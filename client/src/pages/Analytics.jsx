@@ -25,7 +25,7 @@ function Analytics() {
       const token = localStorage.getItem('token');
       
       // Fetch bots
-      const botsResponse = await axios.get('http://localhost:3000/bots', {
+      const botsResponse = await axios.get('https://botbuilder-platform.onrender.com/bots', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
