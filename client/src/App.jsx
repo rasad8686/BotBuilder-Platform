@@ -17,7 +17,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create-bot" element={<CreateBot />} />
-        <Route path="/my-bots" element={<MyBots />} />
+        <Route path="/mybots" element={<MyBots />} />
         <Route path="/bot/:botId/messages" element={<BotMessages />} />
         <Route path="/bot/:botId/edit" element={<EditBot />} />
         <Route path="/analytics" element={<Analytics />} />
