@@ -14,25 +14,30 @@ const pool = new Pool({
 // Create bot
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { name, description, platform, api_token, webhook_url } = req.body;
-    const userId = req.user.userId;
-
-    if (!name || !platform) {
-      return res.status(400).json({ error: 'Name and platform are required' });
+    const { name, description } = req.body;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Bot name is required' });
     }
 
-    const result = await pool.query(
-      'INSERT INTO bots (user_id, name, description, platform, api_token, webhook_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [userId, name, description, platform, api_token, webhook_url]
-    );
-
-    res.status(201).json({
-      message: 'Bot created successfully',
-      bot: result.rows[0]
-    });
-
+    const token = `bot-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
+    const newBot = {
+      id: bots.length + 1,
+      userId: req.user.userId,
+      name: name.trim(),
+      description: description?.trim() || '',
+      token: token,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    bots.push(newBot);
+    console.log(`✅ Bot created: ${newBot.name}`);
+    res.status(201).json(newBot);
   } catch (error) {
-    console.error('Create bot error:', error);
+    console.error('❌ Error:', error);
     res.status(500).json({ error: 'Failed to create bot' });
   }
 });
