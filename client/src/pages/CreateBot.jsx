@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -27,7 +27,7 @@ function CreateBot() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:3000/bots',
+        '${import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com"}/bots',
         formData,
         {
           headers: {
@@ -71,11 +71,11 @@ function CreateBot() {
               onClick={() => navigate('/dashboard')}
               className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
             >
-              ← Back to Dashboard
+              â† Back to Dashboard
             </button>
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Create New Bot 🤖</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Create New Bot ðŸ¤–</h2>
           <p className="text-gray-600 mb-8">Fill in the details to create your chatbot</p>
 
           {error && (
@@ -120,13 +120,13 @@ function CreateBot() {
               disabled={loading}
               className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create Bot 🚀'}
+              {loading ? 'Creating...' : 'Create Bot ðŸš€'}
             </button>
           </form>
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-gray-600">
-              💡 <strong>Tip:</strong> After creating your bot, you can add messages and configure its responses.
+              ðŸ’¡ <strong>Tip:</strong> After creating your bot, you can add messages and configure its responses.
             </p>
           </div>
         </div>
@@ -136,5 +136,6 @@ function CreateBot() {
 }
 
 export default CreateBot;
+
 
 
