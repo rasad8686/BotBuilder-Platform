@@ -1,85 +1,67 @@
-﻿import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+﻿$temizKod = @'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function CreateBot() {
-  const navigate = useNavigate();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
+
+const CreateBot = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    platform: 'web'
+    name: "",
+    description: "",
+    platform: "web"
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError("");
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        '${import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com"}/bots',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      const token = localStorage.getItem("token");
+      const response = await axios.post(`${API_BASE_URL}/bots`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
+      });
 
-      console.log('Bot created:', response.data);
-      alert('Bot created successfully!');
-      navigate('/dashboard');
+      if (response.data.success) {
+        alert("Bot created successfully!");
+        navigate("/dashboard");
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create bot');
+      setError(err.response?.data?.error || "Failed to create bot");
+      console.error(err);
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">BotBuilder</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        
+          href="/dashboard"
+          className="text-blue-600 hover:text-blue-800 mb-6 inline-block"
+        >
+          ← Back to Dashboard
+        </a>
 
-      <div className="max-w-2xl mx-auto mt-12 px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="mb-6">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-            >
-              â† Back to Dashboard
-            </button>
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Create New Bot ðŸ¤–</h2>
-          <p className="text-gray-600 mb-8">Fill in the details to create your chatbot</p>
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <h1 className="text-3xl font-bold mb-2">Create New Bot 🤖</h1>
+          <p className="text-gray-600 mb-6">
+            Fill in the details to create your chatbot
+          </p>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
               {error}
             </div>
           )}
@@ -120,22 +102,24 @@ function CreateBot() {
               disabled={loading}
               className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create Bot ðŸš€'}
+              {loading ? "Creating..." : "Create Bot 🚀"}
             </button>
           </form>
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-gray-600">
-              ðŸ’¡ <strong>Tip:</strong> After creating your bot, you can add messages and configure its responses.
+              💡 <strong>Tip:</strong> After creating your bot, you can add
+              messages and configure its responses.
             </p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default CreateBot;
+'@
 
-
-
+Set-Content -Path "C:\Users\User\Desktop\BotBuilder\client\src\pages\CreateBot.jsx" -Value $temizKod -Encoding UTF8
+Write-Host "✅ DOSYA YAZILDI!" -ForegroundColor Green
