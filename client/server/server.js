@@ -3,7 +3,26 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
+// PostgreSQL Setup
+const { Pool } = require('pg');
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Auto-create table
+pool.query(`
+  CREATE TABLE IF NOT EXISTS bots (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).then(() => console.log('✅ Bots table ready'))
+  .catch(err => console.error('❌ Table error:', err));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -117,58 +136,56 @@ app.post('/auth/login', async (req, res) => {
 // ✅ Bot routes (CRUD)
 app.get('/bots', async (req, res) => {
   try {
-    // TODO: Get from database - real implementation now
-    const bots = []; // Placeholder for now, will be replaced with DB query
+    const result = await pool.query('SELECT * FROM bots ORDER BY created_at DESC');
     
-    res.json({
-      success: true,
-      message: 'Bots retrieved successfully',
-      bots: bots,
-      total: bots.length
-    });
+    const bots = result.rows.map(bot => ({
+      id: bot.id,
+      name: bot.name,
+      description: bot.description,
+      token: bot.token,
+      status: bot.status,
+      createdAt: bot.created_at
+    }));
+
+    res.json(bots);
   } catch (error) {
-    console.error('Get bots error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    console.error('❌ Error:', error);
+    res.status(500).json({ error: 'Failed to fetch bots' });
   }
 });
 
-app.post('/bots', (req, res) => {
+app.post('/bots', async (req, res) => {
   try {
-   const { name, description } = req.body;
+    const { name, description } = req.body;
 
-if (!name || name.trim() === '') {
-    return res.status(400).json({
-        message: 'Bot name is required'
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Bot name is required' });
+    }
+
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 11);
+    const token = `bot-${timestamp}-${randomString}`;
+
+    const result = await pool.query(
+      'INSERT INTO bots (name, description, token, status) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name.trim(), description?.trim() || null, token, 'active']
+    );
+
+    const newBot = result.rows[0];
+    console.log('✅ Bot created:', newBot.id);
+    
+    res.status(201).json({
+      id: newBot.id,
+      name: newBot.name,
+      description: newBot.description,
+      token: newBot.token,
+      status: newBot.status,
+      createdAt: newBot.created_at
     });
-}
 
-// Auto-generate token
-const token = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // TODO: Save to database
-    res.status(201).json({ 
-      success: true,
-      message: 'Bot created successfully!',
-      bot: { 
-        id: Date.now(), 
-        name, 
-        token,
-        description: description || '',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      }
-    });
   } catch (error) {
-    console.error('Create bot error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error', 
-      error: error.message 
-    });
+    console.error('❌ Error:', error);
+    res.status(500).json({ error: 'Failed to create bot' });
   }
 });
 
