@@ -135,15 +135,15 @@ app.get('/bots', (req, res) => {
 
 app.post('/bots', (req, res) => {
   try {
-    const { name, token, description } = req.body;
+    const { name, description } = req.body;
     
-    if (!name || !token) {
+    if (!name || name.trim() === '') {
       return res.status(400).json({ 
-        message: 'Bot name and token are required' 
+        message: 'Bot name is required'
       });
     }
 
-    // TODO: Save to database
+    const token = `bot-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     res.status(201).json({ 
       success: true,
       message: 'Bot created successfully!',
