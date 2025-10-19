@@ -115,22 +115,25 @@ app.post('/auth/login', async (req, res) => {
 });
 
 // ✅ Bot routes (CRUD)
-app.get('/bots', (req, res) => {
-  // TODO: Get from database
-  res.json({ 
-    success: true,
-    message: 'Bots retrieved successfully',
-    bots: [
-      {
-        id: 1,
-        name: 'Demo Bot',
-        token: 'demo-token-123',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      }
-    ],
-    total: 1
-  });
+app.get('/bots', async (req, res) => {
+  try {
+    // TODO: Get from database - real implementation now
+    const bots = []; // Placeholder for now, will be replaced with DB query
+    
+    res.json({
+      success: true,
+      message: 'Bots retrieved successfully',
+      bots: bots,
+      total: bots.length
+    });
+  } catch (error) {
+    console.error('Get bots error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
 });
 
 app.post('/bots', (req, res) => {
