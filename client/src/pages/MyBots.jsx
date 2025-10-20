@@ -31,10 +31,10 @@ function MyBots() {
 
       console.log('Bots response:', response.data);
 
-      if (response.data.success) {
-        setBots(response.data.bots || []);
-      } else {
-        setError(response.data.message || 'Failed to fetch bots');
+      if (Array.isArray(response.data)) {
+  setBots(response.data);
+} else {
+  setError('Failed to fetch bots');
       }
     } catch (err) {
       console.error('Fetch bots error:', err);
