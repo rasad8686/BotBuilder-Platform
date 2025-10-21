@@ -1,167 +1,89 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+﻿import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-// CRITICAL: Use environment variable for API URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
 
 function Register() {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user types
-    if (error) setError('');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
-    // Validation
-    if (!formData.username || !formData.email || !formData.password) {
-      setError('All fields are required');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setLoading(false);
-      return;
-    }
-
+    setError("");
+    
     try {
-      console.log('Registering with API URL:', API_BASE_URL);
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
       
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/register`,
-        {
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('Registration response:', response.data);
-
-      if (response.data.success) {
-        // Success! Redirect to login
-        alert('Registration successful! Please login.');
-        navigate('/login');
-      } else {
-        setError(response.data.message || 'Registration failed');
+      if (response.data.success && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        navigate("/dashboard");
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      
-      if (err.response) {
-        // Server responded with error
-        setError(err.response.data.message || 'Registration failed');
-      } else if (err.request) {
-        // Request made but no response
-        setError('Cannot connect to server. Please try again.');
-      } else {
-        // Something else happened
-        setError('An error occurred. Please try again.');
-      }
+      setError(err.response?.data?.error || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-500">
-      <div className="bg-white p-8 rounded-lg shadow-2xl w-96">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          BotBuilder
-        </h1>
-        <h2 className="text-xl text-center mb-6 text-gray-600">
-          Create Account
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-2">BotBuilder</h1>
+        <p className="text-gray-600 text-center mb-6">Create Account</p>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-2">Name</label>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Name</label>
             <input
               type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
-              disabled={loading}
-              autoComplete="username"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Email</label>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Email</label>
             <input
               type="email"
-              name="email"
               value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
-              disabled={loading}
-              autoComplete="email"
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Password</label>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-semibold mb-2">Password</label>
             <input
               type="password"
-              name="password"
               value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
-              disabled={loading}
-              autoComplete="new-password"
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50"
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? "Creating..." : "Register"}
           </button>
         </form>
 
-        <p className="text-center mt-4 text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-purple-600 hover:underline">
-            Login
-          </Link>
+        <p className="text-center mt-6 text-gray-600">
+          Already have an account? <a href="/login" className="text-purple-600 hover:underline">Login</a>
         </p>
-
-        {/* Debug info (remove in production) */}
-        <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
-          API: {API_BASE_URL}
-        </div>
       </div>
     </div>
   );

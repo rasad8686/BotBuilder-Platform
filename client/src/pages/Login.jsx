@@ -1,156 +1,78 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+﻿import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-// CRITICAL: Use environment variable for API URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
 
 function Login() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user types
-    if (error) setError('');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
-    // Validation
-    if (!formData.email || !formData.password) {
-      setError('All fields are required');
-      setLoading(false);
-      return;
-    }
-
+    setError("");
+    
     try {
-      console.log('Logging in with API URL:', API_BASE_URL);
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
       
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/login`,
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('Login response:', response.data);
-
-      if (response.data.success) {
-        // Save token to localStorage
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-        }
-        
-        // Save user info
-        if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-
-        // Success! Redirect to dashboard/mybots
-        alert('Login successful!');
-        navigate('/mybots');
-      } else {
-        setError(response.data.message || 'Login failed');
+      if (response.data.success && response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        navigate("/dashboard");
       }
     } catch (err) {
-      console.error('Login error:', err);
-      
-      if (err.response) {
-        // Server responded with error
-        setError(err.response.data.message || 'Login failed');
-      } else if (err.request) {
-        // Request made but no response
-        setError('Cannot connect to server. Please try again.');
-      } else {
-        // Something else happened
-        setError('An error occurred. Please try again.');
-      }
+      setError(err.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-500">
-      <div className="bg-white p-8 rounded-lg shadow-2xl w-96">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          BotBuilder
-        </h1>
-        <h2 className="text-xl text-center mb-6 text-gray-600">
-          Login
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-500 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-2">BotBuilder</h1>
+        <p className="text-gray-600 text-center mb-6">Login</p>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 mb-2">Email</label>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Email</label>
             <input
               type="email"
-              name="email"
               value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              disabled={loading}
-              autoComplete="email"
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Password</label>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-semibold mb-2">Password</label>
             <input
               type="password"
-              name="password"
               value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              disabled={loading}
-              autoComplete="current-password"
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <p className="text-center mt-4 text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
+        <p className="text-center mt-6 text-gray-600">
+          Don't have an account? <a href="/register" className="text-blue-600 hover:underline">Register</a>
         </p>
-
-        {/* Debug info (remove in production) */}
-        <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
-          API: {API_BASE_URL}
-        </div>
       </div>
     </div>
   );

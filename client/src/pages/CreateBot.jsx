@@ -20,14 +20,20 @@ function CreateBot() {
     setLoading(true);
     setError("");
     setSuccess(false);
+
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(`${API_BASE_URL}/bots`, {
-        name: formData.name,
-        description: formData.description
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}/bots`,
+        { name: formData.name, description: formData.description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       if (response.data.success) {
         setSuccess(true);
         setTimeout(() => {
