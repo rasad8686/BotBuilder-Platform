@@ -22,11 +22,11 @@ function CreateBot() {
     setSuccess(false);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(${API_BASE_URL}/bots, {
+      const response = await axios.post(`${API_BASE_URL}/bots`, {
         name: formData.name,
         description: formData.description
       }, {
-        headers: { Authorization: Bearer  }
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
         setSuccess(true);
