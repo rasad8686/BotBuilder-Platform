@@ -18,11 +18,13 @@
   "author": "Rashad",
   "license": "MIT",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
     "pg": "^8.16.3"
