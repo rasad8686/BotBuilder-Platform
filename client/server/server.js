@@ -33,12 +33,33 @@ app.use('/bots', apiLimiter);
 
 app.use(express.json());
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL, 
+  ssl: { rejectUnauthorized: false } 
+});
+
+async function setupDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Users table ready');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bots (
+        id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         token VARCHAR(255) UNIQUE NOT NULL,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMP DEFAULT NOW()
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     console.log('✅ Bots table ready');
@@ -46,6 +67,8 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejec
     console.error('❌ Database setup error:', err);
   }
 }
+
+setupDatabase();
 
 setupDatabase();
 
