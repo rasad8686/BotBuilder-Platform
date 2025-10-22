@@ -63,6 +63,22 @@ async function setupDatabase() {
       )
     `);
     console.log('✅ Bots table ready');
+    console.log('✅ Bots table ready');
+    
+    // Migration: Add user_id column
+    try {
+      await pool.query(`
+        ALTER TABLE bots ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id)
+      `);
+      console.log('✅ Migration: user_id column added');
+    } catch (migErr) {
+      console.log('⚠️ Migration skipped:', migErr.message);
+    }
+    
+  } catch (err) {
   } catch (err) {
     console.error('❌ Database setup error:', err);
   }
