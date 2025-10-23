@@ -6,17 +6,33 @@ const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// CORS - Allow Vercel deployments
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://bot-builder-platform.vercel.app',
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
+    if (origin.includes('bot-builder-platform') && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
+app.use(helmet());
+app.use(express.json());
+
+// Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -28,18 +44,25 @@ const apiLimiter = rateLimit({
   max: 100
 });
 
-app.use('/auth/', authLimiter);
-app.use('/bots', apiLimiter);
+// Auth Middleware
+const authMiddleware = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-app.use(express.json());
-
-const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL, 
-  ssl: { rejectUnauthorized: false } 
-});
-
+// Setup Database Tables
 async function setupDatabase() {
   try {
+    // Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -49,8 +72,8 @@ async function setupDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('✅ Users table ready');
 
+    // Bots table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bots (
         id SERIAL PRIMARY KEY,
@@ -62,58 +85,24 @@ async function setupDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('✅ Bots table ready');
-    console.log('✅ Bots table ready');
-    
-    // Migration: Add user_id column
-    try {
-      await pool.query(`
-        ALTER TABLE bots ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
-      `);
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id)
-      `);
-      console.log('✅ Migration: user_id column added');
-    } catch (migErr) {
-      console.log('⚠️ Migration skipped:', migErr.message);
-    }
-    
-  } catch (err) {
+
+    console.log('✅ Database tables ready');
   } catch (err) {
     console.error('❌ Database setup error:', err);
   }
 }
 
-setupDatabase();
-
-setupDatabase();
-
-// Auth middleware
-const authMiddleware = (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-// Root
+// Root route
 app.get('/', (req, res) => {
-  res.json({ 
-    message: '🤖 BotBuilder API is LIVE!', 
+  res.json({
+    message: '🚀 BotBuilder Backend is LIVE!',
     version: '2.0',
     endpoints: ['/auth/register', '/auth/login', '/bots']
   });
 });
 
 // Register
-app.post('/auth/register', async (req, res) => {
+app.post('/auth/register', authLimiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -128,14 +117,14 @@ app.post('/auth/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email',
+      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id',
       [name, email, hashedPassword]
     );
 
     const user = result.rows[0];
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ success: true, token, user });
+    res.json({ success: true, token, user: { id: user.id, name, email } });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -143,7 +132,7 @@ app.post('/auth/register', async (req, res) => {
 });
 
 // Login
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -162,7 +151,7 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ success: true, token, user: { id: user.id, name: user.name, email: user.email } });
   } catch (error) {
     console.error('Login error:', error);
@@ -171,13 +160,18 @@ app.post('/auth/login', async (req, res) => {
 });
 
 // Get bots
-app.get('/bots', authMiddleware, async (req, res) => {
+app.get('/bots', authMiddleware, apiLimiter, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM bots WHERE user_id = $1 ORDER BY created_at DESC',
       [req.userId]
     );
-    res.json(result.rows);
+    res.json({
+      success: true,
+      message: 'Bots retrieved successfully',
+      bots: result.rows,
+      total: result.rows.length
+    });
   } catch (error) {
     console.error('Get bots error:', error);
     res.status(500).json({ error: 'Failed to fetch bots' });
@@ -185,40 +179,100 @@ app.get('/bots', authMiddleware, async (req, res) => {
 });
 
 // Create bot
-app.post('/bots', authMiddleware, async (req, res) => {
+app.post('/bots', authMiddleware, apiLimiter, async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, token } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ error: 'Bot name is required' });
+    if (!name || !token) {
+      return res.status(400).json({ error: 'Name and token required' });
     }
 
-    const token = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const result = await pool.query(
       'INSERT INTO bots (name, description, token, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
       [name, description, token, req.userId]
     );
 
-    res.json({ success: true, bot: result.rows[0] });
+    res.json({
+      success: true,
+      message: 'Bot created successfully',
+      bot: result.rows[0]
+    });
   } catch (error) {
     console.error('Create bot error:', error);
     res.status(500).json({ error: 'Failed to create bot' });
   }
 });
 
-// Delete bot
-app.delete('/bots/:id', authMiddleware, async (req, res) => {
+// Update bot
+app.put('/bots/:id', authMiddleware, apiLimiter, async (req, res) => {
   try {
-    await pool.query('DELETE FROM bots WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
-    res.json({ success: true });
+    const { id } = req.params;
+    const { name, token, description } = req.body;
+
+    const result = await pool.query(
+      'UPDATE bots SET name = $1, token = $2, description = $3 WHERE id = $4 AND user_id = $5 RETURNING *',
+      [name, token, description, id, req.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot updated successfully',
+      bot: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update bot error:', error);
+    res.status(500).json({ error: 'Failed to update bot' });
+  }
+});
+
+// Delete bot
+app.delete('/bots/:id', authMiddleware, apiLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM bots WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot deleted successfully',
+      deletedId: parseInt(id)
+    });
   } catch (error) {
     console.error('Delete bot error:', error);
     res.status(500).json({ error: 'Failed to delete bot' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log('🚀 BotBuilder Backend is LIVE!');
-  console.log(`📍 Port: ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found',
+    path: req.path,
+    method: req.method
+  });
+});
+
+// Start server
+setupDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log('');
+    console.log('═══════════════════════════════════════');
+    console.log('🚀 BotBuilder Backend is LIVE!');
+    console.log(`📍 Port: ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('═══════════════════════════════════════');
+    console.log('');
+  });
 });
