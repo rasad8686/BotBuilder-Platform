@@ -1,30 +1,30 @@
-﻿import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+﻿import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
-function Register() {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
-  const [error, setError] = useState("");
+export default function Register() {
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    
+    setError('');
+
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
       
       if (response.data.success && response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        navigate("/dashboard");
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Registration failed");
+      setError(err.response?.data?.error || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -36,7 +36,11 @@ function Register() {
         <h1 className="text-3xl font-bold text-center mb-2">BotBuilder</h1>
         <p className="text-gray-600 text-center mb-6">Create Account</p>
 
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -77,16 +81,14 @@ function Register() {
             disabled={loading}
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Register"}
+            {loading ? 'Creating...' : 'Register'}
           </button>
         </form>
 
         <p className="text-center mt-6 text-gray-600">
-          Already have an account? <a href="/login" className="text-purple-600 hover:underline">Login</a>
+          Already have an account? <Link to="/login" className="text-purple-600 hover:underline">Login</Link>
         </p>
       </div>
     </div>
   );
 }
-
-export default Register;
