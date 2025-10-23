@@ -1,134 +1,110 @@
 ﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Database connection
+// Database
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// CORS - Allow Vercel deployments
+// CORS - Allow all Vercel
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (origin.startsWith('http://localhost:')) return callback(null, true);
-    if (origin.includes('bot-builder-platform') && origin.includes('vercel.app')) {
-      return callback(null, true);
+  origin: (origin, callback) => {
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS'));
     }
-    callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
 
-app.use(helmet());
 app.use(express.json());
 
-// Rate limiters
-// Rate limiters (DISABLED FOR TESTING)
-const authLimiter = (req, res, next) => next(); // Bypass
-const apiLimiter = (req, res, next) => next(); // Bypass
-
 // Auth Middleware
-const authMiddleware = (req, res, next) => {
+const auth = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'No token' });
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+    req.userId = jwt.verify(token, process.env.JWT_SECRET).userId;
     next();
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-// Setup Database Tables
-async function setupDatabase() {
+// Setup DB
+async function setupDB() {
   try {
-    // Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        name VARCHAR(255),
+        email VARCHAR(255) UNIQUE,
+        password VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-
-    // Bots table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bots (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
         description TEXT,
-        token VARCHAR(255) UNIQUE NOT NULL,
+        token VARCHAR(255) UNIQUE,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
-
-    console.log('✅ Database tables ready');
+    console.log('✅ DB ready');
   } catch (err) {
-    console.error('❌ Database setup error:', err);
+    console.error('❌ DB error:', err);
   }
 }
 
-// Root route
+// Routes
 app.get('/', (req, res) => {
-  res.json({
-    message: '🚀 BotBuilder Backend is LIVE!',
-    version: '2.0',
-    endpoints: ['/auth/register', '/auth/login', '/bots']
-  });
+  res.json({ message: '🚀 BotBuilder API v2.1', status: 'live' });
 });
 
 // Register
-app.post('/auth/register', authLimiter, async (req, res) => {
+app.post('/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'All fields required' });
     }
 
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
+    const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (exists.rows.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id',
-      [name, email, hashedPassword]
+      [name, email, hash]
     );
 
-    const user = result.rows[0];
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-    res.json({ success: true, token, user: { id: user.id, name, email } });
-  } catch (error) {
-    console.error('Register error:', error);
+    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, token, user: { id: result.rows[0].id, name, email } });
+  } catch (err) {
+    console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
 // Login
-app.post('/auth/login', authLimiter, async (req, res) => {
+app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
     }
@@ -139,43 +115,36 @@ app.post('/auth/login', authLimiter, async (req, res) => {
     }
 
     const user = result.rows[0];
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ success: true, token, user: { id: user.id, name: user.name, email: user.email } });
-  } catch (error) {
-    console.error('Login error:', error);
+  } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed' });
   }
 });
 
 // Get bots
-app.get('/bots', authMiddleware, apiLimiter, async (req, res) => {
+app.get('/bots', auth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM bots WHERE user_id = $1 ORDER BY created_at DESC',
       [req.userId]
     );
-    res.json({
-      success: true,
-      message: 'Bots retrieved successfully',
-      bots: result.rows,
-      total: result.rows.length
-    });
-  } catch (error) {
-    console.error('Get bots error:', error);
+    res.json({ success: true, bots: result.rows, total: result.rows.length });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to fetch bots' });
   }
 });
 
 // Create bot
-app.post('/bots', authMiddleware, apiLimiter, async (req, res) => {
+app.post('/bots', auth, async (req, res) => {
   try {
     const { name, description, token } = req.body;
-
     if (!name || !token) {
       return res.status(400).json({ error: 'Name and token required' });
     }
@@ -184,88 +153,49 @@ app.post('/bots', authMiddleware, apiLimiter, async (req, res) => {
       'INSERT INTO bots (name, description, token, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
       [name, description, token, req.userId]
     );
-
-    res.json({
-      success: true,
-      message: 'Bot created successfully',
-      bot: result.rows[0]
-    });
-  } catch (error) {
-    console.error('Create bot error:', error);
+    res.json({ success: true, bot: result.rows[0] });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to create bot' });
   }
 });
 
 // Update bot
-app.put('/bots/:id', authMiddleware, apiLimiter, async (req, res) => {
+app.put('/bots/:id', auth, async (req, res) => {
   try {
-    const { id } = req.params;
     const { name, token, description } = req.body;
-
     const result = await pool.query(
       'UPDATE bots SET name = $1, token = $2, description = $3 WHERE id = $4 AND user_id = $5 RETURNING *',
-      [name, token, description, id, req.userId]
+      [name, token, description, req.params.id, req.userId]
     );
-
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Bot not found' });
     }
-
-    res.json({
-      success: true,
-      message: 'Bot updated successfully',
-      bot: result.rows[0]
-    });
-  } catch (error) {
-    console.error('Update bot error:', error);
+    res.json({ success: true, bot: result.rows[0] });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to update bot' });
   }
 });
 
 // Delete bot
-app.delete('/bots/:id', authMiddleware, apiLimiter, async (req, res) => {
+app.delete('/bots/:id', auth, async (req, res) => {
   try {
-    const { id } = req.params;
-
     const result = await pool.query(
       'DELETE FROM bots WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, req.userId]
+      [req.params.id, req.userId]
     );
-
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Bot not found' });
     }
-
-    res.json({
-      success: true,
-      message: 'Bot deleted successfully',
-      deletedId: parseInt(id)
-    });
-  } catch (error) {
-    console.error('Delete bot error:', error);
+    res.json({ success: true, deletedId: parseInt(req.params.id) });
+  } catch (err) {
     res.status(500).json({ error: 'Failed to delete bot' });
   }
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.path,
-    method: req.method
-  });
-});
-
-// Start server
-setupDatabase().then(() => {
+// Start
+setupDB().then(() => {
   app.listen(PORT, () => {
-    console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('🚀 BotBuilder Backend is LIVE!');
+    console.log('🚀 BotBuilder Backend LIVE!');
     console.log(`📍 Port: ${PORT}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('═══════════════════════════════════════');
-    console.log('');
   });
 });
