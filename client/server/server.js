@@ -33,16 +33,9 @@ app.use(helmet());
 app.use(express.json());
 
 // Rate limiters
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,  // ← 100'e çıkar!
-  message: { error: 'Too many auth attempts' }
-});
-
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
-});
+// Rate limiters (DISABLED FOR TESTING)
+const authLimiter = (req, res, next) => next(); // Bypass
+const apiLimiter = (req, res, next) => next(); // Bypass
 
 // Auth Middleware
 const authMiddleware = (req, res, next) => {
