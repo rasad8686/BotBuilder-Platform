@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
@@ -8,11 +8,23 @@ function Dashboard() {
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchBots();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.botCreated) {
+      setSuccessMessage("Bot created successfully!");
+      // Clear the state to prevent showing on refresh
+      window.history.replaceState({}, document.title);
+      // Auto-hide after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    }
+  }, [location]);
 
   const fetchBots = async () => {
     try {
@@ -26,13 +38,17 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setBots(response.data);
+      setBots(response.data.bots || response.data || []);
     } catch (err) {
-      if (err.response?.status === 401) {
+      console.error('Fetch bots error:', err);
+
+      if (!err.response) {
+        setError("Network error: Unable to connect to server");
+      } else if (err.response?.status === 401) {
         localStorage.clear();
         navigate("/login");
       } else {
-        setError("Failed to fetch bots");
+        setError(err.response?.data?.message || "Failed to fetch bots");
       }
     } finally {
       setLoading(false);
@@ -40,14 +56,24 @@ function Dashboard() {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this bot?")) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${API_BASE_URL}/bots/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBots(bots.filter(bot => bot.id !== id));
+      setSuccessMessage("Bot deleted successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      alert("Failed to delete bot");
+      console.error('Delete bot error:', err);
+      const errorMsg = !err.response
+        ? "Network error: Unable to connect to server"
+        : (err.response?.data?.message || "Failed to delete bot");
+      alert(errorMsg);
     }
   };
 
@@ -87,6 +113,12 @@ function Dashboard() {
             </button>
           </div>
         </div>
+
+        {successMessage && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 flex items-center gap-2">
+            ✅ {successMessage}
+          </div>
+        )}
 
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{error}</div>}
 
