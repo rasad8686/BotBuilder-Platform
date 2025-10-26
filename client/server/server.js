@@ -64,6 +64,32 @@ async function setupDB() {
       )
     `);
     console.log('✅ DB ready');
+    console.log('✅ Bots table ready');
+    
+    // Migration: Ensure user_id column exists
+    try {
+      await db.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'bots' AND column_name = 'user_id'
+          ) THEN
+            ALTER TABLE bots ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
+      
+      await db.query(`
+        CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id)
+      `);
+      
+      console.log('✅ Migration: user_id checked');
+    } catch (migrationError) {
+      console.error('⚠️ Migration warning:', migrationError.message);
+    }
+    
+  } catch (error) {
   } catch (err) {
     console.error('❌ DB error:', err);
   }

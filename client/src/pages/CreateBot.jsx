@@ -5,7 +5,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
 export default function CreateBot() {
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', token: '', description: '' });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,14 +19,23 @@ export default function CreateBot() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/bots`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/bots`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       setSuccess(true);
-      setTimeout(() => navigate('/mybots'), 1500);
+      setTimeout(() => navigate('/mybots', { state: { botCreated: true } }), 1500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create bot');
+      console.error('Create bot error:', err);
+
+      // Network error or CORS issue (no response from server)
+      if (!err.response) {
+        setError('Network error: Unable to connect to server. Please check your connection.');
+      }
+      // Server responded with error
+      else {
+        setError(err.response?.data?.message || 'Failed to create bot');
+      }
     } finally {
       setLoading(false);
     }
@@ -62,6 +71,19 @@ export default function CreateBot() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter bot name"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">Bot Token *</label>
+              <input
+                type="text"
+                value={formData.token}
+                onChange={(e) => setFormData({ ...formData, token: e.target.value })}
+                required
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter bot token"
               />
             </div>
 
@@ -73,6 +95,7 @@ export default function CreateBot() {
                 required
                 rows="4"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter bot description"
               />
             </div>
 
