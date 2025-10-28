@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+client/node_modules/
+BotBuilder/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+client/.env.local
+client/.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+client/dist/
+client/build/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.bak
+*.tmp
+.cache/
+.eslintcache
+.npm
+
+# Mock/test server - DO NOT deploy to production
+# Ignore ENTIRE directory to prevent deployment
+client/server/
