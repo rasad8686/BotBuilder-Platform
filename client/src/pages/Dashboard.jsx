@@ -1,9 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
+import botApi from "../api/bots";
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -36,11 +34,8 @@ function Dashboard() {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/bots`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setBots(response.data.bots || response.data || []);
+      const response = await botApi.getBots();
+      setBots(response.bots || response.data || []);
     } catch (err) {
       console.error('Fetch bots error:', err);
 
@@ -63,10 +58,7 @@ function Dashboard() {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE_URL}/bots/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await botApi.deleteBot(id);
       setBots(bots.filter(bot => bot.id !== id));
       setSuccessMessage(t('dashboard.botDeleted'));
       setTimeout(() => setSuccessMessage(""), 3000);
