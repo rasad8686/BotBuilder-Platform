@@ -6,6 +6,7 @@ import CreateBot from './pages/CreateBot';
 import MyBots from './pages/MyBots';
 import BotMessages from './pages/BotMessages';
 import EditBot from './pages/EditBot';
+import FlowBuilder from './pages/FlowBuilder';
 import Analytics from './pages/Analytics';
 
 // New SaaS Pages
@@ -34,6 +35,7 @@ function App() {
         <Route path="/my-bots" element={<Layout><MyBots /></Layout>} />
         <Route path="/bot/:botId/messages" element={<Layout><BotMessages /></Layout>} />
         <Route path="/bot/:botId/edit" element={<Layout><EditBot /></Layout>} />
+        <Route path="/bots/:botId/flow" element={<FlowBuilder />} />
         <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
 
         {/* New SaaS Routes - With Sidebar */}
