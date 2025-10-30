@@ -202,6 +202,9 @@ app.post('/auth/login', async (req, res) => {
 // ✅ Bot routes (CRUD) - Using modular router
 app.use('/api/bots', require('./routes/bots'));
 
+// ✅ Messages routes (CRUD) - Using modular router
+app.use('/api/messages', require('./routes/messages'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -217,7 +220,12 @@ app.use((req, res) => {
       'GET /api/bots (Auth Required)',
       'GET /api/bots/:id (Auth Required)',
       'PUT /api/bots/:id (Auth Required)',
-      'DELETE /api/bots/:id (Auth Required)'
+      'DELETE /api/bots/:id (Auth Required)',
+      'POST /api/messages (Auth Required)',
+      'GET /api/messages/bot/:botId (Auth Required)',
+      'GET /api/messages/:id (Auth Required)',
+      'PUT /api/messages/:id (Auth Required)',
+      'DELETE /api/messages/:id (Auth Required)'
     ]
   });
 });
