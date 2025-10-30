@@ -4,9 +4,11 @@ require('dotenv').config();
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false // Required for most cloud providers (Render, Railway, etc.)
-  } : false,
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('render.com') ? {
+    rejectUnauthorized: false // Required for Render and other cloud providers
+  } : (process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false),
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
