@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 async function runMigration() {
   const client = new Client({
@@ -18,7 +18,7 @@ async function runMigration() {
 
     console.log('📦 Reading migration file...');
     const sql = fs.readFileSync(
-      path.join(__dirname, 'migrations', '004_create_bot_flows.sql'),
+      path.join(__dirname, 'migrations', '005_add_rbac_multitenant.sql'),
       'utf8'
     );
 
@@ -26,7 +26,12 @@ async function runMigration() {
     await client.query(sql);
 
     console.log('✅ Migration executed successfully!');
-    console.log('📊 Table bot_flows created with indexes');
+    console.log('📊 RBAC + Multi-tenant schema created:');
+    console.log('   - organizations table');
+    console.log('   - organization_members table');
+    console.log('   - roles table (seeded)');
+    console.log('   - Added organization_id to bots, messages, api_tokens');
+    console.log('   - Migrated existing data to personal organizations');
 
     await client.end();
     process.exit(0);
