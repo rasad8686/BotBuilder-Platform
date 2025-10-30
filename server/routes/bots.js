@@ -93,26 +93,83 @@ router.post('/', async (req, res) => {
 /**
  * GET /api/bots - Get all bots for authenticated user
  * Returns array of all bots belonging to the user
+ * Query params (optional): page (default 1), limit (default 10)
+ * If no pagination params provided, returns all bots (backward compatible)
  */
 router.get('/', async (req, res) => {
   try {
     const user_id = req.user.id;
 
-    const query = `
-      SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
-      FROM bots
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-    `;
+    // Parse pagination parameters
+    let page = parseInt(req.query.page);
+    let limit = parseInt(req.query.limit);
 
-    const result = await db.query(query, [user_id]);
+    // Check if pagination is requested
+    const usePagination = !isNaN(page) || !isNaN(limit);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Bots retrieved successfully',
-      bots: result.rows,
-      total: result.rows.length
-    });
+    if (usePagination) {
+      // Set defaults and validate
+      page = isNaN(page) || page < 1 ? 1 : page;
+      limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+      // Enforce maximum limit to prevent abuse
+      if (limit > 100) {
+        limit = 100;
+      }
+
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count
+      const countQuery = 'SELECT COUNT(*) FROM bots WHERE user_id = $1';
+      const countResult = await db.query(countQuery, [user_id]);
+      const total = parseInt(countResult.rows[0].count);
+
+      // Get paginated bots
+      const query = `
+        SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        FROM bots
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+      `;
+
+      const result = await db.query(query, [user_id, limit, offset]);
+
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(total / limit);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Bots retrieved successfully',
+        data: result.rows,
+        pagination: {
+          page: page,
+          limit: limit,
+          total: total,
+          totalPages: totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      });
+    } else {
+      // No pagination - return all bots (backward compatible)
+      const query = `
+        SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        FROM bots
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+      `;
+
+      const result = await db.query(query, [user_id]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Bots retrieved successfully',
+        bots: result.rows,
+        total: result.rows.length
+      });
+    }
 
   } catch (error) {
     console.error('Get bots error:', error);

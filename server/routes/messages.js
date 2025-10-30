@@ -123,6 +123,8 @@ router.post('/', async (req, res) => {
 /**
  * GET /api/messages/bot/:botId - Get all messages for a bot
  * Returns array of all messages belonging to the bot
+ * Query params (optional): page (default 1), limit (default 10)
+ * If no pagination params provided, returns all messages (backward compatible)
  */
 router.get('/bot/:botId', async (req, res) => {
   try {
@@ -146,22 +148,76 @@ router.get('/bot/:botId', async (req, res) => {
       });
     }
 
-    // Get all messages for the bot
-    const query = `
-      SELECT id, bot_id, message_type, content, trigger_keywords, created_at, updated_at
-      FROM bot_messages
-      WHERE bot_id = $1
-      ORDER BY created_at DESC
-    `;
+    // Parse pagination parameters
+    let page = parseInt(req.query.page);
+    let limit = parseInt(req.query.limit);
 
-    const result = await db.query(query, [botId]);
+    // Check if pagination is requested
+    const usePagination = !isNaN(page) || !isNaN(limit);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Messages retrieved successfully',
-      data: result.rows,
-      total: result.rows.length
-    });
+    if (usePagination) {
+      // Set defaults and validate
+      page = isNaN(page) || page < 1 ? 1 : page;
+      limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+      // Enforce maximum limit to prevent abuse
+      if (limit > 100) {
+        limit = 100;
+      }
+
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count
+      const countQuery = 'SELECT COUNT(*) FROM bot_messages WHERE bot_id = $1';
+      const countResult = await db.query(countQuery, [botId]);
+      const total = parseInt(countResult.rows[0].count);
+
+      // Get paginated messages
+      const query = `
+        SELECT id, bot_id, message_type, content, trigger_keywords, created_at, updated_at
+        FROM bot_messages
+        WHERE bot_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+      `;
+
+      const result = await db.query(query, [botId, limit, offset]);
+
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(total / limit);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Messages retrieved successfully',
+        data: result.rows,
+        pagination: {
+          page: page,
+          limit: limit,
+          total: total,
+          totalPages: totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      });
+    } else {
+      // No pagination - return all messages (backward compatible)
+      const query = `
+        SELECT id, bot_id, message_type, content, trigger_keywords, created_at, updated_at
+        FROM bot_messages
+        WHERE bot_id = $1
+        ORDER BY created_at DESC
+      `;
+
+      const result = await db.query(query, [botId]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Messages retrieved successfully',
+        data: result.rows,
+        total: result.rows.length
+      });
+    }
 
   } catch (error) {
     console.error('Get messages error:', error);
