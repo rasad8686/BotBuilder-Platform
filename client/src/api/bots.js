@@ -18,10 +18,16 @@ const botApi = {
 
   /**
    * Get all bots for authenticated user
-   * @returns {Promise} Array of bots
+   * @param {Object} params - { page?, limit? } - Optional pagination parameters
+   * @returns {Promise} Array of bots or paginated response
    */
-  getBots: async () => {
-    const response = await axiosInstance.get('/api/bots');
+  getBots: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+
+    const url = queryParams.toString() ? `/api/bots?${queryParams.toString()}` : '/api/bots';
+    const response = await axiosInstance.get(url);
     return response.data;
   },
 

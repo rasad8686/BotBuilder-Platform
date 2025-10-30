@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import botApi from '../api/bots';
 import BotCard from '../components/BotCard';
 import ConfirmModal from '../components/ConfirmModal';
+import Pagination from '../components/Pagination';
 
 export default function MyBots() {
   const { t } = useTranslation();
@@ -16,12 +17,16 @@ export default function MyBots() {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [botToDelete, setBotToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState(null);
+  const [usePagination, setUsePagination] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     fetchBots();
-  }, []);
+  }, [currentPage, itemsPerPage, usePagination]);
 
   useEffect(() => {
     // Show success message if bot was just created
@@ -34,28 +39,56 @@ export default function MyBots() {
   }, [location]);
 
   useEffect(() => {
-    // Filter bots based on search and platform
-    let filtered = bots;
+    // Only apply local filtering if pagination is disabled
+    if (!usePagination) {
+      let filtered = bots;
 
-    if (searchQuery) {
-      filtered = filtered.filter(bot =>
-        bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (bot.description && bot.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      if (searchQuery) {
+        filtered = filtered.filter(bot =>
+          bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (bot.description && bot.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }
+
+      if (filterPlatform !== 'all') {
+        filtered = filtered.filter(bot => bot.platform === filterPlatform);
+      }
+
+      setFilteredBots(filtered);
+    } else {
+      // When using pagination, display the paginated results directly
+      setFilteredBots(bots);
     }
-
-    if (filterPlatform !== 'all') {
-      filtered = filtered.filter(bot => bot.platform === filterPlatform);
-    }
-
-    setFilteredBots(filtered);
-  }, [searchQuery, filterPlatform, bots]);
+  }, [searchQuery, filterPlatform, bots, usePagination]);
 
   const fetchBots = async () => {
     try {
       setLoading(true);
-      const response = await botApi.getBots();
-      setBots(response.bots || []);
+
+      if (usePagination) {
+        // Fetch with pagination
+        const response = await botApi.getBots({
+          page: currentPage,
+          limit: itemsPerPage
+        });
+
+        if (response.pagination) {
+          // Paginated response
+          setBots(response.data || []);
+          setPagination(response.pagination);
+          setFilteredBots(response.data || []);
+        } else {
+          // Non-paginated response (backward compatibility)
+          setBots(response.bots || response.data || []);
+          setPagination(null);
+        }
+      } else {
+        // Fetch all without pagination (for filtering)
+        const response = await botApi.getBots();
+        setBots(response.bots || response.data || []);
+        setPagination(null);
+      }
+
       setError('');
     } catch (err) {
       console.error('Fetch bots error:', err);
@@ -75,9 +108,10 @@ export default function MyBots() {
 
     try {
       await botApi.deleteBot(botToDelete.id);
-      setBots(bots.filter(bot => bot.id !== botToDelete.id));
       setSuccessMessage(`Bot "${botToDelete.name}" deleted successfully`);
       setTimeout(() => setSuccessMessage(''), 5000);
+      // Refetch to update the list
+      fetchBots();
     } catch (err) {
       console.error('Delete bot error:', err);
       setError(err.response?.data?.message || 'Failed to delete bot');
@@ -85,6 +119,16 @@ export default function MyBots() {
     } finally {
       setBotToDelete(null);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newLimit) => {
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   // Loading skeleton
@@ -149,8 +193,8 @@ export default function MyBots() {
           </div>
         )}
 
-        {/* Search and Filter */}
-        {bots.length > 0 && (
+        {/* Search and Filter - Hidden when using pagination */}
+        {bots.length > 0 && !usePagination && (
           <div className="bg-white rounded-lg shadow-md p-4 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Search */}
@@ -231,15 +275,29 @@ export default function MyBots() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredBots.map(bot => (
-              <BotCard
-                key={bot.id}
-                bot={bot}
-                onDelete={handleDeleteClick}
+          <>
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {filteredBots.map(bot => (
+                <BotCard
+                  key={bot.id}
+                  bot={bot}
+                  onDelete={handleDeleteClick}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {pagination && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
               />
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 

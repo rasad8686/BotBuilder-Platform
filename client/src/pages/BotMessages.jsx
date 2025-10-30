@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import Pagination from '../components/Pagination';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
@@ -11,6 +12,9 @@ function BotMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState(null);
   const [formData, setFormData] = useState({
     message_type: 'greeting',
     content: '',
@@ -19,8 +23,11 @@ function BotMessages() {
 
   useEffect(() => {
     fetchBot();
-    fetchMessages();
   }, []);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [botId, currentPage, itemsPerPage]);
 
   const fetchBot = async () => {
     try {
@@ -36,14 +43,25 @@ function BotMessages() {
 
   const fetchMessages = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/api/messages/bot/${botId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessages(response.data.data || []);
-      setLoading(false);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/messages/bot/${botId}?page=${currentPage}&limit=${itemsPerPage}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.pagination) {
+        // Paginated response
+        setMessages(response.data.data || []);
+        setPagination(response.data.pagination);
+      } else {
+        // Non-paginated response (backward compatibility)
+        setMessages(response.data.data || []);
+        setPagination(null);
+      }
     } catch (err) {
       console.error('Error fetching messages:', err);
+    } finally {
       setLoading(false);
     }
   };
@@ -83,6 +101,16 @@ function BotMessages() {
     } catch (err) {
       alert('Failed to delete message');
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newLimit) => {
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const handleLogout = () => {
@@ -203,41 +231,55 @@ function BotMessages() {
             <p className="text-gray-600 mb-6">Add your first message to get started!</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">
-                      {msg.message_type === 'greeting' ? '👋' : msg.message_type === 'response' ? '💬' : '🤷'}
-                    </span>
-                    <div>
-                      <h4 className="font-bold text-gray-800 capitalize">{msg.message_type}</h4>
-                      {msg.trigger_keywords && (
-                        <div className="flex gap-2 mt-1">
-                          {msg.trigger_keywords.split(',').map((kw, i) => (
-                            <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                              {kw.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+          <>
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">
+                        {msg.message_type === 'greeting' ? '👋' : msg.message_type === 'response' ? '💬' : '🤷'}
+                      </span>
+                      <div>
+                        <h4 className="font-bold text-gray-800 capitalize">{msg.message_type}</h4>
+                        {msg.trigger_keywords && (
+                          <div className="flex gap-2 mt-1">
+                            {msg.trigger_keywords.split(',').map((kw, i) => (
+                              <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                {kw.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <button
+                      onClick={() => handleDelete(msg.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
+                    >
+                      Delete
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDelete(msg.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
-                  >
-                    Delete
-                  </button>
+                  <p className="text-gray-700">{msg.content}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Added: {new Date(msg.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-                <p className="text-gray-700">{msg.content}</p>
-                <p className="text-xs text-gray-400 mt-2">
-                  Added: {new Date(msg.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {pagination && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
