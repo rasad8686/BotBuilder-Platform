@@ -70,7 +70,8 @@ app.post('/auth/register', async (req, res) => {
 
     // TODO: Database save - For now just creating user
     // In production, hash password and save to database
-    const userId = Date.now();
+    // Generate random ID within PostgreSQL INTEGER range (1 to 2,147,483,647)
+    const userId = Math.floor(Math.random() * 2147483647) + 1;
     const user = {
       id: userId,
       username: username,
@@ -119,7 +120,8 @@ app.post('/auth/login', async (req, res) => {
 
     // TODO: Database check - For now accepting any credentials
     // In production, verify against database
-    const userId = Date.now();
+    // Generate random ID within PostgreSQL INTEGER range (1 to 2,147,483,647)
+    const userId = Math.floor(Math.random() * 2147483647) + 1;
     const user = {
       id: userId,
       email: email,
