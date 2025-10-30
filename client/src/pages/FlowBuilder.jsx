@@ -10,7 +10,6 @@ import 'reactflow/dist/style.css';
 
 import useFlowStore from '../store/flowStore';
 import flowsApi from '../api/flows';
-import botsApi from '../api/bots';
 
 // Import custom node components
 import StartNode from '../components/nodes/StartNode';
@@ -57,24 +56,17 @@ function FlowBuilder() {
   } = useFlowStore();
 
   // Local component state
-  const [botName, setBotName] = useState('');
   const [currentFlowId, setCurrentFlowId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Fetch bot details and flow data on mount
+  // Fetch flow data on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFlow = async () => {
       try {
         setIsLoading(true);
-
-        // Fetch bot details
-        const botResponse = await botsApi.getBotById(botId);
-        if (botResponse.success) {
-          setBotName(botResponse.data.name);
-        }
 
         // Fetch active flow if exists
         try {
@@ -89,14 +81,14 @@ function FlowBuilder() {
           console.log('No existing flow found - starting fresh');
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading flow:', error);
         showNotification('Error loading flow builder', 'error');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchFlow();
   }, [botId, loadFlow]);
 
   // Set up onEdit callback for nodes
@@ -164,7 +156,7 @@ function FlowBuilder() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${botName}-flow-${Date.now()}.json`;
+    link.download = `bot-${botId}-flow-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(url);
     showNotification('Flow exported successfully', 'success');
@@ -221,7 +213,7 @@ function FlowBuilder() {
             ← Back to Bots
           </button>
           <div className="border-l border-gray-300 pl-4">
-            <h1 className="text-2xl font-bold text-gray-800">{botName}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Bot #{botId}</h1>
             <p className="text-sm text-gray-600">Visual Flow Builder</p>
           </div>
         </div>
