@@ -25,10 +25,10 @@ function BotMessages() {
   const fetchBot = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/bots/${botId}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/bots/${botId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setBot(response.data);
+      setBot(response.data.bot);
     } catch (err) {
       console.error('Error fetching bot:', err);
     }
@@ -37,10 +37,10 @@ function BotMessages() {
   const fetchMessages = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/bots/${botId}/messages`, {
+      const response = await axios.get(`${API_BASE_URL}/api/messages/bot/${botId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessages(response.data);
+      setMessages(response.data.data || []);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching messages:', err);
@@ -53,10 +53,12 @@ function BotMessages() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_BASE_URL}/bots/${botId}/messages`,
+        `${API_BASE_URL}/api/messages`,
         {
-          ...formData,
-          trigger_keywords: formData.trigger_keywords.split(',').map(k => k.trim()).filter(k => k)
+          bot_id: parseInt(botId),
+          message_type: formData.message_type,
+          content: formData.content,
+          trigger_keywords: formData.trigger_keywords.trim() || null
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -73,7 +75,7 @@ function BotMessages() {
     if (!window.confirm('Delete this message?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/bots/${botId}/messages/${messageId}`, {
+      await axios.delete(`${API_BASE_URL}/api/messages/${messageId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Message deleted!');
@@ -211,11 +213,11 @@ function BotMessages() {
                     </span>
                     <div>
                       <h4 className="font-bold text-gray-800 capitalize">{msg.message_type}</h4>
-                      {msg.trigger_keywords && msg.trigger_keywords.length > 0 && (
+                      {msg.trigger_keywords && (
                         <div className="flex gap-2 mt-1">
-                          {msg.trigger_keywords.map((kw, i) => (
+                          {msg.trigger_keywords.split(',').map((kw, i) => (
                             <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                              {kw}
+                              {kw.trim()}
                             </span>
                           ))}
                         </div>
