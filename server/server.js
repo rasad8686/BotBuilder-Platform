@@ -205,6 +205,9 @@ app.use('/api/bots', require('./routes/bots'));
 // ✅ Messages routes (CRUD) - Using modular router
 app.use('/api/messages', require('./routes/messages'));
 
+// ✅ Bot Flows routes (Visual Flow Builder) - Using modular router
+app.use('/api/bots', require('./routes/botFlows'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -225,7 +228,11 @@ app.use((req, res) => {
       'GET /api/messages/bot/:botId (Auth Required)',
       'GET /api/messages/:id (Auth Required)',
       'PUT /api/messages/:id (Auth Required)',
-      'DELETE /api/messages/:id (Auth Required)'
+      'DELETE /api/messages/:id (Auth Required)',
+      'POST /api/bots/:botId/flow (Auth Required)',
+      'GET /api/bots/:botId/flow (Auth Required)',
+      'PUT /api/bots/:botId/flow/:flowId (Auth Required)',
+      'GET /api/bots/:botId/flow/history (Auth Required)'
     ]
   });
 });
