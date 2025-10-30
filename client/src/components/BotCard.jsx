@@ -87,30 +87,42 @@ export default function BotCard({ bot, onDelete }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2">
+      <div className="space-y-2">
+        {/* Flow Builder - Full Width */}
         <button
-          onClick={() => navigate(`/bot/${bot.id}/edit`)}
-          className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-sm"
-          title="Edit bot"
+          onClick={() => navigate(`/bots/${bot.id}/flow`)}
+          className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-sm"
+          title="Visual Flow Builder"
         >
-          ✏️ <span>Edit</span>
+          🔀 <span>Flow Builder</span>
         </button>
 
-        <button
-          onClick={() => navigate(`/bot/${bot.id}/messages`)}
-          className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-sm"
-          title="Manage messages"
-        >
-          💬 <span>Messages</span>
-        </button>
+        {/* Other Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/bot/${bot.id}/edit`)}
+            className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Edit bot"
+          >
+            ✏️ <span>Edit</span>
+          </button>
 
-        <button
-          onClick={() => onDelete(bot)}
-          className="bg-red-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center text-sm"
-          title="Delete bot"
-        >
-          🗑️
-        </button>
+          <button
+            onClick={() => navigate(`/bot/${bot.id}/messages`)}
+            className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Manage messages"
+          >
+            💬 <span>Messages</span>
+          </button>
+
+          <button
+            onClick={() => onDelete(bot)}
+            className="bg-red-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center text-sm"
+            title="Delete bot"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
     </div>
   );
