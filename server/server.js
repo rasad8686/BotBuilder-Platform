@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const db = require('./db');
 
 dotenv.config();
 
@@ -68,23 +70,38 @@ app.post('/auth/register', async (req, res) => {
       });
     }
 
-    // TODO: Database save - For now just creating user
-    // In production, hash password and save to database
-    // Generate random ID within PostgreSQL INTEGER range (1 to 2,147,483,647)
-    const userId = Math.floor(Math.random() * 2147483647) + 1;
-    const user = {
-      id: userId,
-      username: username,
-      email: email,
-      createdAt: new Date().toISOString()
-    };
+    // Check if email already exists
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
 
-    // Generate real JWT token
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user into database (using correct column names from schema)
+    const result = await db.query(
+      `INSERT INTO users (name, email, password_hash, email_verified, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING id, name, email, email_verified, created_at`,
+      [username, email, hashedPassword, false]
+    );
+
+    const user = result.rows[0];
+
+    // Generate JWT token with REAL database user ID
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.name // Map 'name' from DB to 'username' in JWT
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
@@ -94,7 +111,13 @@ app.post('/auth/register', async (req, res) => {
       success: true,
       message: 'User registered successfully!',
       token: token,
-      user: user
+      user: {
+        id: user.id,
+        username: user.name,
+        email: user.email,
+        isVerified: user.email_verified,
+        createdAt: user.created_at
+      }
     });
 
   } catch (error) {
@@ -118,22 +141,38 @@ app.post('/auth/login', async (req, res) => {
       });
     }
 
-    // TODO: Database check - For now accepting any credentials
-    // In production, verify against database
-    // Generate random ID within PostgreSQL INTEGER range (1 to 2,147,483,647)
-    const userId = Math.floor(Math.random() * 2147483647) + 1;
-    const user = {
-      id: userId,
-      email: email,
-      username: email.split('@')[0] || 'User'
-    };
+    // Query database for user (using correct column names from schema)
+    const result = await db.query(
+      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      [email]
+    );
 
-    // Generate real JWT token
+    // Check if user exists
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate JWT token with REAL database user ID
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.name // Map 'name' from DB to 'username' in JWT
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
@@ -143,7 +182,11 @@ app.post('/auth/login', async (req, res) => {
       success: true,
       message: 'Login successful!',
       token: token,
-      user: user
+      user: {
+        id: user.id,
+        username: user.name,
+        email: user.email
+      }
     });
 
   } catch (error) {
