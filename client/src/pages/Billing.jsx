@@ -1,42 +1,78 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import billingApi from '../api/billing';
+import PricingCard from '../components/PricingCard';
+import SubscriptionStatus from '../components/SubscriptionStatus';
 
 export default function Billing() {
   const [subscription, setSubscription] = useState(null);
-  const [plans, setPlans] = useState([]);
-  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [plans, setPlans] = useState({});
+  const [usage, setUsage] = useState(null);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('subscription');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     fetchBillingData();
-  }, []);
+
+    // Check for success/cancel from Stripe redirect
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      alert('Subscription updated successfully!');
+      // Clear query params
+      navigate('/billing', { replace: true });
+    } else if (canceled === 'true') {
+      alert('Checkout canceled');
+      navigate('/billing', { replace: true });
+    }
+  }, [searchParams]);
 
   const fetchBillingData = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
         return;
       }
 
-      const [subRes, plansRes, historyRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/subscriptions/current`, {
-          headers: { Authorization: `Bearer ${token}` }
+      // Fetch all billing data in parallel
+      const [subscriptionRes, plansRes, usageRes, invoicesRes] = await Promise.all([
+        billingApi.getSubscription().catch(err => {
+          console.error('Error fetching subscription:', err);
+          return { subscription: null };
         }),
-        axios.get(`${API_BASE_URL}/subscriptions/plans`),
-        axios.get(`${API_BASE_URL}/subscriptions/payment-history`, {
-          headers: { Authorization: `Bearer ${token}` }
+        billingApi.getPlans().catch(err => {
+          console.error('Error fetching plans:', err);
+          return { plans: {} };
+        }),
+        billingApi.getUsage().catch(err => {
+          console.error('Error fetching usage:', err);
+          return { usage: null };
+        }),
+        billingApi.getInvoices().catch(err => {
+          console.error('Error fetching invoices:', err);
+          return { invoices: [] };
         })
       ]);
 
-      setSubscription(subRes.data);
-      setPlans(plansRes.data);
-      setPaymentHistory(historyRes.data);
+      if (subscriptionRes.subscription) {
+        setSubscription(subscriptionRes.subscription);
+      }
+      if (plansRes.plans) {
+        setPlans(plansRes.plans);
+      }
+      if (usageRes.usage) {
+        setUsage(usageRes.usage);
+      }
+      if (invoicesRes.invoices) {
+        setInvoices(invoicesRes.invoices);
+      }
     } catch (error) {
       console.error('Error fetching billing data:', error);
       if (error.response?.status === 401) {
@@ -47,30 +83,46 @@ export default function Billing() {
     }
   };
 
-  const handleUpgrade = async (planId, billingCycle = 'monthly') => {
+  const handleSelectPlan = async (planKey) => {
+    if (planKey === 'free') {
+      alert('To downgrade to free, please cancel your current subscription from the Manage Subscription portal.');
+      return;
+    }
+
     try {
-      setUpgrading(true);
-      const token = localStorage.getItem('token');
+      setActionLoading(true);
+      const response = await billingApi.createCheckoutSession(planKey);
 
-      const response = await axios.post(
-        `${API_BASE_URL}/subscriptions/create-checkout`,
-        { planId, billingCycle },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Redirect to Stripe Checkout
-      if (response.data.url) {
-        window.location.href = response.data.url;
-      } else if (response.data.success) {
-        // Downgrade to free (no payment needed)
-        alert(response.data.message);
-        fetchBillingData();
+      if (response.success && response.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = response.url;
+      } else {
+        alert('Failed to create checkout session');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      alert(error.response?.data?.error || 'Failed to start checkout process');
+      alert(error.response?.data?.message || 'Failed to start checkout process');
     } finally {
-      setUpgrading(false);
+      setActionLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      setActionLoading(true);
+      const response = await billingApi.createPortalSession();
+
+      if (response.success && response.url) {
+        // Redirect to Stripe Customer Portal
+        window.location.href = response.url;
+      } else {
+        alert('Failed to open customer portal');
+      }
+    } catch (error) {
+      console.error('Error opening portal:', error);
+      alert(error.response?.data?.message || 'Failed to open customer portal');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -80,35 +132,18 @@ export default function Billing() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${API_BASE_URL}/subscriptions/cancel`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      setActionLoading(true);
+      const response = await billingApi.cancelSubscription();
 
-      alert('Subscription cancelled. You will have access until the end of your billing period.');
-      fetchBillingData();
+      if (response.success) {
+        alert('Subscription canceled. You will have access until the end of your billing period.');
+        fetchBillingData();
+      }
     } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      alert(error.response?.data?.error || 'Failed to cancel subscription');
-    }
-  };
-
-  const handleReactivate = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${API_BASE_URL}/subscriptions/reactivate`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert('Subscription reactivated!');
-      fetchBillingData();
-    } catch (error) {
-      console.error('Error reactivating subscription:', error);
-      alert(error.response?.data?.error || 'Failed to reactivate subscription');
+      console.error('Error canceling subscription:', error);
+      alert(error.response?.data?.message || 'Failed to cancel subscription');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -116,8 +151,8 @@ export default function Billing() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading billing information...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Loading billing information...</p>
         </div>
       </div>
     );
@@ -128,284 +163,304 @@ export default function Billing() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Billing & Subscription</h1>
-          <p className="text-gray-600">Manage your subscription and payment methods</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Billing & Subscription</h1>
+          <p className="text-gray-600">Manage your subscription, usage, and invoices</p>
         </div>
 
-        {/* Current Subscription Card */}
-        {subscription && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{subscription.display_name}</h2>
-                <p className="text-gray-600 mt-1">{subscription.plan_name === 'free' ? 'Free Plan' : `$${subscription.price_monthly}/month`}</p>
-              </div>
-              <div className={`px-4 py-2 rounded-full ${
-                subscription.status === 'active' ? 'bg-green-100 text-green-800' :
-                subscription.cancel_at_period_end ? 'bg-orange-100 text-orange-800' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {subscription.cancel_at_period_end ? 'Canceling Soon' : subscription.status}
-              </div>
-            </div>
+        {/* Tabs */}
+        <div className="mb-8 border-b border-gray-200">
+          <nav className="flex gap-8">
+            <button
+              onClick={() => setActiveTab('subscription')}
+              className={`pb-4 px-2 font-semibold transition-colors border-b-2 ${
+                activeTab === 'subscription'
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Current Subscription
+            </button>
+            <button
+              onClick={() => setActiveTab('plans')}
+              className={`pb-4 px-2 font-semibold transition-colors border-b-2 ${
+                activeTab === 'plans'
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Available Plans
+            </button>
+            <button
+              onClick={() => setActiveTab('usage')}
+              className={`pb-4 px-2 font-semibold transition-colors border-b-2 ${
+                activeTab === 'usage'
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Usage & Limits
+            </button>
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`pb-4 px-2 font-semibold transition-colors border-b-2 ${
+                activeTab === 'invoices'
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Invoices
+            </button>
+          </nav>
+        </div>
 
-            {/* Usage Stats */}
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Tab Content */}
+        {activeTab === 'subscription' && (
+          <div>
+            <SubscriptionStatus
+              subscription={subscription}
+              onManageSubscription={handleManageSubscription}
+              onCancelSubscription={handleCancelSubscription}
+              loading={actionLoading}
+            />
+          </div>
+        )}
+
+        {activeTab === 'plans' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Plan</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {Object.keys(plans).map((planKey) => (
+                <PricingCard
+                  key={planKey}
+                  plan={plans[planKey]}
+                  planKey={planKey}
+                  isCurrentPlan={subscription?.plan === planKey}
+                  isPopular={planKey === 'pro'}
+                  onSelectPlan={handleSelectPlan}
+                  loading={actionLoading}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'usage' && usage && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Current Usage</h2>
+            <div className="grid md:grid-cols-3 gap-6">
               {/* Bots Usage */}
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Bots</span>
-                  <span className="font-semibold">
-                    {subscription.current_bot_count} / {subscription.max_bots === -1 ? '∞' : subscription.max_bots}
-                  </span>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Bots</h3>
+                  <span className="text-3xl">🤖</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full ${
-                      subscription.current_bot_count >= subscription.max_bots && subscription.max_bots !== -1
-                        ? 'bg-red-500'
-                        : subscription.current_bot_count / subscription.max_bots > 0.8 && subscription.max_bots !== -1
-                        ? 'bg-orange-500'
-                        : 'bg-purple-600'
-                    }`}
-                    style={{
-                      width: subscription.max_bots === -1
-                        ? '10%'
-                        : `${Math.min((subscription.current_bot_count / subscription.max_bots) * 100, 100)}%`
-                    }}
-                  ></div>
+                <div className="mb-4">
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-3xl font-bold text-purple-600">
+                      {usage.bots.current}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      / {usage.bots.limit === -1 ? '∞' : usage.bots.limit}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        usage.bots.percentage >= 90 && usage.bots.limit !== -1
+                          ? 'bg-red-500'
+                          : usage.bots.percentage >= 70 && usage.bots.limit !== -1
+                          ? 'bg-yellow-500'
+                          : 'bg-purple-600'
+                      }`}
+                      style={{
+                        width: usage.bots.limit === -1 ? '10%' : `${Math.min(usage.bots.percentage, 100)}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
+                <p className="text-sm text-gray-600">
+                  {usage.bots.limit === -1
+                    ? 'Unlimited bots available'
+                    : `${usage.bots.limit - usage.bots.current} bots remaining`}
+                </p>
               </div>
 
               {/* Messages Usage */}
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Messages this month</span>
-                  <span className="font-semibold">
-                    {subscription.current_message_count} / {subscription.max_messages_per_month === -1 ? '∞' : subscription.max_messages_per_month.toLocaleString()}
-                  </span>
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
+                  <span className="text-3xl">💬</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full ${
-                      subscription.current_message_count >= subscription.max_messages_per_month && subscription.max_messages_per_month !== -1
-                        ? 'bg-red-500'
-                        : subscription.current_message_count / subscription.max_messages_per_month > 0.8 && subscription.max_messages_per_month !== -1
-                        ? 'bg-orange-500'
-                        : 'bg-purple-600'
-                    }`}
-                    style={{
-                      width: subscription.max_messages_per_month === -1
-                        ? '10%'
-                        : `${Math.min((subscription.current_message_count / subscription.max_messages_per_month) * 100, 100)}%`
-                    }}
-                  ></div>
+                <div className="mb-4">
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-3xl font-bold text-purple-600">
+                      {usage.messages.current.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      / {usage.messages.limit === -1 ? '∞' : usage.messages.limit.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        usage.messages.percentage >= 90 && usage.messages.limit !== -1
+                          ? 'bg-red-500'
+                          : usage.messages.percentage >= 70 && usage.messages.limit !== -1
+                          ? 'bg-yellow-500'
+                          : 'bg-purple-600'
+                      }`}
+                      style={{
+                        width: usage.messages.limit === -1 ? '10%' : `${Math.min(usage.messages.percentage, 100)}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Warning Message */}
-            {!subscription.can_create_more_bots && subscription.plan_name !== 'enterprise' && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                <p className="text-orange-800">
-                  ⚠️ You've reached your bot limit. Upgrade to create more bots!
+                <p className="text-sm text-gray-600">
+                  {usage.messages.limit === -1
+                    ? 'Unlimited messages this month'
+                    : `${(usage.messages.limit - usage.messages.current).toLocaleString()} messages remaining this month`}
                 </p>
               </div>
-            )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              {subscription.plan_name === 'free' && (
-                <button
-                  onClick={() => handleUpgrade(plans.find(p => p.name === 'pro')?.id)}
-                  disabled={upgrading}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                >
-                  {upgrading ? 'Processing...' : 'Upgrade to Pro'}
-                </button>
-              )}
-
-              {subscription.plan_name === 'pro' && (
-                <>
-                  <button
-                    onClick={() => handleUpgrade(plans.find(p => p.name === 'enterprise')?.id)}
-                    disabled={upgrading}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {upgrading ? 'Processing...' : 'Upgrade to Enterprise'}
-                  </button>
-                  {!subscription.cancel_at_period_end && (
-                    <button
-                      onClick={handleCancelSubscription}
-                      className="px-6 py-3 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
-                    >
-                      Cancel Subscription
-                    </button>
-                  )}
-                </>
-              )}
-
-              {subscription.plan_name === 'enterprise' && !subscription.cancel_at_period_end && (
-                <button
-                  onClick={handleCancelSubscription}
-                  className="px-6 py-3 border border-red-500 text-red-500 rounded-lg hover:bg-red-50"
-                >
-                  Cancel Subscription
-                </button>
-              )}
-
-              {subscription.cancel_at_period_end && (
-                <button
-                  onClick={handleReactivate}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Reactivate Subscription
-                </button>
-              )}
+              {/* API Calls Usage */}
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">API Calls</h3>
+                  <span className="text-3xl">🔌</span>
+                </div>
+                <div className="mb-4">
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-3xl font-bold text-purple-600">
+                      {usage.apiCalls.current.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      / {usage.apiCalls.limit === -1 ? '∞' : usage.apiCalls.limit.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        usage.apiCalls.percentage >= 90 && usage.apiCalls.limit !== -1
+                          ? 'bg-red-500'
+                          : usage.apiCalls.percentage >= 70 && usage.apiCalls.limit !== -1
+                          ? 'bg-yellow-500'
+                          : 'bg-purple-600'
+                      }`}
+                      style={{
+                        width: usage.apiCalls.limit === -1 ? '10%' : `${Math.min(usage.apiCalls.percentage, 100)}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {usage.apiCalls.limit === -1
+                    ? 'Unlimited API calls this month'
+                    : `${(usage.apiCalls.limit - usage.apiCalls.current).toLocaleString()} API calls remaining this month`}
+                </p>
+              </div>
             </div>
 
-            {subscription.cancel_at_period_end && (
-              <p className="mt-4 text-sm text-gray-600">
-                Your subscription will end on {new Date(subscription.current_period_end).toLocaleDateString()}
-              </p>
+            {/* Usage Warning */}
+            {(usage.bots.percentage >= 90 || usage.messages.percentage >= 90 || usage.apiCalls.percentage >= 90) && (
+              <div className="mt-6 bg-orange-50 border border-orange-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl">⚠️</span>
+                  <div>
+                    <h3 className="font-semibold text-orange-900 mb-2">Approaching Limit</h3>
+                    <p className="text-orange-800">
+                      You're approaching your plan limits. Consider upgrading to a higher plan to avoid service interruptions.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('plans')}
+                      className="mt-3 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      View Plans
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
 
-        {/* Available Plans */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Available Plans</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`bg-white rounded-2xl shadow-lg p-8 ${
-                  subscription?.plan_name === plan.name ? 'ring-2 ring-purple-600' : ''
-                }`}
-              >
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-800">{plan.display_name}</h3>
-                  <p className="text-4xl font-bold text-purple-600 mt-4">
-                    ${plan.price_monthly}
-                    <span className="text-lg text-gray-600">/mo</span>
-                  </p>
-                  {plan.price_yearly > 0 && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      or ${plan.price_yearly}/year (save ${(plan.price_monthly * 12 - plan.price_yearly).toFixed(0)})
-                    </p>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center text-gray-700">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {plan.max_bots === -1 ? 'Unlimited' : plan.max_bots} bot{plan.max_bots !== 1 ? 's' : ''}
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {plan.max_messages_per_month === -1 ? 'Unlimited' : plan.max_messages_per_month.toLocaleString()} messages/mo
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Webhook support
-                  </li>
-                  {plan.features?.api_access && (
-                    <li className="flex items-center text-gray-700">
-                      <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      API access
-                    </li>
-                  )}
-                  {plan.features?.priority_support && (
-                    <li className="flex items-center text-gray-700">
-                      <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Priority support
-                    </li>
-                  )}
-                  {plan.features?.custom_branding && (
-                    <li className="flex items-center text-gray-700">
-                      <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Custom branding
-                    </li>
-                  )}
-                </ul>
-
-                {subscription?.plan_name === plan.name ? (
-                  <button disabled className="w-full py-3 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
-                    Current Plan
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleUpgrade(plan.id)}
-                    disabled={upgrading}
-                    className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {plan.price_monthly === 0 ? 'Downgrade' : 'Upgrade'}
-                  </button>
-                )}
+        {activeTab === 'invoices' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Invoice History</h2>
+            {invoices.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-md p-12 text-center border border-gray-200">
+                <span className="text-6xl mb-4 block">📄</span>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Invoices Yet</h3>
+                <p className="text-gray-600">Your invoice history will appear here once you have a paid subscription.</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Payment History */}
-        {paymentHistory.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Payment History</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4">Date</th>
-                    <th className="text-left py-3 px-4">Description</th>
-                    <th className="text-left py-3 px-4">Amount</th>
-                    <th className="text-left py-3 px-4">Status</th>
-                    <th className="text-left py-3 px-4">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentHistory.map((payment) => (
-                    <tr key={payment.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">{new Date(payment.created_at).toLocaleDateString()}</td>
-                      <td className="py-3 px-4">{payment.description || 'Subscription payment'}</td>
-                      <td className="py-3 px-4">${payment.amount}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-sm ${
-                          payment.status === 'succeeded' ? 'bg-green-100 text-green-800' :
-                          payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {payment.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {payment.receipt_url && (
-                          <a
-                            href={payment.receipt_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-purple-600 hover:underline"
-                          >
-                            View
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Date</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Description</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Amount</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Status</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoices.map((invoice) => (
+                        <tr key={invoice.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-6 text-gray-700">
+                            {new Date(invoice.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </td>
+                          <td className="py-4 px-6 text-gray-700">{invoice.description}</td>
+                          <td className="py-4 px-6 font-semibold text-gray-900">
+                            ${invoice.amount.toFixed(2)} {invoice.currency}
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              invoice.status === 'paid'
+                                ? 'bg-green-100 text-green-800'
+                                : invoice.status === 'open'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {invoice.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex gap-2">
+                              {invoice.pdfUrl && (
+                                <a
+                                  href={invoice.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                                >
+                                  PDF
+                                </a>
+                              )}
+                              {invoice.hostedUrl && (
+                                <a
+                                  href={invoice.hostedUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                                >
+                                  View
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

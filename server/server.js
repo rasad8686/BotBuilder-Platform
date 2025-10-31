@@ -409,6 +409,9 @@ app.use('/api/admin', require('./routes/admin'));
 // ✅ White-label routes (Custom Branding) - Using modular router
 app.use('/api/whitelabel', require('./routes/whitelabel'));
 
+// ✅ Billing routes (Subscription Management) - Using modular router
+app.use('/api/billing', require('./routes/billing'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
