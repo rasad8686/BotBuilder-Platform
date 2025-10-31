@@ -105,23 +105,23 @@ export default function PricingCard({
 
       {/* Limits Summary */}
       <div className="grid grid-cols-3 gap-2 mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${theme.accent}`}>
+        <div className="text-center px-2">
+          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
             {formatLimit(plan.limits.bots)}
           </div>
-          <div className="text-xs text-gray-600 font-medium">Bots</div>
+          <div className="text-xs text-gray-600 font-medium mt-1">Bots</div>
         </div>
-        <div className="text-center border-x border-gray-200">
-          <div className={`text-2xl font-bold ${theme.accent}`}>
+        <div className="text-center border-l border-r border-gray-200 px-2">
+          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
             {formatLimit(plan.limits.messages)}
           </div>
-          <div className="text-xs text-gray-600 font-medium">Messages</div>
+          <div className="text-xs text-gray-600 font-medium mt-1">Messages</div>
         </div>
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${theme.accent}`}>
+        <div className="text-center px-2">
+          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
             {formatLimit(plan.limits.apiCalls)}
           </div>
-          <div className="text-xs text-gray-600 font-medium">API Calls</div>
+          <div className="text-xs text-gray-600 font-medium mt-1">API Calls</div>
         </div>
       </div>
 
@@ -140,7 +140,15 @@ export default function PricingCard({
 
       {/* Action Button */}
       <button
-        onClick={() => onSelectPlan(planKey)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log(`[PricingCard] Button clicked for plan: ${planKey}`);
+          if (!isCurrentPlan && !loading) {
+            onSelectPlan(planKey);
+          }
+        }}
         disabled={isCurrentPlan || loading}
         className={`
           w-full py-3 px-4 rounded-lg font-semibold text-white

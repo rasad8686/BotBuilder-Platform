@@ -34,9 +34,11 @@ export default function Billing() {
 
   const fetchBillingData = async () => {
     try {
+      console.log('=== Fetching billing data ===');
       setLoading(true);
       const token = localStorage.getItem('token');
       if (!token) {
+        console.warn('No token found, redirecting to login');
         navigate('/login');
         return;
       }
@@ -45,26 +47,37 @@ export default function Billing() {
       const [subscriptionRes, plansRes, usageRes, invoicesRes] = await Promise.all([
         billingApi.getSubscription().catch(err => {
           console.error('Error fetching subscription:', err);
+          console.error('Subscription error response:', err.response);
           return { subscription: null };
         }),
         billingApi.getPlans().catch(err => {
           console.error('Error fetching plans:', err);
+          console.error('Plans error response:', err.response);
           return { plans: {} };
         }),
         billingApi.getUsage().catch(err => {
           console.error('Error fetching usage:', err);
+          console.error('Usage error response:', err.response);
           return { usage: null };
         }),
         billingApi.getInvoices().catch(err => {
           console.error('Error fetching invoices:', err);
+          console.error('Invoices error response:', err.response);
           return { invoices: [] };
         })
       ]);
+
+      console.log('=== Billing data fetched ===');
+      console.log('Subscription:', subscriptionRes.subscription);
+      console.log('Plans:', plansRes.plans);
+      console.log('Usage:', usageRes.usage);
+      console.log('Invoices:', invoicesRes.invoices);
 
       if (subscriptionRes.subscription) {
         setSubscription(subscriptionRes.subscription);
       }
       if (plansRes.plans) {
+        console.log('Setting plans state with:', plansRes.plans);
         setPlans(plansRes.plans);
       }
       if (usageRes.usage) {
@@ -73,8 +86,12 @@ export default function Billing() {
       if (invoicesRes.invoices) {
         setInvoices(invoicesRes.invoices);
       }
+
+      console.log('=== Billing data state updated ===');
     } catch (error) {
-      console.error('Error fetching billing data:', error);
+      console.error('=== Critical error fetching billing data ===');
+      console.error('Error:', error);
+      console.error('Error response:', error.response);
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -84,23 +101,42 @@ export default function Billing() {
   };
 
   const handleSelectPlan = async (planKey) => {
+    console.log('=== handleSelectPlan called ===');
+    console.log('Plan Key:', planKey);
+    console.log('Current actionLoading:', actionLoading);
+    console.log('Current subscription:', subscription);
+
+    // Prevent multiple calls
+    if (actionLoading) {
+      console.warn('Already processing a plan selection, ignoring duplicate call');
+      return;
+    }
+
     if (planKey === 'free') {
       alert('To downgrade to free, please cancel your current subscription from the Manage Subscription portal.');
       return;
     }
 
     try {
+      console.log(`Starting upgrade to ${planKey} plan...`);
       setActionLoading(true);
+
       const response = await billingApi.createCheckoutSession(planKey);
+      console.log('Checkout session response:', response);
 
       if (response.success && response.url) {
+        console.log('Redirecting to Stripe Checkout:', response.url);
         // Redirect to Stripe Checkout
         window.location.href = response.url;
       } else {
+        console.error('Failed to create checkout session - no URL returned');
         alert('Failed to create checkout session. Please try again later.');
       }
     } catch (error) {
-      console.error('Error creating checkout:', error);
+      console.error('=== Error creating checkout ===');
+      console.error('Error:', error);
+      console.error('Error response:', error.response);
+
       const errorMessage = error.response?.data?.message || error.message || 'Failed to start checkout process';
 
       // Handle specific error codes
@@ -113,6 +149,7 @@ export default function Billing() {
       }
     } finally {
       setActionLoading(false);
+      console.log('=== handleSelectPlan completed ===');
     }
   };
 
