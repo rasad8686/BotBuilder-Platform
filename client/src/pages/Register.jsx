@@ -16,7 +16,11 @@ export default function Register() {
     setError('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, formData);
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+        username: formData.name,  // Backend expects 'username', not 'name'
+        email: formData.email,
+        password: formData.password
+      });
 
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
