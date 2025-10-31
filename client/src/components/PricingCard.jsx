@@ -104,24 +104,24 @@ export default function PricingCard({
       </div>
 
       {/* Limits Summary */}
-      <div className="grid grid-cols-3 gap-2 mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="text-center px-2">
-          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
+      <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="text-center px-3">
+          <div className={`text-2xl font-bold ${theme.accent} mb-2 block`}>
             {formatLimit(plan.limits.bots)}
           </div>
-          <div className="text-xs text-gray-600 font-medium mt-1">Bots</div>
+          <div className="text-xs text-gray-600 font-medium mt-2 block">Bots</div>
         </div>
-        <div className="text-center border-l border-r border-gray-200 px-2">
-          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
+        <div className="text-center border-l-2 border-r-2 border-gray-300 px-3">
+          <div className={`text-2xl font-bold ${theme.accent} mb-2 block`}>
             {formatLimit(plan.limits.messages)}
           </div>
-          <div className="text-xs text-gray-600 font-medium mt-1">Messages</div>
+          <div className="text-xs text-gray-600 font-medium mt-2 block">Messages</div>
         </div>
-        <div className="text-center px-2">
-          <div className={`text-2xl font-bold ${theme.accent} mb-1`}>
+        <div className="text-center px-3">
+          <div className={`text-2xl font-bold ${theme.accent} mb-2 block`}>
             {formatLimit(plan.limits.apiCalls)}
           </div>
-          <div className="text-xs text-gray-600 font-medium mt-1">API Calls</div>
+          <div className="text-xs text-gray-600 font-medium mt-2 block">API Calls</div>
         </div>
       </div>
 
