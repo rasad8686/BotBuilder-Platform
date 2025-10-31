@@ -103,30 +103,38 @@ export default function PricingCard({
         </div>
       </div>
 
-      {/* Plan Limits Display - GRID LAYOUT FOR PROPER SEPARATION */}
-      <div className="grid grid-cols-3 gap-8 mb-8 px-4">
-        {/* Bots */}
-        <div className="flex flex-col items-center">
-          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-            {formatLimit(plan.limits.bots)}
+      {/* Plan Limits - NUCLEAR FIX with individual containers */}
+      <div className="w-full px-6 mb-8">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Bots Column */}
+          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
+            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+              {plan.limits?.bots === -1 ? 'Unlimited' : formatLimit(plan.limits?.bots || 0)}
+            </div>
+            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Bots
+            </div>
           </div>
-          <div className="text-sm text-gray-600 font-medium">Bots</div>
-        </div>
 
-        {/* Messages */}
-        <div className="flex flex-col items-center">
-          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-            {formatLimit(plan.limits.messages)}
+          {/* Messages Column */}
+          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
+            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+              {plan.limits?.messages === -1 ? 'Unlimited' : formatLimit(plan.limits?.messages || 0)}
+            </div>
+            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Messages
+            </div>
           </div>
-          <div className="text-sm text-gray-600 font-medium">Messages</div>
-        </div>
 
-        {/* API Calls */}
-        <div className="flex flex-col items-center">
-          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-            {formatLimit(plan.limits.apiCalls)}
+          {/* API Calls Column */}
+          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
+            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+              {plan.limits?.apiCalls === -1 ? 'Unlimited' : formatLimit(plan.limits?.apiCalls || 0)}
+            </div>
+            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              API Calls
+            </div>
           </div>
-          <div className="text-sm text-gray-600 font-medium">API Calls</div>
         </div>
       </div>
 
