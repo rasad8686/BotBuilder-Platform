@@ -51,37 +51,37 @@ router.get('/audit-logs', organizationContext, async (req, res) => {
     // Add organization filter if present (either from context or query)
     const targetOrgId = filterOrgId || organizationId;
     if (targetOrgId) {
-      conditions.push(`organization_id = $${paramCount}`);
+      conditions.push(`al.organization_id = $${paramCount}`);
       values.push(targetOrgId);
       paramCount++;
     }
 
     if (user_id) {
-      conditions.push(`user_id = $${paramCount}`);
+      conditions.push(`al.user_id = $${paramCount}`);
       values.push(user_id);
       paramCount++;
     }
 
     if (action) {
-      conditions.push(`action = $${paramCount}`);
+      conditions.push(`al.action = $${paramCount}`);
       values.push(action);
       paramCount++;
     }
 
     if (resource_type) {
-      conditions.push(`resource_type = $${paramCount}`);
+      conditions.push(`al.resource_type = $${paramCount}`);
       values.push(resource_type);
       paramCount++;
     }
 
     if (start_date) {
-      conditions.push(`created_at >= $${paramCount}`);
+      conditions.push(`al.created_at >= $${paramCount}`);
       values.push(start_date);
       paramCount++;
     }
 
     if (end_date) {
-      conditions.push(`created_at <= $${paramCount}`);
+      conditions.push(`al.created_at <= $${paramCount}`);
       values.push(end_date);
       paramCount++;
     }
@@ -92,7 +92,7 @@ router.get('/audit-logs', organizationContext, async (req, res) => {
     // Get total count
     const countQuery = `
       SELECT COUNT(*)
-      FROM audit_logs
+      FROM audit_logs al
       ${whereClause}
     `;
     const countResult = await db.query(countQuery, values);
