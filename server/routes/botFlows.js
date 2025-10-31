@@ -2,28 +2,28 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../middleware/auth');
+const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
+const { checkPermission } = require('../middleware/checkPermission');
 
-// Apply authentication middleware to all routes
+// Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
+router.use(organizationContext);
+router.use(requireOrganization);
 
 /**
- * Helper function to verify bot ownership
+ * Helper function to verify bot belongs to organization
  * @param {number} botId - Bot ID
- * @param {number} userId - User ID
+ * @param {number} organizationId - Organization ID
  * @returns {Promise<{valid: boolean, error?: string}>}
  */
-async function verifyBotOwnership(botId, userId) {
+async function verifyBotInOrganization(botId, organizationId) {
   const result = await db.query(
-    'SELECT user_id FROM bots WHERE id = $1',
-    [botId]
+    'SELECT id FROM bots WHERE id = $1 AND organization_id = $2',
+    [botId, organizationId]
   );
 
   if (result.rows.length === 0) {
-    return { valid: false, error: 'Bot not found' };
-  }
-
-  if (result.rows[0].user_id !== userId) {
-    return { valid: false, error: 'Access denied. This bot does not belong to you.' };
+    return { valid: false, error: 'Bot not found or not accessible in this organization' };
   }
 
   return { valid: true };
@@ -32,14 +32,15 @@ async function verifyBotOwnership(botId, userId) {
 /**
  * POST /:botId/flow - Create new flow for a bot
  * Creates a new flow configuration and deactivates previous active flows
+ * Permission: member or admin
  */
-router.post('/:botId/flow', async (req, res) => {
+router.post('/:botId/flow', checkPermission('member'), async (req, res) => {
   const client = await db.pool.connect();
 
   try {
     const { botId } = req.params;
     const { flowData } = req.body;
-    const userId = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate botId
     if (isNaN(botId)) {
@@ -57,12 +58,12 @@ router.post('/:botId/flow', async (req, res) => {
       });
     }
 
-    // Verify bot ownership
-    const ownership = await verifyBotOwnership(botId, userId);
-    if (!ownership.valid) {
-      return res.status(ownership.error === 'Bot not found' ? 404 : 403).json({
+    // Verify bot belongs to organization
+    const verification = await verifyBotInOrganization(botId, organization_id);
+    if (!verification.valid) {
+      return res.status(404).json({
         success: false,
-        message: ownership.error
+        message: verification.error
       });
     }
 
@@ -123,11 +124,12 @@ router.post('/:botId/flow', async (req, res) => {
 /**
  * GET /:botId/flow - Get active flow for a bot
  * Returns the currently active flow configuration
+ * Permission: viewer or higher
  */
-router.get('/:botId/flow', async (req, res) => {
+router.get('/:botId/flow', checkPermission('viewer'), async (req, res) => {
   try {
     const { botId } = req.params;
-    const userId = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate botId
     if (isNaN(botId)) {
@@ -137,12 +139,12 @@ router.get('/:botId/flow', async (req, res) => {
       });
     }
 
-    // Verify bot ownership
-    const ownership = await verifyBotOwnership(botId, userId);
-    if (!ownership.valid) {
-      return res.status(ownership.error === 'Bot not found' ? 404 : 403).json({
+    // Verify bot belongs to organization
+    const verification = await verifyBotInOrganization(botId, organization_id);
+    if (!verification.valid) {
+      return res.status(404).json({
         success: false,
-        message: ownership.error
+        message: verification.error
       });
     }
 
@@ -181,14 +183,15 @@ router.get('/:botId/flow', async (req, res) => {
 /**
  * PUT /:botId/flow/:flowId - Update an existing flow
  * Updates flow data and increments version
+ * Permission: member or admin
  */
-router.put('/:botId/flow/:flowId', async (req, res) => {
+router.put('/:botId/flow/:flowId', checkPermission('member'), async (req, res) => {
   const client = await db.pool.connect();
 
   try {
     const { botId, flowId } = req.params;
     const { flowData } = req.body;
-    const userId = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate IDs
     if (isNaN(botId) || isNaN(flowId)) {
@@ -206,12 +209,12 @@ router.put('/:botId/flow/:flowId', async (req, res) => {
       });
     }
 
-    // Verify bot ownership
-    const ownership = await verifyBotOwnership(botId, userId);
-    if (!ownership.valid) {
-      return res.status(ownership.error === 'Bot not found' ? 404 : 403).json({
+    // Verify bot belongs to organization
+    const verification = await verifyBotInOrganization(botId, organization_id);
+    if (!verification.valid) {
+      return res.status(404).json({
         success: false,
-        message: ownership.error
+        message: verification.error
       });
     }
 
@@ -278,11 +281,12 @@ router.put('/:botId/flow/:flowId', async (req, res) => {
 /**
  * GET /:botId/flow/history - Get all flow versions for a bot
  * Returns all versions ordered by version number (newest first)
+ * Permission: viewer or higher
  */
-router.get('/:botId/flow/history', async (req, res) => {
+router.get('/:botId/flow/history', checkPermission('viewer'), async (req, res) => {
   try {
     const { botId } = req.params;
-    const userId = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate botId
     if (isNaN(botId)) {
@@ -292,12 +296,12 @@ router.get('/:botId/flow/history', async (req, res) => {
       });
     }
 
-    // Verify bot ownership
-    const ownership = await verifyBotOwnership(botId, userId);
-    if (!ownership.valid) {
-      return res.status(ownership.error === 'Bot not found' ? 404 : 403).json({
+    // Verify bot belongs to organization
+    const verification = await verifyBotInOrganization(botId, organization_id);
+    if (!verification.valid) {
+      return res.status(404).json({
         success: false,
-        message: ownership.error
+        message: verification.error
       });
     }
 
