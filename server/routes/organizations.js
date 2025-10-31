@@ -334,11 +334,11 @@ router.get('/:id/members', organizationContext, requireOrganization, async (req,
 });
 
 /**
- * POST /api/organizations/:id/invite
+ * POST /api/organizations/:id/members
  * Invite user to organization
  * Admin only
  */
-router.post('/:id/invite', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+router.post('/:id/members', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
     const orgId = req.params.id;
     const { email, role } = req.body;
