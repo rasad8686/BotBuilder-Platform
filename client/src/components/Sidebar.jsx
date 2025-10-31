@@ -38,6 +38,7 @@ export default function Sidebar() {
     { path: '/api-tokens', icon: '🔑', label: t('sidebar.apiTokens') },
     { path: '/webhooks', icon: '🔗', label: t('sidebar.webhooks') },
     { path: '/usage', icon: '📊', label: t('sidebar.usage') },
+    { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
   ];
 
