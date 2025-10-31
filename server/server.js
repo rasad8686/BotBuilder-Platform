@@ -3,7 +3,10 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const morgan = require('morgan');
 const db = require('./db');
+const { logRegister, logLogin } = require('./middleware/audit');
+const log = require('./utils/logger');
 
 dotenv.config();
 
@@ -32,6 +35,29 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// ✅ HTTP request logging with Morgan
+// Custom format: :method :url :status :response-time ms - :user-agent
+morgan.token('user-agent', (req) => req.headers['user-agent']);
+
+// Create custom stream to pipe Morgan output to Winston
+const morganStream = {
+  write: (message) => {
+    log.http(message.trim());
+  }
+};
+
+// Use Morgan with custom format and Winston stream
+app.use(morgan(':method :url :status :response-time ms - :user-agent', {
+  stream: morganStream,
+  skip: (req, res) => {
+    // Skip logging for test route in production to reduce noise
+    if (process.env.NODE_ENV === 'production' && req.path === '/test') {
+      return true;
+    }
+    return false;
+  }
+}));
 
 // ✅ Test route
 app.get('/test', (req, res) => {
@@ -225,6 +251,9 @@ app.post('/auth/register', async (req, res) => {
     console.log(`[REGISTER]   - Organization Name: ${finalData.org_name}`);
     console.log(`[REGISTER]   - User Role: ${finalData.user_role}`);
 
+    // Log successful registration to audit trail
+    await logRegister(req, user.id, user.email);
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully!',
@@ -280,6 +309,8 @@ app.post('/auth/login', async (req, res) => {
 
     // Check if user exists
     if (result.rows.length === 0) {
+      // Log failed login attempt - user not found
+      await logLogin(req, null, false, 'User not found');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -292,6 +323,8 @@ app.post('/auth/login', async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
+      // Log failed login attempt - invalid password
+      await logLogin(req, user.id, false, 'Invalid password');
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -324,6 +357,9 @@ app.post('/auth/login', async (req, res) => {
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
     );
+
+    // Log successful login to audit trail
+    await logLogin(req, user.id, true);
 
     res.json({
       success: true,
@@ -358,6 +394,9 @@ app.use('/api/organizations', require('./routes/organizations'));
 
 // ✅ Bot Flows routes (Visual Flow Builder) - Using modular router
 app.use('/api/bots', require('./routes/botFlows'));
+
+// ✅ Admin routes (Monitoring & Audit) - Using modular router
+app.use('/api/admin', require('./routes/admin'));
 
 // ✅ 404 handler
 app.use((req, res) => {

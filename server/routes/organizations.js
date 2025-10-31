@@ -4,6 +4,15 @@ const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
+const {
+  logOrganizationCreated,
+  logOrganizationUpdated,
+  logOrganizationDeleted,
+  logOrganizationSwitched,
+  logMemberInvited,
+  logMemberRoleChanged,
+  logMemberRemoved
+} = require('../middleware/audit');
 
 // Apply authentication to all routes
 router.use(authenticateToken);
@@ -50,6 +59,13 @@ router.post('/', async (req, res) => {
       VALUES ($1, $2, 'admin', 'active', NOW())
     `;
     await db.query(memberQuery, [organization.id, userId]);
+
+    // Log organization creation to audit trail
+    await logOrganizationCreated(req, organization.id, {
+      name: organization.name,
+      slug: organization.slug,
+      plan_tier: organization.plan_tier
+    });
 
     return res.status(201).json({
       success: true,
@@ -181,6 +197,10 @@ router.put('/:id', organizationContext, requireOrganization, checkPermission('ad
       });
     }
 
+    // Get current values for audit log
+    const currentOrg = await db.query('SELECT name, plan_tier, settings FROM organizations WHERE id = $1', [orgId]);
+    const oldValues = currentOrg.rows[0];
+
     const updates = [];
     const values = [];
     let paramCount = 1;
@@ -221,6 +241,14 @@ router.put('/:id', organizationContext, requireOrganization, checkPermission('ad
     `;
 
     const result = await db.query(query, values);
+
+    // Log organization update to audit trail
+    const newValues = {
+      name: result.rows[0].name,
+      plan_tier: result.rows[0].plan_tier,
+      settings: result.rows[0].settings
+    };
+    await logOrganizationUpdated(req, orgId, oldValues, newValues);
 
     return res.status(200).json({
       success: true,
@@ -264,6 +292,13 @@ router.delete('/:id', organizationContext, requireOrganization, checkPermission(
         message: 'Organization not found'
       });
     }
+
+    // Log organization deletion to audit trail
+    await logOrganizationDeleted(req, orgId, {
+      name: result.rows[0].name,
+      slug: result.rows[0].slug,
+      plan_tier: result.rows[0].plan_tier
+    });
 
     return res.status(200).json({
       success: true,
@@ -401,6 +436,9 @@ router.post('/:id/members', organizationContext, requireOrganization, checkPermi
     `;
     const result = await db.query(insertQuery, [orgId, userId, role, inviterId]);
 
+    // Log member invitation to audit trail
+    await logMemberInvited(req, orgId, userId, role);
+
     return res.status(201).json({
       success: true,
       message: 'User invited successfully',
@@ -451,6 +489,13 @@ router.put('/:id/members/:userId', organizationContext, requireOrganization, che
       });
     }
 
+    // Get current role for audit log
+    const currentMember = await db.query(
+      'SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2',
+      [orgId, targetUserId]
+    );
+    const oldRole = currentMember.rows[0]?.role;
+
     const query = `
       UPDATE organization_members
       SET role = $1
@@ -466,6 +511,9 @@ router.put('/:id/members/:userId', organizationContext, requireOrganization, che
         message: 'Member not found'
       });
     }
+
+    // Log member role change to audit trail
+    await logMemberRoleChanged(req, orgId, targetUserId, oldRole, role);
 
     return res.status(200).json({
       success: true,
@@ -523,6 +571,12 @@ router.delete('/:id/members/:userId', organizationContext, requireOrganization, 
       });
     }
 
+    // Log member removal to audit trail
+    await logMemberRemoved(req, orgId, targetUserId, {
+      role: result.rows[0].role,
+      status: result.rows[0].status
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Member removed successfully',
@@ -575,6 +629,9 @@ router.post('/:id/switch', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Log organization switch to audit trail
+    await logOrganizationSwitched(req, orgId);
 
     return res.status(200).json({
       success: true,
