@@ -2,21 +2,27 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../middleware/auth');
+const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
+const { checkPermission } = require('../middleware/checkPermission');
 const crypto = require('crypto');
 
-// Apply authentication middleware to all routes
+// Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
+router.use(organizationContext);
+router.use(requireOrganization);
 
 /**
  * POST /api/bots - Create new bot
- * Creates a new bot for the authenticated user
+ * Creates a new bot for the authenticated user in their current organization
  * Required: name, platform
  * Optional: description, webhook_url
+ * Permission: member or admin
  */
-router.post('/', async (req, res) => {
+router.post('/', checkPermission('member'), async (req, res) => {
   try {
     const { name, platform, description, webhook_url } = req.body;
     const user_id = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validation - Required fields
     if (!name || name.trim() === '') {
@@ -33,7 +39,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Validate platform value (optional - you can expand this list)
+    // Validate platform value
     const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger'];
     if (!validPlatforms.includes(platform.toLowerCase())) {
       return res.status(400).json({
@@ -45,15 +51,16 @@ router.post('/', async (req, res) => {
     // Generate unique API token
     const api_token = crypto.randomBytes(32).toString('hex');
 
-    // Insert bot into database
+    // Insert bot into database with organization_id
     const query = `
-      INSERT INTO bots (user_id, name, description, platform, api_token, webhook_url, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+      INSERT INTO bots (user_id, organization_id, name, description, platform, api_token, webhook_url, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
     `;
 
     const values = [
       user_id,
+      organization_id,
       name.trim(),
       description ? description.trim() : null,
       platform.toLowerCase().trim(),
@@ -91,14 +98,15 @@ router.post('/', async (req, res) => {
 });
 
 /**
- * GET /api/bots - Get all bots for authenticated user
- * Returns array of all bots belonging to the user
+ * GET /api/bots - Get all bots for current organization
+ * Returns array of all bots belonging to the current organization
  * Query params (optional): page (default 1), limit (default 10)
  * If no pagination params provided, returns all bots (backward compatible)
+ * Permission: viewer or higher
  */
-router.get('/', async (req, res) => {
+router.get('/', checkPermission('viewer'), async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const organization_id = req.organization.id;
 
     // Parse pagination parameters
     let page = parseInt(req.query.page);
@@ -120,21 +128,21 @@ router.get('/', async (req, res) => {
       // Calculate offset
       const offset = (page - 1) * limit;
 
-      // Get total count
-      const countQuery = 'SELECT COUNT(*) FROM bots WHERE user_id = $1';
-      const countResult = await db.query(countQuery, [user_id]);
+      // Get total count for this organization
+      const countQuery = 'SELECT COUNT(*) FROM bots WHERE organization_id = $1';
+      const countResult = await db.query(countQuery, [organization_id]);
       const total = parseInt(countResult.rows[0].count);
 
-      // Get paginated bots
+      // Get paginated bots for this organization
       const query = `
-        SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
         FROM bots
-        WHERE user_id = $1
+        WHERE organization_id = $1
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
       `;
 
-      const result = await db.query(query, [user_id, limit, offset]);
+      const result = await db.query(query, [organization_id, limit, offset]);
 
       // Calculate pagination metadata
       const totalPages = Math.ceil(total / limit);
@@ -153,15 +161,15 @@ router.get('/', async (req, res) => {
         }
       });
     } else {
-      // No pagination - return all bots (backward compatible)
+      // No pagination - return all bots for this organization
       const query = `
-        SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
         FROM bots
-        WHERE user_id = $1
+        WHERE organization_id = $1
         ORDER BY created_at DESC
       `;
 
-      const result = await db.query(query, [user_id]);
+      const result = await db.query(query, [organization_id]);
 
       return res.status(200).json({
         success: true,
@@ -183,12 +191,13 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/bots/:id - Get single bot details
- * Returns details of a specific bot (only if it belongs to the user)
+ * Returns details of a specific bot (only if it belongs to current organization)
+ * Permission: viewer or higher
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkPermission('viewer'), async (req, res) => {
   try {
     const { id } = req.params;
-    const user_id = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate ID is a number
     if (isNaN(id)) {
@@ -199,34 +208,24 @@ router.get('/:id', async (req, res) => {
     }
 
     const query = `
-      SELECT id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+      SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
       FROM bots
-      WHERE id = $1
+      WHERE id = $1 AND organization_id = $2
     `;
 
-    const result = await db.query(query, [id]);
+    const result = await db.query(query, [id, organization_id]);
 
-    // Check if bot exists
+    // Check if bot exists in this organization
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Bot not found'
-      });
-    }
-
-    const bot = result.rows[0];
-
-    // Check ownership - Security check
-    if (bot.user_id !== user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This bot does not belong to you.'
+        message: 'Bot not found or not accessible in this organization'
       });
     }
 
     return res.status(200).json({
       success: true,
-      bot: bot
+      bot: result.rows[0]
     });
 
   } catch (error) {
@@ -241,14 +240,15 @@ router.get('/:id', async (req, res) => {
 
 /**
  * PUT /api/bots/:id - Update bot
- * Updates bot details (only if it belongs to the user)
+ * Updates bot details (only if it belongs to the current organization)
  * Updatable fields: name, description, platform, webhook_url, is_active
  * NOT updatable: id, user_id, api_token, created_at
+ * Permission: member or admin
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkPermission('member'), async (req, res) => {
   try {
     const { id } = req.params;
-    const user_id = req.user.id;
+    const organization_id = req.organization.id;
     const { name, description, platform, webhook_url, is_active } = req.body;
 
     // Validate ID is a number
@@ -259,22 +259,14 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    // First, check if bot exists and belongs to user
-    const checkQuery = 'SELECT user_id FROM bots WHERE id = $1';
-    const checkResult = await db.query(checkQuery, [id]);
+    // First, check if bot exists and belongs to organization
+    const checkQuery = 'SELECT id FROM bots WHERE id = $1 AND organization_id = $2';
+    const checkResult = await db.query(checkQuery, [id, organization_id]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Bot not found'
-      });
-    }
-
-    // Check ownership - Security check
-    if (checkResult.rows[0].user_id !== user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This bot does not belong to you.'
+        message: 'Bot not found or not accessible in this organization'
       });
     }
 
@@ -375,13 +367,14 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/bots/:id - Delete bot
- * Deletes bot (only if it belongs to the user)
+ * Deletes bot (only if it belongs to the current organization)
  * CASCADE: bot_messages will be automatically deleted due to database constraint
+ * Permission: admin
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkPermission('admin'), async (req, res) => {
   try {
     const { id } = req.params;
-    const user_id = req.user.id;
+    const organization_id = req.organization.id;
 
     // Validate ID is a number
     if (isNaN(id)) {
@@ -391,22 +384,14 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // First, check if bot exists and belongs to user
-    const checkQuery = 'SELECT user_id, name FROM bots WHERE id = $1';
-    const checkResult = await db.query(checkQuery, [id]);
+    // First, check if bot exists and belongs to organization
+    const checkQuery = 'SELECT name FROM bots WHERE id = $1 AND organization_id = $2';
+    const checkResult = await db.query(checkQuery, [id, organization_id]);
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Bot not found'
-      });
-    }
-
-    // Check ownership - Security check
-    if (checkResult.rows[0].user_id !== user_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This bot does not belong to you.'
+        message: 'Bot not found or not accessible in this organization'
       });
     }
 

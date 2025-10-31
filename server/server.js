@@ -96,12 +96,31 @@ app.post('/auth/register', async (req, res) => {
 
     const user = result.rows[0];
 
-    // Generate JWT token with REAL database user ID
+    // Create personal organization for the new user
+    const orgSlug = `${username.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${user.id}`;
+    const orgResult = await db.query(
+      `INSERT INTO organizations (name, slug, owner_id, plan_tier, settings, created_at, updated_at)
+       VALUES ($1, $2, $3, 'free', '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING id`,
+      [`${username}'s Organization`, orgSlug, user.id]
+    );
+
+    const organizationId = orgResult.rows[0].id;
+
+    // Add user as admin to their organization
+    await db.query(
+      `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
+       VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)`,
+      [organizationId, user.id]
+    );
+
+    // Generate JWT token with REAL database user ID and organization ID
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        username: user.name // Map 'name' from DB to 'username' in JWT
+        username: user.name, // Map 'name' from DB to 'username' in JWT
+        current_organization_id: organizationId
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
@@ -116,7 +135,8 @@ app.post('/auth/register', async (req, res) => {
         username: user.name,
         email: user.email,
         isVerified: user.email_verified,
-        createdAt: user.created_at
+        createdAt: user.created_at,
+        currentOrganizationId: organizationId
       }
     });
 
@@ -167,12 +187,28 @@ app.post('/auth/login', async (req, res) => {
       });
     }
 
-    // Generate JWT token with REAL database user ID
+    // Get user's default organization (first one they joined)
+    const orgResult = await db.query(
+      `SELECT om.org_id
+       FROM organization_members om
+       WHERE om.user_id = $1 AND om.status = 'active'
+       ORDER BY om.joined_at ASC
+       LIMIT 1`,
+      [user.id]
+    );
+
+    let organizationId = null;
+    if (orgResult.rows.length > 0) {
+      organizationId = orgResult.rows[0].org_id;
+    }
+
+    // Generate JWT token with REAL database user ID and organization ID
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
-        username: user.name // Map 'name' from DB to 'username' in JWT
+        username: user.name, // Map 'name' from DB to 'username' in JWT
+        current_organization_id: organizationId
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
@@ -185,7 +221,8 @@ app.post('/auth/login', async (req, res) => {
       user: {
         id: user.id,
         username: user.name,
-        email: user.email
+        email: user.email,
+        currentOrganizationId: organizationId
       }
     });
 
@@ -204,6 +241,9 @@ app.use('/api/bots', require('./routes/bots'));
 
 // ✅ Messages routes (CRUD) - Using modular router
 app.use('/api/messages', require('./routes/messages'));
+
+// ✅ Organizations routes (Multi-Tenant) - Using modular router
+app.use('/api/organizations', require('./routes/organizations'));
 
 // ✅ Bot Flows routes (Visual Flow Builder) - Using modular router
 app.use('/api/bots', require('./routes/botFlows'));
