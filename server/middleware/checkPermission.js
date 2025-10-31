@@ -79,7 +79,7 @@ function checkSpecificPermission(resource, action) {
         });
       }
 
-      const db = require('../config/db');
+      const db = require('../db');
 
       // Get role permissions from database
       const roleQuery = 'SELECT permissions FROM roles WHERE name = $1';
