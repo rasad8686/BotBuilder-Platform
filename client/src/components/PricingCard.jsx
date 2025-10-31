@@ -6,6 +6,7 @@
  * @param {boolean} isPopular - Whether to highlight as popular
  * @param {function} onSelectPlan - Handler for plan selection
  * @param {boolean} loading - Loading state for button
+ * @version 2025-11-01 - Fixed Unlimited concatenation bug with inline styles
  */
 export default function PricingCard({
   plan,
