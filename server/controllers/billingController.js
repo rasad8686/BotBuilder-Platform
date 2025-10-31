@@ -1,10 +1,46 @@
 const db = require('../db');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Stripe only if key is configured
+let stripe = null;
+const STRIPE_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
+
+if (STRIPE_CONFIGURED) {
+  try {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    console.log('✅ Stripe initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Stripe:', error.message);
+  }
+} else {
+  console.warn('⚠️ Stripe not configured - billing features will be limited to viewing plans');
+}
 
 /**
  * Billing Controller
  * Handles subscription management and Stripe integration
+ * Gracefully handles missing Stripe configuration
  */
+
+/**
+ * Check if Stripe is configured
+ */
+function isStripeConfigured() {
+  return STRIPE_CONFIGURED && stripe !== null;
+}
+
+/**
+ * Validate Stripe configuration for operations that require it
+ */
+function validateStripeConfig(res) {
+  if (!isStripeConfigured()) {
+    return res.status(503).json({
+      success: false,
+      message: 'Billing system not configured. Please contact support.',
+      code: 'STRIPE_NOT_CONFIGURED'
+    });
+  }
+  return null;
+}
 
 // Plan configurations
 const PLANS = {
@@ -102,13 +138,21 @@ async function getSubscription(req, res) {
     const planTier = org.plan_tier || 'free';
     const planDetails = PLANS[planTier];
 
-    // Get Stripe subscription if exists
+    if (!planDetails) {
+      return res.status(500).json({
+        success: false,
+        message: `Invalid plan tier: ${planTier}`
+      });
+    }
+
+    // Get Stripe subscription if exists and Stripe is configured
     let stripeSubscription = null;
-    if (org.stripe_subscription_id) {
+    if (isStripeConfigured() && org.stripe_subscription_id) {
       try {
         stripeSubscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
       } catch (error) {
-        console.error('Error fetching Stripe subscription:', error);
+        console.error('Error fetching Stripe subscription:', error.message);
+        // Don't fail the request, just log the error
       }
     }
 
@@ -124,7 +168,8 @@ async function getSubscription(req, res) {
         status: org.subscription_status || 'active',
         currentPeriodEnd: org.subscription_current_period_end,
         cancelAtPeriodEnd: stripeSubscription?.cancel_at_period_end || false,
-        stripeSubscription: stripeSubscription
+        stripeSubscription: stripeSubscription,
+        stripeConfigured: isStripeConfigured()
       }
     });
 
@@ -133,7 +178,7 @@ async function getSubscription(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Failed to get subscription',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 }
@@ -144,22 +189,34 @@ async function getSubscription(req, res) {
  */
 async function createCheckoutSession(req, res) {
   try {
+    // Validate Stripe configuration first
+    const stripeError = validateStripeConfig(res);
+    if (stripeError) return stripeError;
+
     const organizationId = req.organization.id;
     const { plan } = req.body;
 
     if (!plan || !['pro', 'enterprise'].includes(plan)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid plan selected'
+        message: 'Invalid plan selected. Please choose either "pro" or "enterprise".'
       });
     }
 
     const planDetails = PLANS[plan];
 
-    if (!planDetails.stripePriceId) {
+    if (!planDetails) {
       return res.status(400).json({
         success: false,
-        message: 'Stripe price ID not configured for this plan'
+        message: `Plan "${plan}" not found`
+      });
+    }
+
+    if (!planDetails.stripePriceId) {
+      return res.status(503).json({
+        success: false,
+        message: 'Stripe price ID not configured for this plan. Please contact support.',
+        code: 'STRIPE_PRICE_NOT_CONFIGURED'
       });
     }
 
@@ -238,6 +295,10 @@ async function createCheckoutSession(req, res) {
  */
 async function createPortalSession(req, res) {
   try {
+    // Validate Stripe configuration first
+    const stripeError = validateStripeConfig(res);
+    if (stripeError) return stripeError;
+
     const organizationId = req.organization.id;
 
     const orgResult = await db.query(
@@ -248,7 +309,8 @@ async function createPortalSession(req, res) {
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_customer_id) {
       return res.status(400).json({
         success: false,
-        message: 'No payment method configured'
+        message: 'No payment method configured. Please upgrade to a paid plan first.',
+        code: 'NO_STRIPE_CUSTOMER'
       });
     }
 
@@ -267,7 +329,7 @@ async function createPortalSession(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Failed to create portal session',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 }
@@ -280,45 +342,67 @@ async function getInvoices(req, res) {
   try {
     const organizationId = req.organization.id;
 
+    // Get organization's stripe customer ID
     const orgResult = await db.query(
       'SELECT stripe_customer_id FROM organizations WHERE id = $1',
       [organizationId]
     );
 
+    // If no organization or no stripe customer, return empty array
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_customer_id) {
       return res.status(200).json({
         success: true,
-        invoices: []
+        invoices: [],
+        message: 'No billing history available'
       });
     }
 
-    const invoices = await stripe.invoices.list({
-      customer: orgResult.rows[0].stripe_customer_id,
-      limit: 12
-    });
+    // If Stripe is not configured, return empty array
+    if (!isStripeConfigured()) {
+      return res.status(200).json({
+        success: true,
+        invoices: [],
+        message: 'Billing system not configured'
+      });
+    }
 
-    const formattedInvoices = invoices.data.map(invoice => ({
-      id: invoice.id,
-      date: new Date(invoice.created * 1000),
-      description: invoice.lines.data[0]?.description || 'Subscription',
-      amount: invoice.total / 100,
-      currency: invoice.currency.toUpperCase(),
-      status: invoice.status,
-      pdfUrl: invoice.invoice_pdf,
-      hostedUrl: invoice.hosted_invoice_url
-    }));
+    // Fetch invoices from Stripe
+    try {
+      const invoices = await stripe.invoices.list({
+        customer: orgResult.rows[0].stripe_customer_id,
+        limit: 12
+      });
 
-    return res.status(200).json({
-      success: true,
-      invoices: formattedInvoices
-    });
+      const formattedInvoices = invoices.data.map(invoice => ({
+        id: invoice.id,
+        date: new Date(invoice.created * 1000),
+        description: invoice.lines.data[0]?.description || 'Subscription',
+        amount: invoice.total / 100,
+        currency: invoice.currency.toUpperCase(),
+        status: invoice.status,
+        pdfUrl: invoice.invoice_pdf,
+        hostedUrl: invoice.hosted_invoice_url
+      }));
+
+      return res.status(200).json({
+        success: true,
+        invoices: formattedInvoices
+      });
+    } catch (stripeError) {
+      console.error('Stripe API error:', stripeError.message);
+      return res.status(200).json({
+        success: true,
+        invoices: [],
+        message: 'Unable to fetch invoices at this time'
+      });
+    }
 
   } catch (error) {
     console.error('Get invoices error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to get invoices',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 }
@@ -398,6 +482,10 @@ async function getUsage(req, res) {
  */
 async function cancelSubscription(req, res) {
   try {
+    // Validate Stripe configuration first
+    const stripeError = validateStripeConfig(res);
+    if (stripeError) return stripeError;
+
     const organizationId = req.organization.id;
 
     const orgResult = await db.query(
@@ -408,7 +496,8 @@ async function cancelSubscription(req, res) {
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_subscription_id) {
       return res.status(400).json({
         success: false,
-        message: 'No active subscription'
+        message: 'No active subscription to cancel',
+        code: 'NO_ACTIVE_SUBSCRIPTION'
       });
     }
 
@@ -434,7 +523,7 @@ async function cancelSubscription(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Failed to cancel subscription',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 }
