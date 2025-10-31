@@ -97,11 +97,20 @@ export default function Billing() {
         // Redirect to Stripe Checkout
         window.location.href = response.url;
       } else {
-        alert('Failed to create checkout session');
+        alert('Failed to create checkout session. Please try again later.');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
-      alert(error.response?.data?.message || 'Failed to start checkout process');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to start checkout process';
+
+      // Handle specific error codes
+      if (error.response?.data?.code === 'STRIPE_NOT_CONFIGURED') {
+        alert('Billing system is not yet configured. Please contact support to enable billing for your organization.');
+      } else if (error.response?.data?.code === 'STRIPE_PRICE_NOT_CONFIGURED') {
+        alert('This plan is not yet available. Please contact support for more information.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -116,11 +125,20 @@ export default function Billing() {
         // Redirect to Stripe Customer Portal
         window.location.href = response.url;
       } else {
-        alert('Failed to open customer portal');
+        alert('Failed to open customer portal. Please try again later.');
       }
     } catch (error) {
       console.error('Error opening portal:', error);
-      alert(error.response?.data?.message || 'Failed to open customer portal');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to open customer portal';
+
+      // Handle specific error codes
+      if (error.response?.data?.code === 'STRIPE_NOT_CONFIGURED') {
+        alert('Billing system is not yet configured. Please contact support.');
+      } else if (error.response?.data?.code === 'NO_STRIPE_CUSTOMER') {
+        alert('You need to upgrade to a paid plan first before accessing the customer portal.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -138,10 +156,21 @@ export default function Billing() {
       if (response.success) {
         alert('Subscription canceled. You will have access until the end of your billing period.');
         fetchBillingData();
+      } else {
+        alert('Failed to cancel subscription. Please try again later.');
       }
     } catch (error) {
       console.error('Error canceling subscription:', error);
-      alert(error.response?.data?.message || 'Failed to cancel subscription');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel subscription';
+
+      // Handle specific error codes
+      if (error.response?.data?.code === 'STRIPE_NOT_CONFIGURED') {
+        alert('Billing system is not yet configured. Please contact support.');
+      } else if (error.response?.data?.code === 'NO_ACTIVE_SUBSCRIPTION') {
+        alert('You do not have an active subscription to cancel.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setActionLoading(false);
     }
