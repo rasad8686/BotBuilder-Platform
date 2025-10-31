@@ -17,10 +17,78 @@ export const OrganizationProvider = ({ children }) => {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Fetch user's organizations on mount
   useEffect(() => {
-    fetchOrganizations();
+    // Check if user is authenticated before fetching
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // User not authenticated, don't fetch
+      setLoading(false);
+      setIsAuthenticated(false);
+      return;
+    }
+
+    setIsAuthenticated(true);
+    let isMounted = true;
+
+    const loadOrganizations = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get('/api/organizations');
+
+        if (!isMounted) return; // Component unmounted, don't update state
+
+        const orgs = response.data.organizations || [];
+        setOrganizations(orgs);
+
+        // Set current organization (from localStorage or first org)
+        const savedOrgId = localStorage.getItem('currentOrganizationId');
+        if (savedOrgId) {
+          const savedOrg = orgs.find(o => o.id === parseInt(savedOrgId));
+          if (savedOrg) {
+            setCurrentOrganization(savedOrg);
+            setUserRole(savedOrg.role);
+          } else if (orgs.length > 0) {
+            setCurrentOrganization(orgs[0]);
+            setUserRole(orgs[0].role);
+          }
+        } else if (orgs.length > 0) {
+          setCurrentOrganization(orgs[0]);
+          setUserRole(orgs[0].role);
+        }
+
+        setError(null);
+      } catch (err) {
+        if (!isMounted) return; // Component unmounted, don't update state
+
+        console.error('Failed to fetch organizations:', err);
+
+        // Handle 401 - user not authenticated
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('currentOrganizationId');
+          setIsAuthenticated(false);
+          // Don't redirect here - axios interceptor will handle it
+          setError('Authentication required');
+        } else {
+          setError(err.response?.data?.message || 'Failed to load organizations');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadOrganizations();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Update user role when current organization changes
@@ -36,6 +104,14 @@ export const OrganizationProvider = ({ children }) => {
   }, [currentOrganization, organizations]);
 
   const fetchOrganizations = async () => {
+    // Check authentication before fetching
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      setIsAuthenticated(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await axiosInstance.get('/api/organizations');
@@ -61,7 +137,17 @@ export const OrganizationProvider = ({ children }) => {
       setError(null);
     } catch (err) {
       console.error('Failed to fetch organizations:', err);
-      setError(err.response?.data?.message || 'Failed to load organizations');
+
+      // Handle 401 - user not authenticated
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('currentOrganizationId');
+        setIsAuthenticated(false);
+        setError('Authentication required');
+      } else {
+        setError(err.response?.data?.message || 'Failed to load organizations');
+      }
     } finally {
       setLoading(false);
     }
@@ -105,6 +191,7 @@ export const OrganizationProvider = ({ children }) => {
     userRole,
     loading,
     error,
+    isAuthenticated,
     switchOrganization,
     hasPermission,
     refreshOrganizations

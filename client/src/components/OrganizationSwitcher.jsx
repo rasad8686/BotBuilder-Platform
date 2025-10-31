@@ -8,17 +8,29 @@ export default function OrganizationSwitcher() {
     currentOrganization,
     userRole,
     switchOrganization,
-    loading
+    loading,
+    isAuthenticated
   } = useOrganization();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  if (loading || !currentOrganization) {
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
     return (
       <div className="px-4 py-3 border-b border-gray-200 animate-pulse">
         <div className="h-12 bg-gray-200 rounded"></div>
       </div>
     );
+  }
+
+  // Don't render if no organizations
+  if (!currentOrganization || organizations.length === 0) {
+    return null;
   }
 
   const getRoleBadgeColor = (role) => {
