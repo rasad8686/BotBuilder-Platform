@@ -17,9 +17,15 @@ import Usage from './pages/Usage';
 import Settings from './pages/Settings';
 import OrganizationSettings from './pages/OrganizationSettings';
 
+// Admin Pages
+import AdminDashboard from './pages/AdminDashboard';
+import AdminAuditLogs from './pages/AdminAuditLogs';
+import AdminHealth from './pages/AdminHealth';
+
 // Layout & Contexts
 import Layout from './components/Layout';
 import { OrganizationProvider } from './contexts/OrganizationContext';
+import AdminRouteGuard from './utils/AdminRouteGuard';
 
 // Wrapper component for authenticated routes
 function AuthenticatedApp({ children }) {
@@ -54,6 +60,11 @@ function App() {
 
         {/* Organization Routes */}
         <Route path="/organizations/settings" element={<AuthenticatedApp><Layout><OrganizationSettings /></Layout></AuthenticatedApp>} />
+
+        {/* Admin Routes - Protected by AdminRouteGuard */}
+        <Route path="/admin/dashboard" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminDashboard /></Layout></AdminRouteGuard></AuthenticatedApp>} />
+        <Route path="/admin/audit-logs" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminAuditLogs /></Layout></AdminRouteGuard></AuthenticatedApp>} />
+        <Route path="/admin/health" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp>} />
       </Routes>
     </Router>
   );
