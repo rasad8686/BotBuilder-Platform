@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
-const { authenticateToken } = require('../middleware/auth');
+const db = require('../db');
+const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
 
@@ -90,9 +90,12 @@ router.get('/', async (req, res) => {
 
     const result = await db.query(query, [userId]);
 
+    console.log(`[Organizations] Fetched ${result.rows.length} organizations for user ${userId}`);
+    console.log(`[Organizations] Organizations:`, result.rows.map(o => ({ id: o.id, name: o.name, role: o.role })));
+
     return res.status(200).json({
       success: true,
-      data: result.rows
+      organizations: result.rows  // Changed from 'data' to 'organizations' to match frontend expectation
     });
   } catch (error) {
     console.error('List organizations error:', error);
@@ -314,9 +317,11 @@ router.get('/:id/members', organizationContext, requireOrganization, async (req,
 
     const result = await db.query(query, [orgId]);
 
+    console.log(`[Organizations] Fetched ${result.rows.length} members for organization ${orgId}`);
+
     return res.status(200).json({
       success: true,
-      data: result.rows
+      members: result.rows  // Changed from 'data' to 'members' to match frontend expectation
     });
   } catch (error) {
     console.error('List members error:', error);

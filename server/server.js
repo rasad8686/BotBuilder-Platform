@@ -95,6 +95,7 @@ app.post('/auth/register', async (req, res) => {
     );
 
     const user = result.rows[0];
+    console.log(`[Register] User created with ID: ${user.id}, email: ${user.email}`);
 
     // Create personal organization for the new user
     const orgSlug = `${username.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${user.id}`;
@@ -106,6 +107,7 @@ app.post('/auth/register', async (req, res) => {
     );
 
     const organizationId = orgResult.rows[0].id;
+    console.log(`[Register] Organization created with ID: ${organizationId}, slug: ${orgSlug}`);
 
     // Add user as admin to their organization
     await db.query(
@@ -113,6 +115,7 @@ app.post('/auth/register', async (req, res) => {
        VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)`,
       [organizationId, user.id]
     );
+    console.log(`[Register] User added to organization as admin`);
 
     // Generate JWT token with REAL database user ID and organization ID
     const token = jwt.sign(
@@ -125,6 +128,8 @@ app.post('/auth/register', async (req, res) => {
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
     );
+
+    console.log(`[Register] JWT token generated for user ${user.id} with org ${organizationId}`);
 
     res.status(201).json({
       success: true,
@@ -139,6 +144,8 @@ app.post('/auth/register', async (req, res) => {
         currentOrganizationId: organizationId
       }
     });
+
+    console.log(`[Register] Registration complete for ${user.email}`);
 
   } catch (error) {
     console.error('Register error:', error);
