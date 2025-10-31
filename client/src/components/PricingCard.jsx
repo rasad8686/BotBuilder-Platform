@@ -103,44 +103,30 @@ export default function PricingCard({
         </div>
       </div>
 
-      {/* Limits Summary - NUCLEAR FIX with flex and huge spacing */}
-      <div className="mb-6 p-6 bg-gray-50 rounded-lg">
-        <div className="flex justify-around items-center gap-8">
-          {/* Bots Limit */}
-          <div className="flex-1 text-center" style={{minWidth: '100px'}}>
-            <div className={`text-3xl font-bold ${theme.accent} mb-3`} style={{display: 'block', marginBottom: '12px'}}>
-              {formatLimit(plan.limits.bots)}
-            </div>
-            <div className="text-sm text-gray-600 font-medium" style={{display: 'block', marginTop: '12px'}}>
-              Bots
-            </div>
+      {/* Plan Limits Display - GRID LAYOUT FOR PROPER SEPARATION */}
+      <div className="grid grid-cols-3 gap-8 mb-8 px-4">
+        {/* Bots */}
+        <div className="flex flex-col items-center">
+          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+            {formatLimit(plan.limits.bots)}
           </div>
+          <div className="text-sm text-gray-600 font-medium">Bots</div>
+        </div>
 
-          {/* Vertical Divider */}
-          <div style={{width: '2px', height: '60px', backgroundColor: '#d1d5db'}}></div>
-
-          {/* Messages Limit */}
-          <div className="flex-1 text-center" style={{minWidth: '100px'}}>
-            <div className={`text-3xl font-bold ${theme.accent} mb-3`} style={{display: 'block', marginBottom: '12px'}}>
-              {formatLimit(plan.limits.messages)}
-            </div>
-            <div className="text-sm text-gray-600 font-medium" style={{display: 'block', marginTop: '12px'}}>
-              Messages
-            </div>
+        {/* Messages */}
+        <div className="flex flex-col items-center">
+          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+            {formatLimit(plan.limits.messages)}
           </div>
+          <div className="text-sm text-gray-600 font-medium">Messages</div>
+        </div>
 
-          {/* Vertical Divider */}
-          <div style={{width: '2px', height: '60px', backgroundColor: '#d1d5db'}}></div>
-
-          {/* API Calls Limit */}
-          <div className="flex-1 text-center" style={{minWidth: '100px'}}>
-            <div className={`text-3xl font-bold ${theme.accent} mb-3`} style={{display: 'block', marginBottom: '12px'}}>
-              {formatLimit(plan.limits.apiCalls)}
-            </div>
-            <div className="text-sm text-gray-600 font-medium" style={{display: 'block', marginTop: '12px'}}>
-              API Calls
-            </div>
+        {/* API Calls */}
+        <div className="flex flex-col items-center">
+          <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
+            {formatLimit(plan.limits.apiCalls)}
           </div>
+          <div className="text-sm text-gray-600 font-medium">API Calls</div>
         </div>
       </div>
 
