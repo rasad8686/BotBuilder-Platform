@@ -5,6 +5,7 @@ const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
 const crypto = require('crypto');
+const { logBotCreated, logBotUpdated, logBotDeleted } = require('../middleware/audit');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -71,6 +72,13 @@ router.post('/', checkPermission('member'), async (req, res) => {
 
     const result = await db.query(query, values);
     const bot = result.rows[0];
+
+    // Log bot creation to audit trail
+    await logBotCreated(req, organization_id, bot.id, {
+      name: bot.name,
+      platform: bot.platform,
+      description: bot.description
+    });
 
     return res.status(201).json({
       success: true,
@@ -259,8 +267,8 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
       });
     }
 
-    // First, check if bot exists and belongs to organization
-    const checkQuery = 'SELECT id FROM bots WHERE id = $1 AND organization_id = $2';
+    // First, check if bot exists and belongs to organization, and get old values for audit
+    const checkQuery = 'SELECT id, name, description, platform, webhook_url, is_active FROM bots WHERE id = $1 AND organization_id = $2';
     const checkResult = await db.query(checkQuery, [id, organization_id]);
 
     if (checkResult.rows.length === 0) {
@@ -269,6 +277,8 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
         message: 'Bot not found or not accessible in this organization'
       });
     }
+
+    const oldBot = checkResult.rows[0];
 
     // Validate at least one field is being updated
     if (!name && !description && !platform && !webhook_url && is_active === undefined) {
@@ -349,6 +359,23 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     const result = await db.query(updateQuery, values);
     const updatedBot = result.rows[0];
 
+    // Log bot update to audit trail
+    const oldValues = {
+      name: oldBot.name,
+      description: oldBot.description,
+      platform: oldBot.platform,
+      webhook_url: oldBot.webhook_url,
+      is_active: oldBot.is_active
+    };
+    const newValues = {
+      name: updatedBot.name,
+      description: updatedBot.description,
+      platform: updatedBot.platform,
+      webhook_url: updatedBot.webhook_url,
+      is_active: updatedBot.is_active
+    };
+    await logBotUpdated(req, organization_id, parseInt(id), oldValues, newValues);
+
     return res.status(200).json({
       success: true,
       message: 'Bot updated successfully!',
@@ -385,7 +412,7 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
     }
 
     // First, check if bot exists and belongs to organization
-    const checkQuery = 'SELECT name FROM bots WHERE id = $1 AND organization_id = $2';
+    const checkQuery = 'SELECT name, platform, description FROM bots WHERE id = $1 AND organization_id = $2';
     const checkResult = await db.query(checkQuery, [id, organization_id]);
 
     if (checkResult.rows.length === 0) {
@@ -395,15 +422,22 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
       });
     }
 
-    const botName = checkResult.rows[0].name;
+    const bot = checkResult.rows[0];
 
     // Delete bot (bot_messages will be deleted automatically due to CASCADE)
     const deleteQuery = 'DELETE FROM bots WHERE id = $1';
     await db.query(deleteQuery, [id]);
 
+    // Log bot deletion to audit trail
+    await logBotDeleted(req, organization_id, parseInt(id), {
+      name: bot.name,
+      platform: bot.platform,
+      description: bot.description
+    });
+
     return res.status(200).json({
       success: true,
-      message: `Bot "${botName}" deleted successfully!`,
+      message: `Bot "${bot.name}" deleted successfully!`,
       deletedId: parseInt(id)
     });
 
