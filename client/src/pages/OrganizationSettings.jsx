@@ -6,7 +6,7 @@ import InviteMemberModal from '../components/InviteMemberModal';
 import ConfirmModal from '../components/ConfirmModal';
 
 export default function OrganizationSettings() {
-  const { currentOrganization, userRole, hasPermission, refreshOrganizations } = useOrganization();
+  const { currentOrganization, userRole, hasPermission, refreshOrganizations, loading: orgLoading, isAuthenticated } = useOrganization();
   const navigate = useNavigate();
 
   const [members, setMembers] = useState([]);
@@ -21,20 +21,39 @@ export default function OrganizationSettings() {
   const [isEditingOrg, setIsEditingOrg] = useState(false);
 
   useEffect(() => {
-    if (!currentOrganization) return;
+    // If not authenticated, redirect to login
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    // Wait for organization to load
+    if (orgLoading) {
+      return;
+    }
+
+    // If no organization, redirect to dashboard
+    if (!currentOrganization) {
+      setError('No organization found. Please select an organization.');
+      setTimeout(() => navigate('/dashboard'), 2000);
+      return;
+    }
 
     // Check permissions
     if (!hasPermission('admin')) {
       setError('You do not have permission to view organization settings');
+      setTimeout(() => navigate('/dashboard'), 2000);
       return;
     }
 
     setOrgName(currentOrganization.name);
     setOrgSlug(currentOrganization.slug);
     fetchMembers();
-  }, [currentOrganization]);
+  }, [currentOrganization, orgLoading, isAuthenticated, hasPermission, navigate]);
 
   const fetchMembers = async () => {
+    if (!currentOrganization) return;
+
     try {
       setLoading(true);
       const response = await axiosInstance.get(`/api/organizations/${currentOrganization.id}/members`);
@@ -42,7 +61,17 @@ export default function OrganizationSettings() {
       setError('');
     } catch (err) {
       console.error('Failed to fetch members:', err);
-      setError(err.response?.data?.message || 'Failed to load members');
+
+      // Handle specific error codes
+      if (err.response?.status === 401) {
+        setError('Authentication required. Redirecting to login...');
+        setTimeout(() => navigate('/login'), 1500);
+      } else if (err.response?.status === 403) {
+        setError('You do not have permission to view members');
+        setTimeout(() => navigate('/dashboard'), 2000);
+      } else {
+        setError(err.response?.data?.message || 'Failed to load members');
+      }
     } finally {
       setLoading(false);
     }
