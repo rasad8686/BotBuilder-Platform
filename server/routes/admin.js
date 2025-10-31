@@ -131,7 +131,8 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit logs',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: error.message, // Always show error message for debugging
+      errorCode: error.code,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
@@ -207,7 +208,7 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
     // Total messages (last 30 days)
     const messagesResult = await db.query(
       `SELECT COUNT(*) as count
-       FROM messages m
+       FROM bot_messages m
        JOIN bots b ON m.bot_id = b.id
        WHERE b.organization_id = $1
        AND m.created_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'`,
@@ -293,7 +294,8 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve statistics',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: error.message, // Always show error message for debugging
+      errorCode: error.code,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
@@ -387,10 +389,17 @@ router.get('/activity-timeline', organizationContext, requireOrganization, check
 
   } catch (error) {
     console.error('Get activity timeline error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      organizationId: req.organization?.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve activity timeline',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message, // Always show error message for debugging
+      errorCode: error.code,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
