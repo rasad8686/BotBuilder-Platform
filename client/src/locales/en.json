@@ -14,6 +14,7 @@
     "apiTokens": "API Tokens",
     "webhooks": "Webhooks",
     "usage": "Usage",
+    "organization": "Organization",
     "settings": "Settings",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
