@@ -103,38 +103,27 @@ export default function PricingCard({
         </div>
       </div>
 
-      {/* Plan Limits - NUCLEAR FIX with individual containers */}
-      <div className="w-full px-6 mb-8">
-        <div className="grid grid-cols-3 gap-6">
-          {/* Bots Column */}
-          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
-            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-              {plan.limits?.bots === -1 ? 'Unlimited' : formatLimit(plan.limits?.bots || 0)}
-            </div>
-            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              Bots
-            </div>
+      {/* Plan Limits - INLINE STYLES ONLY */}
+      <div style={{display: 'flex', justifyContent: 'space-around', padding: '20px', marginBottom: '30px'}}>
+        <div style={{textAlign: 'center', minWidth: '120px'}}>
+          <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '10px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB'}}>
+            {plan.limits?.bots === -1 ? 'Unlimited' : formatLimit(plan.limits?.bots || 0)}
           </div>
+          <div style={{fontSize: '14px', color: '#666', fontWeight: '600'}}>BOTS</div>
+        </div>
 
-          {/* Messages Column */}
-          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
-            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-              {plan.limits?.messages === -1 ? 'Unlimited' : formatLimit(plan.limits?.messages || 0)}
-            </div>
-            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              Messages
-            </div>
+        <div style={{textAlign: 'center', minWidth: '120px'}}>
+          <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '10px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB'}}>
+            {plan.limits?.messages === -1 ? 'Unlimited' : formatLimit(plan.limits?.messages || 0)}
           </div>
+          <div style={{fontSize: '14px', color: '#666', fontWeight: '600'}}>MESSAGES</div>
+        </div>
 
-          {/* API Calls Column */}
-          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
-            <div className={`text-4xl font-bold ${theme.accent} mb-2`}>
-              {plan.limits?.apiCalls === -1 ? 'Unlimited' : formatLimit(plan.limits?.apiCalls || 0)}
-            </div>
-            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              API Calls
-            </div>
+        <div style={{textAlign: 'center', minWidth: '120px'}}>
+          <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '10px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB'}}>
+            {plan.limits?.apiCalls === -1 ? 'Unlimited' : formatLimit(plan.limits?.apiCalls || 0)}
           </div>
+          <div style={{fontSize: '14px', color: '#666', fontWeight: '600'}}>API CALLS</div>
         </div>
       </div>
 
