@@ -105,6 +105,7 @@ export default function PricingCard({
       </div>
 
       {/* Plan Limits - ABSOLUTE FINAL FIX WITH BORDERS */}
+      {/* DEBUG: Version 29e353e deployed */}
       <div style={{display: 'flex', justifyContent: 'space-between', padding: '20px', marginBottom: '30px', gap: '20px'}}>
         <div style={{textAlign: 'center', flex: '1', padding: '15px', border: '2px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f9fafb'}}>
           <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '10px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB', display: 'block'}}>
