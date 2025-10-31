@@ -16,6 +16,7 @@ router.use(authenticateToken);
 router.get('/audit-logs', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
     const organizationId = req.organization.id;
+    console.log('[Admin] Fetching audit logs for organization:', organizationId);
 
     // Parse query parameters
     const {
@@ -105,6 +106,8 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
     values.push(limitNum, offset);
     const result = await db.query(query, values);
 
+    console.log(`[Admin] Found ${result.rows.length} audit logs (total: ${total})`);
+
     return res.status(200).json({
       success: true,
       data: result.rows,
@@ -120,10 +123,16 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
 
   } catch (error) {
     console.error('Get audit logs error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      organizationId: req.organization?.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit logs',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -169,6 +178,7 @@ router.get('/audit-logs/actions', organizationContext, requireOrganization, chec
 router.get('/stats', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
     const organizationId = req.organization.id;
+    console.log('[Admin] Fetching stats for organization:', organizationId);
 
     // Get various statistics
     const stats = {};
@@ -251,8 +261,22 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
       'SELECT plan_tier, created_at FROM organizations WHERE id = $1',
       [organizationId]
     );
-    stats.planTier = orgResult.rows[0].plan_tier;
-    stats.organizationCreatedAt = orgResult.rows[0].created_at;
+
+    if (orgResult.rows.length > 0) {
+      stats.planTier = orgResult.rows[0].plan_tier;
+      stats.organizationCreatedAt = orgResult.rows[0].created_at;
+    } else {
+      stats.planTier = 'unknown';
+      stats.organizationCreatedAt = null;
+    }
+
+    console.log('[Admin] Stats retrieved successfully:', {
+      totalMembers: stats.totalMembers,
+      totalBots: stats.totalBots,
+      activeBots: stats.activeBots,
+      messagesLast30Days: stats.messagesLast30Days,
+      auditEventsLast30Days: stats.auditEventsLast30Days
+    });
 
     return res.status(200).json({
       success: true,
@@ -261,10 +285,16 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
 
   } catch (error) {
     console.error('Get stats error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      organizationId: req.organization?.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve statistics',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -272,9 +302,9 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
 /**
  * GET /api/admin/health
  * System health check
- * Admin only
+ * Admin only - requires organization context for permission check
  */
-router.get('/health', checkPermission('admin'), async (req, res) => {
+router.get('/health', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
     const health = {
       status: 'healthy',
