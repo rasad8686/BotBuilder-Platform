@@ -21,10 +21,12 @@ import OrganizationSettings from './pages/OrganizationSettings';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminAuditLogs from './pages/AdminAuditLogs';
 import AdminHealth from './pages/AdminHealth';
+import WhiteLabelSettings from './pages/WhiteLabelSettings';
 
 // Layout & Contexts
 import Layout from './components/Layout';
 import { OrganizationProvider } from './contexts/OrganizationContext';
+import { BrandProvider } from './contexts/BrandContext';
 import AdminRouteGuard from './utils/AdminRouteGuard';
 
 // Wrapper component for authenticated routes
@@ -34,12 +36,13 @@ function AuthenticatedApp({ children }) {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Auth Routes - No Sidebar, No Organization Context */}
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <BrandProvider>
+      <Router>
+        <Routes>
+          {/* Auth Routes - No Sidebar, No Organization Context */}
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp>} />
@@ -65,8 +68,10 @@ function App() {
         <Route path="/admin/dashboard" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminDashboard /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/audit-logs" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminAuditLogs /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/health" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp>} />
+        <Route path="/admin/whitelabel" element={<AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp>} />
       </Routes>
-    </Router>
+      </Router>
+    </BrandProvider>
   );
 }
 

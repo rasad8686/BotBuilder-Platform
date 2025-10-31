@@ -4,9 +4,11 @@ const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const morgan = require('morgan');
+const path = require('path');
 const db = require('./db');
 const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
+const { detectCustomDomain } = require('./middleware/whitelabel');
 
 dotenv.config();
 
@@ -58,6 +60,12 @@ app.use(morgan(':method :url :status :response-time ms - :user-agent', {
     return false;
   }
 }));
+
+// ✅ Domain detection middleware (for white-label custom domains)
+app.use(detectCustomDomain);
+
+// ✅ Serve uploaded files (logos, favicons, etc.)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ✅ Test route
 app.get('/test', (req, res) => {
@@ -397,6 +405,9 @@ app.use('/api/bots', require('./routes/botFlows'));
 
 // ✅ Admin routes (Monitoring & Audit) - Using modular router
 app.use('/api/admin', require('./routes/admin'));
+
+// ✅ White-label routes (Custom Branding) - Using modular router
+app.use('/api/whitelabel', require('./routes/whitelabel'));
 
 // ✅ 404 handler
 app.use((req, res) => {
