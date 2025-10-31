@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
+import { useBrand } from '../contexts/BrandContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 
 export default function Sidebar() {
@@ -14,6 +15,7 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const { currentLanguage, changeLanguage, languages } = useLanguage();
   const { userRole } = useOrganization();
+  const { brand } = useBrand();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -49,6 +51,7 @@ export default function Sidebar() {
     { path: '/admin/dashboard', icon: '📊', label: 'Admin Dashboard' },
     { path: '/admin/audit-logs', icon: '📋', label: 'Audit Logs' },
     { path: '/admin/health', icon: '🔧', label: 'System Health' },
+    { path: '/admin/whitelabel', icon: '🎨', label: 'White-label Settings' },
   ];
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
@@ -90,10 +93,20 @@ export default function Sidebar() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🤖</div>
+              {brand?.logo_url ? (
+                <img
+                  src={brand.logo_url}
+                  alt={brand.brand_name || 'Logo'}
+                  className="h-10 w-10 object-contain"
+                />
+              ) : (
+                <div className="text-3xl">🤖</div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-gray-800">{t('sidebar.brand')}</h1>
+                  <h1 className="text-xl font-bold text-gray-800">
+                    {brand?.brand_name || t('sidebar.brand')}
+                  </h1>
                   <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
                     BETA
                   </span>
