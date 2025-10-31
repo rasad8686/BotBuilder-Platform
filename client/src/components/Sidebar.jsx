@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 
 export default function Sidebar() {
@@ -12,6 +13,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currentLanguage, changeLanguage, languages } = useLanguage();
+  const { userRole } = useOrganization();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -41,6 +43,15 @@ export default function Sidebar() {
     { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
   ];
+
+  // Admin links - only shown to admins and owners
+  const adminLinks = [
+    { path: '/admin/dashboard', icon: '📊', label: 'Admin Dashboard' },
+    { path: '/admin/audit-logs', icon: '📋', label: 'Audit Logs' },
+    { path: '/admin/health', icon: '🔧', label: 'System Health' },
+  ];
+
+  const isAdmin = userRole === 'admin' || userRole === 'owner';
 
   const currentLang = languages.find(lang => lang.code === currentLanguage);
 
@@ -170,6 +181,41 @@ export default function Sidebar() {
                 </Link>
               </li>
             ))}
+
+            {/* Admin Section - Only visible to admins */}
+            {isAdmin && (
+              <>
+                <li className="pt-4 pb-2">
+                  <div className="flex items-center gap-2 px-4">
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
+                      Admin
+                    </span>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                  </div>
+                </li>
+                {adminLinks.map((link) => (
+                  <li key={link.path}>
+                    <Link
+                      to={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg
+                        transition-all duration-200
+                        ${
+                          isActive(link.path)
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                        }
+                      `}
+                    >
+                      <span className="text-xl">{link.icon}</span>
+                      <span className="font-medium">{link.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </>
+            )}
           </ul>
         </nav>
 
@@ -183,8 +229,15 @@ export default function Sidebar() {
                 </div>
                 <div className="flex-1 min-w-0">
                   {user.name && (
-                    <div className="text-sm font-semibold text-gray-800 truncate">
-                      {user.name}
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-semibold text-gray-800 truncate">
+                        {user.name}
+                      </div>
+                      {isAdmin && (
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">
+                          ADMIN
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="text-xs text-gray-600 truncate">
