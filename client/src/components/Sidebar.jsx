@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
+import OrganizationSwitcher from './OrganizationSwitcher';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
@@ -141,6 +142,9 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
+
+        {/* Organization Switcher */}
+        <OrganizationSwitcher />
 
         {/* Navigation Links */}
         <nav className="flex-1 overflow-y-auto p-4">

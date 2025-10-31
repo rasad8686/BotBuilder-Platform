@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import PermissionGuard from './PermissionGuard';
 
 /**
  * Reusable Bot Card Component
@@ -115,13 +116,15 @@ export default function BotCard({ bot, onDelete }) {
             💬 <span>Messages</span>
           </button>
 
-          <button
-            onClick={() => onDelete(bot)}
-            className="bg-red-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center text-sm"
-            title="Delete bot"
-          >
-            🗑️
-          </button>
+          <PermissionGuard require="admin">
+            <button
+              onClick={() => onDelete(bot)}
+              className="bg-red-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center text-sm"
+              title="Delete bot"
+            >
+              🗑️
+            </button>
+          </PermissionGuard>
         </div>
       </div>
     </div>

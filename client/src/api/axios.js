@@ -10,13 +10,20 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and organization ID
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add organization ID to headers if available
+    const organizationId = localStorage.getItem('currentOrganizationId');
+    if (organizationId) {
+      config.headers['X-Organization-ID'] = organizationId;
+    }
+
     return config;
   },
   (error) => {

@@ -5,6 +5,7 @@ import botApi from '../api/bots';
 import BotCard from '../components/BotCard';
 import ConfirmModal from '../components/ConfirmModal';
 import Pagination from '../components/Pagination';
+import PermissionGuard from '../components/PermissionGuard';
 
 export default function MyBots() {
   const { t } = useTranslation();
@@ -171,12 +172,14 @@ export default function MyBots() {
               Manage and monitor all your chatbots
             </p>
           </div>
-          <button
-            onClick={() => navigate('/create-bot')}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
-          >
-            + Create New Bot
-          </button>
+          <PermissionGuard require="member">
+            <button
+              onClick={() => navigate('/create-bot')}
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
+            >
+              + Create New Bot
+            </button>
+          </PermissionGuard>
         </div>
 
         {/* Success Message */}
@@ -248,12 +251,21 @@ export default function MyBots() {
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               Get started by creating your first chatbot. It only takes a minute!
             </p>
-            <button
-              onClick={() => navigate('/create-bot')}
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
+            <PermissionGuard
+              require="member"
+              fallback={
+                <p className="text-gray-500 italic">
+                  Contact your organization admin to create bots
+                </p>
+              }
             >
-              Create Your First Bot
-            </button>
+              <button
+                onClick={() => navigate('/create-bot')}
+                className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
+              >
+                Create Your First Bot
+              </button>
+            </PermissionGuard>
           </div>
         ) : filteredBots.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
