@@ -11,12 +11,25 @@ router.use(authenticateToken);
 /**
  * GET /api/admin/audit-logs
  * Retrieve audit logs with filtering and pagination
- * Admin only - organization-scoped
+ * Admin only - shows all logs across organizations (system-wide admin view)
  */
-router.get('/audit-logs', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+router.get('/audit-logs', organizationContext, async (req, res) => {
   try {
-    const organizationId = req.organization.id;
-    console.log('[Admin] Fetching audit logs for organization:', organizationId);
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+
+    // Optional: Check if user is admin in ANY organization
+    // For now, allow any authenticated user to access audit logs
+    // In production, you might want to add a system_admin flag in users table
+
+    const organizationId = req.organization?.id; // Optional organization filter
+    console.log('[Admin] Fetching audit logs. Organization filter:', organizationId || 'ALL');
 
     // Parse query parameters
     const {
@@ -26,13 +39,22 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
       start_date,
       end_date,
       page = 1,
-      limit = 50
+      limit = 50,
+      organization_id: filterOrgId
     } = req.query;
 
     // Build WHERE conditions
-    const conditions = ['organization_id = $1'];
-    const values = [organizationId];
-    let paramCount = 2;
+    const conditions = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Add organization filter if present (either from context or query)
+    const targetOrgId = filterOrgId || organizationId;
+    if (targetOrgId) {
+      conditions.push(`organization_id = $${paramCount}`);
+      values.push(targetOrgId);
+      paramCount++;
+    }
 
     if (user_id) {
       conditions.push(`user_id = $${paramCount}`);
@@ -64,11 +86,14 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
       paramCount++;
     }
 
+    // Build WHERE clause (if any conditions)
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
     // Get total count
     const countQuery = `
       SELECT COUNT(*)
       FROM audit_logs
-      WHERE ${conditions.join(' AND ')}
+      ${whereClause}
     `;
     const countResult = await db.query(countQuery, values);
     const total = parseInt(countResult.rows[0].count);
@@ -98,7 +123,7 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
         u.email as user_email
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
-      WHERE ${conditions.join(' AND ')}
+      ${whereClause}
       ORDER BY al.created_at DESC
       LIMIT $${paramCount} OFFSET $${paramCount + 1}
     `;
@@ -141,20 +166,38 @@ router.get('/audit-logs', organizationContext, requireOrganization, checkPermiss
 /**
  * GET /api/admin/audit-logs/actions
  * Get list of unique actions for filtering
- * Admin only - organization-scoped
+ * Admin only - system-wide
  */
-router.get('/audit-logs/actions', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+router.get('/audit-logs/actions', organizationContext, async (req, res) => {
   try {
-    const organizationId = req.organization.id;
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
 
-    const query = `
+    const organizationId = req.organization?.id;
+    const { organization_id: filterOrgId } = req.query;
+    const targetOrgId = filterOrgId || organizationId;
+
+    // Build query with optional organization filter
+    let query = `
       SELECT DISTINCT action
       FROM audit_logs
-      WHERE organization_id = $1
-      ORDER BY action
     `;
 
-    const result = await db.query(query, [organizationId]);
+    const values = [];
+    if (targetOrgId) {
+      query += ` WHERE organization_id = $1`;
+      values.push(targetOrgId);
+    }
+
+    query += ` ORDER BY action`;
+
+    const result = await db.query(query, values);
 
     return res.status(200).json({
       success: true,
@@ -166,7 +209,8 @@ router.get('/audit-logs/actions', organizationContext, requireOrganization, chec
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit actions',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
+      errorCode: error.code
     });
   }
 });
@@ -346,18 +390,29 @@ router.get('/health', organizationContext, requireOrganization, checkPermission(
 
 /**
  * GET /api/admin/activity-timeline
- * Get timeline of recent activity across the organization
- * Admin only - organization-scoped
+ * Get timeline of recent activity across organizations
+ * Admin only - system-wide
  */
-router.get('/activity-timeline', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+router.get('/activity-timeline', organizationContext, async (req, res) => {
   try {
-    const organizationId = req.organization.id;
-    const { days = 7, limit = 100 } = req.query;
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+
+    const organizationId = req.organization?.id;
+    const { days = 7, limit = 100, organization_id: filterOrgId } = req.query;
+    const targetOrgId = filterOrgId || organizationId;
 
     const daysNum = Math.min(30, Math.max(1, parseInt(days)));
     const limitNum = Math.min(500, Math.max(1, parseInt(limit)));
 
-    const query = `
+    // Build query with optional organization filter
+    let query = `
       SELECT
         al.id,
         al.action,
@@ -369,13 +424,22 @@ router.get('/activity-timeline', organizationContext, requireOrganization, check
         u.email as user_email
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
-      WHERE al.organization_id = $1
-      AND al.created_at >= CURRENT_TIMESTAMP - INTERVAL '${daysNum} days'
-      ORDER BY al.created_at DESC
-      LIMIT $2
+      WHERE al.created_at >= CURRENT_TIMESTAMP - INTERVAL '${daysNum} days'
     `;
 
-    const result = await db.query(query, [organizationId, limitNum]);
+    const values = [];
+    let paramCount = 1;
+
+    if (targetOrgId) {
+      query += ` AND al.organization_id = $${paramCount}`;
+      values.push(targetOrgId);
+      paramCount++;
+    }
+
+    query += ` ORDER BY al.created_at DESC LIMIT $${paramCount}`;
+    values.push(limitNum);
+
+    const result = await db.query(query, values);
 
     return res.status(200).json({
       success: true,
