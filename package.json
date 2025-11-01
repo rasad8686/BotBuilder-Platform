@@ -19,6 +19,7 @@
   "author": "Rashad",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.3",
     "axios": "^1.13.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "nodemailer": "^6.10.1",
+    "openai": "^4.104.0",
     "pg": "^8.11.0",
     "stripe": "^14.25.0",
     "uuid": "^9.0.1",

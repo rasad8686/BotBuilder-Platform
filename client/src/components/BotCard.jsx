@@ -89,14 +89,24 @@ export default function BotCard({ bot, onDelete }) {
 
       {/* Action Buttons */}
       <div className="space-y-2">
-        {/* Flow Builder - Full Width */}
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/flow`)}
-          className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-sm"
-          title="Visual Flow Builder"
-        >
-          🔀 <span>Flow Builder</span>
-        </button>
+        {/* Flow Builder & AI Config - Full Width Row */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/flow`)}
+            className="flex-1 bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Visual Flow Builder"
+          >
+            🔀 <span>Flow Builder</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/ai`)}
+            className="flex-1 bg-indigo-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="AI Configuration"
+          >
+            🤖 <span>AI Config</span>
+          </button>
+        </div>
 
         {/* Other Actions */}
         <div className="flex gap-2">
