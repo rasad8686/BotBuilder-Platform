@@ -23,6 +23,9 @@ import AdminAuditLogs from './pages/AdminAuditLogs';
 import AdminHealth from './pages/AdminHealth';
 import WhiteLabelSettings from './pages/WhiteLabelSettings';
 
+// AI Pages
+import AIConfigPanel from './components/AI/AIConfigPanel';
+
 // Layout & Contexts
 import Layout from './components/Layout';
 import { OrganizationProvider } from './contexts/OrganizationContext';
@@ -52,6 +55,7 @@ function App() {
         <Route path="/bot/:botId/messages" element={<AuthenticatedApp><Layout><BotMessages /></Layout></AuthenticatedApp>} />
         <Route path="/bot/:botId/edit" element={<AuthenticatedApp><Layout><EditBot /></Layout></AuthenticatedApp>} />
         <Route path="/bots/:botId/flow" element={<AuthenticatedApp><FlowBuilder /></AuthenticatedApp>} />
+        <Route path="/bots/:botId/ai" element={<AuthenticatedApp><Layout><AIConfigPanel /></Layout></AuthenticatedApp>} />
         <Route path="/analytics" element={<AuthenticatedApp><Layout><Analytics /></Layout></AuthenticatedApp>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}

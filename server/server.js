@@ -412,6 +412,9 @@ app.use('/api/whitelabel', require('./routes/whitelabel'));
 // ✅ Billing routes (Subscription Management) - Using modular router
 app.use('/api/billing', require('./routes/billing'));
 
+// ✅ AI routes (AI Integration) - Using modular router
+app.use('/api', require('./routes/ai'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -436,7 +439,15 @@ app.use((req, res) => {
       'POST /api/bots/:botId/flow (Auth Required)',
       'GET /api/bots/:botId/flow (Auth Required)',
       'PUT /api/bots/:botId/flow/:flowId (Auth Required)',
-      'GET /api/bots/:botId/flow/history (Auth Required)'
+      'GET /api/bots/:botId/flow/history (Auth Required)',
+      'GET /api/ai/providers',
+      'GET /api/ai/models/:provider',
+      'GET /api/bots/:botId/ai/configure (Auth Required)',
+      'POST /api/bots/:botId/ai/configure (Auth Required)',
+      'DELETE /api/bots/:botId/ai/configure (Auth Required)',
+      'POST /api/bots/:botId/ai/chat (Auth Required)',
+      'GET /api/bots/:botId/ai/usage (Auth Required)',
+      'GET /api/organizations/:orgId/ai/billing (Auth Required)'
     ]
   });
 });

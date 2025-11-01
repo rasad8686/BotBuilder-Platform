@@ -53,6 +53,8 @@ export default function PricingCard({
     return value;
   };
 
+  // Plan rendering logic
+
   return (
     <div
       className={`
@@ -104,29 +106,97 @@ export default function PricingCard({
         </div>
       </div>
 
-      {/* Plan Limits - CLEAN PRODUCTION FIX */}
-      <div style={{display: 'flex', justifyContent: 'space-around', padding: '20px', marginBottom: '30px', gap: '32px'}}>
-        <div style={{textAlign: 'center', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '12px', backgroundColor: '#f9fafb', minWidth: '150px'}}>
-          <div style={{fontSize: '36px', fontWeight: 'bold', marginBottom: '15px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB', display: 'block'}}>
-            {planKey === 'enterprise' ? 'Unlimited' : (plan.limits?.bots === -1 ? 'Unlimited' : formatLimit(plan.limits?.bots || 0))}
+      {/* Plan Limits - Enterprise gets bordered boxes */}
+      {planKey === 'enterprise' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          gap: '32px',
+          padding: '24px 16px',
+          marginBottom: '24px'
+        }}>
+          {/* Bots Box */}
+          <div style={{
+            textAlign: 'center',
+            padding: '16px',
+            backgroundColor: '#f9fafb',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            minWidth: '100px'
+          }}>
+            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
+              Unlimited
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
+              Bots
+            </div>
           </div>
-          <div style={{fontSize: '14px', color: '#666', fontWeight: '600', display: 'block', textTransform: 'uppercase'}}>Bots</div>
-        </div>
 
-        <div style={{textAlign: 'center', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '12px', backgroundColor: '#f9fafb', minWidth: '150px'}}>
-          <div style={{fontSize: '36px', fontWeight: 'bold', marginBottom: '15px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB', display: 'block'}}>
-            {planKey === 'enterprise' ? 'Unlimited' : (plan.limits?.messages === -1 ? 'Unlimited' : formatLimit(plan.limits?.messages || 0))}
+          {/* Messages Box */}
+          <div style={{
+            textAlign: 'center',
+            padding: '16px',
+            backgroundColor: '#f9fafb',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            minWidth: '100px'
+          }}>
+            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
+              Unlimited
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
+              Messages
+            </div>
           </div>
-          <div style={{fontSize: '14px', color: '#666', fontWeight: '600', display: 'block', textTransform: 'uppercase'}}>Messages</div>
-        </div>
 
-        <div style={{textAlign: 'center', padding: '20px', border: '2px solid #e5e7eb', borderRadius: '12px', backgroundColor: '#f9fafb', minWidth: '150px'}}>
-          <div style={{fontSize: '36px', fontWeight: 'bold', marginBottom: '15px', color: planKey === 'free' ? '#4B5563' : planKey === 'pro' ? '#9333EA' : '#2563EB', display: 'block'}}>
-            {planKey === 'enterprise' ? 'Unlimited' : (plan.limits?.apiCalls === -1 ? 'Unlimited' : formatLimit(plan.limits?.apiCalls || 0))}
+          {/* API Calls Box */}
+          <div style={{
+            textAlign: 'center',
+            padding: '16px',
+            backgroundColor: '#f9fafb',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            minWidth: '100px'
+          }}>
+            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
+              Unlimited
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
+              API Calls
+            </div>
           </div>
-          <div style={{fontSize: '14px', color: '#666', fontWeight: '600', display: 'block', textTransform: 'uppercase'}}>API Calls</div>
         </div>
-      </div>
+      )}
+
+      {/* Non-Enterprise plans - show limits in simple format */}
+      {planKey !== 'enterprise' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          padding: '20px',
+          marginBottom: '30px',
+          gap: '16px'
+        }}>
+          <div style={{textAlign: 'center'}}>
+            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
+              {plan.limits?.bots === -1 ? '∞' : formatLimit(plan.limits?.bots || 0)}
+            </div>
+            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>Bots</div>
+          </div>
+          <div style={{textAlign: 'center'}}>
+            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
+              {plan.limits?.messages === -1 ? '∞' : formatLimit(plan.limits?.messages || 0)}
+            </div>
+            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>Messages</div>
+          </div>
+          <div style={{textAlign: 'center'}}>
+            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
+              {plan.limits?.apiCalls === -1 ? '∞' : formatLimit(plan.limits?.apiCalls || 0)}
+            </div>
+            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>API Calls</div>
+          </div>
+        </div>
+      )}
 
       {/* Features List */}
       <div className="mb-6">
