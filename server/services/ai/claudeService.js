@@ -14,8 +14,16 @@ class ClaudeService {
       throw new Error('Anthropic API key is required');
     }
 
+    // Trim whitespace from API key
+    const cleanApiKey = apiKey.trim();
+
+    // Debug logging (show first 15 chars only for security)
+    console.log(`[ClaudeService] Initializing with API key: ${cleanApiKey.substring(0, 15)}...`);
+    console.log(`[ClaudeService] API key length: ${cleanApiKey.length}`);
+    console.log(`[ClaudeService] Model: ${model || 'claude-3-5-sonnet-20241022'}`);
+
     this.client = new Anthropic({
-      apiKey: apiKey
+      apiKey: cleanApiKey
     });
 
     this.model = model || 'claude-3-5-sonnet-20241022';
@@ -111,12 +119,32 @@ class ClaudeService {
       return response;
 
     } catch (error) {
-      console.error('Claude API error:', error);
+      console.error('❌ [ClaudeService] API error:', error);
+      console.error('❌ [ClaudeService] Error type:', error.type);
+      console.error('❌ [ClaudeService] Error status:', error.status);
+      console.error('❌ [ClaudeService] Error message:', error.message);
+
+      // Log full error details for debugging
+      if (error.error) {
+        console.error('❌ [ClaudeService] Error details:', JSON.stringify(error.error, null, 2));
+      }
 
       // Enhance error message
       const errorMessage = error.message || 'Unknown error';
       const errorType = error.type || 'unknown_error';
       const statusCode = error.status || 500;
+
+      // Specific error handling for authentication issues
+      if (statusCode === 401) {
+        console.error('❌ [ClaudeService] AUTHENTICATION FAILED - Invalid API key');
+        throw {
+          provider: 'claude',
+          message: 'Invalid Anthropic API key. Please check your API key configuration.',
+          type: 'authentication_error',
+          statusCode: 401,
+          originalError: error
+        };
+      }
 
       throw {
         provider: 'claude',
