@@ -337,13 +337,25 @@ async function sendChat(req, res) {
     let apiKey;
     if (config.api_key_encrypted) {
       apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
+      console.log(`[AI Chat] Using custom encrypted API key for ${config.provider}`);
     } else {
       // Use platform API key
       apiKey = config.provider === 'openai'
         ? process.env.OPENAI_API_KEY
         : process.env.ANTHROPIC_API_KEY;
 
+      // Trim whitespace
+      if (apiKey) {
+        apiKey = apiKey.trim();
+      }
+
+      // Debug logging (show first 15 chars only for security)
+      console.log(`[AI Chat] Provider: ${config.provider}`);
+      console.log(`[AI Chat] Platform API key loaded: ${apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND'}`);
+      console.log(`[AI Chat] API key length: ${apiKey ? apiKey.length : 0}`);
+
       if (!apiKey) {
+        console.error(`❌ [AI Chat] Platform ${config.provider.toUpperCase()} API key not configured`);
         return res.status(400).json({
           success: false,
           message: `Platform API key not configured for ${config.provider}. Please provide your own API key.`
@@ -503,13 +515,25 @@ async function testAIConnection(req, res) {
     let apiKey;
     if (config.api_key_encrypted) {
       apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
+      console.log(`[AI Test] Using custom encrypted API key for ${config.provider}`);
     } else {
       apiKey = config.provider === 'openai'
         ? process.env.OPENAI_API_KEY
         : process.env.ANTHROPIC_API_KEY;
+
+      // Trim whitespace
+      if (apiKey) {
+        apiKey = apiKey.trim();
+      }
+
+      // Debug logging (show first 15 chars only for security)
+      console.log(`[AI Test] Provider: ${config.provider}`);
+      console.log(`[AI Test] Platform API key loaded: ${apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND'}`);
+      console.log(`[AI Test] API key length: ${apiKey ? apiKey.length : 0}`);
     }
 
     if (!apiKey) {
+      console.error(`❌ [AI Test] No API key configured for ${config.provider}`);
       return res.status(400).json({
         success: false,
         message: 'No API key configured'
