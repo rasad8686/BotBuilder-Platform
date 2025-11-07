@@ -468,4 +468,80 @@ router.get('/activity-timeline', organizationContext, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/billing-stats
+ * Get billing statistics across all organizations
+ * Admin only - requires admin permission
+ */
+router.get('/billing-stats', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    console.log('[Admin] Fetching billing stats');
+
+    // Total subscriptions by plan (active subscriptions)
+    const planCountsResult = await db.query(`
+      SELECT
+        plan_tier,
+        COUNT(*)::int as count
+      FROM organizations
+      WHERE subscription_status = 'active' OR (plan_tier = 'free' AND subscription_status IS NULL)
+      GROUP BY plan_tier
+    `);
+
+    const planCounts = planCountsResult.rows;
+
+    // MRR calculation (monthly recurring revenue)
+    const prices = { free: 0, pro: 29, enterprise: 99 };
+    let mrr = 0;
+    planCounts.forEach(p => {
+      mrr += (prices[p.plan_tier] || 0) * p.count;
+    });
+
+    // Total organizations (users)
+    const totalUsersResult = await db.query(
+      'SELECT COUNT(*)::int as count FROM organizations'
+    );
+    const totalUsers = totalUsersResult.rows[0].count;
+
+    // Recent subscriptions (last 30 days) - organizations created in last 30 days
+    const recentSubsResult = await db.query(`
+      SELECT
+        DATE(created_at) as date,
+        COUNT(*)::int as count
+      FROM organizations
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at)
+    `);
+    const recentSubs = recentSubsResult.rows;
+
+    console.log('[Admin] Billing stats retrieved:', {
+      mrr,
+      totalUsers,
+      planBreakdown: planCounts.length
+    });
+
+    return res.status(200).json({
+      success: true,
+      mrr,
+      totalUsers,
+      planBreakdown: planCounts,
+      recentActivity: recentSubs
+    });
+
+  } catch (error) {
+    console.error('Billing stats error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve billing stats',
+      error: error.message,
+      errorCode: error.code,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
 module.exports = router;
