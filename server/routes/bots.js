@@ -6,6 +6,7 @@ const { organizationContext, requireOrganization } = require('../middleware/orga
 const { checkPermission } = require('../middleware/checkPermission');
 const crypto = require('crypto');
 const { logBotCreated, logBotUpdated, logBotDeleted } = require('../middleware/audit');
+const webhookService = require('../services/webhookService');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -49,6 +50,68 @@ router.post('/', checkPermission('member'), async (req, res) => {
       });
     }
 
+    // ========================================
+    // CHECK PLAN LIMITS
+    // ========================================
+    const PLAN_LIMITS = {
+      free: 1,
+      pro: 10,
+      enterprise: -1 // unlimited
+    };
+
+    // Get organization's current plan
+    const planQuery = await db.query(
+      'SELECT plan_tier FROM organizations WHERE id = $1',
+      [organization_id]
+    );
+
+    const currentPlan = planQuery.rows[0]?.plan_tier || 'free';
+    const maxBots = PLAN_LIMITS[currentPlan];
+
+    console.log(`[CREATE BOT] Organization ${organization_id} - Plan: ${currentPlan}, Max bots: ${maxBots === -1 ? 'unlimited' : maxBots}`);
+
+    // Count existing bots for this organization
+    const countQuery = await db.query(
+      'SELECT COUNT(*) as count FROM bots WHERE organization_id = $1',
+      [organization_id]
+    );
+
+    const currentBots = parseInt(countQuery.rows[0].count);
+    console.log(`[CREATE BOT] Current bots: ${currentBots}`);
+
+    // Check if limit reached (skip check for unlimited plans)
+    if (maxBots !== -1 && currentBots >= maxBots) {
+      console.log(`[CREATE BOT] ❌ Limit reached for ${currentPlan} plan`);
+
+      // Determine upgrade suggestion
+      let upgradeMessage = '';
+      let upgradePlan = '';
+
+      if (currentPlan === 'free') {
+        upgradeMessage = 'Upgrade to Pro for 10 bots or Enterprise for unlimited bots';
+        upgradePlan = 'pro';
+      } else if (currentPlan === 'pro') {
+        upgradeMessage = 'Upgrade to Enterprise for unlimited bots';
+        upgradePlan = 'enterprise';
+      }
+
+      return res.status(403).json({
+        success: false,
+        error: 'Plan limit reached',
+        currentPlan: currentPlan,
+        currentBots: currentBots,
+        maxBots: maxBots,
+        message: upgradeMessage,
+        upgradePlan: upgradePlan,
+        limitReached: true
+      });
+    }
+
+    console.log(`[CREATE BOT] ✅ Limit OK - Creating bot (${currentBots + 1}/${maxBots === -1 ? '∞' : maxBots})`);
+    // ========================================
+    // END PLAN LIMIT CHECK
+    // ========================================
+
     // Generate unique API token
     const api_token = crypto.randomBytes(32).toString('hex');
 
@@ -78,6 +141,15 @@ router.post('/', checkPermission('member'), async (req, res) => {
       name: bot.name,
       platform: bot.platform,
       description: bot.description
+    });
+
+    // Trigger webhook for bot creation
+    await webhookService.trigger(organization_id, 'bot.created', {
+      bot_id: bot.id,
+      name: bot.name,
+      platform: bot.platform,
+      description: bot.description,
+      created_at: bot.created_at
     });
 
     return res.status(201).json({
@@ -376,6 +448,20 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     };
     await logBotUpdated(req, organization_id, parseInt(id), oldValues, newValues);
 
+    // Trigger webhook for bot update
+    await webhookService.trigger(organization_id, 'bot.updated', {
+      bot_id: updatedBot.id,
+      name: updatedBot.name,
+      platform: updatedBot.platform,
+      description: updatedBot.description,
+      is_active: updatedBot.is_active,
+      updated_at: updatedBot.updated_at,
+      changes: {
+        old: oldValues,
+        new: newValues
+      }
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Bot updated successfully!',
@@ -433,6 +519,15 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
       name: bot.name,
       platform: bot.platform,
       description: bot.description
+    });
+
+    // Trigger webhook for bot deletion
+    await webhookService.trigger(organization_id, 'bot.deleted', {
+      bot_id: parseInt(id),
+      name: bot.name,
+      platform: bot.platform,
+      description: bot.description,
+      deleted_at: new Date().toISOString()
     });
 
     return res.status(200).json({

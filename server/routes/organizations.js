@@ -531,6 +531,82 @@ router.put('/:id/members/:userId', organizationContext, requireOrganization, che
 });
 
 /**
+ * PUT /api/organizations/:id/members/:userId/role
+ * Update member role (alternative route with /role suffix)
+ * Admin only
+ */
+router.put('/:id/members/:userId/role', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    const orgId = req.params.id;
+    const targetUserId = req.params.userId;
+    const { role } = req.body;
+
+    // Verify access
+    if (req.organization.id != orgId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this organization'
+      });
+    }
+
+    // Validation
+    if (!role || !['admin', 'member', 'viewer'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Must be admin, member, or viewer'
+      });
+    }
+
+    // Cannot change owner role
+    if (targetUserId == req.organization.owner_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change organization owner role'
+      });
+    }
+
+    // Get current role for audit log
+    const currentMember = await db.query(
+      'SELECT role FROM organization_members WHERE org_id = $1 AND user_id = $2',
+      [orgId, targetUserId]
+    );
+    const oldRole = currentMember.rows[0]?.role;
+
+    const query = `
+      UPDATE organization_members
+      SET role = $1
+      WHERE org_id = $2 AND user_id = $3
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [role, orgId, targetUserId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Member not found'
+      });
+    }
+
+    // Log member role change to audit trail
+    await logMemberRoleChanged(req, orgId, targetUserId, oldRole, role);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Member role updated successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Update member role error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error updating member role',
+      error: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/organizations/:id/members/:userId
  * Remove member from organization
  * Admin only (cannot remove owner)

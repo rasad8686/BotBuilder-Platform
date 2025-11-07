@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import botApi from '../api/bots';
+import UpgradeLimitModal from '../components/UpgradeLimitModal';
 
 export default function CreateBot() {
   const { t } = useTranslation();
@@ -17,6 +18,10 @@ export default function CreateBot() {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const navigate = useNavigate();
+
+  // Plan limit modal state
+  const [upgradeLimitModalOpen, setUpgradeLimitModalOpen] = useState(false);
+  const [limitErrorData, setLimitErrorData] = useState(null);
 
   // Validate form
   const validateForm = () => {
@@ -85,11 +90,18 @@ export default function CreateBot() {
       }
     } catch (err) {
       console.error('Create bot error:', err);
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to create bot. Please try again.'
-      );
+
+      // Check if this is a plan limit error
+      if (err.response?.data?.limitReached) {
+        setLimitErrorData(err.response.data);
+        setUpgradeLimitModalOpen(true);
+      } else {
+        setError(
+          err.response?.data?.message ||
+          err.message ||
+          'Failed to create bot. Please try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -283,6 +295,13 @@ export default function CreateBot() {
           </div>
         </div>
       )}
+
+      {/* Upgrade Limit Modal */}
+      <UpgradeLimitModal
+        isOpen={upgradeLimitModalOpen}
+        onClose={() => setUpgradeLimitModalOpen(false)}
+        limitData={limitErrorData}
+      />
     </div>
   );
 }

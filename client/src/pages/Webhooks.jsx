@@ -1,30 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FiPlus, FiTrash2, FiEdit2, FiCopy, FiRefreshCw, FiSend, FiCheck, FiX, FiEye } from 'react-icons/fi';
+import { API_URL } from '../config/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
+const API_BASE_URL = API_URL;
 
 export default function Webhooks() {
-  const [bots, setBots] = useState([]);
-  const [selectedBot, setSelectedBot] = useState(null);
-  const [webhookLogs, setWebhookLogs] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [testingWebhook, setTestingWebhook] = useState(false);
-  const [testUrl, setTestUrl] = useState('');
-  const [testResult, setTestResult] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [selectedWebhook, setSelectedWebhook] = useState(null);
+  const [webhookLogs, setWebhookLogs] = useState([]);
+  const [availableEvents, setAvailableEvents] = useState([]);
+  const [copiedSecret, setCopiedSecret] = useState(false);
   const navigate = useNavigate();
 
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    url: '',
+    events: []
+  });
+
   useEffect(() => {
-    fetchBots();
+    console.log('🟢 [INIT] Component mounted, fetching data...');
+    fetchWebhooks();
+    fetchAvailableEvents();
   }, []);
 
+  // Debug logging for availableEvents state changes
   useEffect(() => {
-    if (selectedBot) {
-      fetchWebhookLogs(selectedBot.id);
-    }
-  }, [selectedBot]);
+    console.log('🟡 [STATE] availableEvents changed:', availableEvents);
+  }, [availableEvents]);
 
-  const fetchBots = async () => {
+  const fetchWebhooks = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -32,16 +43,13 @@ export default function Webhooks() {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/bots`, {
+      const response = await axios.get(`${API_BASE_URL}/api/webhooks`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setBots(response.data);
-      if (response.data.length > 0) {
-        setSelectedBot(response.data[0]);
-      }
+      setWebhooks(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching bots:', error);
+      console.error('Error fetching webhooks:', error);
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -50,342 +58,400 @@ export default function Webhooks() {
     }
   };
 
-  const fetchWebhookLogs = async (botId) => {
+  const fetchAvailableEvents = async () => {
+    console.log('🔵 [EVENTS] Starting fetchAvailableEvents...');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/webhooks/${botId}/logs?limit=50`, {
+      console.log('🔵 [EVENTS] Token exists:', !!token);
+      console.log('🔵 [EVENTS] Token value:', token?.substring(0, 20) + '...');
+      console.log('🔵 [EVENTS] Fetching from URL:', `${API_BASE_URL}/api/webhooks/events/list`);
+
+      const response = await axios.get(`${API_BASE_URL}/api/webhooks/events/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setWebhookLogs(response.data);
+      console.log('🔵 [EVENTS] Response status:', response.status);
+      console.log('🔵 [EVENTS] Response data:', response.data);
+      console.log('🔵 [EVENTS] Events array:', response.data.data);
+      console.log('🔵 [EVENTS] Events count:', response.data.data?.length);
+
+      setAvailableEvents(response.data.data || []);
+      console.log('🔵 [EVENTS] State updated with', response.data.data?.length || 0, 'events');
     } catch (error) {
-      console.error('Error fetching webhook logs:', error);
+      console.error('🔴 [EVENTS] Error fetching events:', error);
+      console.error('🔴 [EVENTS] Error response:', error.response?.data);
+      console.error('🔴 [EVENTS] Error status:', error.response?.status);
     }
   };
 
-  const handleTestWebhook = async (e) => {
-    e.preventDefault();
-    if (!testUrl || !selectedBot) return;
+  const fetchWebhookLogs = async (webhookId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/webhooks/${webhookId}/logs?limit=50`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    setTestingWebhook(true);
-    setTestResult(null);
+      setWebhookLogs(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    }
+  };
+
+  const handleCreateWebhook = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.url || formData.events.length === 0) {
+      alert('Please fill all fields and select at least one event');
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${API_BASE_URL}/webhooks/${selectedBot.id}/test`,
-        { webhookUrl: testUrl },
+        `${API_BASE_URL}/api/webhooks`,
+        formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setTestResult({
-        success: true,
-        status: response.data.status,
-        responseTime: response.data.responseTime,
-        response: response.data.response
-      });
-
-      // Refresh logs
-      fetchWebhookLogs(selectedBot.id);
+      alert(`Webhook created! Secret: ${response.data.data.secret}\n\nSave this secret - it will not be shown again!`);
+      setShowCreateModal(false);
+      setFormData({ name: '', url: '', events: [] });
+      fetchWebhooks();
     } catch (error) {
-      setTestResult({
-        success: false,
-        error: error.response?.data?.error || error.message,
-        status: error.response?.data?.status
-      });
-    } finally {
-      setTestingWebhook(false);
+      console.error('Error creating webhook:', error);
+      alert(error.response?.data?.message || 'Failed to create webhook');
     }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+  const handleDeleteWebhook = async (webhookId) => {
+    if (!confirm('Are you sure you want to delete this webhook?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/api/webhooks/${webhookId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      fetchWebhooks();
+    } catch (error) {
+      console.error('Error deleting webhook:', error);
+      alert(error.response?.data?.message || 'Failed to delete webhook');
+    }
   };
 
-  const webhookUrl = selectedBot
-    ? `${API_BASE_URL}/webhooks/receive/${selectedBot.id}`
-    : '';
+  const handleTestWebhook = async (webhookId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_BASE_URL}/api/webhooks/${webhookId}/test`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(response.data.message);
+    } catch (error) {
+      console.error('Error testing webhook:', error);
+      alert(error.response?.data?.message || 'Failed to test webhook');
+    }
+  };
+
+  const handleToggleEvent = (eventName) => {
+    setFormData(prev => ({
+      ...prev,
+      events: prev.events.includes(eventName)
+        ? prev.events.filter(e => e !== eventName)
+        : [...prev.events, eventName]
+    }));
+  };
+
+  const viewLogs = (webhook) => {
+    setSelectedWebhook(webhook);
+    fetchWebhookLogs(webhook.id);
+    setShowLogsModal(true);
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading webhooks...</p>
         </div>
       </div>
     );
   }
 
-  if (bots.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div className="text-6xl mb-4">🔗</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">No Bots Yet</h2>
-            <p className="text-gray-600 mb-6">Create a bot first to set up webhooks</p>
-            <button
-              onClick={() => navigate('/create-bot')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Create Your First Bot
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Webhooks</h1>
-          <p className="text-gray-600">Configure and monitor webhook integrations for your bots</p>
-        </div>
-
-        {/* Bot Selector */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <label className="block text-gray-700 font-semibold mb-3">Select Bot</label>
-          <select
-            value={selectedBot?.id || ''}
-            onChange={(e) => {
-              const bot = bots.find(b => b.id === parseInt(e.target.value));
-              setSelectedBot(bot);
-            }}
-            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">Webhooks</h1>
+            <p className="text-gray-600">Manage webhook integrations for your bots</p>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
           >
-            {bots.map((bot) => (
-              <option key={bot.id} value={bot.id}>
-                {bot.name} ({bot.platform})
-              </option>
-            ))}
-          </select>
+            <FiPlus className="w-5 h-5" />
+            Create Webhook
+          </button>
         </div>
 
-        {selectedBot && (
-          <>
-            {/* Webhook URL Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Webhook URL</h2>
-              <p className="text-gray-600 mb-4">
-                Use this URL to receive webhook events from external platforms
-              </p>
+        {/* Webhooks List */}
+        {webhooks.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <div className="text-gray-400 mb-4">
+              <FiSend className="w-16 h-16 mx-auto" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No webhooks yet</h3>
+            <p className="text-gray-500 mb-6">Create your first webhook to start receiving events</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors"
+            >
+              <FiPlus className="w-5 h-5" />
+              Create Webhook
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {webhooks.map(webhook => (
+              <div key={webhook.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-semibold text-gray-800">{webhook.name}</h3>
+                      {webhook.is_active ? (
+                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Inactive
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3 font-mono bg-gray-50 p-2 rounded">
+                      {webhook.url}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {webhook.events.map(event => (
+                        <span key={event} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs">
+                          {event}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => viewLogs(webhook)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="View Logs"
+                    >
+                      <FiEye className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleTestWebhook(webhook.id)}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Test Webhook"
+                    >
+                      <FiSend className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWebhook(webhook.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <FiTrash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
 
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={webhookUrl}
-                  readOnly
-                  className="flex-1 px-4 py-3 bg-gray-50 border rounded-lg"
-                />
-                <button
-                  onClick={() => copyToClipboard(webhookUrl)}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                >
-                  📋 Copy
-                </button>
+                {/* Stats */}
+                {webhook.stats && (
+                  <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-800">{webhook.stats.total_attempts}</p>
+                      <p className="text-xs text-gray-500">Total</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">{webhook.stats.successful}</p>
+                      <p className="text-xs text-gray-500">Success</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-600">{webhook.stats.failed}</p>
+                      <p className="text-xs text-gray-500">Failed</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">{webhook.stats.success_rate}%</p>
+                      <p className="text-xs text-gray-500">Success Rate</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Create Webhook Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-800">Create Webhook</h2>
               </div>
 
-              {selectedBot.webhook_secret && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 mb-2">
-                    <strong>Webhook Secret:</strong> {selectedBot.webhook_secret.substring(0, 20)}...
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    Use this secret to verify webhook signatures (HMAC SHA-256)
-                  </p>
+              <form onSubmit={handleCreateWebhook} className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Webhook Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="My Webhook"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Webhook URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.url}
+                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://example.com/webhook"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Must be HTTPS in production. Use webhook.site for testing.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Select Events to Subscribe ({availableEvents.length} events available)
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                      {availableEvents.map(event => (
+                        <label
+                          key={event.name}
+                          className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.events.includes(event.name)}
+                            onChange={() => handleToggleEvent(event.name)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-gray-800">{event.name}</p>
+                            <p className="text-xs text-gray-500">{event.description}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Test Webhook Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Test Webhook</h2>
-              <p className="text-gray-600 mb-4">
-                Send a test webhook to verify your endpoint is working correctly
-              </p>
-
-              <form onSubmit={handleTestWebhook} className="mb-4">
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={testUrl}
-                    onChange={(e) => setTestUrl(e.target.value)}
-                    placeholder="https://your-server.com/webhook"
-                    required
-                    className="flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
+                <div className="flex gap-3 mt-6">
                   <button
                     type="submit"
-                    disabled={testingWebhook}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                   >
-                    {testingWebhook ? 'Testing...' : 'Test'}
+                    Create Webhook
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setFormData({ name: '', url: '', events: [] });
+                    }}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Cancel
                   </button>
                 </div>
               </form>
-
-              {testResult && (
-                <div className={`p-4 rounded-lg ${
-                  testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-                }`}>
-                  <p className={`font-semibold mb-2 ${
-                    testResult.success ? 'text-green-800' : 'text-red-800'
-                  }`}>
-                    {testResult.success ? '✅ Webhook Test Successful' : '❌ Webhook Test Failed'}
-                  </p>
-                  {testResult.success ? (
-                    <div className="text-sm text-green-700">
-                      <p>Status: {testResult.status}</p>
-                      <p>Response Time: {testResult.responseTime}ms</p>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-red-700">
-                      <p>Error: {testResult.error}</p>
-                      {testResult.status && <p>Status: {testResult.status}</p>}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+          </div>
+        )}
 
-            {/* Integration Guides */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Integration Guides</h2>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                {/* Telegram */}
-                <div className="border rounded-lg p-4">
-                  <div className="text-3xl mb-2">📱</div>
-                  <h3 className="font-bold text-gray-800 mb-2">Telegram</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Set up Telegram bot webhook integration
-                  </p>
-                  <code className="text-xs bg-gray-100 p-2 rounded block overflow-x-auto">
-                    curl -X POST \<br/>
-                    https://api.telegram.org/bot&lt;TOKEN&gt;/setWebhook \<br/>
-                    -d url={webhookUrl}
-                  </code>
+        {/* Logs Modal */}
+        {showLogsModal && selectedWebhook && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">{selectedWebhook.name} - Logs</h2>
+                  <p className="text-sm text-gray-500 mt-1">{selectedWebhook.url}</p>
                 </div>
-
-                {/* WhatsApp */}
-                <div className="border rounded-lg p-4">
-                  <div className="text-3xl mb-2">💬</div>
-                  <h3 className="font-bold text-gray-800 mb-2">WhatsApp</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Configure WhatsApp Business API
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Use webhook URL in Meta Business Suite → WhatsApp → Configuration → Webhooks
-                  </p>
-                </div>
-
-                {/* Discord */}
-                <div className="border rounded-lg p-4">
-                  <div className="text-3xl mb-2">🎮</div>
-                  <h3 className="font-bold text-gray-800 mb-2">Discord</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Set up Discord bot interactions
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Add interaction endpoint URL in Discord Developer Portal → Your App → General Information
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Webhook Logs */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Recent Webhook Logs</h2>
                 <button
-                  onClick={() => fetchWebhookLogs(selectedBot.id)}
-                  className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200"
+                  onClick={() => {
+                    setShowLogsModal(false);
+                    setSelectedWebhook(null);
+                    setWebhookLogs([]);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
                 >
-                  🔄 Refresh
+                  <FiX className="w-6 h-6" />
                 </button>
               </div>
 
-              {webhookLogs.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600">No webhook calls yet</p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Webhook calls will appear here once your bot starts receiving events
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {webhookLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className={`border rounded-lg p-4 ${
-                        log.response_status >= 200 && log.response_status < 300
-                          ? 'border-green-200 bg-green-50'
-                          : log.error_message
-                          ? 'border-red-200 bg-red-50'
-                          : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-800">
-                              {log.request_method} {log.webhook_url}
-                            </span>
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              log.response_status >= 200 && log.response_status < 300
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {log.response_status || 'Error'}
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <span>{new Date(log.created_at).toLocaleString()}</span>
-                            {log.response_time_ms && (
-                              <span className="ml-4">Response time: {log.response_time_ms}ms</span>
+              <div className="p-6">
+                {webhookLogs.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No logs yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {webhookLogs.map(log => (
+                      <div
+                        key={log.id}
+                        className={`border rounded-lg p-4 ${
+                          log.response_status >= 200 && log.response_status < 300
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-red-200 bg-red-50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-3">
+                            {log.response_status >= 200 && log.response_status < 300 ? (
+                              <FiCheck className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <FiX className="w-5 h-5 text-red-600" />
+                            )}
+                            <span className="font-semibold text-gray-800">{log.event_type}</span>
+                            {log.response_status && (
+                              <span className="text-sm text-gray-600">Status: {log.response_status}</span>
                             )}
                           </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.created_at).toLocaleString()}
+                          </span>
                         </div>
+                        {log.error && (
+                          <p className="text-sm text-red-700 mt-2">Error: {log.error}</p>
+                        )}
+                        {log.response_time_ms && (
+                          <p className="text-xs text-gray-600 mt-1">Response time: {log.response_time_ms}ms</p>
+                        )}
+                        {log.retry_count > 0 && (
+                          <p className="text-xs text-orange-600 mt-1">Retry count: {log.retry_count}</p>
+                        )}
                       </div>
-
-                      {log.error_message && (
-                        <div className="mt-2 text-sm text-red-700 bg-red-100 p-2 rounded">
-                          Error: {log.error_message}
-                        </div>
-                      )}
-
-                      {log.request_body && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-                            View Request Body
-                          </summary>
-                          <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-                            {JSON.stringify(log.request_body, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-
-                      {log.response_body && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-                            View Response Body
-                          </summary>
-                          <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-                            {log.response_body}
-                          </pre>
-                        </details>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

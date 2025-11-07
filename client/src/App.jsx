@@ -8,6 +8,7 @@ import BotMessages from './pages/BotMessages';
 import EditBot from './pages/EditBot';
 import FlowBuilder from './pages/FlowBuilder';
 import Analytics from './pages/Analytics';
+import AIConfiguration from './pages/AIConfiguration';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -22,9 +23,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminAuditLogs from './pages/AdminAuditLogs';
 import AdminHealth from './pages/AdminHealth';
 import WhiteLabelSettings from './pages/WhiteLabelSettings';
-
-// AI Pages
-import AIConfigPanel from './components/AI/AIConfigPanel';
+import AdminStats from './pages/AdminStats';
 
 // Layout & Contexts
 import Layout from './components/Layout';
@@ -55,7 +54,7 @@ function App() {
         <Route path="/bot/:botId/messages" element={<AuthenticatedApp><Layout><BotMessages /></Layout></AuthenticatedApp>} />
         <Route path="/bot/:botId/edit" element={<AuthenticatedApp><Layout><EditBot /></Layout></AuthenticatedApp>} />
         <Route path="/bots/:botId/flow" element={<AuthenticatedApp><FlowBuilder /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/ai" element={<AuthenticatedApp><Layout><AIConfigPanel /></Layout></AuthenticatedApp>} />
+        <Route path="/bots/:botId/ai-config" element={<AuthenticatedApp><Layout><AIConfiguration /></Layout></AuthenticatedApp>} />
         <Route path="/analytics" element={<AuthenticatedApp><Layout><Analytics /></Layout></AuthenticatedApp>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
@@ -73,6 +72,7 @@ function App() {
         <Route path="/admin/audit-logs" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminAuditLogs /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/health" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/whitelabel" element={<AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp>} />
+        <Route path="/admin/stats" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp>} />
       </Routes>
       </Router>
     </BrandProvider>

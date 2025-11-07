@@ -1,261 +1,147 @@
-/**
- * Pricing Card Component
- * Displays subscription plan details with features and pricing
- * @param {Object} plan - Plan object with name, price, interval, limits, features
- * @param {boolean} isCurrentPlan - Whether this is the user's current plan
- * @param {boolean} isPopular - Whether to highlight as popular
- * @param {function} onSelectPlan - Handler for plan selection
- * @param {boolean} loading - Loading state for button
- * @version 2025-11-01 - Fixed Unlimited concatenation bug with inline styles
- */
+import { Check, Zap, Crown, Star } from 'lucide-react';
+
 export default function PricingCard({
   plan,
   planKey,
-  isCurrentPlan = false,
-  isPopular = false,
+  isCurrentPlan,
+  isPopular,
   onSelectPlan,
-  loading = false
+  loading
 }) {
-  // Plan color themes
-  const planThemes = {
-    free: {
-      badge: 'bg-gray-100 text-gray-800',
-      button: 'bg-gray-600 hover:bg-gray-700',
-      border: 'border-gray-200',
-      accent: 'text-gray-600'
-    },
-    pro: {
-      badge: 'bg-purple-100 text-purple-800',
-      button: 'bg-purple-600 hover:bg-purple-700',
-      border: 'border-purple-200',
-      accent: 'text-purple-600'
-    },
-    enterprise: {
-      badge: 'bg-blue-100 text-blue-800',
-      button: 'bg-blue-600 hover:bg-blue-700',
-      border: 'border-blue-200',
-      accent: 'text-blue-600'
+  const getIcon = () => {
+    switch (planKey) {
+      case 'free':
+        return <Star className="w-8 h-8 text-gray-600" />;
+      case 'pro':
+        return <Zap className="w-8 h-8 text-purple-600" />;
+      case 'enterprise':
+        return <Crown className="w-8 h-8 text-blue-600" />;
+      default:
+        return <Star className="w-8 h-8 text-gray-600" />;
     }
   };
 
-  const theme = planThemes[planKey] || planThemes.free;
-
-  // Format price display
-  const formatPrice = (price, interval) => {
-    if (price === 0) return 'Free';
-    return `$${price}/${interval}`;
+  const getGradient = () => {
+    switch (planKey) {
+      case 'free':
+        return 'from-gray-50 to-gray-100';
+      case 'pro':
+        return 'from-purple-50 to-purple-100';
+      case 'enterprise':
+        return 'from-blue-50 to-blue-100';
+      default:
+        return 'from-gray-50 to-gray-100';
+    }
   };
 
-  // Format limits display
-  const formatLimit = (value) => {
-    if (value === -1) return 'Unlimited';
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
-    return value;
+  const getBorderColor = () => {
+    if (isCurrentPlan) return 'border-green-500';
+    if (isPopular) return 'border-purple-500';
+    return 'border-gray-200';
   };
 
-  // Plan rendering logic
+  const getButtonColor = () => {
+    if (isCurrentPlan) return 'bg-green-600 hover:bg-green-700';
+    if (planKey === 'pro') return 'bg-purple-600 hover:bg-purple-700';
+    if (planKey === 'enterprise') return 'bg-blue-600 hover:bg-blue-700';
+    return 'bg-gray-600 hover:bg-gray-700';
+  };
 
   return (
     <div
-      className={`
-        bg-white rounded-xl shadow-md p-6 border-2 transition-all duration-300
-        ${isPopular ? 'border-purple-500 shadow-xl scale-105' : theme.border}
-        ${isCurrentPlan ? 'ring-4 ring-green-200' : ''}
-        hover:shadow-lg relative
-      `}
+      className={`relative bg-white rounded-2xl shadow-lg border-2 ${getBorderColor()} overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105`}
     >
       {/* Popular Badge */}
-      {isPopular && (
-        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <span className="bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-            MOST POPULAR
-          </span>
+      {isPopular && !isCurrentPlan && (
+        <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 text-xs font-bold rounded-bl-lg">
+          MOST POPULAR
         </div>
       )}
 
       {/* Current Plan Badge */}
       {isCurrentPlan && (
-        <div className="absolute -top-3 right-6">
-          <span className="bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-            CURRENT PLAN
-          </span>
+        <div className="absolute top-0 right-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1 text-xs font-bold rounded-bl-lg">
+          CURRENT PLAN
         </div>
       )}
 
-      {/* Plan Header */}
-      <div className="text-center mb-6">
-        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-3 ${theme.badge}`}>
-          {planKey === 'free' && '🆓'}
-          {planKey === 'pro' && '⭐'}
-          {planKey === 'enterprise' && '👑'}
-          <span className="font-bold uppercase">{plan.name}</span>
+      {/* Header */}
+      <div className={`bg-gradient-to-br ${getGradient()} p-6 text-center`}>
+        <div className="flex justify-center mb-3">
+          {getIcon()}
         </div>
-
-        {/* Price */}
-        <div className="mb-4">
-          <div className={`text-4xl font-bold ${theme.accent}`}>
-            {plan.price === 0 ? (
-              'Free'
-            ) : (
-              <>
-                <span className="text-5xl">${plan.price}</span>
-                <span className="text-xl text-gray-500">/{plan.interval}</span>
-              </>
-            )}
-          </div>
+        <h3 className="text-2xl font-bold text-gray-900 capitalize mb-2">
+          {plan.name}
+        </h3>
+        <div className="flex items-baseline justify-center gap-1">
+          <span className="text-5xl font-extrabold text-gray-900">
+            ${plan.price}
+          </span>
+          {plan.price > 0 && (
+            <span className="text-gray-600 text-lg">/month</span>
+          )}
         </div>
+        {plan.price === 0 && (
+          <span className="text-gray-600 text-sm">Forever free</span>
+        )}
       </div>
 
-      {/* Plan Limits - Enterprise gets bordered boxes */}
-      {planKey === 'enterprise' && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          gap: '32px',
-          padding: '24px 16px',
-          marginBottom: '24px'
-        }}>
-          {/* Bots Box */}
-          <div style={{
-            textAlign: 'center',
-            padding: '16px',
-            backgroundColor: '#f9fafb',
-            border: '2px solid #e5e7eb',
-            borderRadius: '8px',
-            minWidth: '100px'
-          }}>
-            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
-              Unlimited
-            </div>
-            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
-              Bots
-            </div>
-          </div>
-
-          {/* Messages Box */}
-          <div style={{
-            textAlign: 'center',
-            padding: '16px',
-            backgroundColor: '#f9fafb',
-            border: '2px solid #e5e7eb',
-            borderRadius: '8px',
-            minWidth: '100px'
-          }}>
-            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
-              Unlimited
-            </div>
-            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
-              Messages
-            </div>
-          </div>
-
-          {/* API Calls Box */}
-          <div style={{
-            textAlign: 'center',
-            padding: '16px',
-            backgroundColor: '#f9fafb',
-            border: '2px solid #e5e7eb',
-            borderRadius: '8px',
-            minWidth: '100px'
-          }}>
-            <div style={{fontSize: '32px', fontWeight: 'bold', marginBottom: '8px'}}>
-              Unlimited
-            </div>
-            <div style={{fontSize: '14px', color: '#6b7280', textTransform: 'uppercase'}}>
-              API Calls
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Non-Enterprise plans - show limits in simple format */}
-      {planKey !== 'enterprise' && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          padding: '20px',
-          marginBottom: '30px',
-          gap: '16px'
-        }}>
-          <div style={{textAlign: 'center'}}>
-            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
-              {plan.limits?.bots === -1 ? '∞' : formatLimit(plan.limits?.bots || 0)}
-            </div>
-            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>Bots</div>
-          </div>
-          <div style={{textAlign: 'center'}}>
-            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
-              {plan.limits?.messages === -1 ? '∞' : formatLimit(plan.limits?.messages || 0)}
-            </div>
-            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>Messages</div>
-          </div>
-          <div style={{textAlign: 'center'}}>
-            <div style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '8px'}}>
-              {plan.limits?.apiCalls === -1 ? '∞' : formatLimit(plan.limits?.apiCalls || 0)}
-            </div>
-            <div style={{fontSize: '12px', color: '#666', textTransform: 'uppercase'}}>API Calls</div>
-          </div>
-        </div>
-      )}
-
-      {/* Features List */}
-      <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Features included:</h4>
-        <ul className="space-y-2">
+      {/* Features */}
+      <div className="p-6">
+        <ul className="space-y-3 mb-6">
           {plan.features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-              <span className="text-green-500 mt-0.5">✓</span>
-              <span>{feature}</span>
+            <li key={index} className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <div className={`rounded-full p-1 ${
+                  planKey === 'pro' ? 'bg-purple-100' :
+                  planKey === 'enterprise' ? 'bg-blue-100' :
+                  'bg-gray-100'
+                }`}>
+                  <Check className={`w-4 h-4 ${
+                    planKey === 'pro' ? 'text-purple-600' :
+                    planKey === 'enterprise' ? 'text-blue-600' :
+                    'text-gray-600'
+                  }`} />
+                </div>
+              </div>
+              <span className="text-gray-700 text-sm leading-relaxed">
+                {feature}
+              </span>
             </li>
           ))}
         </ul>
-      </div>
 
-      {/* Action Button */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log(`[PricingCard] Button clicked for plan: ${planKey}`);
-          if (!isCurrentPlan && !loading) {
-            onSelectPlan(planKey);
-          }
-        }}
-        disabled={isCurrentPlan || loading}
-        className={`
-          w-full py-3 px-4 rounded-lg font-semibold text-white
-          transition-all duration-200
-          ${isCurrentPlan
-            ? 'bg-green-500 cursor-default'
-            : loading
+        {/* Action Button */}
+        <button
+          onClick={() => onSelectPlan(planKey)}
+          disabled={loading || isCurrentPlan}
+          className={`w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-300 ${
+            isCurrentPlan
               ? 'bg-gray-400 cursor-not-allowed'
-              : `${theme.button} hover:scale-105 active:scale-95`
-          }
-        `}
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="animate-spin">⚙️</span>
-            Processing...
-          </span>
-        ) : isCurrentPlan ? (
-          <span className="flex items-center justify-center gap-2">
-            ✓ Current Plan
-          </span>
-        ) : planKey === 'free' ? (
-          'Downgrade to Free'
-        ) : (
-          `Upgrade to ${plan.name}`
-        )}
-      </button>
+              : getButtonColor()
+          } ${loading ? 'opacity-50 cursor-wait' : ''} shadow-md hover:shadow-xl`}
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Processing...
+            </span>
+          ) : isCurrentPlan ? (
+            'Current Plan'
+          ) : planKey === 'free' ? (
+            'Get Started Free'
+          ) : (
+            `Upgrade to ${plan.name}`
+          )}
+        </button>
 
-      {/* Footer Note */}
-      {!isCurrentPlan && planKey !== 'free' && (
-        <p className="text-xs text-gray-500 text-center mt-3">
-          Cancel anytime. No hidden fees.
-        </p>
-      )}
+        {/* Additional Info */}
+        {!isCurrentPlan && plan.price > 0 && (
+          <p className="text-center text-xs text-gray-500 mt-3">
+            Cancel anytime • No hidden fees
+          </p>
+        )}
+      </div>
     </div>
   );
 }

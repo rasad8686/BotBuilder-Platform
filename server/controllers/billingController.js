@@ -1,4 +1,5 @@
 const db = require('../db');
+const webhookService = require('../services/webhookService');
 
 // Initialize Stripe only if key is configured
 let stripe = null;
@@ -7,12 +8,23 @@ const STRIPE_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
 if (STRIPE_CONFIGURED) {
   try {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const keyPrefix = process.env.STRIPE_SECRET_KEY.substring(0, 20);
+    const keySuffix = process.env.STRIPE_SECRET_KEY.slice(-4);
+    console.log('✅ ========================================');
     console.log('✅ Stripe initialized successfully');
+    console.log(`✅ Key: ${keyPrefix}...${keySuffix}`);
+    console.log(`✅ Pro Price ID: ${process.env.STRIPE_PRO_PRICE_ID || 'NOT SET'}`);
+    console.log(`✅ Enterprise Price ID: ${process.env.STRIPE_ENTERPRISE_PRICE_ID || 'NOT SET'}`);
+    console.log('✅ ========================================');
   } catch (error) {
+    console.error('❌ ========================================');
     console.error('❌ Failed to initialize Stripe:', error.message);
+    console.error('❌ ========================================');
   }
 } else {
+  console.warn('⚠️ ========================================');
   console.warn('⚠️ Stripe not configured - billing features will be limited to viewing plans');
+  console.warn('⚠️ ========================================');
 }
 
 /**
@@ -183,6 +195,20 @@ async function getSubscription(req, res) {
   }
 }
 
+// Idempotency cache (in-memory store)
+// In production, use Redis or database
+const idempotencyCache = new Map();
+
+// Clean old idempotency keys after 24 hours
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of idempotencyCache.entries()) {
+    if (now - value.timestamp > 24 * 60 * 60 * 1000) {
+      idempotencyCache.delete(key);
+    }
+  }
+}, 60 * 60 * 1000); // Clean every hour
+
 /**
  * Create Stripe checkout session for upgrade
  * POST /api/billing/checkout
@@ -194,31 +220,37 @@ async function createCheckoutSession(req, res) {
     if (stripeError) return stripeError;
 
     const organizationId = req.organization.id;
-    const { plan } = req.body;
+    const { priceId } = req.body;
+    const idempotencyKey = req.headers['idempotency-key'];
 
-    if (!plan || !['pro', 'enterprise'].includes(plan)) {
+    // Check idempotency key
+    if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
+      console.log('🔁 Idempotency: Returning cached response for key:', idempotencyKey);
+      return res.status(200).json(idempotencyCache.get(idempotencyKey).response);
+    }
+
+    // Validate priceId
+    if (!priceId) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid plan selected. Please choose either "pro" or "enterprise".'
+        message: 'Price ID is required'
+      });
+    }
+
+    // Determine plan from priceId
+    let plan = null;
+    if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+      plan = 'pro';
+    } else if (priceId === process.env.STRIPE_ENTERPRISE_PRICE_ID) {
+      plan = 'enterprise';
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid price ID'
       });
     }
 
     const planDetails = PLANS[plan];
-
-    if (!planDetails) {
-      return res.status(400).json({
-        success: false,
-        message: `Plan "${plan}" not found`
-      });
-    }
-
-    if (!planDetails.stripePriceId) {
-      return res.status(503).json({
-        success: false,
-        message: 'Stripe price ID not configured for this plan. Please contact support.',
-        code: 'STRIPE_PRICE_NOT_CONFIGURED'
-      });
-    }
 
     // Get organization
     const orgResult = await db.query(
@@ -254,14 +286,16 @@ async function createCheckoutSession(req, res) {
       );
     }
 
-    // Create checkout session
+    console.log('🔵 Creating checkout session:', { plan, priceId, idempotencyKey });
+
+    // Create checkout session with Stripe idempotency
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
         {
-          price: planDetails.stripePriceId,
+          price: priceId,
           quantity: 1
         }
       ],
@@ -271,13 +305,26 @@ async function createCheckoutSession(req, res) {
         organizationId: org.id,
         plan: plan
       }
+    }, {
+      idempotencyKey: idempotencyKey // Pass idempotency key to Stripe
     });
 
-    return res.status(200).json({
+    const response = {
       success: true,
       sessionId: session.id,
       url: session.url
-    });
+    };
+
+    // Cache response for idempotency
+    if (idempotencyKey) {
+      idempotencyCache.set(idempotencyKey, {
+        response,
+        timestamp: Date.now()
+      });
+      console.log('💾 Cached response for idempotency key:', idempotencyKey);
+    }
+
+    return res.status(200).json(response);
 
   } catch (error) {
     console.error('Create checkout session error:', error);
@@ -307,10 +354,12 @@ async function createPortalSession(req, res) {
     );
 
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_customer_id) {
+      console.log(`⚠️ User attempted to access portal without Stripe customer ID (org: ${organizationId})`);
       return res.status(400).json({
         success: false,
-        message: 'No payment method configured. Please upgrade to a paid plan first.',
-        code: 'NO_STRIPE_CUSTOMER'
+        message: 'You need to subscribe to a paid plan before accessing subscription management.',
+        code: 'NO_STRIPE_CUSTOMER',
+        hint: 'Please upgrade to Pro or Enterprise plan first'
       });
     }
 
@@ -494,10 +543,12 @@ async function cancelSubscription(req, res) {
     );
 
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_subscription_id) {
+      console.log(`⚠️ User attempted to cancel subscription without active subscription (org: ${organizationId})`);
       return res.status(400).json({
         success: false,
-        message: 'No active subscription to cancel',
-        code: 'NO_ACTIVE_SUBSCRIPTION'
+        message: 'You don\'t have an active paid subscription to cancel.',
+        code: 'NO_ACTIVE_SUBSCRIPTION',
+        hint: 'Only Pro and Enterprise plans can be canceled'
       });
     }
 
@@ -548,6 +599,355 @@ async function getPlans(req, res) {
   }
 }
 
+/**
+ * Handle Stripe webhook events
+ * POST /api/billing/webhook
+ */
+async function handleWebhook(req, res) {
+  // Get webhook secret
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret || webhookSecret === 'whsec_your_webhook_secret_here') {
+    console.error('❌ STRIPE_WEBHOOK_SECRET not configured properly');
+    return res.status(500).json({
+      success: false,
+      message: 'Webhook secret not configured'
+    });
+  }
+
+  // Verify Stripe is configured
+  if (!isStripeConfigured()) {
+    console.error('❌ Stripe not configured');
+    return res.status(500).json({
+      success: false,
+      message: 'Stripe not configured'
+    });
+  }
+
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    // Verify webhook signature
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+    console.log('\n========== STRIPE WEBHOOK RECEIVED ==========');
+    console.log(`Event Type: ${event.type}`);
+    console.log(`Event ID: ${event.id}`);
+  } catch (err) {
+    console.error('❌ Webhook signature verification failed:', err.message);
+    return res.status(400).json({
+      success: false,
+      message: `Webhook Error: ${err.message}`
+    });
+  }
+
+  try {
+    // Handle different event types
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object);
+        break;
+
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object);
+        break;
+
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(event.data.object);
+        break;
+
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data.object);
+        break;
+
+      default:
+        console.log(`⚠️ Unhandled event type: ${event.type}`);
+    }
+
+    console.log('✅ Webhook processed successfully');
+    console.log('========== WEBHOOK END ==========\n');
+
+    return res.status(200).json({ received: true });
+
+  } catch (error) {
+    console.error('❌ Error processing webhook:', error);
+    console.error('========== WEBHOOK ERROR END ==========\n');
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing webhook',
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Handle checkout.session.completed event
+ * When a customer completes the checkout process
+ */
+async function handleCheckoutSessionCompleted(session) {
+  console.log('\n--- Processing checkout.session.completed ---');
+  console.log(`Session ID: ${session.id}`);
+  console.log(`Customer: ${session.customer}`);
+  console.log(`Subscription: ${session.subscription}`);
+
+  const organizationId = session.metadata?.organizationId;
+  const plan = session.metadata?.plan;
+
+  if (!organizationId) {
+    console.error('❌ No organizationId in session metadata');
+    return;
+  }
+
+  try {
+    // Get the subscription details from Stripe
+    const subscription = await stripe.subscriptions.retrieve(session.subscription);
+
+    console.log(`Plan: ${plan}`);
+    console.log(`Status: ${subscription.status}`);
+    console.log(`Current Period End: ${new Date(subscription.current_period_end * 1000)}`);
+
+    // Update organization with subscription details
+    const result = await db.query(
+      `UPDATE organizations
+       SET stripe_customer_id = $1,
+           stripe_subscription_id = $2,
+           subscription_status = $3,
+           plan_tier = $4,
+           subscription_current_period_end = $5
+       WHERE id = $6
+       RETURNING id, name, plan_tier`,
+      [
+        session.customer,
+        session.subscription,
+        subscription.status,
+        plan,
+        new Date(subscription.current_period_end * 1000),
+        organizationId
+      ]
+    );
+
+    if (result.rows.length > 0) {
+      console.log(`✅ Organization ${result.rows[0].name} upgraded to ${plan} plan`);
+
+      // Trigger webhook for user subscription
+      await webhookService.trigger(organizationId, 'user.subscribed', {
+        organization_id: organizationId,
+        organization_name: result.rows[0].name,
+        plan: plan,
+        subscription_id: session.subscription,
+        status: subscription.status,
+        current_period_end: new Date(subscription.current_period_end * 1000),
+        subscribed_at: new Date().toISOString()
+      });
+    } else {
+      console.error(`❌ Organization ${organizationId} not found`);
+    }
+
+  } catch (error) {
+    console.error('❌ Error in handleCheckoutSessionCompleted:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle customer.subscription.updated event
+ * When a subscription is modified (plan change, cancellation scheduled, etc.)
+ */
+async function handleSubscriptionUpdated(subscription) {
+  console.log('\n--- Processing customer.subscription.updated ---');
+  console.log(`Subscription ID: ${subscription.id}`);
+  console.log(`Status: ${subscription.status}`);
+  console.log(`Cancel at period end: ${subscription.cancel_at_period_end}`);
+
+  try {
+    // Find organization by subscription ID
+    const orgResult = await db.query(
+      'SELECT id, name, plan_tier FROM organizations WHERE stripe_subscription_id = $1',
+      [subscription.id]
+    );
+
+    if (orgResult.rows.length === 0) {
+      console.log(`⚠️ No organization found with subscription ID: ${subscription.id}`);
+      return;
+    }
+
+    const org = orgResult.rows[0];
+
+    // Determine plan tier from subscription items
+    let newPlanTier = org.plan_tier; // Default to current plan
+
+    // Check if subscription has items and get the price ID
+    if (subscription.items?.data?.length > 0) {
+      const priceId = subscription.items.data[0].price.id;
+
+      // Map price ID to plan tier
+      if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+        newPlanTier = 'pro';
+      } else if (priceId === process.env.STRIPE_ENTERPRISE_PRICE_ID) {
+        newPlanTier = 'enterprise';
+      }
+    }
+
+    console.log(`Current plan: ${org.plan_tier}, New plan: ${newPlanTier}`);
+    console.log(`Current Period End: ${new Date(subscription.current_period_end * 1000)}`);
+
+    // Update organization
+    const result = await db.query(
+      `UPDATE organizations
+       SET subscription_status = $1,
+           plan_tier = $2,
+           subscription_current_period_end = $3
+       WHERE id = $4
+       RETURNING id, name, plan_tier, subscription_status`,
+      [
+        subscription.status,
+        newPlanTier,
+        new Date(subscription.current_period_end * 1000),
+        org.id
+      ]
+    );
+
+    if (result.rows.length > 0) {
+      console.log(`✅ Organization ${result.rows[0].name} subscription updated`);
+      console.log(`   Status: ${result.rows[0].subscription_status}`);
+      console.log(`   Plan: ${result.rows[0].plan_tier}`);
+    }
+
+  } catch (error) {
+    console.error('❌ Error in handleSubscriptionUpdated:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle customer.subscription.deleted event
+ * When a subscription is canceled/expired
+ */
+async function handleSubscriptionDeleted(subscription) {
+  console.log('\n--- Processing customer.subscription.deleted ---');
+  console.log(`Subscription ID: ${subscription.id}`);
+  console.log(`Status: ${subscription.status}`);
+
+  try {
+    // Find organization by subscription ID
+    const orgResult = await db.query(
+      'SELECT id, name FROM organizations WHERE stripe_subscription_id = $1',
+      [subscription.id]
+    );
+
+    if (orgResult.rows.length === 0) {
+      console.log(`⚠️ No organization found with subscription ID: ${subscription.id}`);
+      return;
+    }
+
+    const org = orgResult.rows[0];
+
+    // Downgrade to free plan
+    const result = await db.query(
+      `UPDATE organizations
+       SET subscription_status = $1,
+           plan_tier = $2,
+           stripe_subscription_id = NULL,
+           subscription_current_period_end = NULL
+       WHERE id = $3
+       RETURNING id, name, plan_tier, subscription_status`,
+      [
+        'canceled',
+        'free',
+        org.id
+      ]
+    );
+
+    if (result.rows.length > 0) {
+      console.log(`✅ Organization ${result.rows[0].name} downgraded to free plan`);
+      console.log(`   Status: ${result.rows[0].subscription_status}`);
+
+      // Trigger webhook for user unsubscription
+      await webhookService.trigger(org.id, 'user.unsubscribed', {
+        organization_id: org.id,
+        organization_name: result.rows[0].name,
+        previous_plan: subscription.plan?.nickname || 'unknown',
+        downgraded_to: 'free',
+        subscription_id: subscription.id,
+        status: 'canceled',
+        unsubscribed_at: new Date().toISOString()
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error in handleSubscriptionDeleted:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle invoice.payment_succeeded event
+ * When a payment is successful
+ */
+async function handleInvoicePaymentSucceeded(invoice) {
+  console.log('\n--- Processing invoice.payment_succeeded ---');
+  console.log(`Invoice ID: ${invoice.id}`);
+  console.log(`Amount: ${invoice.amount_paid / 100} ${invoice.currency.toUpperCase()}`);
+  console.log(`Subscription: ${invoice.subscription}`);
+
+  // You can add additional logic here, such as:
+  // - Sending a receipt email
+  // - Recording the payment in a payments table
+  // - Triggering notifications
+
+  console.log('✅ Payment recorded successfully');
+}
+
+/**
+ * Handle invoice.payment_failed event
+ * When a payment fails
+ */
+async function handleInvoicePaymentFailed(invoice) {
+  console.log('\n--- Processing invoice.payment_failed ---');
+  console.log(`Invoice ID: ${invoice.id}`);
+  console.log(`Amount: ${invoice.amount_due / 100} ${invoice.currency.toUpperCase()}`);
+  console.log(`Subscription: ${invoice.subscription}`);
+
+  try {
+    // Find organization by subscription ID
+    const orgResult = await db.query(
+      'SELECT id, name FROM organizations WHERE stripe_subscription_id = $1',
+      [invoice.subscription]
+    );
+
+    if (orgResult.rows.length === 0) {
+      console.log(`⚠️ No organization found with subscription ID: ${invoice.subscription}`);
+      return;
+    }
+
+    const org = orgResult.rows[0];
+
+    // Update subscription status to past_due
+    await db.query(
+      `UPDATE organizations
+       SET subscription_status = $1
+       WHERE id = $2`,
+      ['past_due', org.id]
+    );
+
+    console.log(`⚠️ Organization ${org.name} marked as past_due`);
+
+    // You can add additional logic here, such as:
+    // - Sending a payment failed email
+    // - Limiting access to premium features
+    // - Setting up retry logic
+
+  } catch (error) {
+    console.error('❌ Error in handleInvoicePaymentFailed:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getSubscription,
   createCheckoutSession,
@@ -556,5 +956,6 @@ module.exports = {
   getUsage,
   cancelSubscription,
   getPlans,
+  handleWebhook,
   PLANS
 };

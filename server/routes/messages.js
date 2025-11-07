@@ -4,6 +4,8 @@ const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
+const { checkMessageLimit } = require('../middleware/checkMessageLimit');
+const webhookService = require('../services/webhookService');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -33,8 +35,9 @@ async function verifyBotInOrganization(botId, organizationId) {
  * Required: bot_id, message_type, content
  * Optional: trigger_keywords
  * Permission: member or admin
+ * Message limit check applied
  */
-router.post('/', checkPermission('member'), async (req, res) => {
+router.post('/', checkMessageLimit, checkPermission('member'), async (req, res) => {
   try {
     const { bot_id, message_type, content, trigger_keywords } = req.body;
     const organization_id = req.organization.id;
@@ -96,10 +99,40 @@ router.post('/', checkPermission('member'), async (req, res) => {
     const result = await db.query(query, values);
     const message = result.rows[0];
 
+    // Increment message usage count
+    try {
+      await db.query(
+        `INSERT INTO message_usage (organization_id, message_count, period_start)
+         VALUES ($1, 1, CURRENT_TIMESTAMP)
+         ON CONFLICT (organization_id)
+         WHERE period_end IS NULL
+         DO UPDATE SET
+           message_count = message_usage.message_count + 1,
+           updated_at = CURRENT_TIMESTAMP`,
+        [organization_id]
+      );
+
+      console.log(`[Message Usage] Org ${organization_id}: Incremented count`);
+    } catch (usageError) {
+      // Log error but don't fail the request
+      console.error('[Message Usage] Failed to increment count:', usageError.message);
+    }
+
+    // Trigger webhook for message received
+    await webhookService.trigger(organization_id, 'message.received', {
+      message_id: message.id,
+      bot_id: message.bot_id,
+      message_type: message.message_type,
+      content: message.content,
+      trigger_keywords: message.trigger_keywords,
+      created_at: message.created_at
+    });
+
     return res.status(201).json({
       success: true,
       message: 'Message created successfully!',
-      data: message
+      data: message,
+      usage: req.messageUsage // Include usage info if available
     });
 
   } catch (error) {

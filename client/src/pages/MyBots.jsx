@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import botApi from '../api/bots';
 import BotCard from '../components/BotCard';
 import ConfirmModal from '../components/ConfirmModal';
 import Pagination from '../components/Pagination';
 import PermissionGuard from '../components/PermissionGuard';
+import UpgradeLimitModal from '../components/UpgradeLimitModal';
+import { API_URL } from '../config/api';
 
 export default function MyBots() {
   const { t } = useTranslation();
@@ -25,9 +28,30 @@ export default function MyBots() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Plan limits state
+  const [subscription, setSubscription] = useState(null);
+  const [upgradeLimitModalOpen, setUpgradeLimitModalOpen] = useState(false);
+  const [limitErrorData, setLimitErrorData] = useState(null);
+
   useEffect(() => {
     fetchBots();
+    fetchSubscription();
   }, [currentPage, itemsPerPage, usePagination]);
+
+  // Fetch subscription/plan info
+  const fetchSubscription = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/billing/subscription`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.data.success) {
+        setSubscription(response.data.subscription);
+      }
+    } catch (err) {
+      console.error('Error fetching subscription:', err);
+    }
+  };
 
   useEffect(() => {
     // Show success message if bot was just created
@@ -132,6 +156,53 @@ export default function MyBots() {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
+  // Check if user can create more bots based on plan limits
+  const getPlanLimits = () => {
+    const limits = {
+      free: 1,
+      pro: 10,
+      enterprise: -1 // unlimited
+    };
+
+    const currentPlan = subscription?.plan || 'free';
+    const maxBots = limits[currentPlan];
+    const currentBots = bots.length;
+
+    return {
+      currentPlan,
+      maxBots,
+      currentBots,
+      canCreate: maxBots === -1 || currentBots < maxBots,
+      isAtLimit: maxBots !== -1 && currentBots >= maxBots
+    };
+  };
+
+  // Handle create bot button click with limit check
+  const handleCreateBot = () => {
+    const limits = getPlanLimits();
+
+    if (limits.isAtLimit) {
+      // Show upgrade modal
+      const upgradePlan = limits.currentPlan === 'free' ? 'pro' : 'enterprise';
+      const upgradeMessage = limits.currentPlan === 'free'
+        ? 'Upgrade to Pro for 10 bots or Enterprise for unlimited bots'
+        : 'Upgrade to Enterprise for unlimited bots';
+
+      setLimitErrorData({
+        currentPlan: limits.currentPlan,
+        currentBots: limits.currentBots,
+        maxBots: limits.maxBots,
+        message: upgradeMessage,
+        upgradePlan: upgradePlan,
+        limitReached: true
+      });
+      setUpgradeLimitModalOpen(true);
+    } else {
+      // Navigate to create bot page
+      navigate('/create-bot');
+    }
+  };
+
   // Loading skeleton
   if (loading) {
     return (
@@ -173,12 +244,31 @@ export default function MyBots() {
             </p>
           </div>
           <PermissionGuard require="member">
-            <button
-              onClick={() => navigate('/create-bot')}
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
-            >
-              + Create New Bot
-            </button>
+            {(() => {
+              const limits = getPlanLimits();
+              const isAtLimit = limits.isAtLimit;
+
+              return (
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    onClick={handleCreateBot}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-colors shadow-md ${
+                      isAtLimit
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                    }`}
+                    disabled={isAtLimit}
+                  >
+                    {isAtLimit ? '⚠️ Limit Reached' : '+ Create New Bot'}
+                  </button>
+                  {subscription && (
+                    <span className="text-xs text-gray-600">
+                      {limits.currentBots} / {limits.maxBots === -1 ? '∞' : limits.maxBots} bots
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </PermissionGuard>
         </div>
 
@@ -260,7 +350,7 @@ export default function MyBots() {
               }
             >
               <button
-                onClick={() => navigate('/create-bot')}
+                onClick={handleCreateBot}
                 className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
               >
                 Create Your First Bot
@@ -326,6 +416,13 @@ export default function MyBots() {
         confirmText="Delete"
         cancelText="Cancel"
         isDanger={true}
+      />
+
+      {/* Upgrade Limit Modal */}
+      <UpgradeLimitModal
+        isOpen={upgradeLimitModalOpen}
+        onClose={() => setUpgradeLimitModalOpen(false)}
+        limitData={limitErrorData}
       />
     </div>
   );

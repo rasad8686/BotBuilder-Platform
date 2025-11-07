@@ -58,7 +58,10 @@
       "Bash(client/public/version.txt)",
       "Bash(sed:*)",
       "Bash(timeout 5 bash:*)",
-      "Bash(python -m json.tool:*)"
+      "Bash(python -m json.tool:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(timeout 10 node:*)"
     ],
     "deny": [],
     "ask": []
