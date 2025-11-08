@@ -29,6 +29,13 @@ export default function AIConfiguration() {
 
   const [hasConfig, setHasConfig] = useState(false);
 
+  // Test tab state
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testError, setTestError] = useState('');
+  const [sessionId, setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+
   useEffect(() => {
     loadConfig();
   }, [botId]);
@@ -108,7 +115,7 @@ export default function AIConfiguration() {
       description: 'GPT models from OpenAI'
     },
     {
-      id: 'anthropic',
+      id: 'claude',
       name: 'Claude',
       modelsCount: 3,
       description: 'Claude models from Anthropic'
@@ -142,26 +149,26 @@ export default function AIConfiguration() {
 
   const claudeModels = [
     {
-      id: 'claude-3-5-sonnet-20241022',
-      name: 'Claude 3.5 Sonnet',
+      id: 'claude-sonnet-4-5',
+      name: 'Claude Sonnet 4.5',
       description: 'Most intelligent model, best for complex tasks',
       pricing: '$3/$15 per 1M tokens',
       maxTokens: '8,192 max tokens',
       recommended: true
     },
     {
-      id: 'claude-3-5-haiku-20241022',
-      name: 'Claude 3.5 Haiku',
+      id: 'claude-haiku-4-5',
+      name: 'Claude Haiku 4.5',
       description: 'Fastest model, great for simple tasks',
-      pricing: '$0.8/$4 per 1M tokens',
+      pricing: '$1/$5 per 1M tokens',
       maxTokens: '8,192 max tokens'
     },
     {
-      id: 'claude-3-opus-20240229',
-      name: 'Claude 3 Opus',
-      description: 'Previous generation flagship model',
-      pricing: '$15/$75 per 1M tokens',
-      maxTokens: '4,096 max tokens'
+      id: 'claude-3-5-haiku-20241022',
+      name: 'Claude 3.5 Haiku',
+      description: 'Legacy fast model',
+      pricing: '$0.8/$4 per 1M tokens',
+      maxTokens: '8,192 max tokens'
     }
   ];
 
@@ -169,6 +176,82 @@ export default function AIConfiguration() {
 
   const wordCount = config.systemPrompt.trim().split(/\s+/).filter(w => w.length > 0).length;
   const charCount = config.systemPrompt.length;
+
+  // Test tab handlers
+  const handleTestConnection = async () => {
+    try {
+      setTesting(true);
+      setTestError('');
+
+      // Simple connection test
+      const response = await aiApi.getConfig(botId);
+
+      if (response.config) {
+        alert('✅ Connection successful! AI is configured and ready.');
+      }
+    } catch (err) {
+      setTestError(err.response?.data?.message || 'Failed to connect to AI service');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || testing) return;
+
+    const userMessage = {
+      role: 'user',
+      content: inputMessage.trim(),
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages([...messages, userMessage]);
+    setInputMessage('');
+    setTesting(true);
+    setTestError('');
+
+    const startTime = Date.now();
+
+    try {
+      // Call AI chat endpoint
+      const response = await aiApi.sendChat(botId, {
+        message: inputMessage.trim(),
+        sessionId: sessionId
+      });
+
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+
+      const botMessage = {
+        role: 'assistant',
+        content: response.response || 'No response',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        tokens: response.usage?.totalTokens || response.usage?.total_tokens || 0,
+        cost: response.cost || 0,
+        responseTime: response.responseTime || responseTime
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      setTestError(err.response?.data?.message || 'Failed to get AI response. Make sure your configuration is saved and API key is valid.');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+    setTestError('');
+    // Generate new session ID for fresh conversation
+    setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  };
 
   if (loading) {
     return (
@@ -253,7 +336,7 @@ export default function AIConfiguration() {
                         onClick={() => setConfig({
                           ...config,
                           provider: provider.id,
-                          model: provider.id === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-sonnet-20241022'
+                          model: provider.id === 'openai' ? 'gpt-4o-mini' : 'claude-sonnet-4-5'
                         })}
                         className={`relative p-4 rounded-lg border-2 transition-all text-left ${
                           config.provider === provider.id
@@ -534,22 +617,120 @@ export default function AIConfiguration() {
 
             {/* TEST TAB */}
             {activeTab === 'test' && (
-              <div>
-                {!hasConfig ? (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">⚙️</div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      No AI Configuration Yet
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Configure AI settings in the Setup tab first, then come back here to test.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-600">
-                    Test interface will be available after saving configuration.
+              <div className="space-y-6">
+                {/* Connection Test Section */}
+                <div className="flex items-center justify-between">
+                  <label className="text-gray-900 font-semibold">Connection Test</label>
+                  <button
+                    onClick={handleTestConnection}
+                    disabled={testing}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {testing ? 'Testing...' : 'Test Connection'}
+                  </button>
+                </div>
+
+                {/* Warning if no config */}
+                {!hasConfig && (
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+                    ⚠️ Please save your AI configuration before testing
                   </div>
                 )}
+
+                {/* Chat Tester Box */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Chat Header */}
+                  <div className="bg-purple-500 px-4 py-3 flex items-center justify-between">
+                    <span className="text-white font-semibold">💬 Chat Tester</span>
+                    <button
+                      onClick={handleClearChat}
+                      className="text-white hover:bg-purple-600 px-3 py-1 rounded transition-colors text-sm"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  {/* Chat Messages Area */}
+                  <div className="bg-white p-4 h-96 overflow-y-auto space-y-4">
+                    {messages.length === 0 ? (
+                      <div className="text-center text-gray-400 py-12">
+                        No messages yet. Start a conversation!
+                      </div>
+                    ) : (
+                      messages.map((message, index) => (
+                        <div
+                          key={index}
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`max-w-[70%] ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+                            <div
+                              className={`inline-block px-4 py-2 rounded-lg ${
+                                message.role === 'user'
+                                  ? 'bg-purple-500 text-white'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}
+                            >
+                              {message.content}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                              <div>{message.timestamp}</div>
+                              {message.role === 'assistant' && (
+                                <>
+                                  <div>📊 {message.tokens} tokens</div>
+                                  <div>💰 ${message.cost.toFixed(8)}</div>
+                                  <div>⏱️ {message.responseTime}ms</div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    {/* Loading indicator */}
+                    {testing && (
+                      <div className="flex justify-start">
+                        <div className="max-w-[70%]">
+                          <div className="inline-block px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
+                            <span className="animate-pulse">Thinking...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error Display */}
+                  {testError && (
+                    <div className="bg-red-100 border-t border-red-200 text-red-800 px-4 py-3">
+                      ⚠️ {testError}
+                    </div>
+                  )}
+
+                  {/* Input Section */}
+                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <div className="flex gap-2">
+                      <textarea
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                        rows="2"
+                        disabled={testing}
+                      />
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!inputMessage.trim() || testing}
+                        className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-end"
+                      >
+                        Send
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 Test your AI configuration by sending messages. Responses are generated using your current settings.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

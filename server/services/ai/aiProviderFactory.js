@@ -93,8 +93,8 @@ class AIProviderFactory {
       case 'claude':
         return [
           {
-            id: 'claude-3-5-sonnet-20241022',
-            name: 'Claude 3.5 Sonnet',
+            id: 'claude-sonnet-4-5',
+            name: 'Claude Sonnet 4.5',
             description: 'Best model for most tasks, excellent reasoning',
             contextWindow: 200000,
             maxTokens: 8192,
@@ -104,25 +104,25 @@ class AIProviderFactory {
             }
           },
           {
+            id: 'claude-haiku-4-5',
+            name: 'Claude Haiku 4.5',
+            description: 'Fastest model, ideal for quick responses',
+            contextWindow: 200000,
+            maxTokens: 8192,
+            pricing: {
+              input: 1.00,   // per 1M tokens
+              output: 5.00   // per 1M tokens
+            }
+          },
+          {
             id: 'claude-3-5-haiku-20241022',
             name: 'Claude 3.5 Haiku',
-            description: 'Fastest model, ideal for quick responses',
+            description: 'Legacy fast model',
             contextWindow: 200000,
             maxTokens: 8192,
             pricing: {
               input: 0.80,   // per 1M tokens
               output: 4.00   // per 1M tokens
-            }
-          },
-          {
-            id: 'claude-3-opus-20240229',
-            name: 'Claude 3 Opus',
-            description: 'Most powerful model for complex analysis',
-            contextWindow: 200000,
-            maxTokens: 4096,
-            pricing: {
-              input: 15.00,
-              output: 75.00
             }
           }
         ];
