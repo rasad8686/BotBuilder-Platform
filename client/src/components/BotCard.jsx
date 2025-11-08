@@ -100,22 +100,13 @@ export default function BotCard({ bot, onDelete }) {
           </button>
 
           <button
-            onClick={() => navigate(`/bots/${bot.id}/ai`)}
+            onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
             className="flex-1 bg-indigo-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-sm"
             title="AI Configuration"
           >
             🤖 <span>AI Config</span>
           </button>
         </div>
-
-        {/* AI Config - Full Width */}
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
-          className="w-full bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-sm"
-          title="AI Configuration"
-        >
-          🤖 <span>AI Config</span>
-        </button>
 
         {/* Other Actions */}
         <div className="flex gap-2">

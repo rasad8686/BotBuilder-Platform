@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function Usage() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -21,7 +21,7 @@ export default function Usage() {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/analytics/dashboard`, {
+      const response = await axios.get(`${API_BASE_URL}/api/analytics/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
