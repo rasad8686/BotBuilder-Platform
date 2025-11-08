@@ -1,95 +1,181 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import botApi from '../api/bots';
+import { useParams, Link } from 'react-router-dom';
+import aiApi from '../api/ai';
 
+/**
+ * AI Configuration Page
+ * Recreated to match exact screenshots
+ */
 export default function AIConfiguration() {
   const { botId } = useParams();
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('setup');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [bot, setBot] = useState(null);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [success, setSuccess] = useState('');
 
+  // Configuration state
   const [config, setConfig] = useState({
-    ai_provider: 'openai',
-    ai_model: 'gpt-4',
-    ai_temperature: 0.7,
-    ai_max_tokens: 2000,
-    ai_system_prompt: '',
-    ai_enabled: false
+    provider: 'openai',
+    model: 'gpt-4o-mini',
+    apiKey: '',
+    isEnabled: true,
+    systemPrompt: 'You are a helpful assistant.',
+    temperature: 0.7,
+    maxTokens: 1000,
+    contextWindow: 10,
+    enableStreaming: true
   });
 
+  const [hasConfig, setHasConfig] = useState(false);
+
   useEffect(() => {
-    fetchBotAndConfig();
+    loadConfig();
   }, [botId]);
 
-  const fetchBotAndConfig = async () => {
+  const loadConfig = async () => {
     try {
       setLoading(true);
-      const response = await botApi.getBot(botId);
+      const response = await aiApi.getConfig(botId);
 
-      if (response.success && response.bot) {
-        setBot(response.bot);
-        // Load existing AI configuration if available
+      if (response.config && response.config.provider) {
+        setHasConfig(true);
         setConfig({
-          ai_provider: response.bot.ai_provider || 'openai',
-          ai_model: response.bot.ai_model || 'gpt-4',
-          ai_temperature: response.bot.ai_temperature || 0.7,
-          ai_max_tokens: response.bot.ai_max_tokens || 2000,
-          ai_system_prompt: response.bot.ai_system_prompt || '',
-          ai_enabled: response.bot.ai_enabled || false
+          provider: response.config.provider || 'openai',
+          model: response.config.model || 'gpt-4o-mini',
+          apiKey: '',
+          isEnabled: response.config.is_enabled ?? true,
+          systemPrompt: response.config.system_prompt || 'You are a helpful assistant.',
+          temperature: parseFloat(response.config.temperature) || 0.7,
+          maxTokens: parseInt(response.config.max_tokens) || 1000,
+          contextWindow: parseInt(response.config.context_window) || 10,
+          enableStreaming: response.config.enable_streaming ?? true
         });
       }
     } catch (err) {
-      console.error('Error fetching bot:', err);
-      setError('Failed to load bot configuration');
+      if (err.response?.status !== 404) {
+        setError(err.response?.data?.message || 'Failed to load configuration');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-    setSaving(true);
-
+  const handleSave = async () => {
     try {
-      const response = await botApi.updateBot(botId, config);
+      setSaving(true);
+      setError('');
+      setSuccess('');
 
-      if (response.success) {
-        setSuccessMessage('AI configuration saved successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
+      const configToSave = {
+        provider: config.provider,
+        model: config.model,
+        temperature: config.temperature,
+        max_tokens: config.maxTokens,
+        system_prompt: config.systemPrompt,
+        context_window: config.contextWindow,
+        enable_streaming: config.enableStreaming,
+        is_enabled: config.isEnabled
+      };
+
+      if (config.apiKey.trim()) {
+        configToSave.api_key = config.apiKey;
       }
+
+      await aiApi.configureAI(botId, configToSave);
+      setSuccess('AI configuration saved successfully!');
+      setHasConfig(true);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error('Error saving AI config:', err);
-      setError(err.response?.data?.message || 'Failed to save AI configuration');
+      setError(err.response?.data?.message || 'Failed to save configuration');
     } finally {
       setSaving(false);
     }
   };
 
+  const tabs = [
+    { id: 'setup', label: 'Setup', icon: '⚙️' },
+    { id: 'prompt', label: 'Prompt', icon: '💬' },
+    { id: 'parameters', label: 'Parameters', icon: '🎚️' },
+    { id: 'test', label: 'Test', icon: '🧪' }
+  ];
+
+  const providers = [
+    {
+      id: 'openai',
+      name: 'Openai',
+      modelsCount: 3,
+      description: 'GPT models from OpenAI'
+    },
+    {
+      id: 'anthropic',
+      name: 'Claude',
+      modelsCount: 3,
+      description: 'Claude models from Anthropic'
+    }
+  ];
+
+  const openaiModels = [
+    {
+      id: 'gpt-4o',
+      name: 'GPT-4o',
+      description: 'Most capable model, best for complex tasks',
+      pricing: '$2.5/$10 per 1M tokens',
+      maxTokens: '16,384 max tokens'
+    },
+    {
+      id: 'gpt-4o-mini',
+      name: 'GPT-4o Mini',
+      description: 'Fast and affordable, great for simple tasks',
+      pricing: '$0.15/$0.6 per 1M tokens',
+      maxTokens: '16,384 max tokens',
+      recommended: true
+    },
+    {
+      id: 'gpt-4-turbo',
+      name: 'GPT-4 Turbo',
+      description: 'Previous generation flagship model',
+      pricing: '$10/$30 per 1M tokens',
+      maxTokens: '4,096 max tokens'
+    }
+  ];
+
+  const claudeModels = [
+    {
+      id: 'claude-3-5-sonnet-20241022',
+      name: 'Claude 3.5 Sonnet',
+      description: 'Most intelligent model, best for complex tasks',
+      pricing: '$3/$15 per 1M tokens',
+      maxTokens: '8,192 max tokens',
+      recommended: true
+    },
+    {
+      id: 'claude-3-5-haiku-20241022',
+      name: 'Claude 3.5 Haiku',
+      description: 'Fastest model, great for simple tasks',
+      pricing: '$0.8/$4 per 1M tokens',
+      maxTokens: '8,192 max tokens'
+    },
+    {
+      id: 'claude-3-opus-20240229',
+      name: 'Claude 3 Opus',
+      description: 'Previous generation flagship model',
+      pricing: '$15/$75 per 1M tokens',
+      maxTokens: '4,096 max tokens'
+    }
+  ];
+
+  const currentModels = config.provider === 'openai' ? openaiModels : claudeModels;
+
+  const wordCount = config.systemPrompt.trim().split(/\s+/).filter(w => w.length > 0).length;
+  const charCount = config.systemPrompt.length;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading AI configuration...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!bot) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Bot Not Found</h2>
-          <Link to="/mybots" className="text-purple-600 hover:text-purple-700">
-            Return to My Bots
-          </Link>
+          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+          <div className="text-xl text-gray-600">Loading AI configuration...</div>
         </div>
       </div>
     );
@@ -97,28 +183,28 @@ export default function AIConfiguration() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <Link
-          to={`/bot/${botId}/edit`}
+          to="/mybots"
           className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium mb-4"
         >
-          ← Back to Bot Details
+          ← Back to My Bots
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             AI Configuration
           </h1>
           <p className="text-gray-600">
-            Configure AI settings for {bot.name}
+            Configure AI capabilities for your bot
           </p>
         </div>
 
         {/* Success Message */}
-        {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-            ✅ {successMessage}
+        {success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            ✅ {success}
           </div>
         )}
 
@@ -129,164 +215,375 @@ export default function AIConfiguration() {
           </div>
         )}
 
-        {/* Configuration Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Enable AI */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-1">
-                  Enable AI Responses
-                </label>
-                <p className="text-sm text-gray-600">
-                  Allow this bot to use AI for generating responses
-                </p>
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-lg mb-6">
+          <div className="border-b border-gray-200">
+            <div className="flex">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
+                      : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* SETUP TAB */}
+            {activeTab === 'setup' && (
+              <div className="space-y-6">
+                {/* AI Provider Selection */}
+                <div>
+                  <label className="block text-gray-900 font-semibold mb-3">
+                    AI Provider <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {providers.map((provider) => (
+                      <button
+                        key={provider.id}
+                        onClick={() => setConfig({
+                          ...config,
+                          provider: provider.id,
+                          model: provider.id === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-sonnet-20241022'
+                        })}
+                        className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+                          config.provider === provider.id
+                            ? 'border-purple-600 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {config.provider === provider.id && (
+                          <div className="absolute top-3 right-3 text-purple-600 text-xl">✓</div>
+                        )}
+                        <div className="font-bold text-gray-900 mb-1">{provider.name}</div>
+                        <div className="text-sm text-gray-500 mb-2">{provider.modelsCount} models available</div>
+                        <div className="text-sm text-gray-600">{provider.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model Selection */}
+                <div>
+                  <label className="block text-gray-900 font-semibold mb-3">
+                    Model <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-3">
+                    {currentModels.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => setConfig({ ...config, model: model.id })}
+                        className={`relative w-full p-4 rounded-lg border-2 transition-all text-left ${
+                          config.model === model.id
+                            ? 'border-purple-600 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {config.model === model.id && (
+                          <div className="absolute top-4 right-4 text-purple-600 text-xl">✓</div>
+                        )}
+                        <div className="flex items-start gap-2 mb-2">
+                          <div className="font-bold text-gray-900">{model.name}</div>
+                          {model.recommended && (
+                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                              ⚡ Recommended
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">{model.description}</div>
+                        <div className="flex gap-4 text-xs text-gray-500">
+                          <span>💰 {model.pricing}</span>
+                          <span>📊 {model.maxTokens}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* API Key */}
+                <div>
+                  <label className="block text-gray-900 font-semibold mb-2">
+                    API Key (Optional)
+                  </label>
+                  <input
+                    type="password"
+                    value={config.apiKey}
+                    onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="sk-... (Leave empty to use platform key)"
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 Provide your own API key or leave empty to use the platform key (if configured)
+                  </p>
+                </div>
+
+                {/* Enable/Disable AI */}
+                <div>
+                  <label className="flex items-center justify-between p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div>
+                      <span className="text-gray-900 font-semibold">Enable AI</span>
+                      <p className="text-sm text-gray-500">
+                        AI is currently {config.isEnabled ? 'enabled' : 'disabled'}
+                      </p>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={config.isEnabled}
+                        onChange={(e) => setConfig({ ...config, isEnabled: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={`w-14 h-8 rounded-full transition-colors ${
+                        config.isEnabled ? 'bg-purple-600' : 'bg-gray-300'
+                      }`}>
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out mt-1 ${
+                          config.isEnabled ? 'translate-x-7 ml-1' : 'translate-x-1'
+                        }`} />
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.ai_enabled}
-                  onChange={(e) => setConfig({ ...config, ai_enabled: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-              </label>
-            </div>
+            )}
 
-            {/* AI Provider */}
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                AI Provider
-              </label>
-              <select
-                value={config.ai_provider}
-                onChange={(e) => setConfig({ ...config, ai_provider: e.target.value })}
-                disabled={!config.ai_enabled}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="google">Google (Gemini)</option>
-              </select>
-            </div>
+            {/* PROMPT TAB */}
+            {activeTab === 'prompt' && (
+              <div className="space-y-6">
+                {/* Show Templates Link */}
+                <div>
+                  <button className="text-purple-600 hover:text-purple-700 font-medium">
+                    📋 Show Prompt Templates
+                  </button>
+                </div>
 
-            {/* AI Model */}
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Model
-              </label>
-              <select
-                value={config.ai_model}
-                onChange={(e) => setConfig({ ...config, ai_model: e.target.value })}
-                disabled={!config.ai_enabled}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {config.ai_provider === 'openai' && (
-                  <>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  </>
-                )}
-                {config.ai_provider === 'anthropic' && (
-                  <>
-                    <option value="claude-3-opus">Claude 3 Opus</option>
-                    <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                    <option value="claude-3-haiku">Claude 3 Haiku</option>
-                  </>
-                )}
-                {config.ai_provider === 'google' && (
-                  <>
-                    <option value="gemini-pro">Gemini Pro</option>
-                    <option value="gemini-pro-vision">Gemini Pro Vision</option>
-                  </>
-                )}
-              </select>
-            </div>
+                {/* System Prompt */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-gray-900 font-semibold">
+                      System Prompt
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {wordCount} words · {charCount} characters
+                    </span>
+                  </div>
+                  <textarea
+                    value={config.systemPrompt}
+                    onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
+                    rows="12"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 The system prompt defines the AI's personality and behavior
+                  </p>
+                </div>
 
-            {/* Temperature */}
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Temperature: {config.ai_temperature}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="2"
-                step="0.1"
-                value={config.ai_temperature}
-                onChange={(e) => setConfig({ ...config, ai_temperature: parseFloat(e.target.value) })}
-                disabled={!config.ai_enabled}
-                className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <p className="text-sm text-gray-600 mt-1">
-                Lower values make responses more focused, higher values make them more creative
-              </p>
-            </div>
+                {/* Tips */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for good prompts:</h4>
+                  <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Be specific about the AI's role and expertise</li>
+                    <li>Include tone guidelines (professional, friendly, formal)</li>
+                    <li>Specify what the AI should or shouldn't do</li>
+                    <li>Keep it concise but comprehensive</li>
+                  </ul>
+                </div>
+              </div>
+            )}
 
-            {/* Max Tokens */}
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Max Tokens
-              </label>
-              <input
-                type="number"
-                min="100"
-                max="4000"
-                value={config.ai_max_tokens}
-                onChange={(e) => setConfig({ ...config, ai_max_tokens: parseInt(e.target.value) })}
-                disabled={!config.ai_enabled}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <p className="text-sm text-gray-600 mt-1">
-                Maximum length of AI responses (100-4000)
-              </p>
-            </div>
+            {/* PARAMETERS TAB */}
+            {activeTab === 'parameters' && (
+              <div className="space-y-6">
+                {/* Temperature */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-gray-900 font-semibold">
+                      Temperature
+                    </label>
+                    <span className="text-gray-900 font-semibold">
+                      {config.temperature.toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.01"
+                    value={config.temperature}
+                    onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0.0 (Precise)</span>
+                    <span>1.0 (Balanced)</span>
+                    <span>2.0 (Creative)</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    🎨 Higher values make output more random and creative, lower values make it more focused and deterministic.
+                  </p>
+                </div>
 
-            {/* System Prompt */}
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                System Prompt
-              </label>
-              <textarea
-                value={config.ai_system_prompt}
-                onChange={(e) => setConfig({ ...config, ai_system_prompt: e.target.value })}
-                disabled={!config.ai_enabled}
-                rows="6"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Define the AI's behavior, personality, and guidelines..."
-              />
-              <p className="text-sm text-gray-600 mt-1">
-                Instructions that define how the AI should behave and respond
-              </p>
-            </div>
+                {/* Max Tokens */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-gray-900 font-semibold">
+                      Max Tokens
+                    </label>
+                    <span className="text-gray-900 font-semibold">
+                      {config.maxTokens.toLocaleString()}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="100"
+                    max="4000"
+                    step="50"
+                    value={config.maxTokens}
+                    onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>100 (Short)</span>
+                    <span>2000 (Medium)</span>
+                    <span>4000 (Long)</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    📏 Maximum number of tokens to generate in the response. Higher values allow longer responses but cost more.
+                  </p>
+                </div>
 
-            {/* Submit Button */}
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
+                {/* Context Window */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-gray-900 font-semibold">
+                      Context Window (Conversation Memory)
+                    </label>
+                    <span className="text-gray-900 font-semibold">
+                      {config.contextWindow} messages
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={config.contextWindow}
+                    onChange={(e) => setConfig({ ...config, contextWindow: parseInt(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0 (No memory)</span>
+                    <span>10 (Default)</span>
+                    <span>50 (Long memory)</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    🧠 Number of previous messages the AI can remember. Higher values maintain more context but use more tokens.
+                  </p>
+                </div>
+
+                {/* Enable Streaming */}
+                <div>
+                  <label className="flex items-center justify-between p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div>
+                      <span className="text-gray-900 font-semibold">Enable Streaming</span>
+                      <p className="text-sm text-gray-500">
+                        Responses will stream in real-time
+                      </p>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={config.enableStreaming}
+                        onChange={(e) => setConfig({ ...config, enableStreaming: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={`w-14 h-8 rounded-full transition-colors ${
+                        config.enableStreaming ? 'bg-purple-600' : 'bg-gray-300'
+                      }`}>
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out mt-1 ${
+                          config.enableStreaming ? 'translate-x-7 ml-1' : 'translate-x-1'
+                        }`} />
+                      </div>
+                    </div>
+                  </label>
+                  <p className="text-sm text-gray-600 mt-2">
+                    ⚡ Streaming provides faster perceived response times but may not be supported by all integrations.
+                  </p>
+                </div>
+
+                {/* Cost Considerations */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Cost Considerations:</h4>
+                  <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+                    <li>Higher max_tokens = higher maximum cost per request</li>
+                    <li>Larger context_window = more input tokens = higher cost</li>
+                    <li>Temperature doesn't affect cost, only response quality</li>
+                    <li>Monitor your usage in the Usage tab</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* TEST TAB */}
+            {activeTab === 'test' && (
+              <div>
+                {!hasConfig ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">⚙️</div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      No AI Configuration Yet
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Configure AI settings in the Setup tab first, then come back here to test.
+                    </p>
+                  </div>
                 ) : (
-                  <>
-                    💾 Save Configuration
-                  </>
+                  <div className="text-center py-12 text-gray-600">
+                    Test interface will be available after saving configuration.
+                  </div>
                 )}
-              </button>
-              <Link
-                to={`/bot/${botId}/edit`}
-                className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-center"
-              >
-                Cancel
-              </Link>
-            </div>
-          </form>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Saving...
+              </>
+            ) : (
+              <>
+                💾 Save Configuration
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Quick Tips */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+            <li>Start with GPT-4o Mini or Claude 3.5 Haiku for best cost/performance</li>
+            <li>Lower temperature (0.3-0.5) for consistent responses, higher (0.8-1.0) for creative ones</li>
+            <li>Context window controls how many previous messages the AI remembers</li>
+            <li>Test your configuration before going live</li>
+          </ul>
         </div>
       </div>
     </div>
