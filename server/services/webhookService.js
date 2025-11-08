@@ -34,7 +34,7 @@ async function getAvailableEvents() {
  */
 async function trigger(organizationId, eventType, payload) {
   try {
-    console.log(`[WEBHOOK] Triggering ${eventType} for organization ${organizationId}`);
+    console.log(`\n[WEBHOOK] 🔔 Triggering ${eventType} for organization ${organizationId}`);
 
     // Get all webhooks for this organization that are subscribed to this event
     const result = await db.query(
@@ -47,16 +47,22 @@ async function trigger(organizationId, eventType, payload) {
     );
 
     const webhooks = result.rows;
-    console.log(`[WEBHOOK] Found ${webhooks.length} active webhooks for ${eventType}`);
+    console.log(`[WEBHOOK] Found ${webhooks.length} active webhook(s) subscribed to ${eventType}`);
+
+    if (webhooks.length === 0) {
+      console.log(`[WEBHOOK] No webhooks to deliver for ${eventType}`);
+      return { success: true, triggered: 0 };
+    }
 
     // Trigger each webhook
     for (const webhook of webhooks) {
       await deliverWebhook(webhook, eventType, payload);
     }
 
+    console.log(`[WEBHOOK] ✓ Completed triggering ${webhooks.length} webhook(s)\n`);
     return { success: true, triggered: webhooks.length };
   } catch (error) {
-    console.error('[WEBHOOK] Error triggering webhooks:', error);
+    console.error('[WEBHOOK] ❌ Error triggering webhooks:', error);
     return { success: false, error: error.message };
   }
 }
@@ -75,7 +81,7 @@ async function deliverWebhook(webhook, eventType, payload) {
   let errorMessage = null;
 
   try {
-    console.log(`[WEBHOOK] Delivering to ${webhook.url}`);
+    console.log(`[WEBHOOK] 📤 Delivering to ${webhook.url}`);
 
     // Prepare webhook payload
     const webhookPayload = {
@@ -83,6 +89,8 @@ async function deliverWebhook(webhook, eventType, payload) {
       timestamp: new Date().toISOString(),
       data: payload
     };
+
+    console.log(`[WEBHOOK] 📦 Payload:`, JSON.stringify(webhookPayload, null, 2).substring(0, 500));
 
     // Send webhook request with timeout
     const response = await axios.post(webhook.url, webhookPayload, {
@@ -100,17 +108,29 @@ async function deliverWebhook(webhook, eventType, payload) {
 
     // Consider 2xx as success
     if (statusCode >= 200 && statusCode < 300) {
-      console.log(`[WEBHOOK] ✓ Delivered successfully (${statusCode})`);
+      console.log(`[WEBHOOK] ✅ Delivered successfully (HTTP ${statusCode})`);
       status = 'success';
     } else {
-      console.log(`[WEBHOOK] ✗ Delivery failed (${statusCode})`);
+      console.log(`[WEBHOOK] ❌ Delivery failed (HTTP ${statusCode})`);
+      console.log(`[WEBHOOK] Response:`, responseBody.substring(0, 200));
       status = 'failed';
       errorMessage = `HTTP ${statusCode}: ${responseBody}`;
     }
   } catch (error) {
     console.error(`[WEBHOOK] ✗ Delivery error:`, error.message);
     status = 'failed';
-    errorMessage = error.message;
+
+    // Handle different error types
+    if (error.code === 'ECONNREFUSED') {
+      errorMessage = 'Connection refused - webhook endpoint not accessible';
+    } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+      errorMessage = 'Request timeout - webhook endpoint did not respond in time';
+    } else if (error.code === 'ENOTFOUND') {
+      errorMessage = 'DNS lookup failed - webhook URL hostname not found';
+    } else {
+      errorMessage = error.message;
+    }
+
     statusCode = error.response?.status || null;
     responseBody = error.response?.data ? JSON.stringify(error.response.data).substring(0, 1000) : null;
   }

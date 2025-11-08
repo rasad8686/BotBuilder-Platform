@@ -29,14 +29,14 @@ const {
  * Get list of available AI providers
  * Public - no auth required
  */
-router.get('/ai/providers', getProviders);
+router.get('/providers', getProviders);
 
 /**
  * GET /api/ai/models/:provider
  * Get available models for a specific provider
  * Public - no auth required
  */
-router.get('/ai/models/:provider', getModels);
+router.get('/models/:provider', getModels);
 
 // ═══════════════════════════════════════════════════════════
 // AUTHENTICATED ROUTES
@@ -56,7 +56,7 @@ router.use(requireOrganization);
  * Get AI configuration for a bot
  * Permission: viewer or higher
  */
-router.get('/bots/:botId/ai/configure', checkPermission('viewer'), getAIConfig);
+router.get('/:botId/ai/configure', checkPermission('viewer'), getAIConfig);
 
 /**
  * POST /api/bots/:botId/ai/configure
@@ -74,21 +74,21 @@ router.get('/bots/:botId/ai/configure', checkPermission('viewer'), getAIConfig);
  *   is_enabled: true (optional)
  * }
  */
-router.post('/bots/:botId/ai/configure', checkPermission('member'), configureAI);
+router.post('/:botId/ai/configure', checkPermission('member'), configureAI);
 
 /**
  * DELETE /api/bots/:botId/ai/configure
  * Delete AI configuration for a bot
  * Permission: admin only
  */
-router.delete('/bots/:botId/ai/configure', checkPermission('admin'), deleteAIConfig);
+router.delete('/:botId/ai/configure', checkPermission('admin'), deleteAIConfig);
 
 /**
  * POST /api/bots/:botId/ai/test
  * Test AI connection for a bot
  * Permission: viewer or higher
  */
-router.post('/bots/:botId/ai/test', checkPermission('viewer'), testAIConnection);
+router.post('/:botId/ai/test', checkPermission('viewer'), testAIConnection);
 
 // ═══════════════════════════════════════════════════════════
 // AI CHAT ROUTES
@@ -103,7 +103,7 @@ router.post('/bots/:botId/ai/test', checkPermission('viewer'), testAIConnection)
  *   sessionId: 'unique_session_id'
  * }
  */
-router.post('/bots/:botId/ai/chat', checkPermission('member'), sendChat);
+router.post('/:botId/ai/chat', checkPermission('member'), sendChat);
 
 /**
  * POST /api/bots/:botId/ai/chat/stream
@@ -111,7 +111,7 @@ router.post('/bots/:botId/ai/chat', checkPermission('member'), sendChat);
  * Permission: member or higher
  * TODO: Implement streaming endpoint
  */
-// router.post('/bots/:botId/ai/chat/stream', checkPermission('member'), sendChatStream);
+// router.post('/:botId/ai/chat/stream', checkPermission('member'), sendChatStream);
 
 // ═══════════════════════════════════════════════════════════
 // AI USAGE & BILLING ROUTES
@@ -123,7 +123,7 @@ router.post('/bots/:botId/ai/chat', checkPermission('member'), sendChat);
  * Permission: viewer or higher
  * Query params: startDate, endDate, limit
  */
-router.get('/bots/:botId/ai/usage', checkPermission('viewer'), getAIUsage);
+router.get('/:botId/ai/usage', checkPermission('viewer'), getAIUsage);
 
 /**
  * GET /api/organizations/:orgId/ai/billing

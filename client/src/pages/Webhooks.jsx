@@ -28,6 +28,15 @@ export default function Webhooks() {
     console.log('🟢 [INIT] Component mounted, fetching data...');
     fetchWebhooks();
     fetchAvailableEvents();
+
+    // Auto-refresh webhooks (including stats) every 30 seconds
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 [AUTO-REFRESH] Refreshing webhook stats...');
+      fetchWebhooks();
+    }, 30000); // 30 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // Debug logging for availableEvents state changes
@@ -148,7 +157,12 @@ export default function Webhooks() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(response.data.message);
+      const result = response.data.data;
+      if (result.success) {
+        alert(`✅ Webhook test successful!\n\nStatus Code: ${result.statusCode}\nResponse Time: ${result.responseTime}ms`);
+      } else {
+        alert(`❌ Webhook test failed\n\nStatus Code: ${result.statusCode}\nPlease check the logs for details.`);
+      }
     } catch (error) {
       console.error('Error testing webhook:', error);
       alert(error.response?.data?.message || 'Failed to test webhook');
@@ -199,6 +213,35 @@ export default function Webhooks() {
           </button>
         </div>
 
+        {/* Statistics Cards */}
+        {webhooks.length > 0 && (() => {
+          const totalAttempts = webhooks.reduce((sum, w) => sum + (w.stats?.total_attempts || 0), 0);
+          const successful = webhooks.reduce((sum, w) => sum + (w.stats?.successful || 0), 0);
+          const failed = webhooks.reduce((sum, w) => sum + (w.stats?.failed || 0), 0);
+          const successRate = totalAttempts > 0 ? Math.round((successful / totalAttempts) * 100) : 0;
+
+          return (
+            <div className="grid grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-sm text-gray-600 mb-2">Total</p>
+                <p className="text-3xl font-bold text-gray-800">{totalAttempts}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-sm text-gray-600 mb-2">Success</p>
+                <p className="text-3xl font-bold text-green-600">{successful}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-sm text-gray-600 mb-2">Failed</p>
+                <p className="text-3xl font-bold text-red-600">{failed}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-sm text-gray-600 mb-2">Success Rate</p>
+                <p className="text-3xl font-bold text-blue-600">{successRate}%</p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Webhooks List */}
         {webhooks.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
@@ -217,7 +260,7 @@ export default function Webhooks() {
           </div>
         ) : (
           <div className="grid gap-6">
-            {webhooks.map(webhook => (
+            {webhooks.map((webhook) => (
               <div key={webhook.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
@@ -415,35 +458,55 @@ export default function Webhooks() {
                       <div
                         key={log.id}
                         className={`border rounded-lg p-4 ${
-                          log.response_status >= 200 && log.response_status < 300
+                          log.status === 'success'
                             ? 'border-green-200 bg-green-50'
                             : 'border-red-200 bg-red-50'
                         }`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-3">
-                            {log.response_status >= 200 && log.response_status < 300 ? (
+                            {log.status === 'success' ? (
                               <FiCheck className="w-5 h-5 text-green-600" />
                             ) : (
                               <FiX className="w-5 h-5 text-red-600" />
                             )}
                             <span className="font-semibold text-gray-800">{log.event_type}</span>
-                            {log.response_status && (
-                              <span className="text-sm text-gray-600">Status: {log.response_status}</span>
+                            {log.status_code && (
+                              <span className={`text-sm font-medium ${
+                                log.status === 'success' ? 'text-green-700' : 'text-red-700'
+                              }`}>
+                                HTTP {log.status_code}
+                              </span>
                             )}
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              log.status === 'success'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {log.status}
+                            </span>
                           </div>
                           <span className="text-xs text-gray-500">
                             {new Date(log.created_at).toLocaleString()}
                           </span>
                         </div>
-                        {log.error && (
-                          <p className="text-sm text-red-700 mt-2">Error: {log.error}</p>
+                        {log.error_message && (
+                          <p className="text-sm text-red-700 mt-2 bg-red-100 p-2 rounded">
+                            <strong>Error:</strong> {log.error_message}
+                          </p>
                         )}
                         {log.response_time_ms && (
-                          <p className="text-xs text-gray-600 mt-1">Response time: {log.response_time_ms}ms</p>
+                          <p className="text-xs text-gray-600 mt-1">⏱️ Response time: {log.response_time_ms}ms</p>
                         )}
-                        {log.retry_count > 0 && (
-                          <p className="text-xs text-orange-600 mt-1">Retry count: {log.retry_count}</p>
+                        {log.response_body && (
+                          <details className="mt-2">
+                            <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-800">
+                              View response body
+                            </summary>
+                            <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-x-auto">
+                              {log.response_body}
+                            </pre>
+                          </details>
                         )}
                       </div>
                     ))}

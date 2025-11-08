@@ -5,6 +5,7 @@ const {
   AICostCalculator,
   EncryptionHelper
 } = require('../services/ai');
+const webhookService = require('../services/webhookService');
 
 /**
  * AI Controller
@@ -388,12 +389,31 @@ async function sendChat(req, res) {
       stream: false
     });
 
+    // Calculate cost
+    const cost = AICostCalculator.calculateCost({
+      provider: config.provider,
+      model: config.model,
+      promptTokens: response.usage.promptTokens,
+      completionTokens: response.usage.completionTokens
+    });
+
     // Save user message to history
     await AIMessageHandler.saveMessage({
       botId: botId,
       sessionId: sessionId,
       role: 'user',
       content: message
+    });
+
+    // Trigger message.sent webhook for user message
+    await webhookService.trigger(organizationId, 'message.sent', {
+      bot_id: botId,
+      session_id: sessionId,
+      message: {
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      }
     });
 
     // Save AI response to history
@@ -404,12 +424,17 @@ async function sendChat(req, res) {
       content: response.content
     });
 
-    // Calculate cost
-    const cost = AICostCalculator.calculateCost({
-      provider: config.provider,
-      model: config.model,
-      promptTokens: response.usage.promptTokens,
-      completionTokens: response.usage.completionTokens
+    // Trigger message.received webhook for bot response
+    await webhookService.trigger(organizationId, 'message.received', {
+      bot_id: botId,
+      session_id: sessionId,
+      message: {
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date().toISOString()
+      },
+      usage: response.usage,
+      cost_usd: cost
     });
 
     // Log usage for billing

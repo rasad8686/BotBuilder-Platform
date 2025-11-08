@@ -501,6 +501,9 @@ app.use('/api/organizations', require('./routes/organizations'));
 // ✅ Bot Flows routes (Visual Flow Builder) - Using modular router
 app.use('/api/bots', require('./routes/botFlows'));
 
+// ✅ Bot AI routes - Mount at /api/bots to handle /api/bots/:id/ai/* endpoints
+app.use('/api/bots', require('./routes/ai'));
+
 // ✅ Admin routes (Monitoring & Audit) - Using modular router
 app.use('/api/admin', require('./routes/admin'));
 
@@ -510,7 +513,7 @@ app.use('/api/whitelabel', require('./routes/whitelabel'));
 // ✅ Billing routes (Subscription Management) - Using modular router
 app.use('/api/billing', require('./routes/billing'));
 
-// ✅ AI Chat routes - Using modular router
+// ✅ AI public routes - Mount at /api/ai for public endpoints like /api/ai/providers
 app.use('/api/ai', require('./routes/ai'));
 
 // ✅ Analytics routes - Using modular router

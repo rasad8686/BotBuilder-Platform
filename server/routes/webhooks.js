@@ -44,16 +44,52 @@ router.get('/', async (req, res) => {
     console.log(`[WEBHOOKS] Fetching webhooks for organization ${organizationId}`);
 
     const result = await db.query(
-      `SELECT id, name, url, events, is_active, created_at, updated_at
-       FROM webhooks
-       WHERE organization_id = $1
-       ORDER BY created_at DESC`,
+      `SELECT
+         w.id,
+         w.name,
+         w.url,
+         w.events,
+         w.is_active,
+         w.created_at,
+         w.updated_at,
+         COUNT(wdl.id) AS total_attempts,
+         COUNT(CASE WHEN wdl.delivery_status = 'success' THEN 1 END) AS successful,
+         COUNT(CASE WHEN wdl.delivery_status = 'failed' THEN 1 END) AS failed
+       FROM webhooks w
+       LEFT JOIN webhook_delivery_logs wdl ON w.id = wdl.webhook_id
+       WHERE w.organization_id = $1
+       GROUP BY w.id, w.name, w.url, w.events, w.is_active, w.created_at, w.updated_at
+       ORDER BY w.created_at DESC`,
       [organizationId]
     );
 
+    // Format the response with stats
+    const webhooks = result.rows.map(webhook => {
+      const totalAttempts = parseInt(webhook.total_attempts) || 0;
+      const successful = parseInt(webhook.successful) || 0;
+      const failed = parseInt(webhook.failed) || 0;
+      const successRate = totalAttempts > 0 ? Math.round((successful / totalAttempts) * 100) : 0;
+
+      return {
+        id: webhook.id,
+        name: webhook.name,
+        url: webhook.url,
+        events: webhook.events,
+        is_active: webhook.is_active,
+        created_at: webhook.created_at,
+        updated_at: webhook.updated_at,
+        stats: {
+          total_attempts: totalAttempts,
+          successful: successful,
+          failed: failed,
+          success_rate: successRate
+        }
+      };
+    });
+
     res.json({
       success: true,
-      data: result.rows
+      data: webhooks
     });
   } catch (error) {
     console.error('[WEBHOOKS] Error fetching webhooks:', error);
@@ -126,7 +162,7 @@ router.post('/', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
   try {
-    const webhookId = parseInt(req.params.id);
+    const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
     const { name, url, events, is_active } = req.body;
 
@@ -220,7 +256,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const webhookId = parseInt(req.params.id);
+    const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
     console.log(`[WEBHOOKS] Deleting webhook ${webhookId}`);
@@ -259,7 +295,7 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/test', async (req, res) => {
   try {
-    const webhookId = parseInt(req.params.id);
+    const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
     console.log(`[WEBHOOKS] Testing webhook ${webhookId}`);
@@ -301,7 +337,7 @@ router.post('/:id/test', async (req, res) => {
  */
 router.get('/:id/logs', async (req, res) => {
   try {
-    const webhookId = parseInt(req.params.id);
+    const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
     const limit = parseInt(req.query.limit) || 50;
 
@@ -349,7 +385,7 @@ router.get('/:id/logs', async (req, res) => {
  */
 router.post('/:id/regenerate-secret', async (req, res) => {
   try {
-    const webhookId = parseInt(req.params.id);
+    const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
     console.log(`[WEBHOOKS] Regenerating secret for webhook ${webhookId}`);
