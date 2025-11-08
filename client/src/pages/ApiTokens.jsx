@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function ApiTokens() {
   const [tokens, setTokens] = useState([]);
@@ -30,10 +30,10 @@ export default function ApiTokens() {
       }
 
       const [tokensRes, botsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api-tokens`, {
+        axios.get(`${API_BASE_URL}/api/api-tokens`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API_BASE_URL}/bots`, {
+        axios.get(`${API_BASE_URL}/api/bots`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -55,7 +55,7 @@ export default function ApiTokens() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${API_BASE_URL}/api-tokens`,
+        `${API_BASE_URL}/api/api-tokens`,
         {
           tokenName: formData.tokenName,
           botId: formData.botId || null,
@@ -80,7 +80,7 @@ export default function ApiTokens() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/api-tokens/${tokenId}`, {
+      await axios.delete(`${API_BASE_URL}/api/api-tokens/${tokenId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -95,7 +95,7 @@ export default function ApiTokens() {
     try {
       const token = localStorage.getItem('token');
       await axios.patch(
-        `${API_BASE_URL}/api-tokens/${tokenId}/toggle`,
+        `${API_BASE_URL}/api/api-tokens/${tokenId}/toggle`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

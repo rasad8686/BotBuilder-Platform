@@ -347,12 +347,24 @@ export default function EditBot() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
+          <button
+            onClick={() => navigate(`/bots/${botId}/ai-config`)}
+            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2"
+          >
+            🤖 Configure AI Settings
+          </button>
           <button
             onClick={() => navigate(`/bot/${botId}/messages`)}
-            className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
+            className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md flex items-center justify-center gap-2"
           >
             💬 Manage Bot Messages
+          </button>
+          <button
+            onClick={() => navigate(`/bots/${botId}/flow`)}
+            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md flex items-center justify-center gap-2"
+          >
+            🔀 Edit Flow Builder
           </button>
         </div>
       </div>
