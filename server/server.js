@@ -121,7 +121,7 @@ app.use(cors({
     }
 
     // Allow all Vercel deployments (production + previews)
-    if (origin.includes('bot-builder-platform') && origin.includes('vercel.app')) {
+    if (origin.includes('vercel.app')) {
       return callback(null, true);
     }
 
