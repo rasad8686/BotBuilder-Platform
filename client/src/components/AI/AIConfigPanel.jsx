@@ -56,19 +56,24 @@ export default function AIConfigPanel() {
       setLoading(true);
       const response = await aiApi.getConfig(botId);
 
-      // Config exists
-      setHasExistingConfig(true);
-      setConfig({
-        provider: response.config.provider,
-        model: response.config.model,
-        api_key: '', // Don't load API key for security
-        temperature: parseFloat(response.config.temperature),
-        max_tokens: parseInt(response.config.max_tokens),
-        system_prompt: response.config.system_prompt,
-        context_window: parseInt(response.config.context_window),
-        enable_streaming: response.config.enable_streaming,
-        is_enabled: response.config.is_enabled
-      });
+      // Check if config exists and has required fields
+      if (response.config && response.config.provider) {
+        setHasExistingConfig(true);
+        setConfig({
+          provider: response.config.provider,
+          model: response.config.model,
+          api_key: '', // Don't load API key for security
+          temperature: parseFloat(response.config.temperature),
+          max_tokens: parseInt(response.config.max_tokens),
+          system_prompt: response.config.system_prompt,
+          context_window: parseInt(response.config.context_window),
+          enable_streaming: response.config.enable_streaming,
+          is_enabled: response.config.is_enabled
+        });
+      } else {
+        // Response came back but no valid config
+        setHasExistingConfig(false);
+      }
 
       setError('');
     } catch (err) {
