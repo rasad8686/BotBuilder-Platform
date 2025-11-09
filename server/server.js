@@ -21,82 +21,97 @@ const PORT = process.env.PORT || 5000;
 /**
  * Automatically creates admin account on server startup
  * - LOCAL: admin@local.dev / admin123
- * - PRODUCTION: dunugojaev@gmail.com / from ENV or strong default
+ * - PRODUCTION: dunugojaev@gmail.com + admin@local.dev (for testing)
  */
 async function ensureAdminExists() {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Admin configuration based on environment
-    const adminConfig = isProduction ? {
-      email: process.env.ADMIN_EMAIL || 'dunugojaev@gmail.com',
-      password: process.env.ADMIN_PASSWORD || 'Admin@BotBuilder2025!SecurePass',
-      name: 'Dunu Admin'
-    } : {
-      email: 'admin@local.dev',
-      password: 'admin123',
-      name: 'Local Admin'
-    };
+    // Admin configurations to create
+    const adminConfigs = isProduction ? [
+      {
+        email: process.env.ADMIN_EMAIL || 'dunugojaev@gmail.com',
+        password: process.env.ADMIN_PASSWORD || 'Admin@BotBuilder2025!SecurePass',
+        name: 'Dunu Admin',
+        orgSlug: 'dunu-admin-org',
+        orgName: 'Dunu Admin Organization'
+      },
+      {
+        email: 'admin@local.dev',
+        password: 'admin123',
+        name: 'Test Admin',
+        orgSlug: 'test-admin-org',
+        orgName: 'Test Admin Organization'
+      }
+    ] : [
+      {
+        email: 'admin@local.dev',
+        password: 'admin123',
+        name: 'Local Admin',
+        orgSlug: 'local-admin-org',
+        orgName: 'Local Admin Organization'
+      }
+    ];
 
-    // Check if admin exists
-    const existingAdmin = await db.query(
-      'SELECT id, name, email FROM users WHERE email = $1',
-      [adminConfig.email]
-    );
-
-    if (existingAdmin.rows.length === 0) {
-      console.log('\n🔐 ========================================');
-      console.log('🔐 CREATING ADMIN ACCOUNT...');
-      console.log('🔐 ========================================');
-
-      // Hash password with bcrypt
-      const hashedPassword = await bcrypt.hash(adminConfig.password, 10);
-
-      // Create admin user with is_verified = true
-      const userResult = await db.query(
-        `INSERT INTO users (name, email, password_hash, email_verified, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id, name, email`,
-        [adminConfig.name, adminConfig.email, hashedPassword, true]
+    // Create each admin account if it doesn't exist
+    for (const adminConfig of adminConfigs) {
+      // Check if admin exists
+      const existingAdmin = await db.query(
+        'SELECT id, name, email FROM users WHERE email = $1',
+        [adminConfig.email]
       );
 
-      const adminUser = userResult.rows[0];
+      if (existingAdmin.rows.length === 0) {
+        console.log('\n🔐 ========================================');
+        console.log('🔐 CREATING ADMIN ACCOUNT...');
+        console.log('🔐 ========================================');
 
-      // Create organization for admin
-      const orgSlug = isProduction ? 'dunu-admin-org' : 'local-admin-org';
-      const orgName = isProduction ? 'Dunu Admin Organization' : 'Local Admin Organization';
+        // Hash password with bcrypt
+        const hashedPassword = await bcrypt.hash(adminConfig.password, 10);
 
-      const orgResult = await db.query(
-        `INSERT INTO organizations (name, slug, owner_id, plan_tier, settings, created_at, updated_at)
-         VALUES ($1, $2, $3, 'enterprise', '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id, name, slug`,
-        [orgName, orgSlug, adminUser.id]
-      );
+        // Create admin user with is_verified = true
+        const userResult = await db.query(
+          `INSERT INTO users (name, email, password_hash, email_verified, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           RETURNING id, name, email`,
+          [adminConfig.name, adminConfig.email, hashedPassword, true]
+        );
 
-      const adminOrg = orgResult.rows[0];
+        const adminUser = userResult.rows[0];
 
-      // Add admin to organization with admin role
-      await db.query(
-        `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
-         VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)`,
-        [adminOrg.id, adminUser.id]
-      );
+        // Create organization for admin
+        const orgResult = await db.query(
+          `INSERT INTO organizations (name, slug, owner_id, plan_tier, settings, created_at, updated_at)
+           VALUES ($1, $2, $3, 'enterprise', '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           RETURNING id, name, slug`,
+          [adminConfig.orgName, adminConfig.orgSlug, adminUser.id]
+        );
 
-      console.log('\n🎉 ========================================');
-      console.log('✅ ADMIN ACCOUNT CREATED SUCCESSFULLY!');
-      console.log('========================================');
-      console.log(`📧 Email: ${adminConfig.email}`);
-      console.log(`🔑 Password: ${adminConfig.password}`);
-      console.log(`👤 Name: ${adminConfig.name}`);
-      console.log(`👑 Role: admin`);
-      console.log(`🏢 Organization: ${adminOrg.name} (${adminOrg.slug})`);
-      console.log(`💎 Plan: Enterprise`);
-      console.log(`🌐 Environment: ${isProduction ? 'PRODUCTION' : 'LOCAL DEVELOPMENT'}`);
-      console.log(`🆔 User ID: ${adminUser.id}`);
-      console.log(`🏢 Org ID: ${adminOrg.id}`);
-      console.log('========================================\n');
-    } else {
-      console.log(`✅ Admin account already exists: ${adminConfig.email}`);
+        const adminOrg = orgResult.rows[0];
+
+        // Add admin to organization with admin role
+        await db.query(
+          `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
+           VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)`,
+          [adminOrg.id, adminUser.id]
+        );
+
+        console.log('\n🎉 ========================================');
+        console.log('✅ ADMIN ACCOUNT CREATED SUCCESSFULLY!');
+        console.log('========================================');
+        console.log(`📧 Email: ${adminConfig.email}`);
+        console.log(`🔑 Password: ${adminConfig.password}`);
+        console.log(`👤 Name: ${adminConfig.name}`);
+        console.log(`👑 Role: admin`);
+        console.log(`🏢 Organization: ${adminOrg.name} (${adminOrg.slug})`);
+        console.log(`💎 Plan: Enterprise`);
+        console.log(`🌐 Environment: ${isProduction ? 'PRODUCTION' : 'LOCAL DEVELOPMENT'}`);
+        console.log(`🆔 User ID: ${adminUser.id}`);
+        console.log(`🏢 Org ID: ${adminOrg.id}`);
+        console.log('========================================\n');
+      } else {
+        console.log(`✅ Admin account already exists: ${adminConfig.email}`);
+      }
     }
   } catch (error) {
     console.error('\n❌ ========================================');
