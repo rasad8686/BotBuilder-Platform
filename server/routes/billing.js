@@ -4,32 +4,76 @@ const authenticateToken = require('../middleware/auth');
 const db = require('../db');
 const { handleWebhook } = require('../controllers/billingController');
 
-// Initialize Stripe with secret key
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
-// Validate Stripe configuration on startup
+// Validate Stripe configuration on startup BEFORE initialization
 console.log('\n========== STRIPE CONFIGURATION CHECK ==========');
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('❌ ERROR: STRIPE_SECRET_KEY not configured in environment variables');
+
+// Validate Secret Key exists and has correct format
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  console.error('❌ CRITICAL ERROR: STRIPE_SECRET_KEY not configured in environment variables');
   console.error('⚠️  Billing functionality will NOT work!');
+  console.error('⚠️  Set STRIPE_SECRET_KEY in Render dashboard environment variables');
+} else if (typeof stripeSecretKey !== 'string') {
+  console.error('❌ CRITICAL ERROR: STRIPE_SECRET_KEY is not a string');
+  console.error('⚠️  Current type:', typeof stripeSecretKey);
+} else if (stripeSecretKey.trim() === '') {
+  console.error('❌ CRITICAL ERROR: STRIPE_SECRET_KEY is empty string');
+  console.error('⚠️  Set proper Stripe Secret Key in Render dashboard');
+} else if (!stripeSecretKey.startsWith('sk_test_') && !stripeSecretKey.startsWith('sk_live_')) {
+  console.error('❌ CRITICAL ERROR: STRIPE_SECRET_KEY has invalid format');
+  console.error('⚠️  Must start with sk_test_ or sk_live_');
+  console.error(`⚠️  Current value starts with: ${stripeSecretKey.substring(0, 10)}...`);
 } else {
-  console.log('✅ Stripe initialized successfully');
-  console.log(`✅ Secret Key: ${process.env.STRIPE_SECRET_KEY.substring(0, 20)}...`);
+  console.log('✅ Stripe Secret Key validated successfully');
+  console.log(`✅ Key type: ${stripeSecretKey.startsWith('sk_test_') ? 'TEST MODE' : 'LIVE MODE'}`);
+  console.log(`✅ Key prefix: ${stripeSecretKey.substring(0, 20)}...`);
+  console.log(`✅ Key length: ${stripeSecretKey.length} characters`);
 }
 
-// Check Price IDs
-if (!process.env.STRIPE_PRO_PRICE_ID) {
+// Initialize Stripe with secret key (will be undefined if validation failed)
+const stripe = stripeSecretKey ? require('stripe')(stripeSecretKey) : null;
+
+if (!stripe) {
+  console.error('❌ CRITICAL ERROR: Stripe SDK not initialized - Secret Key is missing');
+}
+
+// Validate Price IDs
+const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
+const enterprisePriceId = process.env.STRIPE_ENTERPRISE_PRICE_ID;
+
+if (!proPriceId) {
   console.error('❌ ERROR: STRIPE_PRO_PRICE_ID not configured!');
   console.error('⚠️  Pro plan upgrades will FAIL!');
+} else if (!proPriceId.startsWith('price_')) {
+  console.error('❌ ERROR: STRIPE_PRO_PRICE_ID has invalid format!');
+  console.error('⚠️  Must start with price_');
+  console.error(`⚠️  Current value: ${proPriceId}`);
 } else {
-  console.log(`✅ Pro Price ID: ${process.env.STRIPE_PRO_PRICE_ID}`);
+  console.log(`✅ Pro Price ID: ${proPriceId}`);
+  console.log(`✅ Pro Price ID length: ${proPriceId.length} characters`);
 }
 
-if (!process.env.STRIPE_ENTERPRISE_PRICE_ID) {
+if (!enterprisePriceId) {
   console.error('❌ ERROR: STRIPE_ENTERPRISE_PRICE_ID not configured!');
   console.error('⚠️  Enterprise plan upgrades will FAIL!');
+} else if (!enterprisePriceId.startsWith('price_')) {
+  console.error('❌ ERROR: STRIPE_ENTERPRISE_PRICE_ID has invalid format!');
+  console.error('⚠️  Must start with price_');
+  console.error(`⚠️  Current value: ${enterprisePriceId}`);
 } else {
-  console.log(`✅ Enterprise Price ID: ${process.env.STRIPE_ENTERPRISE_PRICE_ID}`);
+  console.log(`✅ Enterprise Price ID: ${enterprisePriceId}`);
+  console.log(`✅ Enterprise Price ID length: ${enterprisePriceId.length} characters`);
+}
+
+// Summary
+if (stripe && proPriceId && enterprisePriceId) {
+  console.log('\n✅✅✅ ALL STRIPE CONFIGURATION VALID - Billing Ready! ✅✅✅');
+} else {
+  console.error('\n❌❌❌ STRIPE CONFIGURATION INCOMPLETE - Billing Will FAIL! ❌❌❌');
+  console.error('📋 Missing components:');
+  if (!stripe) console.error('  - Stripe SDK (Secret Key invalid)');
+  if (!proPriceId) console.error('  - Pro Plan Price ID');
+  if (!enterprisePriceId) console.error('  - Enterprise Plan Price ID');
 }
 console.log('========== STRIPE CONFIGURATION CHECK END ==========\n');
 
@@ -66,6 +110,18 @@ router.post('/webhook', (req, res) => {
 router.post('/checkout', authenticateToken, async (req, res) => {
   try {
     console.log('\n========== STRIPE CHECKOUT REQUEST ==========');
+
+    // Safety check: Ensure Stripe is initialized
+    if (!stripe) {
+      console.error('❌ CRITICAL: Stripe SDK not initialized - cannot process checkout');
+      console.error('⚠️  Check Render environment variables for STRIPE_SECRET_KEY');
+      return res.status(503).json({
+        success: false,
+        message: 'Payment system not configured. Please contact support.',
+        error: 'Stripe SDK not initialized'
+      });
+    }
+
     const { planType, successUrl, cancelUrl } = req.body;
     const userId = req.user.id;
 
@@ -126,8 +182,14 @@ router.post('/checkout', authenticateToken, async (req, res) => {
 
     // Create Stripe checkout session
     console.log('🔄 Creating Stripe checkout session...');
+    console.log(`📋 Checkout parameters:`);
+    console.log(`   - Price ID: ${priceId}`);
+    console.log(`   - Customer Email: ${user.email}`);
+    console.log(`   - User ID: ${userId}`);
+    console.log(`   - Plan Type: ${planType}`);
+    console.log(`   - Mode: subscription`);
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -151,11 +213,16 @@ router.post('/checkout', authenticateToken, async (req, res) => {
           planType: planType
         }
       }
-    });
+    };
+
+    console.log('📤 Calling Stripe API...');
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     console.log('✅ Checkout session created successfully');
     console.log(`Session ID: ${session.id}`);
     console.log(`Checkout URL: ${session.url}`);
+    console.log(`Session Mode: ${session.mode}`);
+    console.log(`Session Status: ${session.status}`);
     console.log('========== CHECKOUT REQUEST SUCCESS ==========\n');
 
     res.json({
