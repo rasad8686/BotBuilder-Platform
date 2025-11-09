@@ -263,7 +263,7 @@ export default function Sidebar() {
 
           {/* Send Feedback Button */}
           <button
-            onClick={() => window.open('mailto:feedback@botbuilder.com?subject=BotBuilder Beta Feedback', '_blank')}
+            onClick={() => window.open('mailto:dunugojaev@gmail.com?subject=BotBuilder Beta Feedback', '_blank')}
             className="w-full px-4 py-2.5 mb-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center gap-2 text-sm"
           >
             <span>💬</span>
