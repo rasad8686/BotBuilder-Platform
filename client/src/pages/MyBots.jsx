@@ -9,9 +9,11 @@ import Pagination from '../components/Pagination';
 import PermissionGuard from '../components/PermissionGuard';
 import UpgradeLimitModal from '../components/UpgradeLimitModal';
 import { API_URL } from '../config/api';
+import { useOrganization } from '../contexts/OrganizationContext';
 
 export default function MyBots() {
   const { t } = useTranslation();
+  const { loading: orgLoading } = useOrganization();
   const [bots, setBots] = useState([]);
   const [filteredBots, setFilteredBots] = useState([]);
   const [error, setError] = useState('');
@@ -34,9 +36,14 @@ export default function MyBots() {
   const [limitErrorData, setLimitErrorData] = useState(null);
 
   useEffect(() => {
+    // Wait for organization context to load before fetching data
+    if (orgLoading) {
+      return;
+    }
+
     fetchBots();
     fetchSubscription();
-  }, [currentPage, itemsPerPage, usePagination]);
+  }, [currentPage, itemsPerPage, usePagination, orgLoading]);
 
   // Fetch subscription/plan info
   const fetchSubscription = async () => {
@@ -203,8 +210,8 @@ export default function MyBots() {
     }
   };
 
-  // Loading skeleton
-  if (loading) {
+  // Loading skeleton - show while org context is loading OR bots are loading
+  if (orgLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
@@ -279,8 +286,8 @@ export default function MyBots() {
           </div>
         )}
 
-        {/* Error Message */}
-        {error && (
+        {/* Error Message - Only show after both org and bots finish loading */}
+        {!orgLoading && !loading && error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 shadow-sm">
             ⚠️ {error}
           </div>
