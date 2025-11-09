@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function Usage() {
   const [dashboardData, setDashboardData] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState(7); // 7 or 30 days
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    fetchAllData();
+  }, [timeRange]);
 
-  const fetchDashboardData = async () => {
+  const fetchAllData = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -21,13 +24,36 @@ export default function Usage() {
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/api/analytics/dashboard`, {
+      // Fetch dashboard data (existing usage stats)
+      const dashboardResponse = await axios.get(`${API_BASE_URL}/api/analytics/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setDashboardData(response.data);
+      // Fetch analytics data (new endpoints)
+      const [overviewRes, messagesOverTimeRes, byBotRes, recentActivityRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/analytics/overview`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_BASE_URL}/api/analytics/messages-over-time?days=${timeRange}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_BASE_URL}/api/analytics/by-bot`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_BASE_URL}/api/analytics/recent-activity`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      setDashboardData(dashboardResponse.data);
+      setAnalyticsData({
+        overview: overviewRes.data.data,
+        messagesOverTime: messagesOverTimeRes.data.data,
+        byBot: byBotRes.data.data,
+        recentActivity: recentActivityRes.data.data
+      });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching data:', error);
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -239,6 +265,139 @@ export default function Usage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Analytics Overview */}
+            {analyticsData && (
+              <>
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Analytics Overview</h2>
+                  <div className="grid md:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-purple-600">{analyticsData.overview.totalMessages}</div>
+                      <p className="text-gray-600 mt-2">Total Messages</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-blue-600">{analyticsData.overview.totalBots}</div>
+                      <p className="text-gray-600 mt-2">Total Bots</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-600">{analyticsData.overview.apiCalls}</div>
+                      <p className="text-gray-600 mt-2">API Calls</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-orange-600">{analyticsData.overview.activeUsers}</div>
+                      <p className="text-gray-600 mt-2">Active Users</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages Over Time Chart */}
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800">Messages Over Time</h2>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setTimeRange(7)}
+                        className={`px-4 py-2 rounded-lg font-semibold ${
+                          timeRange === 7
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        }`}
+                      >
+                        7 Days
+                      </button>
+                      <button
+                        onClick={() => setTimeRange(30)}
+                        className={`px-4 py-2 rounded-lg font-semibold ${
+                          timeRange === 30
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        }`}
+                      >
+                        30 Days
+                      </button>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={analyticsData.messagesOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis />
+                      <Tooltip
+                        labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} name="Messages" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Messages By Bot Chart */}
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Messages by Bot</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.byBot}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="botName" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="messageCount" fill="#3b82f6" name="Messages" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Recent Activity Table */}
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Activity</h2>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Bot</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Content</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.recentActivity.map((activity) => (
+                          <tr key={activity.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-gray-800">{activity.botName}</td>
+                            <td className="py-3 px-4">
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                                {activity.messageType}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-gray-600 max-w-md truncate">
+                              {activity.content}
+                            </td>
+                            <td className="py-3 px-4 text-gray-500 text-sm">
+                              {new Date(activity.timestamp).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                          </tr>
+                        ))}
+                        {analyticsData.recentActivity.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="text-center py-8 text-gray-500">
+                              No recent activity found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Quick Actions */}

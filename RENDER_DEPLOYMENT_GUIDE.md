@@ -90,6 +90,15 @@ git push -u origin main
    - `JWT_SECRET` = `your-secure-random-string-here-change-this`
    - `DATABASE_URL` = (Copy from Render PostgreSQL service)
 
+   **STRIPE CONFIGURATION (REQUIRED for billing):**
+   - `STRIPE_SECRET_KEY` = `sk_test_...` (from https://dashboard.stripe.com/test/apikeys)
+   - `STRIPE_PUBLISHABLE_KEY` = `pk_test_...` (from https://dashboard.stripe.com/test/apikeys)
+   - `STRIPE_WEBHOOK_SECRET` = `whsec_...` (from Stripe webhook settings)
+   - `STRIPE_PRO_PRICE_ID` = `price_...` (from https://dashboard.stripe.com/test/products - Pro Plan)
+   - `STRIPE_ENTERPRISE_PRICE_ID` = `price_...` (from https://dashboard.stripe.com/test/products - Enterprise Plan)
+
+   ⚠️ **CRITICAL**: Without Stripe Price IDs, billing will fail with "Price ID not configured" error!
+
 7. **Click:** "Create Web Service"
 
 #### Option B: Using render.yaml (Auto-Deploy)
