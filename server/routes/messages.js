@@ -84,16 +84,17 @@ router.post('/', checkMessageLimit, checkPermission('member'), async (req, res) 
 
     // Insert message into database
     const query = `
-      INSERT INTO bot_messages (bot_id, message_type, content, trigger_keywords, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, bot_id, message_type, content, trigger_keywords, created_at, updated_at
+      INSERT INTO bot_messages (bot_id, message_type, content, trigger_keywords, organization_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, bot_id, message_type, content, trigger_keywords, organization_id, created_at, updated_at
     `;
 
     const values = [
       bot_id,
       message_type.toLowerCase().trim(),
       content.trim(),
-      trigger_keywords ? trigger_keywords.trim() : null
+      trigger_keywords ? trigger_keywords.trim() : null,
+      organization_id
     ];
 
     const result = await db.query(query, values);

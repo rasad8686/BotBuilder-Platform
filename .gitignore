@@ -46,3 +46,7 @@ coverage/
 # Mock/test server - DO NOT deploy to production
 # Ignore ENTIRE directory to prevent deployment
 client/server/
+
+.vercel
+
+nul
