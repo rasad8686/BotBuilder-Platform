@@ -537,6 +537,9 @@ app.use('/api/analytics', require('./routes/analytics'));
 // ✅ Webhooks routes - Using modular router
 app.use('/api/webhooks', require('./routes/webhooks'));
 
+// ✅ Feedback routes
+app.use('/api/feedback', require('./routes/feedback'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
