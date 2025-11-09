@@ -8,14 +8,30 @@ const { handleWebhook } = require('../controllers/billingController');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Validate Stripe configuration on startup
+console.log('\n========== STRIPE CONFIGURATION CHECK ==========');
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error('❌ ERROR: STRIPE_SECRET_KEY not configured in environment variables');
+  console.error('⚠️  Billing functionality will NOT work!');
 } else {
   console.log('✅ Stripe initialized successfully');
   console.log(`✅ Secret Key: ${process.env.STRIPE_SECRET_KEY.substring(0, 20)}...`);
-  console.log(`✅ Pro Price ID: ${process.env.STRIPE_PRO_PRICE_ID || 'NOT SET'}`);
-  console.log(`✅ Enterprise Price ID: ${process.env.STRIPE_ENTERPRISE_PRICE_ID || 'NOT SET'}`);
 }
+
+// Check Price IDs
+if (!process.env.STRIPE_PRO_PRICE_ID) {
+  console.error('❌ ERROR: STRIPE_PRO_PRICE_ID not configured!');
+  console.error('⚠️  Pro plan upgrades will FAIL!');
+} else {
+  console.log(`✅ Pro Price ID: ${process.env.STRIPE_PRO_PRICE_ID}`);
+}
+
+if (!process.env.STRIPE_ENTERPRISE_PRICE_ID) {
+  console.error('❌ ERROR: STRIPE_ENTERPRISE_PRICE_ID not configured!');
+  console.error('⚠️  Enterprise plan upgrades will FAIL!');
+} else {
+  console.log(`✅ Enterprise Price ID: ${process.env.STRIPE_ENTERPRISE_PRICE_ID}`);
+}
+console.log('========== STRIPE CONFIGURATION CHECK END ==========\n');
 
 /**
  * POST /api/billing/webhook
@@ -152,13 +168,27 @@ router.post('/checkout', authenticateToken, async (req, res) => {
     console.error('\n========== STRIPE CHECKOUT ERROR ==========');
     console.error('Error type:', error.type);
     console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error param:', error.param);
     console.error('Error stack:', error.stack);
     console.error('========== ERROR END ==========\n');
 
+    // Provide helpful error message based on error type
+    let userMessage = 'Failed to create checkout session';
+    if (error.type === 'StripeInvalidRequestError') {
+      if (error.param === 'price' || error.message?.includes('price')) {
+        userMessage = 'Invalid price configuration. Please contact support.';
+      } else if (error.message?.includes('api_key')) {
+        userMessage = 'Payment system configuration error. Please contact support.';
+      }
+    } else if (error.type === 'StripeAuthenticationError') {
+      userMessage = 'Payment system authentication error. Please contact support.';
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Failed to create checkout session',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: userMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Check server logs for details'
     });
   }
 });
