@@ -553,6 +553,9 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 // ✅ Feedback routes
 app.use('/api/feedback', require('./routes/feedback'));
 
+// ✅ API Tokens routes
+app.use('/api/api-tokens', require('./routes/api-tokens'));
+
 // ✅ 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -577,7 +580,10 @@ app.use((req, res) => {
       'POST /api/bots/:botId/flow (Auth Required)',
       'GET /api/bots/:botId/flow (Auth Required)',
       'PUT /api/bots/:botId/flow/:flowId (Auth Required)',
-      'GET /api/bots/:botId/flow/history (Auth Required)'
+      'GET /api/bots/:botId/flow/history (Auth Required)',
+      'GET /api/api-tokens (Auth Required)',
+      'POST /api/api-tokens (Auth Required)',
+      'DELETE /api/api-tokens/:id (Auth Required)'
     ]
   });
 });
