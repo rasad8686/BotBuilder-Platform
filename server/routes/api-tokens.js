@@ -40,10 +40,8 @@ router.get('/', checkPermission('member'), async (req, res) => {
       [organization_id]
     );
 
-    res.json({
-      success: true,
-      data: result.rows
-    });
+    // Return array directly to match frontend expectations
+    res.json(result.rows);
 
   } catch (error) {
     console.error('[API_TOKENS] Error fetching tokens:', error);
