@@ -107,7 +107,6 @@ router.post('/', async (req, res) => {
         organizationId,
         createdAt: feedback.created_at
       });
-      console.log(`[FEEDBACK] Email sent for feedback ID: ${feedback.id}`);
     } catch (emailError) {
       // Log error but don't fail the request
       console.error('[FEEDBACK] Failed to send email notification:', emailError.message);
@@ -243,7 +242,10 @@ router.get('/', async (req, res) => {
 async function sendFeedbackEmail({ feedbackId, name, email, category, message, organizationId, createdAt }) {
   // Check if email is configured
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log('[FEEDBACK] Email not configured, skipping notification');
+    console.log('[FEEDBACK] ⚠️ Email not configured - missing environment variables:');
+    console.log('[FEEDBACK]   EMAIL_USER:', process.env.EMAIL_USER ? '✓ Set' : '✗ Missing');
+    console.log('[FEEDBACK]   EMAIL_PASS:', process.env.EMAIL_PASS ? '✓ Set' : '✗ Missing');
+    console.log('[FEEDBACK] Skipping email notification for feedback ID:', feedbackId);
     return;
   }
 
@@ -323,6 +325,7 @@ async function sendFeedbackEmail({ feedbackId, name, email, category, message, o
   };
 
   await transporter.sendMail(mailOptions);
+  console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`);
 }
 
 module.exports = router;
