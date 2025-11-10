@@ -81,7 +81,8 @@
       "Bash(timeout 8 npm run dev:*)",
       "Bash(for i in {1..10})",
       "Bash(do timeout 2 curl -X POST http://localhost:5000/api/messages -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d \"{\"\"bot_id\"\":96,\"\"message_type\"\":\"\"response\"\",\"\"content\"\":\"\"Test message $i for analytics\"\"}\")",
-      "Bash(timeout 3 curl:*)"
+      "Bash(timeout 3 curl:*)",
+      "Bash(timeout 10 npm run dev)"
     ],
     "deny": [],
     "ask": []
