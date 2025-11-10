@@ -5,11 +5,13 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { useBrand } from '../contexts/BrandContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
+import FeedbackModal from './FeedbackModal';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -263,7 +265,7 @@ export default function Sidebar() {
 
           {/* Send Feedback Button */}
           <button
-            onClick={() => window.open('mailto:dunugojaev@gmail.com?subject=BotBuilder Beta Feedback', '_blank')}
+            onClick={() => setIsFeedbackModalOpen(true)}
             className="w-full px-4 py-2.5 mb-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center gap-2 text-sm"
           >
             <span>💬</span>
@@ -279,6 +281,14 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        userName={user?.username || ''}
+        userEmail={user?.email || ''}
+      />
     </>
   );
 }
