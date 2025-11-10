@@ -14,7 +14,7 @@ const getApiBaseUrl = () => {
 
   // Production domain
   if (hostname.includes('vercel.app') || hostname.includes('bot-builder')) {
-    return 'https://botbuilder-api.onrender.com';
+    return 'https://botbuilder-platform.onrender.com';
   }
 
   // Local development
