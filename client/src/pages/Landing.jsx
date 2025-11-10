@@ -178,7 +178,7 @@ function Landing() {
                 <FaArrowRight />
               </button>
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/demo')}
                 className="w-full sm:w-auto bg-white text-purple-600 px-8 py-4 rounded-xl font-bold text-lg border-2 border-purple-600 hover:bg-purple-50 transition"
               >
                 View Demo

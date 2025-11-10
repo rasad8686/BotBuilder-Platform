@@ -517,6 +517,94 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// ✅ Demo Login Endpoint - Auto-login for demo account
+app.post('/api/auth/demo', async (req, res) => {
+  try {
+    console.log('\n========== DEMO LOGIN REQUEST ==========');
+
+    // Demo credentials
+    const demoEmail = 'demo@botbuilder.com';
+
+    console.log('[DEMO] Querying database for:', demoEmail);
+
+    // Query database for demo user
+    const result = await db.query(
+      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      [demoEmail]
+    );
+
+    console.log('[DEMO] Query result - rows found:', result.rows.length);
+    console.log('[DEMO] Query result - rows:', JSON.stringify(result.rows));
+
+    // Check if demo user exists
+    if (result.rows.length === 0) {
+      console.error('[DEMO] Demo user not found. Please run seed script.');
+      return res.status(404).json({
+        success: false,
+        message: 'Demo account not found. Please contact support.'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Get demo user's organization
+    const orgResult = await db.query(
+      `SELECT om.org_id
+       FROM organization_members om
+       WHERE om.user_id = $1 AND om.status = 'active'
+       ORDER BY om.joined_at ASC
+       LIMIT 1`,
+      [user.id]
+    );
+
+    let organizationId = null;
+    if (orgResult.rows.length > 0) {
+      organizationId = orgResult.rows[0].org_id;
+    }
+
+    // Generate JWT token for demo user
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        username: user.name,
+        current_organization_id: organizationId,
+        is_demo: true // Flag to identify demo users
+      },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      { expiresIn: '24h' }
+    );
+
+    // Log demo login to audit trail
+    await logLogin(req, user.id, true, 'Demo login');
+
+    console.log('[DEMO] Demo login successful');
+    console.log('[DEMO] User ID:', user.id);
+    console.log('[DEMO] Organization ID:', organizationId);
+
+    res.json({
+      success: true,
+      message: 'Demo login successful! You are viewing a demo account.',
+      token: token,
+      user: {
+        id: user.id,
+        username: user.name,
+        email: user.email,
+        currentOrganizationId: organizationId,
+        isDemo: true
+      }
+    });
+
+  } catch (error) {
+    console.error('[DEMO] Demo login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Demo login error',
+      error: error.message
+    });
+  }
+});
+
 // ✅ Bot routes (CRUD) - Using modular router
 app.use('/api/bots', require('./routes/bots'));
 
