@@ -82,7 +82,9 @@
       "Bash(for i in {1..10})",
       "Bash(do timeout 2 curl -X POST http://localhost:5000/api/messages -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d \"{\"\"bot_id\"\":96,\"\"message_type\"\":\"\"response\"\",\"\"content\"\":\"\"Test message $i for analytics\"\"}\")",
       "Bash(timeout 3 curl:*)",
-      "Bash(timeout 10 npm run dev)"
+      "Bash(timeout 10 npm run dev)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDQsImVtYWlsIjoiZGVtb0Bib3RidWlsZGVyLmNvbSIsInVzZXJuYW1lIjoiRGVtbyBVc2VyIiwiY3VycmVudF9vcmdhbml6YXRpb25faWQiOjQ0LCJpc19kZW1vIjp0cnVlLCJpYXQiOjE3NjI4MTUyMzMsImV4cCI6MTc2MjkwMTYzM30.vA91U-xnHosk7ce2uq3h_SDsDTZcsU3jf0-d64q_TyY\")",
+      "Bash(timeout 60 node:*)"
     ],
     "deny": [],
     "ask": []
