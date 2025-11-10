@@ -23,6 +23,11 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// Debug: Log API URL on load
+console.log('[FeedbackModal] API_BASE_URL:', API_BASE_URL);
+console.log('[FeedbackModal] window.location.hostname:', window.location.hostname);
+console.log('[FeedbackModal] import.meta.env.VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+
 export default function FeedbackModal({ isOpen, onClose, userName = '', userEmail = '' }) {
   const { t } = useTranslation();
   const [category, setCategory] = useState('');
@@ -78,6 +83,9 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
     e.preventDefault();
     setError('');
 
+    console.log('[FeedbackModal] handleSubmit called');
+    console.log('[FeedbackModal] API_BASE_URL:', API_BASE_URL);
+
     // Validation
     if (!category) {
       setError(t('feedback.errors.selectCategory', 'Please select a category'));
@@ -98,8 +106,12 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
     try {
       const token = localStorage.getItem('token');
+      const url = `${API_BASE_URL}/api/feedback`;
+      console.log('[FeedbackModal] Sending POST to:', url);
+      console.log('[FeedbackModal] Token exists:', !!token);
+
       const response = await axios.post(
-        `${API_BASE_URL}/api/feedback`,
+        url,
         {
           category,
           message: message.trim()
@@ -112,6 +124,8 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         }
       );
 
+      console.log('[FeedbackModal] Response:', response.data);
+
       if (response.data.success) {
         setSuccess(true);
         setTimeout(() => {
@@ -119,7 +133,9 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         }, 2000);
       }
     } catch (err) {
-      console.error('Feedback submission error:', err);
+      console.error('[FeedbackModal] Feedback submission error:', err);
+      console.error('[FeedbackModal] Error response:', err.response);
+      console.error('[FeedbackModal] Error message:', err.message);
       setError(
         err.response?.data?.message ||
         t('feedback.errors.submitFailed', 'Failed to submit feedback. Please try again.')
