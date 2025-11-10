@@ -135,6 +135,11 @@ app.use(cors({
       return callback(null, true);
     }
 
+    // Allow production domain
+    if (origin === 'https://bot-builder-platform.vercel.app') {
+      return callback(null, true);
+    }
+
     // Allow all Vercel deployments (production + previews)
     if (origin.includes('vercel.app')) {
       return callback(null, true);
@@ -142,7 +147,9 @@ app.use(cors({
 
     callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // ✅ Stripe webhook requires raw body for signature verification
