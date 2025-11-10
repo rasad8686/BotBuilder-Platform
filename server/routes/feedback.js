@@ -238,6 +238,15 @@ router.get('/', async (req, res) => {
 
 /**
  * Send feedback email notification
+ *
+ * NOTE: If Gmail SMTP continues to timeout on Render despite these settings,
+ * consider using a production email service:
+ * - SendGrid (HTTP API, no SMTP ports needed)
+ * - Mailgun (HTTP API or port 2525)
+ * - AWS SES (HTTP API)
+ * - Resend (Modern HTTP API)
+ *
+ * These services are designed for cloud platforms and won't be blocked.
  */
 async function sendFeedbackEmail({ feedbackId, name, email, category, message, organizationId, createdAt }) {
   // Check if email is configured
@@ -249,12 +258,27 @@ async function sendFeedbackEmail({ feedbackId, name, email, category, message, o
     return;
   }
 
+  // Configure transporter with explicit settings and timeouts for production
+  // Using port 465 with SSL as it's more likely to work on cloud platforms like Render
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
-    }
+    },
+    tls: {
+      rejectUnauthorized: true
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000, // 15 seconds
+    pool: true, // Use connection pooling
+    maxConnections: 5,
+    maxMessages: 10,
+    debug: process.env.NODE_ENV === 'development', // Enable debug in dev
+    logger: process.env.NODE_ENV === 'development' // Enable logging in dev
   });
 
   const categoryEmojis = {
@@ -324,8 +348,23 @@ async function sendFeedbackEmail({ feedbackId, name, email, category, message, o
     `
   };
 
-  await transporter.sendMail(mailOptions);
-  console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`);
+  try {
+    // Verify transporter connection before sending
+    await transporter.verify();
+    console.log('[FEEDBACK] SMTP connection verified successfully');
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`);
+  } catch (error) {
+    console.error('[FEEDBACK] ❌ Email sending failed:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response
+    });
+    throw new Error(`Email send failed: ${error.message}`);
+  }
 }
 
 module.exports = router;
