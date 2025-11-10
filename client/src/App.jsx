@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -41,8 +42,10 @@ function App() {
     <BrandProvider>
       <Router>
         <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
+
           {/* Auth Routes - No Sidebar, No Organization Context */}
-          <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
