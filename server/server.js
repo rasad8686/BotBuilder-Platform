@@ -10,7 +10,13 @@ const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
 const { detectCustomDomain } = require('./middleware/whitelabel');
 
-dotenv.config();
+// Load .env from server directory (same directory as this file)
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Verify email configuration loaded
+console.log('📧 Email Configuration Check:');
+console.log('  EMAIL_USER:', process.env.EMAIL_USER ? '✓ Loaded' : '✗ Missing');
+console.log('  EMAIL_PASS:', process.env.EMAIL_PASS ? '✓ Loaded' : '✗ Missing');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
