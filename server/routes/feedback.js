@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext } = require('../middleware/organizationContext');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 // Apply authentication middleware
 router.use(authenticateToken);
@@ -239,47 +239,20 @@ router.get('/', async (req, res) => {
 /**
  * Send feedback email notification
  *
- * NOTE: If Gmail SMTP continues to timeout on Render despite these settings,
- * consider using a production email service:
- * - SendGrid (HTTP API, no SMTP ports needed)
- * - Mailgun (HTTP API or port 2525)
- * - AWS SES (HTTP API)
- * - Resend (Modern HTTP API)
- *
- * These services are designed for cloud platforms and won't be blocked.
+ * Uses Resend HTTP API instead of SMTP (works on cloud platforms like Render)
+ * Get your API key from: https://resend.com/api-keys
  */
 async function sendFeedbackEmail({ feedbackId, name, email, category, message, organizationId, createdAt }) {
   // Check if email is configured
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log('[FEEDBACK] ⚠️ Email not configured - missing environment variables:');
-    console.log('[FEEDBACK]   EMAIL_USER:', process.env.EMAIL_USER ? '✓ Set' : '✗ Missing');
-    console.log('[FEEDBACK]   EMAIL_PASS:', process.env.EMAIL_PASS ? '✓ Set' : '✗ Missing');
+  if (!process.env.RESEND_API_KEY) {
+    console.log('[FEEDBACK] ⚠️ Email not configured - RESEND_API_KEY missing');
+    console.log('[FEEDBACK] Get your API key from: https://resend.com/api-keys');
     console.log('[FEEDBACK] Skipping email notification for feedback ID:', feedbackId);
     return;
   }
 
-  // Configure transporter with explicit settings and timeouts for production
-  // Using port 465 with SSL as it's more likely to work on cloud platforms like Render
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    tls: {
-      rejectUnauthorized: true
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 15000, // 15 seconds
-    pool: true, // Use connection pooling
-    maxConnections: 5,
-    maxMessages: 10,
-    debug: process.env.NODE_ENV === 'development', // Enable debug in dev
-    logger: process.env.NODE_ENV === 'development' // Enable logging in dev
-  });
+  // Initialize Resend with API key
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const categoryEmojis = {
     bug: '🐛',
@@ -300,70 +273,64 @@ async function sendFeedbackEmail({ feedbackId, name, email, category, message, o
   const emoji = categoryEmojis[category] || '📝';
   const categoryName = categoryNames[category] || category;
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: 'dunugojaev@gmail.com',
-    subject: `${emoji} New Feedback: ${categoryName}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">${emoji} New Feedback Received</h1>
-        </div>
-
-        <div style="padding: 30px; background: #f7f7f7;">
-          <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #333; margin-top: 0; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
-              ${categoryName}
-            </h2>
-
-            <div style="margin: 20px 0;">
-              <p style="margin: 8px 0; color: #666;">
-                <strong style="color: #333;">From:</strong> ${name}
-              </p>
-              <p style="margin: 8px 0; color: #666;">
-                <strong style="color: #333;">Email:</strong> ${email}
-              </p>
-              <p style="margin: 8px 0; color: #666;">
-                <strong style="color: #333;">Feedback ID:</strong> #${feedbackId}
-              </p>
-              <p style="margin: 8px 0; color: #666;">
-                <strong style="color: #333;">Organization ID:</strong> ${organizationId || 'N/A'}
-              </p>
-              <p style="margin: 8px 0; color: #666;">
-                <strong style="color: #333;">Submitted:</strong> ${new Date(createdAt).toLocaleString()}
-              </p>
-            </div>
-
-            <div style="margin-top: 25px; padding: 20px; background: #f9f9f9; border-left: 4px solid #667eea; border-radius: 4px;">
-              <h3 style="color: #333; margin-top: 0; font-size: 16px;">Message:</h3>
-              <p style="color: #555; line-height: 1.6; white-space: pre-wrap; margin: 0;">${message}</p>
-            </div>
-          </div>
-
-          <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-            <p>This is an automated notification from BotBuilder Platform</p>
-          </div>
-        </div>
-      </div>
-    `
-  };
-
   try {
-    // Verify transporter connection before sending
-    await transporter.verify();
-    console.log('[FEEDBACK] SMTP connection verified successfully');
+    const { data, error } = await resend.emails.send({
+      from: 'BotBuilder Platform <onboarding@resend.dev>',
+      to: ['dunugojaev@gmail.com'],
+      subject: `${emoji} New Feedback: ${categoryName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">${emoji} New Feedback Received</h1>
+          </div>
 
-    await transporter.sendMail(mailOptions);
-    console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`);
-  } catch (error) {
-    console.error('[FEEDBACK] ❌ Email sending failed:', {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      responseCode: error.responseCode,
-      response: error.response
+          <div style="padding: 30px; background: #f7f7f7;">
+            <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h2 style="color: #333; margin-top: 0; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                ${categoryName}
+              </h2>
+
+              <div style="margin: 20px 0;">
+                <p style="margin: 8px 0; color: #666;">
+                  <strong style="color: #333;">From:</strong> ${name}
+                </p>
+                <p style="margin: 8px 0; color: #666;">
+                  <strong style="color: #333;">Email:</strong> ${email}
+                </p>
+                <p style="margin: 8px 0; color: #666;">
+                  <strong style="color: #333;">Feedback ID:</strong> #${feedbackId}
+                </p>
+                <p style="margin: 8px 0; color: #666;">
+                  <strong style="color: #333;">Organization ID:</strong> ${organizationId || 'N/A'}
+                </p>
+                <p style="margin: 8px 0; color: #666;">
+                  <strong style="color: #333;">Submitted:</strong> ${new Date(createdAt).toLocaleString()}
+                </p>
+              </div>
+
+              <div style="margin-top: 25px; padding: 20px; background: #f9f9f9; border-left: 4px solid #667eea; border-radius: 4px;">
+                <h3 style="color: #333; margin-top: 0; font-size: 16px;">Message:</h3>
+                <p style="color: #555; line-height: 1.6; white-space: pre-wrap; margin: 0;">${message}</p>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+              <p>This is an automated notification from BotBuilder Platform</p>
+            </div>
+          </div>
+        </div>
+      `
     });
-    throw new Error(`Email send failed: ${error.message}`);
+
+    if (error) {
+      console.error('[FEEDBACK] ❌ Email sending failed:', error);
+      throw new Error(`Email send failed: ${error.message}`);
+    }
+
+    console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`, data);
+  } catch (error) {
+    console.error('[FEEDBACK] ❌ Email sending error:', error);
+    throw new Error(`Email send failed: ${error.message || error}`);
   }
 }
 
