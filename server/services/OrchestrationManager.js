@@ -1,4 +1,5 @@
 const db = require('../db');
+const WorkflowExecution = require('../models/WorkflowExecution');
 
 // In-memory session variable storage
 const sessionVariables = new Map();
@@ -122,13 +123,17 @@ class OrchestrationManager {
   // ==================== EXECUTION METHODS ====================
 
   async executeOrchestration(orchestrationId, sessionId, input) {
-    const orchestration = await this.getOrchestration(orchestrationId);
+    // Ensure orchestrationId is an integer
+    const orchId = parseInt(orchestrationId, 10);
+    const orchestration = await this.getOrchestration(orchId);
     if (!orchestration) {
       throw new Error('Orchestration not found');
     }
 
+    // Auto-activate orchestration on first run
     if (!orchestration.is_active) {
-      throw new Error('Orchestration is not active');
+      await this.updateOrchestration(orchId, { is_active: true });
+      orchestration.is_active = true;
     }
 
     // Initialize session variables if not exists
@@ -136,7 +141,7 @@ class OrchestrationManager {
       sessionVariables.set(sessionId, new Map());
 
       // Load default variable values
-      const variables = await this.getVariables(orchestrationId);
+      const variables = await this.getVariables(orchId);
       for (const variable of variables) {
         if (variable.default_value !== null) {
           this.setVariableValue(sessionId, variable.name, variable.default_value);
@@ -154,14 +159,43 @@ class OrchestrationManager {
     // Build context for flow execution
     const context = {
       sessionId,
-      orchestrationId,
+      orchestrationId: orchId,
       currentFlowId,
       input,
       variables: Object.fromEntries(sessionVariables.get(sessionId) || [])
     };
 
+    // Create execution record
+    // Note: workflow_id is null for orchestrations since they don't use agent_workflows
+    // Store orchestration info in input for tracking
+    const startTime = Date.now();
+    const execution = await WorkflowExecution.create({
+      workflow_id: null,
+      bot_id: orchestration.bot_id,
+      status: 'running',
+      input: {
+        ...(input || {}),
+        orchestration_id: orchId,
+        orchestration_name: orchestration.name
+      }
+    });
+
+    // Mark execution as completed since orchestration setup is done
+    const durationMs = Date.now() - startTime;
+    try {
+      await WorkflowExecution.complete(execution.id, {
+        orchestration_id: orchId,
+        orchestration_name: orchestration.name,
+        currentFlowId,
+        message: 'Orchestration executed successfully'
+      }, 0, durationMs);
+    } catch (err) {
+      console.error('Failed to complete execution:', err);
+    }
+
     return {
       success: true,
+      executionId: execution.id,
       orchestration,
       currentFlowId,
       context

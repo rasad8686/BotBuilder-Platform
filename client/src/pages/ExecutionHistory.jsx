@@ -151,7 +151,10 @@ const ExecutionHistory = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
+    // PostgreSQL returns UTC time - parse and add 4 hours for UTC+4
+    let date = new Date(dateString);
+    // Add 4 hours offset for Tbilisi timezone (UTC+4)
+    date = new Date(date.getTime() + (4 * 60 * 60 * 1000));
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -321,7 +324,7 @@ const ExecutionHistory = () => {
               {executions.map((execution) => (
                 <tr key={execution.id}>
                   <td>{formatDate(execution.created_at)}</td>
-                  <td>{execution.workflow_name || `Workflow #${execution.workflow_id}`}</td>
+                  <td>{execution.workflow_name || execution.input?.orchestration_name || (execution.workflow_id ? `Workflow #${execution.workflow_id}` : `Orchestration #${execution.input?.orchestration_id || '?'}`)}</td>
                   <td>{getStatusBadge(execution.status)}</td>
                   <td>{formatDuration(execution.duration)}</td>
                   <td>{execution.total_tokens?.toLocaleString() || '-'}</td>
