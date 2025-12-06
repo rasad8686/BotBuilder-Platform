@@ -30,6 +30,8 @@ function OrchestrationBuilderInner() {
   const [showVariableManager, setShowVariableManager] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
 
   const getToken = () => localStorage.getItem('token');
 
@@ -52,16 +54,18 @@ function OrchestrationBuilderInner() {
         })
       ]);
 
+      let entryFlowId = null;
       if (orchRes.ok) {
         const orchData = await orchRes.json();
         setOrchestration(orchData.data);
+        entryFlowId = orchData.data?.entry_flow_id;
       }
 
       if (flowsRes.ok) {
         const flowsData = await flowsRes.json();
         const flowList = flowsData.data ? [flowsData.data] : [];
         setFlows(flowList);
-        buildNodesFromFlows(flowList);
+        buildNodesFromFlows(flowList, entryFlowId);
       }
 
       if (transitionsRes.ok) {
@@ -76,29 +80,35 @@ function OrchestrationBuilderInner() {
     }
   };
 
-  const buildNodesFromFlows = (flowList) => {
-    const newNodes = flowList.map((flow, index) => ({
-      id: `flow-${flow.id}`,
-      type: 'default',
-      position: { x: 100 + (index % 3) * 300, y: 100 + Math.floor(index / 3) * 200 },
-      data: {
-        label: (
-          <div style={{ padding: 8, textAlign: 'center' }}>
-            <div style={{ fontSize: 24, marginBottom: 4 }}>📋</div>
-            <div style={{ fontWeight: 600 }}>{flow.name || `Flow ${flow.id}`}</div>
-            <div style={{ fontSize: 11, color: '#6b7280' }}>
-              {flow.flow_data?.nodes?.length || 0} nodes
+  const buildNodesFromFlows = (flowList, entryFlowId = null) => {
+    const newNodes = flowList.map((flow, index) => {
+      const isEntryFlow = entryFlowId && flow.id === entryFlowId;
+      return {
+        id: `flow-${flow.id}`,
+        type: 'default',
+        position: { x: 100 + (index % 3) * 300, y: 100 + Math.floor(index / 3) * 200 },
+        data: {
+          flowId: flow.id,
+          flowName: flow.name || `Flow ${flow.id}`,
+          label: (
+            <div style={{ padding: 8, textAlign: 'center' }}>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{isEntryFlow ? '🚀' : '📋'}</div>
+              <div style={{ fontWeight: 600 }}>{flow.name || `Flow ${flow.id}`}</div>
+              <div style={{ fontSize: 11, color: isEntryFlow ? '#059669' : '#6b7280' }}>
+                {isEntryFlow ? '✓ Entry Flow' : `${flow.flow_data?.nodes?.length || 0} nodes`}
+              </div>
             </div>
-          </div>
-        )
-      },
-      style: {
-        backgroundColor: '#f3e8ff',
-        border: '2px solid #8b5cf6',
-        borderRadius: 12,
-        minWidth: 150
-      }
-    }));
+          )
+        },
+        style: {
+          backgroundColor: isEntryFlow ? '#d1fae5' : '#f3e8ff',
+          border: isEntryFlow ? '3px solid #10b981' : '2px solid #8b5cf6',
+          borderRadius: 12,
+          minWidth: 150,
+          cursor: 'pointer'
+        }
+      };
+    });
     setNodes(newNodes);
   };
 
@@ -193,10 +203,59 @@ function OrchestrationBuilderInner() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const handleRunWorkflow = async () => {
+    if (!orchestration?.entry_flow_id) {
+      showNotification('Please set an entry flow first', 'error');
+      return;
+    }
+
+    try {
+      setIsRunning(true);
+      const sessionId = `session_${Date.now()}`;
+
+      const res = await fetch(`${API_URL}/api/orchestrations/${orchestrationId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          input: {}
+        })
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        showNotification('Workflow started successfully!', 'success');
+        // Navigate to executions page after short delay
+        setTimeout(() => {
+          navigate(`/bots/${botId}/executions`);
+        }, 1000);
+      } else {
+        const error = await res.json();
+        showNotification(error.error || 'Failed to start workflow', 'error');
+      }
+    } catch (error) {
+      console.error('Error running workflow:', error);
+      showNotification('Failed to start workflow', 'error');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   const onEdgeClick = useCallback((event, edge) => {
     if (window.confirm('Delete this transition?')) {
       const transitionId = edge.id.replace('edge-', '');
       handleDeleteTransition(transitionId);
+    }
+  }, []);
+
+  const onNodeClick = useCallback((event, node) => {
+    const flowId = node.data?.flowId;
+    const flowName = node.data?.flowName;
+    if (flowId) {
+      setSelectedNode({ flowId, flowName, x: event.clientX, y: event.clientY });
     }
   }, []);
 
@@ -258,6 +317,24 @@ function OrchestrationBuilderInner() {
             <span>📊</span> Variables
           </button>
           <button
+            onClick={handleRunWorkflow}
+            disabled={isRunning}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: isRunning ? '#9ca3af' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: isRunning ? 'not-allowed' : 'pointer',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            <span>{isRunning ? '⏳' : '▶'}</span> {isRunning ? 'Running...' : 'Run Workflow'}
+          </button>
+          <button
             onClick={() => setShowFlowSelector(true)}
             style={{
               padding: '10px 20px',
@@ -295,6 +372,58 @@ function OrchestrationBuilderInner() {
         </div>
       )}
 
+      {/* Node Context Menu */}
+      {selectedNode && (
+        <div style={{
+          position: 'fixed',
+          top: selectedNode.y,
+          left: selectedNode.x,
+          backgroundColor: 'white',
+          borderRadius: 8,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 1000,
+          minWidth: 180,
+          overflow: 'hidden'
+        }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontWeight: 600, fontSize: 14 }}>
+            {selectedNode.flowName}
+          </div>
+          <button
+            onClick={() => {
+              handleSetEntryFlow(selectedNode.flowId);
+              setSelectedNode(null);
+            }}
+            disabled={orchestration?.entry_flow_id === selectedNode.flowId}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              backgroundColor: orchestration?.entry_flow_id === selectedNode.flowId ? '#f3f4f6' : 'white',
+              border: 'none',
+              textAlign: 'left',
+              cursor: orchestration?.entry_flow_id === selectedNode.flowId ? 'default' : 'pointer',
+              fontSize: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              color: orchestration?.entry_flow_id === selectedNode.flowId ? '#9ca3af' : '#374151'
+            }}
+            onMouseEnter={(e) => {
+              if (orchestration?.entry_flow_id !== selectedNode.flowId) {
+                e.target.style.backgroundColor = '#f3f4f6';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (orchestration?.entry_flow_id !== selectedNode.flowId) {
+                e.target.style.backgroundColor = 'white';
+              }
+            }}
+          >
+            <span>🚀</span>
+            {orchestration?.entry_flow_id === selectedNode.flowId ? '✓ Current Entry Flow' : 'Set as Entry Flow'}
+          </button>
+        </div>
+      )}
+
       {/* Canvas */}
       <div style={{ flex: 1 }}>
         <ReactFlow
@@ -304,6 +433,8 @@ function OrchestrationBuilderInner() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
+          onNodeClick={onNodeClick}
+          onPaneClick={() => setSelectedNode(null)}
           fitView
           attributionPosition="bottom-left"
         >
@@ -331,7 +462,7 @@ function OrchestrationBuilderInner() {
           <span>Entry Flow: <strong>{orchestration?.entry_flow_id ? `Flow #${orchestration.entry_flow_id}` : 'Not Set'}</strong></span>
         </div>
         <div style={{ fontSize: 13, color: '#9ca3af' }}>
-          Drag between flow nodes to create transitions • Click edges to delete
+          Click node to set entry flow • Drag between nodes to create transitions • Click edges to delete
         </div>
       </div>
 

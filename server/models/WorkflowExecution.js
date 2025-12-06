@@ -185,14 +185,30 @@ const WorkflowExecution = {
    * Parse execution from database
    */
   parseExecution(execution) {
+    let parsedInput = execution.input || {};
+    let parsedOutput = execution.output || {};
+
+    if (typeof execution.input === 'string') {
+      try {
+        parsedInput = JSON.parse(execution.input);
+      } catch (e) {
+        parsedInput = { raw: execution.input };
+      }
+    }
+
+    if (typeof execution.output === 'string') {
+      try {
+        parsedOutput = JSON.parse(execution.output);
+      } catch (e) {
+        parsedOutput = { raw: execution.output };
+      }
+    }
+
     return {
       ...execution,
-      input: typeof execution.input === 'string'
-        ? JSON.parse(execution.input)
-        : execution.input || {},
-      output: typeof execution.output === 'string'
-        ? JSON.parse(execution.output)
-        : execution.output || {}
+      input: parsedInput,
+      output: parsedOutput,
+      duration: execution.duration_ms
     };
   }
 };
