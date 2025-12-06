@@ -615,11 +615,30 @@ async function handleWebhook(req, res) {
 
   const sig = req.headers['stripe-signature'];
 
+  if (!sig) {
+    log.error('Missing stripe-signature header');
+    return res.status(400).json({
+      success: false,
+      message: 'Missing stripe-signature header'
+    });
+  }
+
   let event;
 
   try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+    // Get raw body - express.raw() provides Buffer directly as req.body
+    const rawBody = req.body;
+
+    if (!rawBody || rawBody.length === 0) {
+      log.error('Empty request body for webhook');
+      return res.status(400).json({
+        success: false,
+        message: 'Empty request body'
+      });
+    }
+
+    // Verify webhook signature using raw body
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     log.info('Stripe webhook received', {
       eventType: event.type,
       eventId: event.id

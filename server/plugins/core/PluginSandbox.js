@@ -13,9 +13,18 @@ class PluginSandbox {
     this.allowedModules = options.allowedModules || [
       'crypto', 'util', 'url', 'querystring', 'path'
     ];
+    // SECURITY: Comprehensive list of blocked dangerous modules
     this.blockedModules = options.blockedModules || [
       'fs', 'child_process', 'cluster', 'worker_threads',
-      'net', 'dgram', 'dns', 'tls', 'http2'
+      'net', 'dgram', 'dns', 'tls', 'http2',
+      'vm', 'repl', 'inspector', 'v8', 'perf_hooks',
+      'async_hooks', 'trace_events', 'process', 'os',
+      'readline', 'stream', 'zlib', 'module', 'require'
+    ];
+    // SECURITY: Blocked global objects that could be used for sandbox escape
+    this.blockedGlobals = [
+      'process', 'global', 'globalThis', 'root', 'GLOBAL',
+      'eval', 'Function', 'require', 'module', '__dirname', '__filename'
     ];
     this.permissionLevels = {
       'read:data': 1,
@@ -43,6 +52,17 @@ class PluginSandbox {
   async executeInSandbox(code, context = {}, options = {}) {
     const timeout = options.timeout || this.defaultTimeout;
     const pluginId = options.pluginId || 'unknown';
+
+    // SECURITY: Validate code before execution
+    const codeValidation = this.validateCode(code);
+    if (!codeValidation.valid) {
+      log.warn(`[PluginSandbox] Code validation failed for ${pluginId}:`, codeValidation.reason);
+      return {
+        success: false,
+        error: `Security violation: ${codeValidation.reason}`,
+        stats: { duration: 0 }
+      };
+    }
 
     // Create sandboxed context
     const sandbox = this.createSandbox(context, options);
@@ -260,6 +280,42 @@ class PluginSandbox {
         }
       });
     };
+  }
+
+  /**
+   * SECURITY: Validate code for dangerous patterns before execution
+   * @param {string} code - Code to validate
+   * @returns {object} - { valid: boolean, reason?: string }
+   */
+  validateCode(code) {
+    // Check for dangerous patterns
+    const dangerousPatterns = [
+      { pattern: /process\s*\.\s*(exit|kill|abort)/gi, reason: 'Process manipulation not allowed' },
+      { pattern: /require\s*\(\s*['"`]child_process['"`]\s*\)/gi, reason: 'child_process module not allowed' },
+      { pattern: /require\s*\(\s*['"`]fs['"`]\s*\)/gi, reason: 'fs module not allowed' },
+      { pattern: /require\s*\(\s*['"`]vm['"`]\s*\)/gi, reason: 'vm module not allowed' },
+      { pattern: /\beval\s*\(/gi, reason: 'eval() not allowed' },
+      { pattern: /new\s+Function\s*\(/gi, reason: 'new Function() not allowed' },
+      { pattern: /constructor\s*\[\s*['"`]constructor['"`]\s*\]/gi, reason: 'Constructor access not allowed' },
+      { pattern: /__proto__/gi, reason: '__proto__ access not allowed' },
+      { pattern: /prototype\s*\.\s*constructor/gi, reason: 'Prototype manipulation not allowed' },
+      { pattern: /globalThis/gi, reason: 'globalThis access not allowed' },
+      { pattern: /Reflect\s*\.\s*(defineProperty|setPrototypeOf)/gi, reason: 'Reflect manipulation not allowed' },
+      { pattern: /Object\s*\.\s*(setPrototypeOf|defineProperty)/gi, reason: 'Object prototype manipulation not allowed' }
+    ];
+
+    for (const { pattern, reason } of dangerousPatterns) {
+      if (pattern.test(code)) {
+        return { valid: false, reason };
+      }
+    }
+
+    // Check code length limit (prevent DoS)
+    if (code.length > 1000000) { // 1MB limit
+      return { valid: false, reason: 'Code exceeds maximum size limit (1MB)' };
+    }
+
+    return { valid: true };
   }
 
   /**

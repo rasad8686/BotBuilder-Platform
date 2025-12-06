@@ -9,7 +9,8 @@ class AgentExecutor {
   constructor(registry) {
     this.registry = registry;
     this.toolCallParser = new ToolCallParser();
-    this.maxToolIterations = 10; // Prevent infinite tool loops
+    this.maxToolIterations = 50; // Increased from 10 to allow complex workflows
+    this.executionTimeout = 5 * 60 * 1000; // 5 minutes timeout (was 30s)
   }
 
   /**
@@ -77,6 +78,19 @@ class AgentExecutor {
 
     try {
       while (iterations < this.maxToolIterations) {
+        // Check for timeout (5 minutes)
+        if (Date.now() - startTime > this.executionTimeout) {
+          return {
+            success: false,
+            error: `Execution timeout after ${Math.round((Date.now() - startTime) / 1000)} seconds`,
+            toolResults,
+            iterations,
+            tokensUsed: totalTokens,
+            durationMs: Date.now() - startTime,
+            warning: 'Execution timeout reached'
+          };
+        }
+
         iterations++;
 
         // Build prompt and call LLM

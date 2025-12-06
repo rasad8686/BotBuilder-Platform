@@ -93,12 +93,10 @@ if (stripe && proPriceId && enterprisePriceId) {
 /**
  * POST /api/billing/webhook
  * Stripe webhook endpoint for subscription events
- * IMPORTANT: This route must come BEFORE authenticated routes
- * and uses raw body parsing (configured in server.js)
+ * IMPORTANT: This route uses raw body parsing (configured in server.js)
+ * express.raw() middleware provides req.body as Buffer for signature verification
  */
 router.post('/webhook', (req, res) => {
-  // Attach raw body to request for signature verification
-  req.rawBody = req.body;
   handleWebhook(req, res);
 });
 
