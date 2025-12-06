@@ -168,7 +168,7 @@ const WorkflowBuilder = () => {
         setBots(Array.isArray(data) ? data : data.bots || []);
       }
     } catch (err) {
-      console.error('Error fetching bots:', err);
+      // Silent fail
     } finally {
       setLoadingBots(false);
     }

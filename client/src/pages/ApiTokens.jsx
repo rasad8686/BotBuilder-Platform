@@ -41,7 +41,7 @@ export default function ApiTokens() {
       setTokens(tokensRes.data);
       setBots(botsRes.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Silent fail
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -68,7 +68,7 @@ export default function ApiTokens() {
       setFormData({ tokenName: '', botId: '', expiresInDays: '' });
       fetchData();
     } catch (error) {
-      console.error('Error creating token:', error);
+      // Silent fail
       alert(error.response?.data?.error || 'Failed to create token');
     }
   };
@@ -86,7 +86,7 @@ export default function ApiTokens() {
 
       fetchData();
     } catch (error) {
-      console.error('Error deleting token:', error);
+      // Silent fail
       alert(error.response?.data?.error || 'Failed to delete token');
     }
   };
@@ -102,7 +102,7 @@ export default function ApiTokens() {
 
       fetchData();
     } catch (error) {
-      console.error('Error toggling token:', error);
+      // Silent fail
       alert(error.response?.data?.error || 'Failed to toggle token');
     }
   };

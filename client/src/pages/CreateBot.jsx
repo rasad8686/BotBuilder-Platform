@@ -89,7 +89,7 @@ export default function CreateBot() {
         setShowTokenModal(true);
       }
     } catch (err) {
-      console.error('Create bot error:', err);
+      // Silent fail
 
       // Check if this is a plan limit error
       if (err.response?.data?.limitReached) {

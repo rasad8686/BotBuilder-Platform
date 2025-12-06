@@ -42,7 +42,7 @@ const AdminAuditLogs = () => {
       const response = await getAuditActions();
       setActions(response.actions || []);
     } catch (err) {
-      console.error('Failed to fetch audit actions:', err);
+      // Silent fail
     }
   };
 
@@ -68,7 +68,7 @@ const AdminAuditLogs = () => {
         totalPages: response.pagination.totalPages
       }));
     } catch (err) {
-      console.error('Failed to fetch audit logs:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to load audit logs');
     } finally {
       setLoading(false);

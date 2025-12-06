@@ -50,7 +50,7 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
         if (data.categories) setCategories(data.categories);
       }
     } catch (err) {
-      console.error('Failed to fetch templates:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
         setPreviewTemplate(data.template);
       }
     } catch (err) {
-      console.error('Failed to fetch template:', err);
+      // Silent fail
     } finally {
       setLoadingPreview(false);
     }

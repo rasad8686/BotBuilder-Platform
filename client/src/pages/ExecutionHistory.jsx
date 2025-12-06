@@ -37,7 +37,7 @@ const ExecutionHistory = () => {
           }
         }
       } catch (err) {
-        console.error('Error fetching bots:', err);
+        // Silent fail
       }
     };
     fetchBots();
@@ -74,7 +74,7 @@ const ExecutionHistory = () => {
       // Fetch executions
       await fetchExecutions();
     } catch (err) {
-      console.error('Error fetching data:', err);
+      // Silent fail
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +108,7 @@ const ExecutionHistory = () => {
         setExecutions(data);
       }
     } catch (err) {
-      console.error('Error fetching executions:', err);
+      // Silent fail
     }
   };
 
@@ -124,7 +124,7 @@ const ExecutionHistory = () => {
         setShowMonitor(true);
       }
     } catch (err) {
-      console.error('Error fetching execution detail:', err);
+      // Silent fail
     }
   };
 
@@ -141,7 +141,7 @@ const ExecutionHistory = () => {
         setExecutions((prev) => prev.filter((e) => e.id !== id));
       }
     } catch (err) {
-      console.error('Error deleting execution:', err);
+      // Silent fail
     }
   };
 

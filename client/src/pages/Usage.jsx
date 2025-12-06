@@ -53,7 +53,7 @@ export default function Usage() {
         recentActivity: recentActivityRes.data.data
       });
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Silent fail
       if (error.response?.status === 401) {
         navigate('/login');
       }

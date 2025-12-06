@@ -74,7 +74,7 @@ function OrchestrationBuilderInner() {
         buildEdgesFromTransitions(transData.data || []);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // Error fetching data
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,6 @@ function OrchestrationBuilderInner() {
         fetchData();
       }
     } catch (error) {
-      console.error('Error creating transition:', error);
       showNotification('Failed to create transition', 'error');
     }
     setShowConnectorModal(false);
@@ -175,7 +174,7 @@ function OrchestrationBuilderInner() {
         fetchData();
       }
     } catch (error) {
-      console.error('Error deleting transition:', error);
+      // Error deleting transition
     }
   };
 
@@ -194,7 +193,7 @@ function OrchestrationBuilderInner() {
         fetchData();
       }
     } catch (error) {
-      console.error('Error setting entry flow:', error);
+      // Error setting entry flow
     }
   };
 
@@ -237,7 +236,6 @@ function OrchestrationBuilderInner() {
         showNotification(error.error || 'Failed to start workflow', 'error');
       }
     } catch (error) {
-      console.error('Error running workflow:', error);
       showNotification('Failed to start workflow', 'error');
     } finally {
       setIsRunning(false);

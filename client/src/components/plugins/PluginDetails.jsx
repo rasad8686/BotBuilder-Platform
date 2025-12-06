@@ -26,7 +26,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
         setReviews(data);
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      // Silent fail
     } finally {
       setLoadingReviews(false);
     }
@@ -54,7 +54,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
         fetchReviews();
       }
     } catch (error) {
-      console.error('Error submitting review:', error);
+      // Silent fail
     } finally {
       setSubmitting(false);
     }

@@ -44,7 +44,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
         setVariables(data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching variables:', error);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
         fetchVariables();
       }
     } catch (error) {
-      console.error('Error adding variable:', error);
+      // Silent fail
     }
   };
 
@@ -85,7 +85,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
         fetchVariables();
       }
     } catch (error) {
-      console.error('Error deleting variable:', error);
+      // Silent fail
     }
   };
 

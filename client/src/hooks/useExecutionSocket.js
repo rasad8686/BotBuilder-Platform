@@ -21,7 +21,6 @@ const useExecutionSocket = (workflowId) => {
 
   const connect = useCallback((executionId) => {
     if (!executionId) {
-      console.log('No executionId provided, skipping WebSocket connection');
       return;
     }
 
@@ -39,14 +38,13 @@ const useExecutionSocket = (workflowId) => {
       });
 
       socketRef.current.on('connect', () => {
-        console.log('Socket.IO connected');
         setError(null);
         // Join the execution room
         socketRef.current.emit('execution:join', executionId);
       });
 
-      socketRef.current.on('execution:joined', (data) => {
-        console.log('Joined execution room:', data);
+      socketRef.current.on('execution:joined', () => {
+        // Room joined successfully
       });
 
       // Handle step start
@@ -94,16 +92,14 @@ const useExecutionSocket = (workflowId) => {
         handleMessage({ type: 'executionResumed', ...data });
       });
 
-      socketRef.current.on('connect_error', (err) => {
-        console.error('Socket.IO connection error:', err);
+      socketRef.current.on('connect_error', () => {
         setError('Connection error');
       });
 
-      socketRef.current.on('disconnect', (reason) => {
-        console.log('Socket.IO disconnected:', reason);
+      socketRef.current.on('disconnect', () => {
+        // Socket disconnected
       });
     } catch (err) {
-      console.error('Error connecting Socket.IO:', err);
       setError('Failed to connect');
     }
   }, []);
@@ -235,7 +231,8 @@ const useExecutionSocket = (workflowId) => {
         break;
 
       default:
-        console.log('Unknown message type:', data.type);
+        // Unknown message type
+        break;
     }
   }, [disconnect]);
 

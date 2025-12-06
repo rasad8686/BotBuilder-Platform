@@ -58,7 +58,6 @@ export default function RoleEditor({ roles, onRoleUpdated }) {
 
   const getToken = () => {
     const token = localStorage.getItem('token');
-    console.log('RoleEditor - Token:', token ? 'exists' : 'missing');
     return token;
   };
 
@@ -98,7 +97,7 @@ export default function RoleEditor({ roles, onRoleUpdated }) {
         onRoleUpdated();
       }
     } catch (err) {
-      console.error('Failed to save role:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -123,7 +122,7 @@ export default function RoleEditor({ roles, onRoleUpdated }) {
         alert(data.error || 'Failed to delete role');
       }
     } catch (err) {
-      console.error('Failed to delete role:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -134,7 +133,6 @@ export default function RoleEditor({ roles, onRoleUpdated }) {
     setLoading(true);
 
     const token = localStorage.getItem('token');
-    console.log('handleCreateRole - Token:', token ? token.substring(0, 30) + '...' : 'NULL');
 
     try {
       const res = await fetch(`${API_URL}/api/team/roles`, {
@@ -155,7 +153,7 @@ export default function RoleEditor({ roles, onRoleUpdated }) {
         onRoleUpdated();
       }
     } catch (err) {
-      console.error('Failed to create role:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

@@ -60,7 +60,7 @@ export default function OrganizationSettings() {
       setMembers(response.data.members || []);
       setError('');
     } catch (err) {
-      console.error('Failed to fetch members:', err);
+      // Silent fail
 
       // Handle specific error codes
       if (err.response?.status === 401) {

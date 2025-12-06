@@ -22,7 +22,6 @@ export const getAuditLogs = async (params = {}) => {
     const response = await axiosInstance.get('/api/admin/audit-logs', { params });
     return response.data;
   } catch (error) {
-    console.error('Get audit logs error:', error);
     throw error;
   }
 };
@@ -36,7 +35,6 @@ export const getAuditActions = async () => {
     const response = await axiosInstance.get('/api/admin/audit-logs/actions');
     return response.data;
   } catch (error) {
-    console.error('Get audit actions error:', error);
     throw error;
   }
 };
@@ -50,7 +48,6 @@ export const getStats = async () => {
     const response = await axiosInstance.get('/api/admin/stats');
     return response.data;
   } catch (error) {
-    console.error('Get stats error:', error);
     throw error;
   }
 };
@@ -64,7 +61,6 @@ export const getHealth = async () => {
     const response = await axiosInstance.get('/api/admin/health');
     return response.data;
   } catch (error) {
-    console.error('Get health error:', error);
     throw error;
   }
 };
@@ -81,7 +77,6 @@ export const getActivityTimeline = async (params = {}) => {
     const response = await axiosInstance.get('/api/admin/activity-timeline', { params });
     return response.data;
   } catch (error) {
-    console.error('Get activity timeline error:', error);
     throw error;
   }
 };

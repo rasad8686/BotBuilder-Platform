@@ -59,7 +59,7 @@ const Marketplace = () => {
         setCategories(data);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      // Silent fail
     }
   };
 
@@ -71,7 +71,7 @@ const Marketplace = () => {
         setFeaturedPlugins(data);
       }
     } catch (error) {
-      console.error('Error fetching featured plugins:', error);
+      // Silent fail
     }
   };
 
@@ -96,7 +96,7 @@ const Marketplace = () => {
         setPlugins(data);
       }
     } catch (error) {
-      console.error('Error fetching plugins:', error);
+      // Silent fail
     }
   };
 
@@ -110,7 +110,7 @@ const Marketplace = () => {
         setPlugins(data);
       }
     } catch (error) {
-      console.error('Error searching plugins:', error);
+      // Silent fail
     }
   };
 
@@ -126,7 +126,7 @@ const Marketplace = () => {
         setInstalledIds(new Set(data.map(p => p.plugin_id)));
       }
     } catch (error) {
-      console.error('Error fetching installed plugins:', error);
+      // Silent fail
     }
   };
 
@@ -153,7 +153,7 @@ const Marketplace = () => {
         alert(error.error || 'Failed to install plugin');
       }
     } catch (error) {
-      console.error('Error installing plugin:', error);
+      // Silent fail
       alert('Failed to install plugin');
     }
   };
@@ -176,7 +176,7 @@ const Marketplace = () => {
         alert(`${plugin.name} uninstalled successfully!`);
       }
     } catch (error) {
-      console.error('Error uninstalling plugin:', error);
+      // Silent fail
     }
   };
 

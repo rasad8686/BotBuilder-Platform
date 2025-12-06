@@ -138,7 +138,7 @@ const PluginUpload = ({ plugin, onUpload, onClose }) => {
         setUploadProgress(0);
       }
     } catch (error) {
-      console.error('Error uploading plugin:', error);
+      // Silent fail
       alert('Failed to upload plugin');
       setUploading(false);
       setUploadProgress(0);

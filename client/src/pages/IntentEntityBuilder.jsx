@@ -68,7 +68,7 @@ export default function IntentEntityBuilder() {
         setBots(Array.isArray(data) ? data : data.bots || []);
       }
     } catch (err) {
-      console.error('Error fetching bots:', err);
+      // Silent fail
     } finally {
       setLoadingBots(false);
     }
@@ -84,7 +84,7 @@ export default function IntentEntityBuilder() {
         setBotName(bot.name);
       }
     } catch (err) {
-      console.error('Error fetching bot:', err);
+      // Silent fail
     }
   };
 
@@ -98,7 +98,7 @@ export default function IntentEntityBuilder() {
         setIntents(data);
       }
     } catch (err) {
-      console.error('Error fetching intents:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export default function IntentEntityBuilder() {
         setEntities(data);
       }
     } catch (err) {
-      console.error('Error fetching entities:', err);
+      // Silent fail
     }
   };
 
@@ -128,7 +128,7 @@ export default function IntentEntityBuilder() {
         setExamples(data);
       }
     } catch (err) {
-      console.error('Error fetching examples:', err);
+      // Silent fail
     }
   };
 
@@ -142,7 +142,7 @@ export default function IntentEntityBuilder() {
         setValues(data);
       }
     } catch (err) {
-      console.error('Error fetching values:', err);
+      // Silent fail
     }
   };
 
@@ -180,7 +180,7 @@ export default function IntentEntityBuilder() {
         selectIntent(intent);
       }
     } catch (err) {
-      console.error('Error creating intent:', err);
+      // Silent fail
     }
   };
 
@@ -201,7 +201,7 @@ export default function IntentEntityBuilder() {
         setSelectedIntent(updated);
       }
     } catch (err) {
-      console.error('Error saving intent:', err);
+      // Silent fail
     }
   };
 
@@ -218,7 +218,7 @@ export default function IntentEntityBuilder() {
         setExamples([]);
       }
     } catch (err) {
-      console.error('Error deleting intent:', err);
+      // Silent fail
     }
   };
 
@@ -245,7 +245,7 @@ export default function IntentEntityBuilder() {
         ));
       }
     } catch (err) {
-      console.error('Error adding example:', err);
+      // Silent fail
     }
   };
 
@@ -264,7 +264,7 @@ export default function IntentEntityBuilder() {
         ));
       }
     } catch (err) {
-      console.error('Error deleting example:', err);
+      // Silent fail
     }
   };
 
@@ -300,7 +300,7 @@ export default function IntentEntityBuilder() {
         selectEntity(entity);
       }
     } catch (err) {
-      console.error('Error creating entity:', err);
+      // Silent fail
     }
   };
 
@@ -321,7 +321,7 @@ export default function IntentEntityBuilder() {
         setSelectedEntity(updated);
       }
     } catch (err) {
-      console.error('Error saving entity:', err);
+      // Silent fail
     }
   };
 
@@ -338,7 +338,7 @@ export default function IntentEntityBuilder() {
         setValues([]);
       }
     } catch (err) {
-      console.error('Error deleting entity:', err);
+      // Silent fail
     }
   };
 
@@ -366,7 +366,7 @@ export default function IntentEntityBuilder() {
         ));
       }
     } catch (err) {
-      console.error('Error adding value:', err);
+      // Silent fail
     }
   };
 
@@ -385,7 +385,7 @@ export default function IntentEntityBuilder() {
         ));
       }
     } catch (err) {
-      console.error('Error deleting value:', err);
+      // Silent fail
     }
   };
 
@@ -407,7 +407,7 @@ export default function IntentEntityBuilder() {
         setNluResult(result);
       }
     } catch (err) {
-      console.error('Error analyzing message:', err);
+      // Silent fail
     } finally {
       setAnalyzing(false);
     }

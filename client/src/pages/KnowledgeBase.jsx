@@ -62,7 +62,7 @@ const KnowledgeBase = () => {
       const data = await response.json();
       setDocuments(data);
     } catch (err) {
-      console.error('Error fetching documents:', err);
+      // Silent fail
     }
   };
 

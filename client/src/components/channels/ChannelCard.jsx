@@ -67,7 +67,7 @@ export default function ChannelCard({ channel, onViewMessages, onRefresh }) {
 
       onRefresh();
     } catch (err) {
-      console.error('Error deleting channel:', err);
+      // Silent fail
       alert('Failed to delete channel');
     } finally {
       setDeleting(false);

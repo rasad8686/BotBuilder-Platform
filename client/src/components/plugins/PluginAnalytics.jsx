@@ -30,7 +30,7 @@ const PluginAnalytics = ({ plugin, plugins, onSelectPlugin }) => {
         setAnalytics(generateMockAnalytics(plugin));
       }
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      // Silent fail
       setAnalytics(generateMockAnalytics(plugin));
     } finally {
       setLoading(false);

@@ -51,7 +51,7 @@ function Analytics() {
             }
           });
         } catch (err) {
-          console.error(`Error fetching messages for bot ${bot.id}:`, err);
+          // Silent fail
         }
       }
 
@@ -64,7 +64,7 @@ function Analytics() {
 
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching analytics:', err);
+      // Silent fail
       setLoading(false);
     }
   };

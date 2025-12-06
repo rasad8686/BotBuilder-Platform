@@ -37,7 +37,7 @@ function BotMessages() {
       });
       setBot(response.data.bot);
     } catch (err) {
-      console.error('Error fetching bot:', err);
+      // Silent fail
     }
   };
 
@@ -60,7 +60,7 @@ function BotMessages() {
         setPagination(null);
       }
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

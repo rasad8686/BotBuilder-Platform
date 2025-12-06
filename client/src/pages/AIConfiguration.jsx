@@ -57,7 +57,7 @@ export default function AIConfiguration() {
         setKnowledgeBases(data);
       }
     } catch (err) {
-      console.error('Failed to load knowledge bases:', err);
+      // Silent fail
     }
   };
 

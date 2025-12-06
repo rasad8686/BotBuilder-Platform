@@ -41,7 +41,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
       }
     } catch (err) {
       setError('Network error');
-      console.error(err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
       }
     } catch (err) {
       setError('Network error');
-      console.error(err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
       }
     } catch (err) {
       setError('Network error');
-      console.error(err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
