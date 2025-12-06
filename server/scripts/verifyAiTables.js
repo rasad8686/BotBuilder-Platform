@@ -1,4 +1,5 @@
 const db = require('../db');
+const log = require('../utils/logger');
 
 /**
  * Verify AI Tables
@@ -7,10 +8,9 @@ const db = require('../db');
 
 async function verifyAiTables() {
   try {
-    console.log('🔍 Verifying AI tables...\n');
+    log.info('Verifying AI tables...');
 
     // Check ai_configurations table
-    console.log('1️⃣ Checking ai_configurations table...');
     const configResult = await db.query(`
       SELECT
         column_name,
@@ -23,17 +23,12 @@ async function verifyAiTables() {
     `);
 
     if (configResult.rows.length > 0) {
-      console.log('   ✅ ai_configurations table exists');
-      console.log(`   └─ Columns: ${configResult.rows.length}`);
-      configResult.rows.forEach(col => {
-        console.log(`      - ${col.column_name} (${col.data_type})`);
-      });
+      log.info('ai_configurations table exists', { columns: configResult.rows.map(c => `${c.column_name} (${c.data_type})`) });
     } else {
-      console.log('   ❌ ai_configurations table NOT FOUND');
+      log.warn('ai_configurations table NOT FOUND');
     }
 
     // Check ai_usage_logs table
-    console.log('\n2️⃣ Checking ai_usage_logs table...');
     const usageResult = await db.query(`
       SELECT
         column_name,
@@ -44,17 +39,12 @@ async function verifyAiTables() {
     `);
 
     if (usageResult.rows.length > 0) {
-      console.log('   ✅ ai_usage_logs table exists');
-      console.log(`   └─ Columns: ${usageResult.rows.length}`);
-      usageResult.rows.forEach(col => {
-        console.log(`      - ${col.column_name} (${col.data_type})`);
-      });
+      log.info('ai_usage_logs table exists', { columns: usageResult.rows.map(c => `${c.column_name} (${c.data_type})`) });
     } else {
-      console.log('   ❌ ai_usage_logs table NOT FOUND');
+      log.warn('ai_usage_logs table NOT FOUND');
     }
 
     // Check ai_conversations table
-    console.log('\n3️⃣ Checking ai_conversations table...');
     const conversationResult = await db.query(`
       SELECT
         column_name,
@@ -65,17 +55,12 @@ async function verifyAiTables() {
     `);
 
     if (conversationResult.rows.length > 0) {
-      console.log('   ✅ ai_conversations table exists');
-      console.log(`   └─ Columns: ${conversationResult.rows.length}`);
-      conversationResult.rows.forEach(col => {
-        console.log(`      - ${col.column_name} (${col.data_type})`);
-      });
+      log.info('ai_conversations table exists', { columns: conversationResult.rows.map(c => `${c.column_name} (${c.data_type})`) });
     } else {
-      console.log('   ❌ ai_conversations table NOT FOUND');
+      log.warn('ai_conversations table NOT FOUND');
     }
 
     // Check indexes
-    console.log('\n4️⃣ Checking indexes...');
     const indexResult = await db.query(`
       SELECT
         indexname,
@@ -86,16 +71,12 @@ async function verifyAiTables() {
     `);
 
     if (indexResult.rows.length > 0) {
-      console.log(`   ✅ Found ${indexResult.rows.length} indexes`);
-      indexResult.rows.forEach(idx => {
-        console.log(`      - ${idx.tablename}.${idx.indexname}`);
-      });
+      log.info('Indexes found', { count: indexResult.rows.length, indexes: indexResult.rows.map(i => `${i.tablename}.${i.indexname}`) });
     } else {
-      console.log('   ⚠️ No indexes found');
+      log.warn('No indexes found');
     }
 
     // Check constraints
-    console.log('\n5️⃣ Checking constraints...');
     const constraintResult = await db.query(`
       SELECT
         conname as constraint_name,
@@ -111,28 +92,16 @@ async function verifyAiTables() {
     `);
 
     if (constraintResult.rows.length > 0) {
-      console.log(`   ✅ Found ${constraintResult.rows.length} constraints`);
-      constraintResult.rows.forEach(con => {
-        const type = {
-          'p': 'PRIMARY KEY',
-          'f': 'FOREIGN KEY',
-          'c': 'CHECK',
-          'u': 'UNIQUE'
-        }[con.constraint_type] || con.constraint_type;
-        console.log(`      - ${con.table_name}.${con.constraint_name} (${type})`);
-      });
+      const typeMap = { 'p': 'PRIMARY KEY', 'f': 'FOREIGN KEY', 'c': 'CHECK', 'u': 'UNIQUE' };
+      log.info('Constraints found', { count: constraintResult.rows.length, constraints: constraintResult.rows.map(c => `${c.table_name}.${c.constraint_name} (${typeMap[c.constraint_type] || c.constraint_type})`) });
     } else {
-      console.log('   ⚠️ No constraints found');
+      log.warn('No constraints found');
     }
 
-    console.log('\n✅ Verification complete!');
-    console.log('━'.repeat(60));
-
+    log.info('Verification complete');
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Verification error:');
-    console.error('Message:', error.message);
-    console.error('Stack:', error.stack);
+    log.error('Verification error', { error: error.message, stack: error.stack });
     process.exit(1);
   }
 }

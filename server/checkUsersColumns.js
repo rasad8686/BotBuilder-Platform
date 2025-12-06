@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const log = require('./utils/logger');
 
 async function checkUsersColumns() {
   const client = new Client({
@@ -10,7 +11,7 @@ async function checkUsersColumns() {
 
   try {
     await client.connect();
-    console.log('✅ Connected to database');
+    log.info('Connected to database');
 
     const result = await client.query(`
       SELECT column_name, data_type
@@ -19,23 +20,19 @@ async function checkUsersColumns() {
       ORDER BY ordinal_position
     `);
 
-    console.log('\n📊 Users table columns:');
-    result.rows.forEach(row => {
-      console.log(`  - ${row.column_name} (${row.data_type})`);
-    });
+    log.info('Users table columns', { columns: result.rows.map(r => `${r.column_name} (${r.data_type})`) });
 
     // Also get a sample user
     const userSample = await client.query('SELECT * FROM users LIMIT 1');
-    console.log('\n📝 Sample user record:');
     if (userSample.rows[0]) {
-      console.log(JSON.stringify(userSample.rows[0], null, 2));
+      log.info('Sample user record', { user: userSample.rows[0] });
     } else {
-      console.log('  (no users found)');
+      log.info('No users found');
     }
 
     await client.end();
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    log.error('Error checking users columns', { error: error.message });
     await client.end();
     process.exit(1);
   }

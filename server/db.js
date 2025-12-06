@@ -1,14 +1,13 @@
 const { Pool } = require('pg');
 require('dotenv').config();
+const log = require('./utils/logger');
 
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('render.com') ? {
-    rejectUnauthorized: false // Required for Render and other cloud providers
-  } : (process.env.NODE_ENV === 'production' ? {
+  ssl: {
     rejectUnauthorized: false
-  } : false),
+  },
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
@@ -17,11 +16,11 @@ const pool = new Pool({
 
 // Test database connection
 pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
+  log.info('Connected to PostgreSQL database');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Unexpected error on idle client', err);
+  log.error('Unexpected error on idle client', { error: err.message });
   process.exit(-1);
 });
 

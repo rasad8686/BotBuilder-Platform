@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import aiApi from '../../api/ai';
 
 /**
  * AI Chat Tester
  * Test chat functionality with the configured AI
+ * Supports both streaming and non-streaming modes
  */
 export default function AIChatTester({ botId, hasConfig, testResult, onTest, testing }) {
   const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [sending, setSending] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [useStreaming, setUseStreaming] = useState(true);
   const [sessionId] = useState(`test_${Date.now()}`);
+  const abortStreamRef = useRef(null);
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -18,37 +22,84 @@ export default function AIChatTester({ botId, hasConfig, testResult, onTest, tes
     setMessage('');
 
     // Add user message to chat
-    setChatHistory([...chatHistory, {
+    setChatHistory(prev => [...prev, {
       role: 'user',
       content: userMessage,
       timestamp: new Date()
     }]);
 
-    try {
-      setSending(true);
+    setSending(true);
 
-      const response = await aiApi.sendChat(botId, {
-        message: userMessage,
-        sessionId: sessionId
-      });
+    if (useStreaming) {
+      // Streaming mode - real-time response
+      setStreamingText('');
 
-      // Add AI response to chat
-      setChatHistory(prev => [...prev, {
-        role: 'assistant',
-        content: response.response,
-        usage: response.usage,
-        cost: response.cost,
-        responseTime: response.responseTime,
-        timestamp: new Date()
-      }]);
+      abortStreamRef.current = aiApi.sendChatStream(
+        botId,
+        { message: userMessage, sessionId: sessionId },
+        // onChunk - called for each piece of text
+        (chunk) => {
+          setStreamingText(chunk.fullContent);
+        },
+        // onComplete - called when streaming finishes
+        (result) => {
+          setStreamingText('');
+          setChatHistory(prev => [...prev, {
+            role: 'assistant',
+            content: result.content,
+            usage: result.usage,
+            cost: result.cost,
+            responseTime: result.responseTime,
+            timestamp: new Date()
+          }]);
+          setSending(false);
+          abortStreamRef.current = null;
+        },
+        // onError - called on error
+        (error) => {
+          setStreamingText('');
+          setChatHistory(prev => [...prev, {
+            role: 'error',
+            content: error.message || 'Streaming failed',
+            timestamp: new Date()
+          }]);
+          setSending(false);
+          abortStreamRef.current = null;
+        }
+      );
+    } else {
+      // Non-streaming mode - wait for full response
+      try {
+        const response = await aiApi.sendChat(botId, {
+          message: userMessage,
+          sessionId: sessionId
+        });
 
-    } catch (err) {
-      setChatHistory(prev => [...prev, {
-        role: 'error',
-        content: err.response?.data?.message || 'Failed to get AI response',
-        timestamp: new Date()
-      }]);
-    } finally {
+        setChatHistory(prev => [...prev, {
+          role: 'assistant',
+          content: response.response,
+          usage: response.usage,
+          cost: response.cost,
+          responseTime: response.responseTime,
+          timestamp: new Date()
+        }]);
+      } catch (err) {
+        setChatHistory(prev => [...prev, {
+          role: 'error',
+          content: err.response?.data?.message || 'Failed to get AI response',
+          timestamp: new Date()
+        }]);
+      } finally {
+        setSending(false);
+      }
+    }
+  };
+
+  const handleStopStreaming = () => {
+    if (abortStreamRef.current) {
+      abortStreamRef.current();
+      abortStreamRef.current = null;
+      setStreamingText('');
       setSending(false);
     }
   };
@@ -124,15 +175,35 @@ export default function AIChatTester({ botId, hasConfig, testResult, onTest, tes
           <div className="flex items-center gap-2">
             <span className="text-xl">💬</span>
             <span className="font-semibold">Chat Tester</span>
+            {/* Streaming Toggle */}
+            <label className="flex items-center gap-2 ml-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useStreaming}
+                onChange={(e) => setUseStreaming(e.target.checked)}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm">⚡ Streaming</span>
+            </label>
           </div>
-          {chatHistory.length > 0 && (
-            <button
-              onClick={clearChat}
-              className="text-sm bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded transition-colors"
-            >
-              🗑️ Clear
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {sending && useStreaming && (
+              <button
+                onClick={handleStopStreaming}
+                className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
+              >
+                ⏹️ Stop
+              </button>
+            )}
+            {chatHistory.length > 0 && (
+              <button
+                onClick={clearChat}
+                className="text-sm bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded transition-colors"
+              >
+                🗑️ Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Chat Messages */}
@@ -181,13 +252,27 @@ export default function AIChatTester({ botId, hasConfig, testResult, onTest, tes
 
               {sending && (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-gray-200 rounded-lg px-4 py-2">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span className="animate-pulse">●</span>
-                      <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>●</span>
-                      <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>●</span>
-                      <span className="ml-2">AI is thinking...</span>
-                    </div>
+                  <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 max-w-[80%]">
+                    {streamingText ? (
+                      // Show streaming text in real-time
+                      <div>
+                        <div className="whitespace-pre-wrap break-words">
+                          {streamingText}
+                          <span className="inline-block w-2 h-4 bg-purple-600 ml-1 animate-pulse"></span>
+                        </div>
+                        <div className="text-xs text-purple-600 mt-2 flex items-center gap-1">
+                          <span className="animate-pulse">⚡</span> Streaming...
+                        </div>
+                      </div>
+                    ) : (
+                      // Show thinking indicator
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <span className="animate-pulse">●</span>
+                        <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>●</span>
+                        <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>●</span>
+                        <span className="ml-2">AI is thinking...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

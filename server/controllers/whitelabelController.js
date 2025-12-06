@@ -1,3 +1,4 @@
+const log = require('../utils/logger');
 const db = require('../db');
 const { deleteOldFile, getPublicUrl } = require('../middleware/upload');
 const path = require('path');
@@ -13,7 +14,18 @@ const path = require('path');
  */
 async function getSettings(req, res) {
   try {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id;
+
+    if (!organizationId) {
+      log.error('Get whitelabel settings error: Organization ID is missing', {
+        organization: req.organization,
+        userId: req.user?.id
+      });
+      return res.status(400).json({
+        success: false,
+        message: 'Organization context is required'
+      });
+    }
 
     const query = `
       SELECT *
@@ -44,11 +56,16 @@ async function getSettings(req, res) {
     });
 
   } catch (error) {
-    console.error('Get whitelabel settings error:', error);
+    log.error('Get whitelabel settings error', {
+      error: error.message,
+      stack: error.stack,
+      organizationId: req.organization?.id,
+      userId: req.user?.id,
+      hasOrganization: !!req.organization
+    });
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve whitelabel settings',
-      error: error.message
+      message: 'Failed to retrieve whitelabel settings'
     });
   }
 }
@@ -247,7 +264,7 @@ async function updateSettings(req, res) {
       });
     }
 
-    console.log(`[Whitelabel] Updated settings for organization ${organizationId}`);
+    log.info('Updated whitelabel settings', { organizationId });
 
     return res.status(200).json({
       success: true,
@@ -256,11 +273,10 @@ async function updateSettings(req, res) {
     });
 
   } catch (error) {
-    console.error('Update whitelabel settings error:', error);
+    log.error('Update whitelabel settings error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to update whitelabel settings',
-      error: error.message
+      message: 'Failed to update whitelabel settings'
     });
   }
 }
@@ -302,7 +318,7 @@ async function uploadLogo(req, res) {
 
     const result = await db.query(query, [logoUrl, organizationId]);
 
-    console.log(`[Whitelabel] Uploaded logo for organization ${organizationId}: ${filename}`);
+    log.info('Uploaded logo for organization', { organizationId, filename });
 
     return res.status(200).json({
       success: true,
@@ -312,11 +328,10 @@ async function uploadLogo(req, res) {
     });
 
   } catch (error) {
-    console.error('Upload logo error:', error);
+    log.error('Upload logo error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to upload logo',
-      error: error.message
+      message: 'Failed to upload logo'
     });
   }
 }
@@ -358,7 +373,7 @@ async function uploadFavicon(req, res) {
 
     const result = await db.query(query, [faviconUrl, organizationId]);
 
-    console.log(`[Whitelabel] Uploaded favicon for organization ${organizationId}: ${filename}`);
+    log.info('Uploaded favicon for organization', { organizationId, filename });
 
     return res.status(200).json({
       success: true,
@@ -368,11 +383,10 @@ async function uploadFavicon(req, res) {
     });
 
   } catch (error) {
-    console.error('Upload favicon error:', error);
+    log.error('Upload favicon error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to upload favicon',
-      error: error.message
+      message: 'Failed to upload favicon'
     });
   }
 }
@@ -429,11 +443,10 @@ async function getPublicSettings(req, res) {
     });
 
   } catch (error) {
-    console.error('Get public whitelabel settings error:', error);
+    log.error('Get public whitelabel settings error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve public whitelabel settings',
-      error: error.message
+      message: 'Failed to retrieve public whitelabel settings'
     });
   }
 }

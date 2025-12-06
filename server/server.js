@@ -5,21 +5,30 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const morgan = require('morgan');
 const path = require('path');
+const http = require('http');
 const db = require('./db');
 const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
 const { detectCustomDomain } = require('./middleware/whitelabel');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
+const securityHeaders = require('./middleware/securityHeaders');
+const { initializeWebSocket } = require('./websocket');
 
 // Load .env from server directory (same directory as this file)
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Verify email configuration loaded
-console.log('📧 Email Configuration Check:');
-console.log('  EMAIL_USER:', process.env.EMAIL_USER ? '✓ Loaded' : '✗ Missing');
-console.log('  EMAIL_PASS:', process.env.EMAIL_PASS ? '✓ Loaded' : '✗ Missing');
+log.info('Email configuration check', {
+  EMAIL_USER: process.env.EMAIL_USER ? 'loaded' : 'missing',
+  EMAIL_PASS: process.env.EMAIL_PASS ? 'loaded' : 'missing'
+});
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Initialize WebSocket
+const { io, executionSocket } = initializeWebSocket(server);
 
 // ========================================
 // 🔐 AUTO-ADMIN ACCOUNT CREATION
@@ -68,9 +77,7 @@ async function ensureAdminExists() {
       );
 
       if (existingAdmin.rows.length === 0) {
-        console.log('\n🔐 ========================================');
-        console.log('🔐 CREATING ADMIN ACCOUNT...');
-        console.log('🔐 ========================================');
+        log.info('Creating admin account', { email: adminConfig.email });
 
         // Hash password with bcrypt
         const hashedPassword = await bcrypt.hash(adminConfig.password, 10);
@@ -102,31 +109,24 @@ async function ensureAdminExists() {
           [adminOrg.id, adminUser.id]
         );
 
-        console.log('\n🎉 ========================================');
-        console.log('✅ ADMIN ACCOUNT CREATED SUCCESSFULLY!');
-        console.log('========================================');
-        console.log(`📧 Email: ${adminConfig.email}`);
-        console.log(`🔑 Password: ${adminConfig.password}`);
-        console.log(`👤 Name: ${adminConfig.name}`);
-        console.log(`👑 Role: admin`);
-        console.log(`🏢 Organization: ${adminOrg.name} (${adminOrg.slug})`);
-        console.log(`💎 Plan: Enterprise`);
-        console.log(`🌐 Environment: ${isProduction ? 'PRODUCTION' : 'LOCAL DEVELOPMENT'}`);
-        console.log(`🆔 User ID: ${adminUser.id}`);
-        console.log(`🏢 Org ID: ${adminOrg.id}`);
-        console.log('========================================\n');
+        log.info('Admin account created successfully', {
+          email: adminConfig.email,
+          name: adminConfig.name,
+          userId: adminUser.id,
+          orgId: adminOrg.id,
+          orgName: adminOrg.name,
+          environment: isProduction ? 'production' : 'development'
+        });
       } else {
-        console.log(`✅ Admin account already exists: ${adminConfig.email}`);
+        log.debug('Admin account already exists', { email: adminConfig.email });
       }
     }
   } catch (error) {
-    console.error('\n❌ ========================================');
-    console.error('❌ ERROR CREATING ADMIN ACCOUNT');
-    console.error('========================================');
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error detail:', error.detail);
-    console.error('========================================\n');
+    log.error('Error creating admin account', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail
+    });
   }
 }
 
@@ -187,8 +187,14 @@ app.use(morgan(':method :url :status :response-time ms - :user-agent', {
   }
 }));
 
+// ✅ Security headers middleware
+app.use(securityHeaders);
+
 // ✅ Domain detection middleware (for white-label custom domains)
 app.use(detectCustomDomain);
+
+// ✅ Rate limiting for API routes
+app.use('/api/', apiLimiter);
 
 // ✅ Serve uploaded files (logos, favicons, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -204,15 +210,14 @@ app.get('/test', (req, res) => {
 
 // ✅ Auth routes
 app.post('/api/auth/register', async (req, res) => {
-  console.log('\n========== NEW REGISTRATION ATTEMPT ==========');
-  console.log('[REGISTER] Request body:', { username: req.body.username, email: req.body.email, hasPassword: !!req.body.password });
+  log.info('Registration attempt', { email: req.body.email });
 
   try {
     const { username, email, password } = req.body;
 
     // Validation
     if (!username || !email || !password) {
-      console.log('[REGISTER] Validation failed: Missing fields');
+      log.debug('Registration validation failed: Missing fields');
       return res.status(400).json({
         message: 'All fields required',
         required: ['username', 'email', 'password']
@@ -222,7 +227,7 @@ app.post('/api/auth/register', async (req, res) => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log('[REGISTER] Validation failed: Invalid email format');
+      log.debug('Registration validation failed: Invalid email', { email });
       return res.status(400).json({
         message: 'Invalid email format'
       });
@@ -230,35 +235,30 @@ app.post('/api/auth/register', async (req, res) => {
 
     // Password length check
     if (password.length < 6) {
-      console.log('[REGISTER] Validation failed: Password too short');
+      log.debug('Registration validation failed: Password too short');
       return res.status(400).json({
         message: 'Password must be at least 6 characters'
       });
     }
 
     // Check if email already exists
-    console.log('[REGISTER] Step 1: Checking if email exists...');
     const existingUser = await db.query(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
     if (existingUser.rows.length > 0) {
-      console.log('[REGISTER] Email already registered');
+      log.debug('Registration failed: Email already registered', { email });
       return res.status(400).json({
         success: false,
         message: 'Email already registered'
       });
     }
-    console.log('[REGISTER] ✓ Email is available');
 
     // Hash password
-    console.log('[REGISTER] Step 2: Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log('[REGISTER] ✓ Password hashed');
 
     // Insert user into database
-    console.log('[REGISTER] Step 3: Creating user in database...');
     const result = await db.query(
       `INSERT INTO users (name, email, password_hash, email_verified, created_at, updated_at)
        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -267,25 +267,17 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     const user = result.rows[0];
-    console.log(`[REGISTER] ✓ User created successfully!`);
-    console.log(`[REGISTER]   - User ID: ${user.id}`);
-    console.log(`[REGISTER]   - Email: ${user.email}`);
-    console.log(`[REGISTER]   - Name: ${user.name}`);
+    log.debug('User created', { userId: user.id, email: user.email });
 
     // Verify user was created
     const verifyUser = await db.query('SELECT id, name, email FROM users WHERE id = $1', [user.id]);
     if (verifyUser.rows.length === 0) {
       throw new Error('User verification failed - user not found after creation');
     }
-    console.log('[REGISTER] ✓ User verified in database');
 
     // Create personal organization
-    console.log('[REGISTER] Step 4: Creating organization...');
     const orgSlug = `${username.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${user.id}`;
     const orgName = `${username}'s Organization`;
-    console.log(`[REGISTER]   - Organization name: ${orgName}`);
-    console.log(`[REGISTER]   - Organization slug: ${orgSlug}`);
-    console.log(`[REGISTER]   - Owner ID: ${user.id}`);
 
     const orgResult = await db.query(
       `INSERT INTO organizations (name, slug, owner_id, plan_tier, settings, created_at, updated_at)
@@ -296,25 +288,15 @@ app.post('/api/auth/register', async (req, res) => {
 
     const organization = orgResult.rows[0];
     const organizationId = organization.id;
-    console.log(`[REGISTER] ✓ Organization created successfully!`);
-    console.log(`[REGISTER]   - Organization ID: ${organizationId}`);
-    console.log(`[REGISTER]   - Name: ${organization.name}`);
-    console.log(`[REGISTER]   - Slug: ${organization.slug}`);
-    console.log(`[REGISTER]   - Owner ID: ${organization.owner_id}`);
+    log.debug('Organization created', { orgId: organizationId, orgSlug });
 
     // Verify organization was created
     const verifyOrg = await db.query('SELECT id, name, slug, owner_id FROM organizations WHERE id = $1', [organizationId]);
     if (verifyOrg.rows.length === 0) {
       throw new Error('Organization verification failed - organization not found after creation');
     }
-    console.log('[REGISTER] ✓ Organization verified in database');
 
     // Add user as admin to organization
-    console.log('[REGISTER] Step 5: Adding user to organization as admin...');
-    console.log(`[REGISTER]   - org_id: ${organizationId}`);
-    console.log(`[REGISTER]   - user_id: ${user.id}`);
-    console.log(`[REGISTER]   - role: admin`);
-
     const memberResult = await db.query(
       `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
        VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)
@@ -323,12 +305,6 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     const membership = memberResult.rows[0];
-    console.log(`[REGISTER] ✓ User added to organization successfully!`);
-    console.log(`[REGISTER]   - Membership ID: ${membership.id}`);
-    console.log(`[REGISTER]   - Org ID: ${membership.org_id}`);
-    console.log(`[REGISTER]   - User ID: ${membership.user_id}`);
-    console.log(`[REGISTER]   - Role: ${membership.role}`);
-    console.log(`[REGISTER]   - Status: ${membership.status}`);
 
     // Verify membership was created
     const verifyMember = await db.query(
@@ -338,10 +314,8 @@ app.post('/api/auth/register', async (req, res) => {
     if (verifyMember.rows.length === 0) {
       throw new Error('Membership verification failed - membership not found after creation');
     }
-    console.log('[REGISTER] ✓ Membership verified in database');
 
     // Generate JWT token
-    console.log('[REGISTER] Step 6: Generating JWT token...');
     const token = jwt.sign(
       {
         id: user.id,
@@ -352,12 +326,8 @@ app.post('/api/auth/register', async (req, res) => {
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
       { expiresIn: '24h' }
     );
-    console.log(`[REGISTER] ✓ JWT token generated`);
-    console.log(`[REGISTER]   - User ID in token: ${user.id}`);
-    console.log(`[REGISTER]   - Organization ID in token: ${organizationId}`);
 
     // Final verification query
-    console.log('[REGISTER] Step 7: Final verification...');
     const finalCheck = await db.query(`
       SELECT
         u.id as user_id,
@@ -378,15 +348,11 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     const finalData = finalCheck.rows[0];
-    console.log('[REGISTER] ✓✓✓ FINAL VERIFICATION PASSED ✓✓✓');
-    console.log(`[REGISTER]   - User ID: ${finalData.user_id}`);
-    console.log(`[REGISTER]   - Email: ${finalData.email}`);
-    console.log(`[REGISTER]   - Organization ID: ${finalData.org_id}`);
-    console.log(`[REGISTER]   - Organization Name: ${finalData.org_name}`);
-    console.log(`[REGISTER]   - User Role: ${finalData.user_role}`);
 
     // Log successful registration to audit trail
     await logRegister(req, user.id, user.email);
+
+    log.info('Registration successful', { userId: user.id, email: user.email, orgId: organizationId });
 
     res.status(201).json({
       success: true,
@@ -402,24 +368,18 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
 
-    console.log(`[REGISTER] ✓✓✓ REGISTRATION COMPLETE FOR ${user.email} ✓✓✓`);
-    console.log('========== REGISTRATION SUCCESS ==========\n');
-
   } catch (error) {
-    console.error('\n❌❌❌ REGISTRATION ERROR ❌❌❌');
-    console.error('[REGISTER] Error type:', error.name);
-    console.error('[REGISTER] Error message:', error.message);
-    console.error('[REGISTER] Error stack:', error.stack);
-    console.error('[REGISTER] Error code:', error.code);
-    console.error('[REGISTER] Error detail:', error.detail);
-    console.error('========== REGISTRATION FAILED ==========\n');
+    log.error('Registration error', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail
+    });
 
     res.status(500).json({
       success: false,
       message: 'Server error during registration',
-      error: error.message,
-      errorCode: error.code,
-      errorDetail: error.detail
+      // SECURITY: Don't expose error details in production
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message })
     });
   }
 });
@@ -508,11 +468,10 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    log.error('Login error', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: 'Server error'
     });
   }
 });
@@ -520,12 +479,10 @@ app.post('/api/auth/login', async (req, res) => {
 // ✅ Demo Login Endpoint - Auto-login for demo account
 app.post('/api/auth/demo', async (req, res) => {
   try {
-    console.log('\n========== DEMO LOGIN REQUEST ==========');
+    log.info('Demo login request');
 
     // Demo credentials
     const demoEmail = 'demo@botbuilder.com';
-
-    console.log('[DEMO] Querying database for:', demoEmail);
 
     // Query database for demo user
     const result = await db.query(
@@ -533,12 +490,9 @@ app.post('/api/auth/demo', async (req, res) => {
       [demoEmail]
     );
 
-    console.log('[DEMO] Query result - rows found:', result.rows.length);
-    console.log('[DEMO] Query result - rows:', JSON.stringify(result.rows));
-
     // Check if demo user exists
     if (result.rows.length === 0) {
-      console.error('[DEMO] Demo user not found. Please run seed script.');
+      log.warn('Demo user not found');
       return res.status(404).json({
         success: false,
         message: 'Demo account not found. Please contact support.'
@@ -578,9 +532,7 @@ app.post('/api/auth/demo', async (req, res) => {
     // Log demo login to audit trail
     await logLogin(req, user.id, true, 'Demo login');
 
-    console.log('[DEMO] Demo login successful');
-    console.log('[DEMO] User ID:', user.id);
-    console.log('[DEMO] Organization ID:', organizationId);
+    log.info('Demo login successful', { userId: user.id, orgId: organizationId });
 
     res.json({
       success: true,
@@ -596,11 +548,10 @@ app.post('/api/auth/demo', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[DEMO] Demo login error:', error);
+    log.error('Demo login error', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Demo login error',
-      error: error.message
+      message: 'Demo login error'
     });
   }
 });
@@ -644,56 +595,60 @@ app.use('/api/feedback', require('./routes/feedback'));
 // ✅ API Tokens routes
 app.use('/api/api-tokens', require('./routes/api-tokens'));
 
-// ✅ 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.path,
-    method: req.method,
-    availableRoutes: [
-      'GET /test',
-      'POST /api/auth/register',
-      'POST /api/auth/login',
-      'POST /api/bots (Auth Required)',
-      'GET /api/bots (Auth Required)',
-      'GET /api/bots/:id (Auth Required)',
-      'PUT /api/bots/:id (Auth Required)',
-      'DELETE /api/bots/:id (Auth Required)',
-      'POST /api/messages (Auth Required)',
-      'GET /api/messages/bot/:botId (Auth Required)',
-      'GET /api/messages/:id (Auth Required)',
-      'PUT /api/messages/:id (Auth Required)',
-      'DELETE /api/messages/:id (Auth Required)',
-      'POST /api/bots/:botId/flow (Auth Required)',
-      'GET /api/bots/:botId/flow (Auth Required)',
-      'PUT /api/bots/:botId/flow/:flowId (Auth Required)',
-      'GET /api/bots/:botId/flow/history (Auth Required)',
-      'GET /api/api-tokens (Auth Required)',
-      'POST /api/api-tokens (Auth Required)',
-      'DELETE /api/api-tokens/:id (Auth Required)'
-    ]
-  });
-});
+// ✅ Multi-Agent AI routes
+app.use('/api/agents', require('./routes/agents'));
+app.use('/api/workflows', require('./routes/workflows'));
+app.use('/api/executions', require('./routes/executions'));
 
-// ✅ Error handler
-app.use((error, req, res, next) => {
-  console.error('Global error:', error);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
-  });
-});
+// ✅ Tools routes (Tool Calling / Function Calling)
+app.use('/api/tools', require('./routes/tools'));
 
-// ✅ Start server
-app.listen(PORT, async () => {
-  console.log('🚀 ═══════════════════════════════════════');
-  console.log(`🚀 BotBuilder Backend is LIVE!`);
-  console.log(`🚀 Port: ${PORT}`);
-  console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🚀 Time: ${new Date().toLocaleString()}`);
-  console.log('🚀 ═══════════════════════════════════════');
+// ✅ Knowledge Base routes (Vector DB / RAG)
+app.use('/api/knowledge', require('./routes/knowledge'));
+
+// ✅ Plugin Marketplace routes
+app.use('/api/plugins', require('./routes/plugins'));
+
+// ✅ Channel Management routes (WhatsApp, Instagram, Telegram)
+app.use('/api/channels', require('./routes/channels'));
+
+// ✅ Channel Webhooks (incoming messages from messaging platforms)
+app.use('/webhooks', require('./routes/channelWebhooks'));
+
+// ✅ Team Collaboration routes
+app.use('/api/team', require('./routes/team'));
+
+// ✅ Version Control routes
+app.use('/api/versions', require('./routes/versions'));
+
+// ✅ AI Flow Generation routes
+app.use('/api/ai/flow', require('./routes/aiFlow'));
+
+// ✅ Orchestrations routes (Multi-flow management)
+app.use('/api/orchestrations', require('./routes/orchestrations'));
+
+// ✅ Intent & Entity routes (NLU)
+app.use('/api/intents', require('./routes/intents'));
+app.use('/api/entities', require('./routes/entities'));
+app.use('/api/nlu', require('./routes/nlu'));
+
+// ✅ Import error handler middleware
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+
+// ✅ 404 handler - use errorHandler version
+app.use(notFoundHandler);
+
+// ✅ Global error handler - SECURITY: No stack traces in production
+app.use(errorHandler);
+
+// ✅ Start server with WebSocket support
+server.listen(PORT, async () => {
+  log.info('BotBuilder Backend started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    websocket: 'enabled',
+    time: new Date().toISOString()
+  });
 
   // 🔐 Create admin account automatically
   await ensureAdminExists();

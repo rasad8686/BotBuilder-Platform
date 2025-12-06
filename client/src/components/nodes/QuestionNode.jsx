@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 function QuestionNode({ data, id }) {
@@ -49,4 +50,4 @@ function QuestionNode({ data, id }) {
   );
 }
 
-export default QuestionNode;
+export default memo(QuestionNode);

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../db');
+const log = require('../utils/logger');
 
 /**
  * Demo Account Seeding Script
@@ -13,12 +14,10 @@ const db = require('../db');
 
 async function seedDemoAccount() {
   try {
-    console.log('\n========================================');
-    console.log('🎭 SEEDING DEMO ACCOUNT...');
-    console.log('========================================\n');
+    log.info('SEEDING DEMO ACCOUNT...');
 
     // 1. Create Demo User
-    console.log('Step 1: Creating demo user...');
+    log.info('Step 1: Creating demo user...');
     const demoEmail = 'demo@botbuilder.com';
     const demoPassword = 'DemoUser2025!';
 
@@ -30,7 +29,7 @@ async function seedDemoAccount() {
 
     let demoUserId;
     if (existingUser.rows.length > 0) {
-      console.log('✅ Demo user already exists');
+      log.info('Demo user already exists');
       demoUserId = existingUser.rows[0].id;
     } else {
       const hashedPassword = await bcrypt.hash(demoPassword, 10);
@@ -41,11 +40,11 @@ async function seedDemoAccount() {
         ['Demo User', demoEmail, hashedPassword, true]
       );
       demoUserId = userResult.rows[0].id;
-      console.log(`✅ Demo user created: ${demoEmail} (ID: ${demoUserId})`);
+      log.info('Demo user created', { email: demoEmail, id: demoUserId });
     }
 
     // 2. Create Demo Organization
-    console.log('\nStep 2: Creating demo organization...');
+    log.info('Step 2: Creating demo organization...');
     const existingOrg = await db.query(
       'SELECT id FROM organizations WHERE slug = $1',
       ['demo-organization']
@@ -53,7 +52,7 @@ async function seedDemoAccount() {
 
     let demoOrgId;
     if (existingOrg.rows.length > 0) {
-      console.log('✅ Demo organization already exists');
+      log.info('Demo organization already exists');
       demoOrgId = existingOrg.rows[0].id;
     } else {
       const orgResult = await db.query(
@@ -72,7 +71,7 @@ async function seedDemoAccount() {
         ]
       );
       demoOrgId = orgResult.rows[0].id;
-      console.log(`✅ Demo organization created (ID: ${demoOrgId})`);
+      log.info('Demo organization created', { id: demoOrgId });
 
       // Add user to organization
       await db.query(
@@ -80,11 +79,11 @@ async function seedDemoAccount() {
          VALUES ($1, $2, 'admin', 'active', CURRENT_TIMESTAMP)`,
         [demoOrgId, demoUserId]
       );
-      console.log('✅ User added to demo organization');
+      log.info('User added to demo organization');
     }
 
     // 3. Create Sample Bot
-    console.log('\nStep 3: Creating sample bot...');
+    log.info('Step 3: Creating sample bot...');
     const existingBot = await db.query(
       'SELECT id FROM bots WHERE name = $1 AND user_id = $2',
       ['Customer Support Bot', demoUserId]
@@ -92,7 +91,7 @@ async function seedDemoAccount() {
 
     let demoBotId;
     if (existingBot.rows.length > 0) {
-      console.log('✅ Sample bot already exists');
+      log.info('Sample bot already exists');
       demoBotId = existingBot.rows[0].id;
     } else {
       const api_token = crypto.randomBytes(32).toString('hex');
@@ -115,11 +114,11 @@ async function seedDemoAccount() {
         ]
       );
       demoBotId = botResult.rows[0].id;
-      console.log(`✅ Sample bot created: Customer Support Bot (ID: ${demoBotId})`);
+      log.info('Sample bot created', { name: 'Customer Support Bot', id: demoBotId });
     }
 
     // 4. Create AI Configuration for the bot (if table exists)
-    console.log('\nStep 4: Creating AI configuration...');
+    log.info('Step 4: Creating AI configuration...');
     try {
       const existingAiConfig = await db.query(
         'SELECT id FROM ai_configurations WHERE bot_id = $1',
@@ -142,16 +141,16 @@ async function seedDemoAccount() {
             500
           ]
         );
-        console.log('✅ AI configuration created');
+        log.info('AI configuration created');
       } else {
-        console.log('✅ AI configuration already exists');
+        log.info('AI configuration already exists');
       }
     } catch (error) {
-      console.log('⚠️  AI configuration table not found, skipping...');
+      log.warn('AI configuration table not found, skipping...');
     }
 
     // 5. Create Sample Messages/Conversations
-    console.log('\nStep 5: Creating sample conversations...');
+    log.info('Step 5: Creating sample conversations...');
     const sampleMessages = [
       {
         type: 'user_message',
@@ -218,13 +217,13 @@ async function seedDemoAccount() {
           [demoBotId, demoOrgId, msg.type, msg.content, msg.timestamp]
         );
       }
-      console.log(`✅ Created ${sampleMessages.length} sample messages`);
+      log.info('Created sample messages', { count: sampleMessages.length });
     } else {
-      console.log('✅ Sample messages already exist');
+      log.info('Sample messages already exist');
     }
 
     // 6. Create Sample Webhooks (mock data, if table exists)
-    console.log('\nStep 6: Creating sample webhooks...');
+    log.info('Step 6: Creating sample webhooks...');
     try {
       const existingWebhooks = await db.query(
         'SELECT id FROM webhooks WHERE bot_id = $1',
@@ -244,28 +243,26 @@ async function seedDemoAccount() {
              '["new_conversation", "conversation_ended"]', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
           [demoBotId]
         );
-        console.log('✅ Created 2 sample webhooks');
+        log.info('Created 2 sample webhooks');
       } else {
-        console.log('✅ Sample webhooks already exist');
+        log.info('Sample webhooks already exist');
       }
     } catch (error) {
-      console.log('⚠️  Webhooks table not found, skipping...');
+      log.warn('Webhooks table not found, skipping...');
     }
 
-    console.log('\n========================================');
-    console.log('✅ DEMO ACCOUNT SEEDING COMPLETE!');
-    console.log('========================================');
-    console.log('📧 Email: demo@botbuilder.com');
-    console.log('🔑 Password: DemoUser2025!');
-    console.log('🏢 Organization: Demo Organization');
-    console.log('💎 Plan: Enterprise');
-    console.log('🤖 Bots: 1 (Customer Support Bot)');
-    console.log('💬 Messages: 10 sample conversations');
-    console.log('🔗 Webhooks: 2 sample webhooks');
-    console.log('========================================\n');
+    log.info('DEMO ACCOUNT SEEDING COMPLETE', {
+      email: 'demo@botbuilder.com',
+      password: 'DemoUser2025!',
+      organization: 'Demo Organization',
+      plan: 'Enterprise',
+      bots: 1,
+      messages: 10,
+      webhooks: 2
+    });
 
   } catch (error) {
-    console.error('\n❌ ERROR SEEDING DEMO ACCOUNT:', error);
+    log.error('ERROR SEEDING DEMO ACCOUNT', { error: error.message });
     throw error;
   }
 }
@@ -274,11 +271,11 @@ async function seedDemoAccount() {
 if (require.main === module) {
   seedDemoAccount()
     .then(() => {
-      console.log('Demo account seeding completed successfully');
+      log.info('Demo account seeding completed successfully');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('Demo account seeding failed:', error);
+      log.error('Demo account seeding failed', { error: error.message });
       process.exit(1);
     });
 }

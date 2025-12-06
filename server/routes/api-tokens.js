@@ -5,6 +5,7 @@ const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
 const crypto = require('crypto');
+const log = require('../utils/logger');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -44,7 +45,7 @@ router.get('/', checkPermission('member'), async (req, res) => {
     res.json(result.rows);
 
   } catch (error) {
-    console.error('[API_TOKENS] Error fetching tokens:', error);
+    log.error('[API_TOKENS] Error fetching tokens:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch API tokens',
@@ -131,7 +132,7 @@ router.post('/', checkPermission('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[API_TOKENS] Error creating token:', error);
+    log.error('[API_TOKENS] Error creating token:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to create API token',
@@ -175,7 +176,7 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[API_TOKENS] Error deleting token:', error);
+    log.error('[API_TOKENS] Error deleting token:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to delete API token',
@@ -223,7 +224,7 @@ router.put('/:id/deactivate', checkPermission('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[API_TOKENS] Error deactivating token:', error);
+    log.error('[API_TOKENS] Error deactivating token:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to deactivate API token',

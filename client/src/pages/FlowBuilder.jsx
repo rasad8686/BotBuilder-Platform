@@ -1,39 +1,31 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
-  BackgroundVariant
+  BackgroundVariant,
+  ReactFlowProvider
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 import useFlowStore from '../store/flowStore';
 import flowsApi from '../api/flows';
 
-// Import custom node components
-import StartNode from '../components/nodes/StartNode';
-import TextNode from '../components/nodes/TextNode';
-import QuestionNode from '../components/nodes/QuestionNode';
-import ConditionNode from '../components/nodes/ConditionNode';
-import EndNode from '../components/nodes/EndNode';
+// Import nodeTypes from separate module for stable reference
+import { nodeTypes } from '../components/nodes';
 
 // Import UI components
 import FlowToolbox from '../components/FlowToolbox';
 import NodeEditor from '../components/NodeEditor';
 
-// Define custom node types for ReactFlow
-const nodeTypes = {
-  start: StartNode,
-  text: TextNode,
-  question: QuestionNode,
-  condition: ConditionNode,
-  end: EndNode
-};
 
 function FlowBuilder() {
   const { botId } = useParams();
   const navigate = useNavigate();
+
+  // Use ref for nodeTypes to ensure stable reference across renders
+  const nodeTypesRef = useRef(nodeTypes);
 
   // Zustand store state
   const {
@@ -239,7 +231,7 @@ function FlowBuilder() {
       )}
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {/* Toolbox Sidebar */}
         <div className="w-72 flex-shrink-0">
           <FlowToolbox
@@ -252,7 +244,7 @@ function FlowBuilder() {
         </div>
 
         {/* ReactFlow Canvas */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" style={{ width: '100%', height: '100%', minHeight: '500px' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -260,10 +252,11 @@ function FlowBuilder() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodesDelete={handleNodesDelete}
-            nodeTypes={nodeTypes}
+            nodeTypes={nodeTypesRef.current}
             fitView
             attributionPosition="bottom-left"
             className="bg-gray-50"
+            proOptions={{ hideAttribution: true }}
           >
             <Background
               variant={BackgroundVariant.Dots}
@@ -321,4 +314,13 @@ function FlowBuilder() {
   );
 }
 
-export default FlowBuilder;
+// Wrap with ReactFlowProvider to fix nodeTypes warning
+function FlowBuilderWithProvider() {
+  return (
+    <ReactFlowProvider>
+      <FlowBuilder />
+    </ReactFlowProvider>
+  );
+}
+
+export default FlowBuilderWithProvider;

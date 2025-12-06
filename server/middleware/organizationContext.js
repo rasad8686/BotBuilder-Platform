@@ -1,4 +1,5 @@
 const db = require('../db');
+const log = require('../utils/logger');
 
 /**
  * Organization Context Middleware
@@ -83,7 +84,7 @@ async function organizationContext(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('Organization context error:', error);
+    log.error('Organization context error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error loading organization context',

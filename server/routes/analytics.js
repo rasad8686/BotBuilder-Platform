@@ -3,6 +3,7 @@ const router = express.Router();
 const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const db = require('../db');
+const log = require('../utils/logger');
 
 // Apply authentication and organization context to all routes
 router.use(authenticateToken);
@@ -97,7 +98,7 @@ router.get('/dashboard', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[ANALYTICS] Error fetching dashboard:', error);
+    log.error('[ANALYTICS] Error fetching dashboard:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard data'
@@ -158,7 +159,7 @@ router.get('/overview', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[ANALYTICS] Error fetching overview:', error);
+    log.error('[ANALYTICS] Error fetching overview:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics'
@@ -198,7 +199,7 @@ router.get('/messages-over-time', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[ANALYTICS] Error fetching messages over time:', error);
+    log.error('[ANALYTICS] Error fetching messages over time:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch messages over time'
@@ -237,7 +238,7 @@ router.get('/by-bot', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[ANALYTICS] Error fetching by-bot analytics:', error);
+    log.error('[ANALYTICS] Error fetching by-bot analytics:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch by-bot analytics'
@@ -282,7 +283,7 @@ router.get('/recent-activity', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[ANALYTICS] Error fetching recent activity:', error);
+    log.error('[ANALYTICS] Error fetching recent activity:', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch recent activity'

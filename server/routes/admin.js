@@ -4,6 +4,7 @@ const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
+const log = require('../utils/logger');
 
 // Apply authentication to all admin routes
 router.use(authenticateToken);
@@ -29,7 +30,7 @@ router.get('/audit-logs', organizationContext, async (req, res) => {
     // In production, you might want to add a system_admin flag in users table
 
     const organizationId = req.organization?.id; // Optional organization filter
-    console.log('[Admin] Fetching audit logs. Organization filter:', organizationId || 'ALL');
+    log.info('Fetching audit logs', { organizationId: organizationId || 'ALL' });
 
     // Parse query parameters
     const {
@@ -131,7 +132,7 @@ router.get('/audit-logs', organizationContext, async (req, res) => {
     values.push(limitNum, offset);
     const result = await db.query(query, values);
 
-    console.log(`[Admin] Found ${result.rows.length} audit logs (total: ${total})`);
+    log.debug('Audit logs retrieved', { count: result.rows.length, total });
 
     return res.status(200).json({
       success: true,
@@ -147,18 +148,16 @@ router.get('/audit-logs', organizationContext, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get audit logs error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
+    log.error('Get audit logs error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       organizationId: req.organization?.id
     });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit logs',
-      error: error.message, // Always show error message for debugging
-      errorCode: error.code,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      errorCode: error.code
     });
   }
 });
@@ -205,11 +204,11 @@ router.get('/audit-logs/actions', organizationContext, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get audit actions error:', error);
+    log.error('Get audit actions error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit actions',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       errorCode: error.code
     });
   }
@@ -223,7 +222,7 @@ router.get('/audit-logs/actions', organizationContext, async (req, res) => {
 router.get('/stats', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
     const organizationId = req.organization.id;
-    console.log('[Admin] Fetching stats for organization:', organizationId);
+    log.info('Fetching organization stats', { organizationId });
 
     // Get various statistics
     const stats = {};
@@ -315,12 +314,10 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
       stats.organizationCreatedAt = null;
     }
 
-    console.log('[Admin] Stats retrieved successfully:', {
+    log.debug('Stats retrieved successfully', {
       totalMembers: stats.totalMembers,
       totalBots: stats.totalBots,
-      activeBots: stats.activeBots,
-      messagesLast30Days: stats.messagesLast30Days,
-      auditEventsLast30Days: stats.auditEventsLast30Days
+      activeBots: stats.activeBots
     });
 
     return res.status(200).json({
@@ -329,18 +326,16 @@ router.get('/stats', organizationContext, requireOrganization, checkPermission('
     });
 
   } catch (error) {
-    console.error('Get stats error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
+    log.error('Get stats error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       organizationId: req.organization?.id
     });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve statistics',
-      error: error.message, // Always show error message for debugging
-      errorCode: error.code,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      errorCode: error.code
     });
   }
 });
@@ -377,12 +372,12 @@ router.get('/health', organizationContext, requireOrganization, checkPermission(
     });
 
   } catch (error) {
-    console.error('Health check error:', error);
+    log.error('Health check error', { error: error.message });
     return res.status(503).json({
       success: false,
       health: {
         status: 'unhealthy',
-        error: error.message
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Service unavailable'
       }
     });
   }
@@ -452,18 +447,16 @@ router.get('/activity-timeline', organizationContext, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get activity timeline error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
+    log.error('Get activity timeline error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       organizationId: req.organization?.id
     });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve activity timeline',
-      error: error.message, // Always show error message for debugging
-      errorCode: error.code,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      errorCode: error.code
     });
   }
 });
@@ -475,7 +468,7 @@ router.get('/activity-timeline', organizationContext, async (req, res) => {
  */
 router.get('/billing-stats', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
   try {
-    console.log('[Admin] Fetching billing stats');
+    log.info('Fetching billing stats');
 
     // Total subscriptions by plan (active subscriptions)
     const planCountsResult = await db.query(`
@@ -514,11 +507,7 @@ router.get('/billing-stats', organizationContext, requireOrganization, checkPerm
     `);
     const recentSubs = recentSubsResult.rows;
 
-    console.log('[Admin] Billing stats retrieved:', {
-      mrr,
-      totalUsers,
-      planBreakdown: planCounts.length
-    });
+    log.debug('Billing stats retrieved', { mrr, totalUsers, planBreakdown: planCounts.length });
 
     return res.status(200).json({
       success: true,
@@ -529,17 +518,15 @@ router.get('/billing-stats', organizationContext, requireOrganization, checkPerm
     });
 
   } catch (error) {
-    console.error('Billing stats error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack
+    log.error('Billing stats error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve billing stats',
-      error: error.message,
-      errorCode: error.code,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      errorCode: error.code
     });
   }
 });

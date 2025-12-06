@@ -304,7 +304,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;

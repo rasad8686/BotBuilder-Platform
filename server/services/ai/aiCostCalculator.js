@@ -2,6 +2,8 @@
  * AI Cost Calculator
  * Calculates costs for AI API usage based on token consumption
  */
+const log = require('./../../utils/logger');
+
 class AICostCalculator {
   /**
    * Pricing per 1M tokens (in USD)
@@ -67,21 +69,21 @@ class AICostCalculator {
     const { provider, model, promptTokens, completionTokens } = params;
 
     if (!provider || !model) {
-      console.warn('Provider and model are required for cost calculation');
+      log.warn('Provider and model are required for cost calculation');
       return 0;
     }
 
     const providerPricing = this.PRICING[provider.toLowerCase()];
 
     if (!providerPricing) {
-      console.warn(`Unknown provider: ${provider}`);
+      log.warn(`Unknown provider: ${provider}`);
       return 0;
     }
 
     const modelPricing = providerPricing[model];
 
     if (!modelPricing) {
-      console.warn(`Unknown model for ${provider}: ${model}`);
+      log.warn(`Unknown model for ${provider}: ${model}`);
       // Try to find a default/fallback pricing
       return this.estimateCost(provider, promptTokens, completionTokens);
     }

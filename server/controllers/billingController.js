@@ -1,3 +1,4 @@
+const log = require('../utils/logger');
 const db = require('../db');
 const webhookService = require('../services/webhookService');
 
@@ -10,21 +11,16 @@ if (STRIPE_CONFIGURED) {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const keyPrefix = process.env.STRIPE_SECRET_KEY.substring(0, 20);
     const keySuffix = process.env.STRIPE_SECRET_KEY.slice(-4);
-    console.log('✅ ========================================');
-    console.log('✅ Stripe initialized successfully');
-    console.log(`✅ Key: ${keyPrefix}...${keySuffix}`);
-    console.log(`✅ Pro Price ID: ${process.env.STRIPE_PRO_PRICE_ID || 'NOT SET'}`);
-    console.log(`✅ Enterprise Price ID: ${process.env.STRIPE_ENTERPRISE_PRICE_ID || 'NOT SET'}`);
-    console.log('✅ ========================================');
+    log.info('Stripe initialized successfully', {
+      keyPrefix: `${keyPrefix}...${keySuffix}`,
+      proPriceId: process.env.STRIPE_PRO_PRICE_ID || 'NOT SET',
+      enterprisePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || 'NOT SET'
+    });
   } catch (error) {
-    console.error('❌ ========================================');
-    console.error('❌ Failed to initialize Stripe:', error.message);
-    console.error('❌ ========================================');
+    log.error('Failed to initialize Stripe', { error: error.message });
   }
 } else {
-  console.warn('⚠️ ========================================');
-  console.warn('⚠️ Stripe not configured - billing features will be limited to viewing plans');
-  console.warn('⚠️ ========================================');
+  log.warn('Stripe not configured - billing features will be limited to viewing plans');
 }
 
 /**
@@ -163,7 +159,7 @@ async function getSubscription(req, res) {
       try {
         stripeSubscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
       } catch (error) {
-        console.error('Error fetching Stripe subscription:', error.message);
+        log.error('Error fetching Stripe subscription', { error: error.message });
         // Don't fail the request, just log the error
       }
     }
@@ -186,11 +182,10 @@ async function getSubscription(req, res) {
     });
 
   } catch (error) {
-    console.error('Get subscription error:', error);
+    log.error('Get subscription error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get subscription',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: 'Failed to get subscription'
     });
   }
 }
@@ -225,7 +220,7 @@ async function createCheckoutSession(req, res) {
 
     // Check idempotency key
     if (idempotencyKey && idempotencyCache.has(idempotencyKey)) {
-      console.log('🔁 Idempotency: Returning cached response for key:', idempotencyKey);
+      log.info('Returning cached response for idempotency key', { idempotencyKey });
       return res.status(200).json(idempotencyCache.get(idempotencyKey).response);
     }
 
@@ -286,7 +281,7 @@ async function createCheckoutSession(req, res) {
       );
     }
 
-    console.log('🔵 Creating checkout session:', { plan, priceId, idempotencyKey });
+    log.info('Creating checkout session', { plan, priceId, idempotencyKey });
 
     // Create checkout session with Stripe idempotency
     const session = await stripe.checkout.sessions.create({
@@ -321,17 +316,16 @@ async function createCheckoutSession(req, res) {
         response,
         timestamp: Date.now()
       });
-      console.log('💾 Cached response for idempotency key:', idempotencyKey);
+      log.info('Cached response for idempotency key', { idempotencyKey });
     }
 
     return res.status(200).json(response);
 
   } catch (error) {
-    console.error('Create checkout session error:', error);
+    log.error('Create checkout session error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to create checkout session',
-      error: error.message
+      message: 'Failed to create checkout session'
     });
   }
 }
@@ -354,7 +348,7 @@ async function createPortalSession(req, res) {
     );
 
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_customer_id) {
-      console.log(`⚠️ User attempted to access portal without Stripe customer ID (org: ${organizationId})`);
+      log.warn('User attempted to access portal without Stripe customer ID', { organizationId });
       return res.status(400).json({
         success: false,
         message: 'You need to subscribe to a paid plan before accessing subscription management.',
@@ -374,11 +368,10 @@ async function createPortalSession(req, res) {
     });
 
   } catch (error) {
-    console.error('Create portal session error:', error);
+    log.error('Create portal session error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to create portal session',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: 'Failed to create portal session'
     });
   }
 }
@@ -438,7 +431,7 @@ async function getInvoices(req, res) {
         invoices: formattedInvoices
       });
     } catch (stripeError) {
-      console.error('Stripe API error:', stripeError.message);
+      log.error('Stripe API error when fetching invoices', { error: stripeError.message });
       return res.status(200).json({
         success: true,
         invoices: [],
@@ -447,11 +440,10 @@ async function getInvoices(req, res) {
     }
 
   } catch (error) {
-    console.error('Get invoices error:', error);
+    log.error('Get invoices error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get invoices',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: 'Failed to get invoices'
     });
   }
 }
@@ -516,11 +508,10 @@ async function getUsage(req, res) {
     });
 
   } catch (error) {
-    console.error('Get usage error:', error);
+    log.error('Get usage error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get usage statistics',
-      error: error.message
+      message: 'Failed to get usage statistics'
     });
   }
 }
@@ -543,7 +534,7 @@ async function cancelSubscription(req, res) {
     );
 
     if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_subscription_id) {
-      console.log(`⚠️ User attempted to cancel subscription without active subscription (org: ${organizationId})`);
+      log.warn('User attempted to cancel subscription without active subscription', { organizationId });
       return res.status(400).json({
         success: false,
         message: 'You don\'t have an active paid subscription to cancel.',
@@ -570,11 +561,10 @@ async function cancelSubscription(req, res) {
     });
 
   } catch (error) {
-    console.error('Cancel subscription error:', error);
+    log.error('Cancel subscription error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to cancel subscription',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: 'Failed to cancel subscription'
     });
   }
 }
@@ -590,11 +580,10 @@ async function getPlans(req, res) {
       plans: PLANS
     });
   } catch (error) {
-    console.error('Get plans error:', error);
+    log.error('Get plans error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get plans',
-      error: error.message
+      message: 'Failed to get plans'
     });
   }
 }
@@ -608,7 +597,7 @@ async function handleWebhook(req, res) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret || webhookSecret === 'whsec_your_webhook_secret_here') {
-    console.error('❌ STRIPE_WEBHOOK_SECRET not configured properly');
+    log.error('STRIPE_WEBHOOK_SECRET not configured properly');
     return res.status(500).json({
       success: false,
       message: 'Webhook secret not configured'
@@ -617,7 +606,7 @@ async function handleWebhook(req, res) {
 
   // Verify Stripe is configured
   if (!isStripeConfigured()) {
-    console.error('❌ Stripe not configured');
+    log.error('Stripe not configured');
     return res.status(500).json({
       success: false,
       message: 'Stripe not configured'
@@ -631,11 +620,12 @@ async function handleWebhook(req, res) {
   try {
     // Verify webhook signature
     event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-    console.log('\n========== STRIPE WEBHOOK RECEIVED ==========');
-    console.log(`Event Type: ${event.type}`);
-    console.log(`Event ID: ${event.id}`);
+    log.info('Stripe webhook received', {
+      eventType: event.type,
+      eventId: event.id
+    });
   } catch (err) {
-    console.error('❌ Webhook signature verification failed:', err.message);
+    log.error('Webhook signature verification failed', { error: err.message });
     return res.status(400).json({
       success: false,
       message: `Webhook Error: ${err.message}`
@@ -666,21 +656,18 @@ async function handleWebhook(req, res) {
         break;
 
       default:
-        console.log(`⚠️ Unhandled event type: ${event.type}`);
+        log.warn('Unhandled Stripe event type', { eventType: event.type });
     }
 
-    console.log('✅ Webhook processed successfully');
-    console.log('========== WEBHOOK END ==========\n');
+    log.info('Webhook processed successfully');
 
     return res.status(200).json({ received: true });
 
   } catch (error) {
-    console.error('❌ Error processing webhook:', error);
-    console.error('========== WEBHOOK ERROR END ==========\n');
+    log.error('Error processing webhook', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Error processing webhook',
-      error: error.message
+      message: 'Error processing webhook'
     });
   }
 }
@@ -690,16 +677,17 @@ async function handleWebhook(req, res) {
  * When a customer completes the checkout process
  */
 async function handleCheckoutSessionCompleted(session) {
-  console.log('\n--- Processing checkout.session.completed ---');
-  console.log(`Session ID: ${session.id}`);
-  console.log(`Customer: ${session.customer}`);
-  console.log(`Subscription: ${session.subscription}`);
+  log.info('Processing checkout.session.completed', {
+    sessionId: session.id,
+    customer: session.customer,
+    subscription: session.subscription
+  });
 
   const organizationId = session.metadata?.organizationId;
   const plan = session.metadata?.plan;
 
   if (!organizationId) {
-    console.error('❌ No organizationId in session metadata');
+    log.error('No organizationId in session metadata');
     return;
   }
 
@@ -707,9 +695,11 @@ async function handleCheckoutSessionCompleted(session) {
     // Get the subscription details from Stripe
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
 
-    console.log(`Plan: ${plan}`);
-    console.log(`Status: ${subscription.status}`);
-    console.log(`Current Period End: ${new Date(subscription.current_period_end * 1000)}`);
+    log.info('Subscription details retrieved', {
+      plan,
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+    });
 
     // Update organization with subscription details
     const result = await db.query(
@@ -732,7 +722,10 @@ async function handleCheckoutSessionCompleted(session) {
     );
 
     if (result.rows.length > 0) {
-      console.log(`✅ Organization ${result.rows[0].name} upgraded to ${plan} plan`);
+      log.info('Organization upgraded successfully', {
+        organizationName: result.rows[0].name,
+        plan
+      });
 
       // Trigger webhook for user subscription
       await webhookService.trigger(organizationId, 'user.subscribed', {
@@ -745,11 +738,11 @@ async function handleCheckoutSessionCompleted(session) {
         subscribed_at: new Date().toISOString()
       });
     } else {
-      console.error(`❌ Organization ${organizationId} not found`);
+      log.error('Organization not found after checkout', { organizationId });
     }
 
   } catch (error) {
-    console.error('❌ Error in handleCheckoutSessionCompleted:', error);
+    log.error('Error in handleCheckoutSessionCompleted', { error: error.message, stack: error.stack });
     throw error;
   }
 }
@@ -759,10 +752,11 @@ async function handleCheckoutSessionCompleted(session) {
  * When a subscription is modified (plan change, cancellation scheduled, etc.)
  */
 async function handleSubscriptionUpdated(subscription) {
-  console.log('\n--- Processing customer.subscription.updated ---');
-  console.log(`Subscription ID: ${subscription.id}`);
-  console.log(`Status: ${subscription.status}`);
-  console.log(`Cancel at period end: ${subscription.cancel_at_period_end}`);
+  log.info('Processing customer.subscription.updated', {
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end
+  });
 
   try {
     // Find organization by subscription ID
@@ -772,7 +766,7 @@ async function handleSubscriptionUpdated(subscription) {
     );
 
     if (orgResult.rows.length === 0) {
-      console.log(`⚠️ No organization found with subscription ID: ${subscription.id}`);
+      log.warn('No organization found with subscription ID', { subscriptionId: subscription.id });
       return;
     }
 
@@ -793,8 +787,11 @@ async function handleSubscriptionUpdated(subscription) {
       }
     }
 
-    console.log(`Current plan: ${org.plan_tier}, New plan: ${newPlanTier}`);
-    console.log(`Current Period End: ${new Date(subscription.current_period_end * 1000)}`);
+    log.info('Subscription plan update', {
+      currentPlan: org.plan_tier,
+      newPlan: newPlanTier,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+    });
 
     // Update organization
     const result = await db.query(
@@ -813,13 +810,15 @@ async function handleSubscriptionUpdated(subscription) {
     );
 
     if (result.rows.length > 0) {
-      console.log(`✅ Organization ${result.rows[0].name} subscription updated`);
-      console.log(`   Status: ${result.rows[0].subscription_status}`);
-      console.log(`   Plan: ${result.rows[0].plan_tier}`);
+      log.info('Organization subscription updated', {
+        organizationName: result.rows[0].name,
+        status: result.rows[0].subscription_status,
+        plan: result.rows[0].plan_tier
+      });
     }
 
   } catch (error) {
-    console.error('❌ Error in handleSubscriptionUpdated:', error);
+    log.error('Error in handleSubscriptionUpdated', { error: error.message, stack: error.stack });
     throw error;
   }
 }
@@ -829,9 +828,10 @@ async function handleSubscriptionUpdated(subscription) {
  * When a subscription is canceled/expired
  */
 async function handleSubscriptionDeleted(subscription) {
-  console.log('\n--- Processing customer.subscription.deleted ---');
-  console.log(`Subscription ID: ${subscription.id}`);
-  console.log(`Status: ${subscription.status}`);
+  log.info('Processing customer.subscription.deleted', {
+    subscriptionId: subscription.id,
+    status: subscription.status
+  });
 
   try {
     // Find organization by subscription ID
@@ -841,7 +841,7 @@ async function handleSubscriptionDeleted(subscription) {
     );
 
     if (orgResult.rows.length === 0) {
-      console.log(`⚠️ No organization found with subscription ID: ${subscription.id}`);
+      log.warn('No organization found with subscription ID', { subscriptionId: subscription.id });
       return;
     }
 
@@ -864,8 +864,10 @@ async function handleSubscriptionDeleted(subscription) {
     );
 
     if (result.rows.length > 0) {
-      console.log(`✅ Organization ${result.rows[0].name} downgraded to free plan`);
-      console.log(`   Status: ${result.rows[0].subscription_status}`);
+      log.info('Organization downgraded to free plan', {
+        organizationName: result.rows[0].name,
+        status: result.rows[0].subscription_status
+      });
 
       // Trigger webhook for user unsubscription
       await webhookService.trigger(org.id, 'user.unsubscribed', {
@@ -880,7 +882,7 @@ async function handleSubscriptionDeleted(subscription) {
     }
 
   } catch (error) {
-    console.error('❌ Error in handleSubscriptionDeleted:', error);
+    log.error('Error in handleSubscriptionDeleted', { error: error.message, stack: error.stack });
     throw error;
   }
 }
@@ -890,17 +892,19 @@ async function handleSubscriptionDeleted(subscription) {
  * When a payment is successful
  */
 async function handleInvoicePaymentSucceeded(invoice) {
-  console.log('\n--- Processing invoice.payment_succeeded ---');
-  console.log(`Invoice ID: ${invoice.id}`);
-  console.log(`Amount: ${invoice.amount_paid / 100} ${invoice.currency.toUpperCase()}`);
-  console.log(`Subscription: ${invoice.subscription}`);
+  log.info('Processing invoice.payment_succeeded', {
+    invoiceId: invoice.id,
+    amount: invoice.amount_paid / 100,
+    currency: invoice.currency.toUpperCase(),
+    subscription: invoice.subscription
+  });
 
   // You can add additional logic here, such as:
   // - Sending a receipt email
   // - Recording the payment in a payments table
   // - Triggering notifications
 
-  console.log('✅ Payment recorded successfully');
+  log.info('Payment recorded successfully', { invoiceId: invoice.id });
 }
 
 /**
@@ -908,10 +912,12 @@ async function handleInvoicePaymentSucceeded(invoice) {
  * When a payment fails
  */
 async function handleInvoicePaymentFailed(invoice) {
-  console.log('\n--- Processing invoice.payment_failed ---');
-  console.log(`Invoice ID: ${invoice.id}`);
-  console.log(`Amount: ${invoice.amount_due / 100} ${invoice.currency.toUpperCase()}`);
-  console.log(`Subscription: ${invoice.subscription}`);
+  log.warn('Processing invoice.payment_failed', {
+    invoiceId: invoice.id,
+    amount: invoice.amount_due / 100,
+    currency: invoice.currency.toUpperCase(),
+    subscription: invoice.subscription
+  });
 
   try {
     // Find organization by subscription ID
@@ -921,7 +927,7 @@ async function handleInvoicePaymentFailed(invoice) {
     );
 
     if (orgResult.rows.length === 0) {
-      console.log(`⚠️ No organization found with subscription ID: ${invoice.subscription}`);
+      log.warn('No organization found with subscription ID', { subscriptionId: invoice.subscription });
       return;
     }
 
@@ -935,7 +941,7 @@ async function handleInvoicePaymentFailed(invoice) {
       ['past_due', org.id]
     );
 
-    console.log(`⚠️ Organization ${org.name} marked as past_due`);
+    log.warn('Organization marked as past_due', { organizationName: org.name });
 
     // You can add additional logic here, such as:
     // - Sending a payment failed email
@@ -943,7 +949,7 @@ async function handleInvoicePaymentFailed(invoice) {
     // - Setting up retry logic
 
   } catch (error) {
-    console.error('❌ Error in handleInvoicePaymentFailed:', error);
+    log.error('Error in handleInvoicePaymentFailed', { error: error.message, stack: error.stack });
     throw error;
   }
 }

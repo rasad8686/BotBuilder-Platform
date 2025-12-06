@@ -8,6 +8,7 @@ const {
   configureAI,
   deleteAIConfig,
   sendChat,
+  sendChatStream,
   testAIConnection,
   getAIUsage,
   getOrganizationAIBilling,
@@ -107,11 +108,18 @@ router.post('/:botId/ai/chat', checkPermission('member'), sendChat);
 
 /**
  * POST /api/bots/:botId/ai/chat/stream
- * Send a streaming chat message to AI
+ * Send a streaming chat message to AI (Server-Sent Events)
  * Permission: member or higher
- * TODO: Implement streaming endpoint
+ * Body: {
+ *   message: 'User message',
+ *   sessionId: 'unique_session_id'
+ * }
+ * Response: SSE stream with events:
+ *   - { type: 'chunk', content: '...', fullContent: '...' }
+ *   - { type: 'done', content: '...', usage: {...}, cost: 0.001, responseTime: 1234 }
+ *   - { type: 'error', message: '...' }
  */
-// router.post('/:botId/ai/chat/stream', checkPermission('member'), sendChatStream);
+router.post('/:botId/ai/chat/stream', checkPermission('member'), sendChatStream);
 
 // ═══════════════════════════════════════════════════════════
 // AI USAGE & BILLING ROUTES

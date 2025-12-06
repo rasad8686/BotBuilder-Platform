@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import aiApi from '../api/ai';
 
@@ -24,10 +24,12 @@ export default function AIConfiguration() {
     temperature: 0.7,
     maxTokens: 1000,
     contextWindow: 10,
-    enableStreaming: true
+    enableStreaming: true,
+    knowledgeBaseId: null
   });
 
   const [hasConfig, setHasConfig] = useState(false);
+  const [knowledgeBases, setKnowledgeBases] = useState([]);
 
   // Test tab state
   const [messages, setMessages] = useState([]);
@@ -35,10 +37,29 @@ export default function AIConfiguration() {
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState('');
   const [sessionId, setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [streamingText, setStreamingText] = useState('');
+  const abortStreamRef = useRef(null);
 
   useEffect(() => {
     loadConfig();
+    loadKnowledgeBases();
   }, [botId]);
+
+  const loadKnowledgeBases = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/knowledge`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setKnowledgeBases(data);
+      }
+    } catch (err) {
+      console.error('Failed to load knowledge bases:', err);
+    }
+  };
 
   const loadConfig = async () => {
     try {
@@ -56,7 +77,8 @@ export default function AIConfiguration() {
           temperature: parseFloat(response.config.temperature) || 0.7,
           maxTokens: parseInt(response.config.max_tokens) || 1000,
           contextWindow: parseInt(response.config.context_window) || 10,
-          enableStreaming: response.config.enable_streaming ?? true
+          enableStreaming: response.config.enable_streaming ?? true,
+          knowledgeBaseId: response.config.knowledge_base_id || null
         });
       }
     } catch (err) {
@@ -82,7 +104,8 @@ export default function AIConfiguration() {
         system_prompt: config.systemPrompt,
         context_window: config.contextWindow,
         enable_streaming: config.enableStreaming,
-        is_enabled: config.isEnabled
+        is_enabled: config.isEnabled,
+        knowledge_base_id: config.knowledgeBaseId || null
       };
 
       if (config.apiKey.trim()) {
@@ -206,35 +229,79 @@ export default function AIConfiguration() {
     };
 
     setMessages([...messages, userMessage]);
+    const messageText = inputMessage.trim();
     setInputMessage('');
     setTesting(true);
     setTestError('');
+    setStreamingText('');
 
-    const startTime = Date.now();
+    // Use streaming if enabled in config
+    if (config.enableStreaming) {
+      abortStreamRef.current = aiApi.sendChatStream(
+        botId,
+        { message: messageText, sessionId: sessionId },
+        // onChunk - real-time text update
+        (chunk) => {
+          setStreamingText(chunk.fullContent);
+        },
+        // onComplete - streaming finished
+        (result) => {
+          setStreamingText('');
+          const botMessage = {
+            role: 'assistant',
+            content: result.content,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            tokens: result.usage?.totalTokens || 0,
+            cost: result.cost || 0,
+            responseTime: result.responseTime || 0
+          };
+          setMessages(prev => [...prev, botMessage]);
+          setTesting(false);
+          abortStreamRef.current = null;
+        },
+        // onError
+        (error) => {
+          setStreamingText('');
+          setTestError(error.message || 'Streaming failed. Make sure your configuration is saved and API key is valid.');
+          setTesting(false);
+          abortStreamRef.current = null;
+        }
+      );
+    } else {
+      // Non-streaming mode
+      const startTime = Date.now();
+      try {
+        const response = await aiApi.sendChat(botId, {
+          message: messageText,
+          sessionId: sessionId
+        });
 
-    try {
-      // Call AI chat endpoint
-      const response = await aiApi.sendChat(botId, {
-        message: inputMessage.trim(),
-        sessionId: sessionId
-      });
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
 
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
+        const botMessage = {
+          role: 'assistant',
+          content: response.response || 'No response',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          tokens: response.usage?.totalTokens || response.usage?.total_tokens || 0,
+          cost: response.cost || 0,
+          responseTime: response.responseTime || responseTime
+        };
 
-      const botMessage = {
-        role: 'assistant',
-        content: response.response || 'No response',
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        tokens: response.usage?.totalTokens || response.usage?.total_tokens || 0,
-        cost: response.cost || 0,
-        responseTime: response.responseTime || responseTime
-      };
+        setMessages(prev => [...prev, botMessage]);
+      } catch (err) {
+        setTestError(err.response?.data?.message || 'Failed to get AI response. Make sure your configuration is saved and API key is valid.');
+      } finally {
+        setTesting(false);
+      }
+    }
+  };
 
-      setMessages(prev => [...prev, botMessage]);
-    } catch (err) {
-      setTestError(err.response?.data?.message || 'Failed to get AI response. Make sure your configuration is saved and API key is valid.');
-    } finally {
+  const handleStopStreaming = () => {
+    if (abortStreamRef.current) {
+      abortStreamRef.current();
+      abortStreamRef.current = null;
+      setStreamingText('');
       setTesting(false);
     }
   };
@@ -434,6 +501,40 @@ export default function AIConfiguration() {
                       </div>
                     </div>
                   </label>
+                </div>
+
+                {/* Knowledge Base (RAG) */}
+                <div>
+                  <label className="block text-gray-900 font-semibold mb-2">
+                    Knowledge Base (RAG)
+                  </label>
+                  <select
+                    value={config.knowledgeBaseId || ''}
+                    onChange={(e) => setConfig({ ...config, knowledgeBaseId: e.target.value ? parseInt(e.target.value) : null })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                  >
+                    <option value="">No Knowledge Base (AI uses general knowledge)</option>
+                    {knowledgeBases.map((kb) => (
+                      <option key={kb.id} value={kb.id}>
+                        {kb.name} ({kb.document_count || 0} docs, {kb.total_chunks || 0} chunks)
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500 mt-2">
+                    🧠 Link a Knowledge Base to enable RAG (Retrieval-Augmented Generation).
+                    AI will search your documents to answer questions.
+                  </p>
+                  {config.knowledgeBaseId && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <span>✅</span>
+                        <span className="font-medium">RAG Enabled</span>
+                      </div>
+                      <p className="text-sm text-green-700 mt-1">
+                        AI will search the linked knowledge base for relevant context before responding.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -641,13 +742,28 @@ export default function AIConfiguration() {
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   {/* Chat Header */}
                   <div className="bg-purple-500 px-4 py-3 flex items-center justify-between">
-                    <span className="text-white font-semibold">💬 Chat Tester</span>
-                    <button
-                      onClick={handleClearChat}
-                      className="text-white hover:bg-purple-600 px-3 py-1 rounded transition-colors text-sm"
-                    >
-                      Clear
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-semibold">💬 Chat Tester</span>
+                      {config.enableStreaming && (
+                        <span className="bg-purple-400 text-white text-xs px-2 py-1 rounded">⚡ Streaming</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {testing && config.enableStreaming && (
+                        <button
+                          onClick={handleStopStreaming}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors text-sm"
+                        >
+                          ⏹️ Stop
+                        </button>
+                      )}
+                      <button
+                        onClick={handleClearChat}
+                        className="text-white hover:bg-purple-600 px-3 py-1 rounded transition-colors text-sm"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
 
                   {/* Chat Messages Area */}
@@ -687,12 +803,19 @@ export default function AIConfiguration() {
                       ))
                     )}
 
-                    {/* Loading indicator */}
+                    {/* Loading/Streaming indicator */}
                     {testing && (
                       <div className="flex justify-start">
                         <div className="max-w-[70%]">
                           <div className="inline-block px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
-                            <span className="animate-pulse">Thinking...</span>
+                            {streamingText ? (
+                              <div>
+                                <div className="whitespace-pre-wrap">{streamingText}<span className="inline-block w-2 h-4 bg-purple-500 ml-1 animate-pulse"></span></div>
+                                <div className="text-xs text-purple-600 mt-2">⚡ Streaming...</div>
+                              </div>
+                            ) : (
+                              <span className="animate-pulse">Thinking...</span>
+                            )}
                           </div>
                         </div>
                       </div>

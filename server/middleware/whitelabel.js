@@ -1,4 +1,5 @@
 const db = require('../db');
+const log = require('../utils/logger');
 
 /**
  * Domain Detection Middleware
@@ -31,14 +32,14 @@ async function detectCustomDomain(req, res, next) {
 
     if (result.rows.length > 0) {
       req.whitelabel = result.rows[0];
-      console.log(`[Whitelabel] Custom domain detected: ${hostname} -> Org: ${req.whitelabel.org_name}`);
+      log.info(`[Whitelabel] Custom domain detected: ${hostname} -> Org: ${req.whitelabel.org_name}`);
     } else {
       req.whitelabel = null;
     }
 
     next();
   } catch (error) {
-    console.error('Domain detection error:', error);
+    log.error('Domain detection error:', error);
     req.whitelabel = null;
     next();
   }
