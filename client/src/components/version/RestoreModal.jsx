@@ -45,7 +45,7 @@ export default function RestoreModal({ entityType, entityId, version, onClose, o
       }
     } catch (err) {
       setError('Network error. Please try again.');
-      console.error(err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

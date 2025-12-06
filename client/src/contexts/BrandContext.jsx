@@ -37,7 +37,6 @@ export function BrandProvider({ children }) {
         applyDefaultBranding();
       }
     } catch (error) {
-      console.error('Error loading brand settings:', error);
       applyDefaultBranding();
     } finally {
       setLoading(false);
@@ -83,7 +82,6 @@ export function BrandProvider({ children }) {
       injectCustomCSS(settings.custom_css);
     }
 
-    console.log('[Brand] Applied brand settings:', settings.brand_name);
   };
 
   const applyDefaultBranding = () => {

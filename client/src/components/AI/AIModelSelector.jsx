@@ -19,7 +19,7 @@ export default function AIModelSelector({ provider, selectedModel, onModelChange
       const response = await aiApi.getModels(provider);
       setModels(response.models);
     } catch (err) {
-      console.error('Failed to load models:', err);
+      // Silent fail
       setModels([]);
     } finally {
       setLoading(false);

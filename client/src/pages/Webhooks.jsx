@@ -25,24 +25,17 @@ export default function Webhooks() {
   });
 
   useEffect(() => {
-    console.log('🟢 [INIT] Component mounted, fetching data...');
     fetchWebhooks();
     fetchAvailableEvents();
 
     // Auto-refresh webhooks (including stats) every 30 seconds
     const refreshInterval = setInterval(() => {
-      console.log('🔄 [AUTO-REFRESH] Refreshing webhook stats...');
       fetchWebhooks();
     }, 30000); // 30 seconds
 
     // Cleanup interval on unmount
     return () => clearInterval(refreshInterval);
   }, []);
-
-  // Debug logging for availableEvents state changes
-  useEffect(() => {
-    console.log('🟡 [STATE] availableEvents changed:', availableEvents);
-  }, [availableEvents]);
 
   const fetchWebhooks = async () => {
     try {
@@ -58,7 +51,6 @@ export default function Webhooks() {
 
       setWebhooks(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching webhooks:', error);
       if (error.response?.status === 401) {
         navigate('/login');
       }
@@ -68,28 +60,16 @@ export default function Webhooks() {
   };
 
   const fetchAvailableEvents = async () => {
-    console.log('🔵 [EVENTS] Starting fetchAvailableEvents...');
     try {
       const token = localStorage.getItem('token');
-      console.log('🔵 [EVENTS] Token exists:', !!token);
-      console.log('🔵 [EVENTS] Token value:', token?.substring(0, 20) + '...');
-      console.log('🔵 [EVENTS] Fetching from URL:', `${API_BASE_URL}/api/webhooks/events/list`);
 
       const response = await axios.get(`${API_BASE_URL}/api/webhooks/events/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('🔵 [EVENTS] Response status:', response.status);
-      console.log('🔵 [EVENTS] Response data:', response.data);
-      console.log('🔵 [EVENTS] Events array:', response.data.data);
-      console.log('🔵 [EVENTS] Events count:', response.data.data?.length);
-
       setAvailableEvents(response.data.data || []);
-      console.log('🔵 [EVENTS] State updated with', response.data.data?.length || 0, 'events');
     } catch (error) {
-      console.error('🔴 [EVENTS] Error fetching events:', error);
-      console.error('🔴 [EVENTS] Error response:', error.response?.data);
-      console.error('🔴 [EVENTS] Error status:', error.response?.status);
+      // Silent fail - events list will be empty
     }
   };
 
@@ -102,7 +82,7 @@ export default function Webhooks() {
 
       setWebhookLogs(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching logs:', error);
+      // Silent fail
     }
   };
 
@@ -127,7 +107,6 @@ export default function Webhooks() {
       setFormData({ name: '', url: '', events: [] });
       fetchWebhooks();
     } catch (error) {
-      console.error('Error creating webhook:', error);
       alert(error.response?.data?.message || 'Failed to create webhook');
     }
   };
@@ -143,7 +122,6 @@ export default function Webhooks() {
 
       fetchWebhooks();
     } catch (error) {
-      console.error('Error deleting webhook:', error);
       alert(error.response?.data?.message || 'Failed to delete webhook');
     }
   };
@@ -164,7 +142,6 @@ export default function Webhooks() {
         alert(`❌ Webhook test failed\n\nStatus Code: ${result.statusCode}\nPlease check the logs for details.`);
       }
     } catch (error) {
-      console.error('Error testing webhook:', error);
       alert(error.response?.data?.message || 'Failed to test webhook');
     }
   };

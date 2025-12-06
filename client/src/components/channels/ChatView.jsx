@@ -56,7 +56,7 @@ export default function ChatView({ channel, conversation, onBack }) {
       const data = await response.json();
       setMessages(data);
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      // Silent fail
       // Demo messages
       setMessages([
         {
@@ -160,7 +160,7 @@ export default function ChatView({ channel, conversation, onBack }) {
         msg.id === tempMessage.id ? { ...msg, status: 'sent' } : msg
       ));
     } catch (err) {
-      console.error('Error sending message:', err);
+      // Silent fail
       // Mark as failed
       setMessages(prev => prev.map(msg =>
         msg.status === 'sending' ? { ...msg, status: 'failed' } : msg

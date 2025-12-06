@@ -29,7 +29,7 @@ export default function ActivityLog() {
 
   const fetchActivities = async () => {
     const token = localStorage.getItem('token');
-    console.log('ActivityLog - Token:', token ? 'exists' : 'missing');
+    // Silent fail
     if (!token) {
       setLoading(false);
       return;
@@ -51,7 +51,7 @@ export default function ActivityLog() {
         setActivities(data);
       }
     } catch (err) {
-      console.error('Failed to fetch activities:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

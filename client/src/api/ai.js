@@ -141,7 +141,7 @@ const aiApi = {
                   onError && onError(new Error(event.message));
                 }
               } catch (e) {
-                console.error('Failed to parse SSE event:', e);
+                // Failed to parse SSE event
               }
             }
           }

@@ -45,7 +45,7 @@ export default function AdminStats() {
         navigate('/login');
       }
     } catch (err) {
-      console.error('Error fetching admin stats:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

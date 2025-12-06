@@ -42,7 +42,7 @@ export default function MemberList({ members, roles, onMemberUpdated }) {
         onMemberUpdated();
       }
     } catch (err) {
-      console.error('Failed to update role:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function MemberList({ members, roles, onMemberUpdated }) {
         onMemberUpdated();
       }
     } catch (err) {
-      console.error('Failed to remove member:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

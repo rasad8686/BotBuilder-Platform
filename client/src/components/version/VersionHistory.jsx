@@ -30,7 +30,7 @@ export default function VersionHistory({ entityType, entityId, onVersionRestored
         setVersions(data.versions || []);
       }
     } catch (err) {
-      console.error('Failed to fetch versions:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

@@ -40,7 +40,7 @@ const AdminHealth = () => {
       setHealth(response.health);
       setLastChecked(new Date());
     } catch (err) {
-      console.error('Failed to fetch health:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to check system health');
     } finally {
       setLoading(false);

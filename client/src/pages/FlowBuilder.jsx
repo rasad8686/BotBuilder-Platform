@@ -70,10 +70,10 @@ function FlowBuilder() {
           }
         } catch (flowError) {
           // No flow exists yet - that's okay
-          console.log('No existing flow found - starting fresh');
+          // No existing flow found - starting fresh
         }
       } catch (error) {
-        console.error('Error loading flow:', error);
+        // Silent fail
         showNotification('Error loading flow builder', 'error');
       } finally {
         setIsLoading(false);
@@ -133,7 +133,7 @@ function FlowBuilder() {
         markAsUnmodified();
       }
     } catch (error) {
-      console.error('Error saving flow:', error);
+      // Silent fail
       showNotification(error.response?.data?.message || 'Error saving flow', 'error');
     } finally {
       setIsSaving(false);

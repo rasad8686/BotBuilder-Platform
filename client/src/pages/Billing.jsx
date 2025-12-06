@@ -23,15 +23,12 @@ export default function Billing() {
       });
 
       const data = await res.json();
-      console.log('📊 Subscription API Response:', data);
 
       if (data.success) {
         setSubscription(data.subscription);
-        console.log('✅ Current Plan:', data.subscription.plan);
-        console.log('✅ Plan Status:', data.subscription.status);
       }
     } catch (err) {
-      console.error('❌ Error fetching subscription:', err);
+      // Error fetching subscription
     } finally {
       setFetchingSubscription(false);
     }
@@ -43,17 +40,14 @@ export default function Billing() {
 
     // TRIPLE GUARD - Module level lock
     if (upgradeInProgress) {
-      console.warn('🚫 Upgrade already in progress - BLOCKED');
       return;
     }
 
     if (!planType || !['pro', 'enterprise'].includes(planType)) {
-      console.error('❌ Invalid plan:', planType);
       return;
     }
 
     upgradeInProgress = true;
-    console.log('🔒 LOCKED - Starting upgrade to:', planType);
 
     try {
       const payload = {
@@ -61,8 +55,6 @@ export default function Billing() {
         successUrl: window.location.origin + '/billing?success=true',
         cancelUrl: window.location.origin + '/billing?canceled=true'
       };
-
-      console.log('📡 Sending:', payload);
 
       const response = await fetch(`${API_URL}/api/billing/checkout`, {
         method: 'POST',
@@ -80,25 +72,21 @@ export default function Billing() {
       }
 
       const data = await response.json();
-      console.log('✅ Response:', data);
 
       if (!data.checkoutUrl || !data.checkoutUrl.startsWith('http')) {
         throw new Error('Invalid checkout URL: ' + data.checkoutUrl);
       }
 
-      console.log('🚀 Redirecting to:', data.checkoutUrl);
       window.location.href = data.checkoutUrl;
 
       // Don't reset flag - we're redirecting anyway
 
     } catch (error) {
-      console.error('❌ Upgrade failed:', error);
       alert('Upgrade failed: ' + error.message);
 
       // Reset after cooldown
       setTimeout(() => {
         upgradeInProgress = false;
-        console.log('🔓 UNLOCKED after error');
       }, UPGRADE_COOLDOWN);
     }
   };
@@ -109,7 +97,6 @@ export default function Billing() {
     }
 
     setCanceling(true);
-    console.log('🚫 Starting subscription cancellation...');
 
     try {
       const response = await fetch(`${API_URL}/api/billing/cancel`, {
@@ -121,12 +108,10 @@ export default function Billing() {
       });
 
       const data = await response.json();
-      console.log('📡 Cancel response:', data);
 
       if (data.success) {
         const endDate = new Date(data.currentPeriodEnd).toLocaleDateString();
         alert(`Subscription canceled successfully. Your access will continue until ${endDate}.`);
-        console.log('✅ Subscription canceled. Ends at:', endDate);
 
         // Refresh subscription data
         await fetchSubscription();
@@ -134,7 +119,6 @@ export default function Billing() {
         throw new Error(data.message || 'Failed to cancel subscription');
       }
     } catch (error) {
-      console.error('❌ Cancel failed:', error);
       alert('Failed to cancel subscription: ' + error.message);
     } finally {
       setCanceling(false);

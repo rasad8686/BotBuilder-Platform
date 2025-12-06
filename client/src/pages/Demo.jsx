@@ -53,7 +53,7 @@ function Demo() {
       }
 
     } catch (error) {
-      console.error('Demo login error:', error);
+      // Silent fail
       setStatus('error');
       setMessage(error.message || 'Failed to load demo account. Please try again.');
     }

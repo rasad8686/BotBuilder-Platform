@@ -77,7 +77,7 @@ export default function WhiteLabelSettings() {
         });
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      // Silent fail
       setMessage({ type: 'error', text: 'Failed to load settings' });
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ export default function WhiteLabelSettings() {
         await refreshBrand();
       }
     } catch (error) {
-      console.error('Error uploading logo:', error);
+      // Silent fail
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to upload logo' });
     } finally {
       setUploadingLogo(false);
@@ -134,7 +134,7 @@ export default function WhiteLabelSettings() {
         await refreshBrand();
       }
     } catch (error) {
-      console.error('Error uploading favicon:', error);
+      // Silent fail
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to upload favicon' });
     } finally {
       setUploadingFavicon(false);
@@ -156,7 +156,7 @@ export default function WhiteLabelSettings() {
         await refreshBrand();
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
+      // Silent fail
       setMessage({
         type: 'error',
         text: error.response?.data?.message || 'Failed to save settings'

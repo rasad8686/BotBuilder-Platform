@@ -33,7 +33,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
         setBranches(data);
       }
     } catch (err) {
-      console.error('Failed to fetch branches:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
         setVersions(data.versions || []);
       }
     } catch (err) {
-      console.error('Failed to fetch versions:', err);
+      // Silent fail
     }
   };
 
@@ -78,7 +78,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
         fetchBranches();
       }
     } catch (err) {
-      console.error('Failed to create branch:', err);
+      // Silent fail
     } finally {
       setActionLoading(false);
     }
@@ -108,7 +108,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
         fetchBranches();
       }
     } catch (err) {
-      console.error('Failed to merge branch:', err);
+      // Silent fail
     } finally {
       setActionLoading(false);
     }
@@ -130,7 +130,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
         fetchBranches();
       }
     } catch (err) {
-      console.error('Failed to delete branch:', err);
+      // Silent fail
     }
   };
 

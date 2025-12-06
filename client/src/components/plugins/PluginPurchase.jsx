@@ -46,7 +46,7 @@ const PluginPurchase = ({ plugin, onPurchaseComplete, onClose }) => {
       }
 
     } catch (err) {
-      console.error('Purchase error:', err);
+      // Silent fail
       setError(err.message);
       setPaymentStep('error');
     } finally {

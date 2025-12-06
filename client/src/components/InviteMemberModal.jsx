@@ -36,7 +36,7 @@ export default function InviteMemberModal({ isOpen, onClose, onSuccess, organiza
         onSuccess();
       }
     } catch (err) {
-      console.error('Failed to invite member:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to send invitation');
     } finally {
       setLoading(false);

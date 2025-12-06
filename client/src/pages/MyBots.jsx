@@ -56,7 +56,7 @@ export default function MyBots() {
         setSubscription(response.data.subscription);
       }
     } catch (err) {
-      console.error('Error fetching subscription:', err);
+      // Silent fail
     }
   };
 
@@ -123,7 +123,7 @@ export default function MyBots() {
 
       setError('');
     } catch (err) {
-      console.error('Fetch bots error:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to load bots');
     } finally {
       setLoading(false);
@@ -145,7 +145,7 @@ export default function MyBots() {
       // Refetch to update the list
       fetchBots();
     } catch (err) {
-      console.error('Delete bot error:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to delete bot');
       setTimeout(() => setError(''), 5000);
     } finally {

@@ -29,7 +29,6 @@ const ActivityTimeline = ({ days = 7, limit = 20, autoRefresh = true }) => {
       const response = await getActivityTimeline({ days, limit });
       setTimeline(response.timeline || []);
     } catch (err) {
-      console.error('Failed to fetch activity timeline:', err);
       setError(err.response?.data?.message || 'Failed to load activity timeline');
     } finally {
       setLoading(false);

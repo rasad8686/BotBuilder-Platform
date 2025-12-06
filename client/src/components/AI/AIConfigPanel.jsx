@@ -47,7 +47,7 @@ export default function AIConfigPanel() {
       const response = await aiApi.getProviders();
       setProviders(response.providers);
     } catch (err) {
-      console.error('Failed to load providers:', err);
+      // Silent fail
     }
   };
 

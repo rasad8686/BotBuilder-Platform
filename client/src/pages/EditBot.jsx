@@ -41,7 +41,7 @@ export default function EditBot() {
       setApiToken(bot.api_token || '');
       setError('');
     } catch (err) {
-      console.error('Fetch bot error:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to load bot details');
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ export default function EditBot() {
         navigate('/mybots');
       }, 1500);
     } catch (err) {
-      console.error('Update bot error:', err);
+      // Silent fail
       setError(
         err.response?.data?.message ||
         err.message ||

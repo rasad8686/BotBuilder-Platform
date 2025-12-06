@@ -46,7 +46,7 @@ export default function AIFlowGenerator({ onFlowGenerated, onClose }) {
       }
     } catch (err) {
       setError('Network error. Please try again.');
-      console.error(err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

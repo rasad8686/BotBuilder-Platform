@@ -13,7 +13,8 @@
       "Bash(del test-db-query.js)",
       "Bash(done)",
       "Bash(for f in team.js tools.js plugins.js knowledge.js)",
-      "Bash(git -C /c/Users/User/Desktop/BotBuilder log --oneline)"
+      "Bash(git -C /c/Users/User/Desktop/BotBuilder log --oneline)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

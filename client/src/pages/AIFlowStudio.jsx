@@ -38,7 +38,7 @@ export default function AIFlowStudio() {
         setBots(Array.isArray(data) ? data : data.bots || []);
       }
     } catch (err) {
-      console.error('Failed to fetch bots:', err);
+      // Silent fail
     } finally {
       setLoadingBots(false);
     }

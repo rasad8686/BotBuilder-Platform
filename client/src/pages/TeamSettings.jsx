@@ -21,7 +21,6 @@ export default function TeamSettings() {
 
   const fetchData = async () => {
     const token = localStorage.getItem('token');
-    console.log('TeamSettings - Token:', token ? 'exists' : 'missing', token?.substring(0, 20) + '...');
     if (!token) {
       setError('Not authenticated');
       setLoading(false);
@@ -30,7 +29,6 @@ export default function TeamSettings() {
 
     setLoading(true);
     try {
-      console.log('TeamSettings - Making API calls with token');
       const [membersRes, rolesRes, statsRes] = await Promise.all([
         fetch(`${API_URL}/api/team/members`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -48,7 +46,6 @@ export default function TeamSettings() {
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (err) {
       setError('Failed to load team data');
-      console.error(err);
     } finally {
       setLoading(false);
     }

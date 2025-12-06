@@ -24,7 +24,7 @@ const AdminDashboard = () => {
       const response = await getStats();
       setStats(response.stats);
     } catch (err) {
-      console.error('Failed to fetch stats:', err);
+      // Silent fail
       setError(err.response?.data?.message || 'Failed to load statistics');
     } finally {
       setLoading(false);

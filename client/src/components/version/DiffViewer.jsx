@@ -33,7 +33,7 @@ export default function DiffViewer({ entityType, entityId, versionA, versionB, o
         setDiff(data);
       }
     } catch (err) {
-      console.error('Failed to fetch diff:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }

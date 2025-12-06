@@ -36,51 +36,37 @@ export const OrganizationProvider = ({ children }) => {
     const loadOrganizations = async () => {
       try {
         setLoading(true);
-        console.log('[OrganizationContext] Fetching organizations...');
         const response = await axiosInstance.get('/api/organizations');
 
         if (!isMounted) return; // Component unmounted, don't update state
 
-        console.log('[OrganizationContext] Response:', response.data);
         const orgs = response.data.organizations || [];
-        console.log('[OrganizationContext] Found', orgs.length, 'organizations:', orgs.map(o => ({ id: o.id, name: o.name, role: o.role })));
 
         setOrganizations(orgs);
 
         // Set current organization (from localStorage or first org)
         const savedOrgId = localStorage.getItem('currentOrganizationId');
-        console.log('[OrganizationContext] Saved org ID from localStorage:', savedOrgId);
 
         if (savedOrgId) {
           const savedOrg = orgs.find(o => o.id === parseInt(savedOrgId));
           if (savedOrg) {
-            console.log('[OrganizationContext] Setting current org from localStorage:', savedOrg.name);
             setCurrentOrganization(savedOrg);
             setUserRole(savedOrg.role);
           } else if (orgs.length > 0) {
-            console.log('[OrganizationContext] Saved org not found, using first org:', orgs[0].name);
             setCurrentOrganization(orgs[0]);
             setUserRole(orgs[0].role);
           }
         } else if (orgs.length > 0) {
-          console.log('[OrganizationContext] No saved org, using first org:', orgs[0].name);
           setCurrentOrganization(orgs[0]);
           setUserRole(orgs[0].role);
-        } else {
-          console.warn('[OrganizationContext] No organizations found for user');
         }
 
         setError(null);
       } catch (err) {
         if (!isMounted) return; // Component unmounted, don't update state
 
-        console.error('[OrganizationContext] Failed to fetch organizations:', err);
-        console.error('[OrganizationContext] Error response:', err.response?.data);
-        console.error('[OrganizationContext] Error status:', err.response?.status);
-
         // Handle 401 - user not authenticated
         if (err.response?.status === 401) {
-          console.warn('[OrganizationContext] 401 Unauthorized - clearing auth');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           localStorage.removeItem('currentOrganizationId');
@@ -150,8 +136,6 @@ export const OrganizationProvider = ({ children }) => {
 
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch organizations:', err);
-
       // Handle 401 - user not authenticated
       if (err.response?.status === 401) {
         localStorage.removeItem('token');

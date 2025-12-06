@@ -37,7 +37,7 @@ function Dashboard() {
       const response = await botApi.getBots();
       setBots(response.bots || response.data || []);
     } catch (err) {
-      console.error('Fetch bots error:', err);
+      // Silent fail
 
       if (!err.response) {
         setError(t('dashboard.networkError'));
@@ -63,7 +63,7 @@ function Dashboard() {
       setSuccessMessage(t('dashboard.botDeleted'));
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      console.error('Delete bot error:', err);
+      // Silent fail
       const errorMsg = !err.response
         ? t('dashboard.networkError')
         : (err.response?.data?.message || t('dashboard.deleteError'));

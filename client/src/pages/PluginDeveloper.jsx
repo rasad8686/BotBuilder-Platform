@@ -37,7 +37,7 @@ const PluginDeveloper = () => {
         calculateStats(data);
       }
     } catch (error) {
-      console.error('Error fetching plugins:', error);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,7 @@ const PluginDeveloper = () => {
         calculateStats(filtered);
       }
     } catch (error) {
-      console.error('Error deleting plugin:', error);
+      // Silent fail
     }
   };
 

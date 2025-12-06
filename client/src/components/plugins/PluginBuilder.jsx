@@ -85,7 +85,7 @@ const PluginBuilder = ({ plugin, onSave, onClose }) => {
         setCategories(data);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      // Silent fail
     }
   };
 
@@ -209,7 +209,7 @@ const PluginBuilder = ({ plugin, onSave, onClose }) => {
         alert(error.error || 'Failed to save plugin');
       }
     } catch (error) {
-      console.error('Error saving plugin:', error);
+      // Silent fail
       alert('Failed to save plugin');
     } finally {
       setLoading(false);

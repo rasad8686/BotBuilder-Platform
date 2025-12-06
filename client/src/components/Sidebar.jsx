@@ -25,7 +25,7 @@ export default function Sidebar() {
       try {
         setUser(JSON.parse(userData));
       } catch (e) {
-        console.error('Error parsing user data:', e);
+        // Error parsing user data
       }
     }
   }, []);

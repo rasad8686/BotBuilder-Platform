@@ -36,7 +36,7 @@ export default function Orchestrations() {
         setBots(Array.isArray(data) ? data : data.bots || []);
       }
     } catch (error) {
-      console.error('Error fetching bots:', error);
+      // Silent fail
     } finally {
       setLoadingBots(false);
     }
@@ -53,7 +53,7 @@ export default function Orchestrations() {
         setOrchestrations(data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching orchestrations:', error);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function Orchestrations() {
         fetchOrchestrations();
       }
     } catch (error) {
-      console.error('Error creating orchestration:', error);
+      // Silent fail
     }
   };
 
@@ -102,7 +102,7 @@ export default function Orchestrations() {
         fetchOrchestrations();
       }
     } catch (error) {
-      console.error('Error updating orchestration:', error);
+      // Silent fail
     }
   };
 
@@ -117,7 +117,7 @@ export default function Orchestrations() {
         fetchOrchestrations();
       }
     } catch (error) {
-      console.error('Error deleting orchestration:', error);
+      // Silent fail
     }
   };
 
