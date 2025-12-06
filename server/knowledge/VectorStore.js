@@ -51,12 +51,73 @@ class VectorStore {
   }
 
   /**
-   * Perform similarity search using cosine distance
+   * Check if pgvector extension is available
+   */
+  async isPgvectorAvailable() {
+    try {
+      const result = await pool.query(
+        `SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector') as available`
+      );
+      return result.rows[0]?.available || false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Perform similarity search using pgvector (optimized)
+   * Falls back to JavaScript if pgvector not available
    */
   async similaritySearch(knowledgeBaseId, queryEmbedding, options = {}) {
     const { limit = 20, threshold = 0.7 } = options;
 
-    // Get all chunks with embeddings
+    // Try pgvector first (much faster)
+    try {
+      const pgvectorAvailable = await this.isPgvectorAvailable();
+
+      if (pgvectorAvailable) {
+        // Use pgvector's cosine distance operator <=>
+        // Cosine distance = 1 - cosine similarity, so we filter where distance < (1 - threshold)
+        const maxDistance = 1 - threshold;
+        const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+        const result = await pool.query(
+          `SELECT
+            c.id,
+            c.document_id,
+            c.content,
+            c.chunk_index,
+            c.metadata,
+            d.name as document_name,
+            d.type as document_type,
+            1 - (c.embedding::vector <=> $2::vector) as similarity
+           FROM chunks c
+           JOIN documents d ON c.document_id = d.id
+           WHERE c.knowledge_base_id = $1
+             AND c.embedding IS NOT NULL
+             AND (c.embedding::vector <=> $2::vector) < $3
+           ORDER BY c.embedding::vector <=> $2::vector
+           LIMIT $4`,
+          [knowledgeBaseId, embeddingStr, maxDistance, limit]
+        );
+
+        log.debug(`[VectorStore] pgvector search returned ${result.rows.length} results`);
+        return result.rows;
+      }
+    } catch (e) {
+      log.warn(`[VectorStore] pgvector search failed, falling back to JS: ${e.message}`);
+    }
+
+    // Fallback: JavaScript-based similarity (slower but always works)
+    return this.similaritySearchJS(knowledgeBaseId, queryEmbedding, options);
+  }
+
+  /**
+   * JavaScript fallback for similarity search
+   */
+  async similaritySearchJS(knowledgeBaseId, queryEmbedding, options = {}) {
+    const { limit = 20, threshold = 0.7 } = options;
+
     const result = await pool.query(
       `SELECT
         c.id,
@@ -74,10 +135,9 @@ class VectorStore {
       [knowledgeBaseId]
     );
 
-    // Calculate similarity in JavaScript
     const results = result.rows
       .map(row => {
-        const embedding = JSON.parse(row.embedding);
+        const embedding = this.parseEmbedding(row.embedding);
         const similarity = this.cosineSimilarity(queryEmbedding, embedding);
         return { ...row, similarity, embedding: undefined };
       })
@@ -86,6 +146,21 @@ class VectorStore {
       .slice(0, limit);
 
     return results;
+  }
+
+  /**
+   * Parse embedding from various formats
+   */
+  parseEmbedding(embedding) {
+    if (Array.isArray(embedding)) return embedding;
+    if (typeof embedding === 'string') {
+      if (embedding.startsWith('{') && embedding.endsWith('}')) {
+        return JSON.parse('[' + embedding.slice(1, -1) + ']');
+      } else if (embedding.startsWith('[')) {
+        return JSON.parse(embedding);
+      }
+    }
+    return [];
   }
 
   /**
@@ -104,19 +179,65 @@ class VectorStore {
   }
 
   /**
-   * Search across multiple knowledge bases
+   * Search across multiple knowledge bases using pgvector (optimized)
    */
   async multiKnowledgeBaseSearch(knowledgeBaseIds, queryEmbedding, options = {}) {
     const { limit = 20, threshold = 0.7 } = options;
 
-    log.debug(`[VectorStore] multiKnowledgeBaseSearch called`);
-    log.debug(`[VectorStore] KB IDs:`, knowledgeBaseIds);
-    log.debug(`[VectorStore] Query embedding length:`, queryEmbedding?.length);
+    log.debug(`[VectorStore] multiKnowledgeBaseSearch called`, { kbIds: knowledgeBaseIds, embeddingLength: queryEmbedding?.length });
 
     if (!knowledgeBaseIds || knowledgeBaseIds.length === 0) {
       log.debug(`[VectorStore] No KB IDs provided`);
       return [];
     }
+
+    // Try pgvector first (much faster for large datasets)
+    try {
+      const pgvectorAvailable = await this.isPgvectorAvailable();
+
+      if (pgvectorAvailable) {
+        const maxDistance = 1 - threshold;
+        const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+        const result = await pool.query(
+          `SELECT
+            c.id,
+            c.document_id,
+            c.knowledge_base_id,
+            c.content,
+            c.chunk_index,
+            c.metadata,
+            d.name as document_name,
+            d.type as document_type,
+            kb.name as knowledge_base_name,
+            1 - (c.embedding::vector <=> $2::vector) as similarity
+           FROM chunks c
+           JOIN documents d ON c.document_id = d.id
+           JOIN knowledge_bases kb ON c.knowledge_base_id = kb.id
+           WHERE c.knowledge_base_id = ANY($1)
+             AND c.embedding IS NOT NULL
+             AND (c.embedding::vector <=> $2::vector) < $3
+           ORDER BY c.embedding::vector <=> $2::vector
+           LIMIT $4`,
+          [knowledgeBaseIds, embeddingStr, maxDistance, limit]
+        );
+
+        log.debug(`[VectorStore] pgvector multi-KB search returned ${result.rows.length} results`);
+        return result.rows;
+      }
+    } catch (e) {
+      log.warn(`[VectorStore] pgvector multi-KB search failed, falling back to JS: ${e.message}`);
+    }
+
+    // Fallback: JavaScript-based similarity
+    return this.multiKnowledgeBaseSearchJS(knowledgeBaseIds, queryEmbedding, options);
+  }
+
+  /**
+   * JavaScript fallback for multi-KB search
+   */
+  async multiKnowledgeBaseSearchJS(knowledgeBaseIds, queryEmbedding, options = {}) {
+    const { limit = 20, threshold = 0.7 } = options;
 
     const result = await pool.query(
       `SELECT
@@ -141,45 +262,19 @@ class VectorStore {
     log.debug(`[VectorStore] Found ${result.rows.length} chunks with embeddings`);
 
     if (result.rows.length === 0) {
-      log.debug(`[VectorStore] No chunks found! Check if embeddings are stored.`);
       return [];
     }
 
-    // Calculate similarity in JavaScript
     const allResults = result.rows.map(row => {
       try {
-        let embedding = row.embedding;
-
-        // Handle different embedding formats
-        if (typeof embedding === 'string') {
-          // Check if it's a PostgreSQL array format: [1,2,3] or {1,2,3}
-          if (embedding.startsWith('{') && embedding.endsWith('}')) {
-            embedding = JSON.parse('[' + embedding.slice(1, -1) + ']');
-          } else if (embedding.startsWith('[')) {
-            embedding = JSON.parse(embedding);
-          } else {
-            log.error(`[VectorStore] Unknown embedding format for chunk ${row.id}:`, embedding.substring(0, 50));
-            return { ...row, similarity: 0, embedding: undefined };
-          }
-        }
-
-        // Debug first chunk
-        if (row.chunk_index === 0) {
-          log.debug(`[VectorStore] Sample embedding length: ${embedding?.length}, first 3 values:`, embedding?.slice(0, 3));
-          log.debug(`[VectorStore] Query embedding first 3 values:`, queryEmbedding?.slice(0, 3));
-        }
-
+        const embedding = this.parseEmbedding(row.embedding);
         const similarity = this.cosineSimilarity(queryEmbedding, embedding);
         return { ...row, similarity, embedding: undefined };
       } catch (e) {
-        log.error(`[VectorStore] Error parsing embedding for chunk ${row.id}:`, e.message);
+        log.error(`[VectorStore] Error parsing embedding for chunk ${row.id}:`, { error: e.message });
         return { ...row, similarity: 0, embedding: undefined };
       }
     });
-
-    // Log all similarity scores for debugging
-    const scores = allResults.map(r => r.similarity.toFixed(4)).join(', ');
-    log.debug(`[VectorStore] Similarity scores: ${scores}`);
 
     const results = allResults
       .filter(row => row.similarity >= threshold)
