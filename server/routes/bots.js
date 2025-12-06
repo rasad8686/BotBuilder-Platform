@@ -7,6 +7,7 @@ const { checkPermission } = require('../middleware/checkPermission');
 const crypto = require('crypto');
 const { logBotCreated, logBotUpdated, logBotDeleted } = require('../middleware/audit');
 const webhookService = require('../services/webhookService');
+const log = require('../utils/logger');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -68,7 +69,11 @@ router.post('/', checkPermission('member'), async (req, res) => {
     const currentPlan = planQuery.rows[0]?.plan_tier || 'free';
     const maxBots = PLAN_LIMITS[currentPlan];
 
-    console.log(`[CREATE BOT] Organization ${organization_id} - Plan: ${currentPlan}, Max bots: ${maxBots === -1 ? 'unlimited' : maxBots}`);
+    log.info('Bot creation limit check', {
+      organization_id,
+      plan: currentPlan,
+      maxBots: maxBots === -1 ? 'unlimited' : maxBots
+    });
 
     // Count existing bots for this organization
     const countQuery = await db.query(
@@ -77,11 +82,16 @@ router.post('/', checkPermission('member'), async (req, res) => {
     );
 
     const currentBots = parseInt(countQuery.rows[0].count);
-    console.log(`[CREATE BOT] Current bots: ${currentBots}`);
+    log.debug('Current bots count', { organization_id, currentBots });
 
     // Check if limit reached (skip check for unlimited plans)
     if (maxBots !== -1 && currentBots >= maxBots) {
-      console.log(`[CREATE BOT] ❌ Limit reached for ${currentPlan} plan`);
+      log.warn('Bot creation limit reached', {
+        organization_id,
+        plan: currentPlan,
+        currentBots,
+        maxBots
+      });
 
       // Determine upgrade suggestion
       let upgradeMessage = '';
@@ -107,7 +117,11 @@ router.post('/', checkPermission('member'), async (req, res) => {
       });
     }
 
-    console.log(`[CREATE BOT] ✅ Limit OK - Creating bot (${currentBots + 1}/${maxBots === -1 ? '∞' : maxBots})`);
+    log.info('Bot creation limit OK', {
+      organization_id,
+      currentCount: currentBots + 1,
+      maxBots: maxBots === -1 ? 'unlimited' : maxBots
+    });
     // ========================================
     // END PLAN LIMIT CHECK
     // ========================================
@@ -159,7 +173,11 @@ router.post('/', checkPermission('member'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create bot error:', error);
+    log.error('Create bot error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      organization_id: req.organization?.id
+    });
 
     // Handle duplicate bot name for user (if you add unique constraint)
     if (error.code === '23505') {
@@ -260,7 +278,11 @@ router.get('/', checkPermission('viewer'), async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Get bots error:', error);
+    log.error('Get bots error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      organization_id: req.organization?.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve bots',
@@ -309,7 +331,11 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get bot error:', error);
+    log.error('Get bot error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      bot_id: req.params.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve bot',
@@ -469,7 +495,11 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update bot error:', error);
+    log.error('Update bot error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      bot_id: req.params.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to update bot',
@@ -537,7 +567,11 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete bot error:', error);
+    log.error('Delete bot error', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      bot_id: req.params.id
+    });
     return res.status(500).json({
       success: false,
       message: 'Failed to delete bot',

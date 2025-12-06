@@ -108,6 +108,33 @@ export default function BotCard({ bot, onDelete }) {
           </button>
         </div>
 
+        {/* Agent Studio, Tools & Workflow Builder */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/agents`)}
+            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Agent Studio - Multi-Agent AI"
+          >
+            🎯 <span>Agents</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/tools`)}
+            className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-2 px-3 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Tool Studio - Function Calling"
+          >
+            🔧 <span>Tools</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/workflows`)}
+            className="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-2 px-3 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Workflow Builder - Visual AI Workflows"
+          >
+            🔄 <span>Workflows</span>
+          </button>
+        </div>
+
         {/* Other Actions */}
         <div className="flex gap-2">
           <button

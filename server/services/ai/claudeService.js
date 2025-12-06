@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const log = require('../../utils/logger');
 
 /**
  * Claude Service (Anthropic)
@@ -18,9 +19,9 @@ class ClaudeService {
     const cleanApiKey = apiKey.trim();
 
     // Debug logging (show first 15 chars only for security)
-    console.log(`[ClaudeService] Initializing with API key: ${cleanApiKey.substring(0, 15)}...`);
-    console.log(`[ClaudeService] API key length: ${cleanApiKey.length}`);
-    console.log(`[ClaudeService] Model: ${model || 'claude-3-5-sonnet-20241022'}`);
+    log.debug(`[ClaudeService] Initializing with API key: ${cleanApiKey.substring(0, 15)}...`);
+    log.debug(`[ClaudeService] API key length: ${cleanApiKey.length}`);
+    log.info(`[ClaudeService] Model: ${model || 'claude-3-5-sonnet-20241022'}`);
 
     this.client = new Anthropic({
       apiKey: cleanApiKey
@@ -119,14 +120,14 @@ class ClaudeService {
       return response;
 
     } catch (error) {
-      console.error('❌ [ClaudeService] API error:', error);
-      console.error('❌ [ClaudeService] Error type:', error.type);
-      console.error('❌ [ClaudeService] Error status:', error.status);
-      console.error('❌ [ClaudeService] Error message:', error.message);
+      log.error('❌ [ClaudeService] API error:', error);
+      log.error('❌ [ClaudeService] Error type:', error.type);
+      log.error('❌ [ClaudeService] Error status:', error.status);
+      log.error('❌ [ClaudeService] Error message:', error.message);
 
       // Log full error details for debugging
       if (error.error) {
-        console.error('❌ [ClaudeService] Error details:', JSON.stringify(error.error, null, 2));
+        log.error('❌ [ClaudeService] Error details:', JSON.stringify(error.error, null, 2));
       }
 
       // Enhance error message
@@ -136,7 +137,7 @@ class ClaudeService {
 
       // Specific error handling for authentication issues
       if (statusCode === 401) {
-        console.error('❌ [ClaudeService] AUTHENTICATION FAILED - Invalid API key');
+        log.error('❌ [ClaudeService] AUTHENTICATION FAILED - Invalid API key');
         throw {
           provider: 'claude',
           message: 'Invalid Anthropic API key. Please check your API key configuration.',
@@ -247,7 +248,7 @@ class ClaudeService {
       }
 
     } catch (error) {
-      console.error('Claude streaming error:', error);
+      log.error('Claude streaming error:', error);
 
       if (onError) {
         onError({

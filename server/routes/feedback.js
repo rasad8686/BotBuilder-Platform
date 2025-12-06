@@ -4,6 +4,7 @@ const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext } = require('../middleware/organizationContext');
 const { Resend } = require('resend');
+const log = require('../utils/logger');
 
 // Apply authentication middleware
 router.use(authenticateToken);
@@ -109,7 +110,7 @@ router.post('/', async (req, res) => {
       });
     } catch (emailError) {
       // Log error but don't fail the request
-      console.error('[FEEDBACK] Failed to send email notification:', emailError.message);
+      log.error('[FEEDBACK] Failed to send email notification:', { error: emailError.message });
     }
 
     return res.status(201).json({
@@ -123,7 +124,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[FEEDBACK] Error submitting feedback:', error);
+    log.error('[FEEDBACK] Error submitting feedback:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to submit feedback. Please try again later.',
@@ -227,7 +228,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[FEEDBACK] Error fetching feedback:', error);
+    log.error('[FEEDBACK] Error fetching feedback:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch feedback',
@@ -245,9 +246,8 @@ router.get('/', async (req, res) => {
 async function sendFeedbackEmail({ feedbackId, name, email, category, message, organizationId, createdAt }) {
   // Check if email is configured
   if (!process.env.RESEND_API_KEY) {
-    console.log('[FEEDBACK] ⚠️ Email not configured - RESEND_API_KEY missing');
-    console.log('[FEEDBACK] Get your API key from: https://resend.com/api-keys');
-    console.log('[FEEDBACK] Skipping email notification for feedback ID:', feedbackId);
+    log.info('[FEEDBACK] Email not configured - RESEND_API_KEY missing', { feedbackId });
+    log.info('[FEEDBACK] Get your API key from: https://resend.com/api-keys');
     return;
   }
 
@@ -323,13 +323,13 @@ async function sendFeedbackEmail({ feedbackId, name, email, category, message, o
     });
 
     if (error) {
-      console.error('[FEEDBACK] ❌ Email sending failed:', error);
+      log.error('[FEEDBACK] Email sending failed:', { error: error.message });
       throw new Error(`Email send failed: ${error.message}`);
     }
 
-    console.log(`[FEEDBACK] ✅ Email sent successfully for feedback ID: ${feedbackId}`, data);
+    log.info('[FEEDBACK] Email sent successfully', { feedbackId, data });
   } catch (error) {
-    console.error('[FEEDBACK] ❌ Email sending error:', error);
+    log.error('[FEEDBACK] Email sending error:', { error: error.message || error });
     throw new Error(`Email send failed: ${error.message || error}`);
   }
 }

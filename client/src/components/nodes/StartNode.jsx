@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 function StartNode({ data }) {
@@ -19,4 +20,4 @@ function StartNode({ data }) {
   );
 }
 
-export default StartNode;
+export default memo(StartNode);

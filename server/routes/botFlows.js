@@ -4,6 +4,7 @@ const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const { checkPermission } = require('../middleware/checkPermission');
+const log = require('../utils/logger');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -101,7 +102,7 @@ router.post('/:botId/flow', checkPermission('member'), async (req, res) => {
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Create flow error:', error);
+    log.error('Create flow error:', { error: error.message });
 
     // Handle unique constraint violation
     if (error.code === '23505') {
@@ -171,7 +172,7 @@ router.get('/:botId/flow', checkPermission('viewer'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get active flow error:', error);
+    log.error('Get active flow error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve flow',
@@ -266,7 +267,7 @@ router.put('/:botId/flow/:flowId', checkPermission('member'), async (req, res) =
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Update flow error:', error);
+    log.error('Update flow error:', { error: error.message });
 
     return res.status(500).json({
       success: false,
@@ -322,7 +323,7 @@ router.get('/:botId/flow/history', checkPermission('viewer'), async (req, res) =
     });
 
   } catch (error) {
-    console.error('Get flow history error:', error);
+    log.error('Get flow history error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve flow history',

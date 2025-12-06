@@ -1,5 +1,6 @@
 const db = require('../db');
 const axios = require('axios');
+const log = require('../utils/logger');
 
 /**
  * Webhook Service
@@ -34,7 +35,7 @@ async function getAvailableEvents() {
  */
 async function trigger(organizationId, eventType, payload) {
   try {
-    console.log(`\n[WEBHOOK] 🔔 Triggering ${eventType} for organization ${organizationId}`);
+    log.info(`\n[WEBHOOK] 🔔 Triggering ${eventType} for organization ${organizationId}`);
 
     // Get all webhooks for this organization that are subscribed to this event
     const result = await db.query(
@@ -47,10 +48,10 @@ async function trigger(organizationId, eventType, payload) {
     );
 
     const webhooks = result.rows;
-    console.log(`[WEBHOOK] Found ${webhooks.length} active webhook(s) subscribed to ${eventType}`);
+    log.info(`[WEBHOOK] Found ${webhooks.length} active webhook(s) subscribed to ${eventType}`);
 
     if (webhooks.length === 0) {
-      console.log(`[WEBHOOK] No webhooks to deliver for ${eventType}`);
+      log.info(`[WEBHOOK] No webhooks to deliver for ${eventType}`);
       return { success: true, triggered: 0 };
     }
 
@@ -59,10 +60,10 @@ async function trigger(organizationId, eventType, payload) {
       await deliverWebhook(webhook, eventType, payload);
     }
 
-    console.log(`[WEBHOOK] ✓ Completed triggering ${webhooks.length} webhook(s)\n`);
+    log.info(`[WEBHOOK] ✓ Completed triggering ${webhooks.length} webhook(s)\n`);
     return { success: true, triggered: webhooks.length };
   } catch (error) {
-    console.error('[WEBHOOK] ❌ Error triggering webhooks:', error);
+    log.error('[WEBHOOK] ❌ Error triggering webhooks:', error);
     return { success: false, error: error.message };
   }
 }
@@ -81,7 +82,7 @@ async function deliverWebhook(webhook, eventType, payload) {
   let errorMessage = null;
 
   try {
-    console.log(`[WEBHOOK] 📤 Delivering to ${webhook.url}`);
+    log.info(`[WEBHOOK] 📤 Delivering to ${webhook.url}`);
 
     // Prepare webhook payload
     const webhookPayload = {
@@ -90,7 +91,7 @@ async function deliverWebhook(webhook, eventType, payload) {
       data: payload
     };
 
-    console.log(`[WEBHOOK] 📦 Payload:`, JSON.stringify(webhookPayload, null, 2).substring(0, 500));
+    log.debug(`[WEBHOOK] 📦 Payload:`, JSON.stringify(webhookPayload, null, 2).substring(0, 500));
 
     // Send webhook request with timeout
     const response = await axios.post(webhook.url, webhookPayload, {
@@ -108,16 +109,16 @@ async function deliverWebhook(webhook, eventType, payload) {
 
     // Consider 2xx as success
     if (statusCode >= 200 && statusCode < 300) {
-      console.log(`[WEBHOOK] ✅ Delivered successfully (HTTP ${statusCode})`);
+      log.info(`[WEBHOOK] ✅ Delivered successfully (HTTP ${statusCode})`);
       status = 'success';
     } else {
-      console.log(`[WEBHOOK] ❌ Delivery failed (HTTP ${statusCode})`);
-      console.log(`[WEBHOOK] Response:`, responseBody.substring(0, 200));
+      log.info(`[WEBHOOK] ❌ Delivery failed (HTTP ${statusCode})`);
+      log.info(`[WEBHOOK] Response:`, responseBody.substring(0, 200));
       status = 'failed';
       errorMessage = `HTTP ${statusCode}: ${responseBody}`;
     }
   } catch (error) {
-    console.error(`[WEBHOOK] ✗ Delivery error:`, error.message);
+    log.error(`[WEBHOOK] ✗ Delivery error:`, error.message);
     status = 'failed';
 
     // Handle different error types
@@ -146,7 +147,7 @@ async function deliverWebhook(webhook, eventType, payload) {
       [webhook.id, eventType, status, statusCode, responseTime, responseBody, errorMessage]
     );
   } catch (logError) {
-    console.error('[WEBHOOK] Failed to log webhook delivery:', logError);
+    log.error('[WEBHOOK] Failed to log webhook delivery:', logError);
   }
 
   return { status, statusCode, responseTime };
@@ -185,7 +186,7 @@ async function testWebhook(webhookId) {
       responseTime: deliveryResult.responseTime
     };
   } catch (error) {
-    console.error('[WEBHOOK] Test webhook error:', error);
+    log.error('[WEBHOOK] Test webhook error:', error);
     throw error;
   }
 }

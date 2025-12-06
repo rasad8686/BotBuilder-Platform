@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const log = require('./../../utils/logger');
 
 /**
  * Encryption Helper
@@ -46,7 +47,7 @@ class EncryptionHelper {
       // Return iv:authTag:encrypted (all in hex)
       return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
     } catch (error) {
-      console.error('Encryption error:', error);
+      log.error('Encryption error:', { error: error.message });
       throw new Error('Failed to encrypt data');
     }
   }
@@ -87,7 +88,7 @@ class EncryptionHelper {
 
       return decrypted;
     } catch (error) {
-      console.error('Decryption error:', error);
+      log.error('Decryption error:', { error: error.message });
       throw new Error('Failed to decrypt data');
     }
   }
@@ -154,7 +155,7 @@ class EncryptionHelper {
 
       return decrypted === testString;
     } catch (error) {
-      console.error('Encryption test failed:', error);
+      log.error('Encryption test failed:', { error: error.message });
       return false;
     }
   }

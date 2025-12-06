@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const log = require('./utils/logger');
 
 async function checkTables() {
   const client = new Client({
@@ -10,7 +11,7 @@ async function checkTables() {
 
   try {
     await client.connect();
-    console.log('✅ Connected to database');
+    log.info('Connected to database');
 
     const result = await client.query(`
       SELECT tablename
@@ -19,14 +20,11 @@ async function checkTables() {
       ORDER BY tablename
     `);
 
-    console.log('\n📊 Existing tables:');
-    result.rows.forEach(row => {
-      console.log('  -', row.tablename);
-    });
+    log.info('Existing tables', { tables: result.rows.map(r => r.tablename) });
 
     await client.end();
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    log.error('Error checking tables', { error: error.message });
     await client.end();
     process.exit(1);
   }

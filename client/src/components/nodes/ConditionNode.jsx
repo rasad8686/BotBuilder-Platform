@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 function ConditionNode({ data, id }) {
@@ -53,4 +54,4 @@ function ConditionNode({ data, id }) {
   );
 }
 
-export default ConditionNode;
+export default memo(ConditionNode);

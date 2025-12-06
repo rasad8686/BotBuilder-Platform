@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const log = require('../utils/logger');
 
 /**
  * Authentication Middleware
@@ -33,13 +34,15 @@ const authenticateToken = (req, res, next) => {
       req.user = {
         id: decoded.id,
         email: decoded.email,
-        username: decoded.username
+        username: decoded.username,
+        current_organization_id: decoded.current_organization_id,
+        organization_id: decoded.current_organization_id
       };
 
       next();
     });
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    log.error('Auth middleware error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Authentication error',

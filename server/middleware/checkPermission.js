@@ -1,3 +1,5 @@
+const log = require('../utils/logger');
+
 /**
  * Permission Checking Middleware
  *
@@ -105,7 +107,7 @@ function checkSpecificPermission(resource, action) {
         code: 'PERMISSION_DENIED'
       });
     } catch (error) {
-      console.error('Permission check error:', error);
+      log.error('Permission check error', { error: error.message });
       return res.status(500).json({
         success: false,
         message: 'Error checking permissions',

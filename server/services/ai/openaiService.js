@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const log = require('./../../utils/logger');
 
 /**
  * OpenAI Service
@@ -77,7 +78,7 @@ class OpenAIService {
       return response;
 
     } catch (error) {
-      console.error('OpenAI API error:', error);
+      log.error('OpenAI API error:', { error: error.message, model: this.model });
 
       // Enhance error message
       const errorMessage = error.response?.data?.error?.message || error.message;
@@ -164,7 +165,7 @@ class OpenAIService {
       }
 
     } catch (error) {
-      console.error('OpenAI streaming error:', error);
+      log.error('OpenAI streaming error:', { error: error.message, model: this.model });
 
       if (onError) {
         onError({

@@ -1,3 +1,4 @@
+const log = require('../utils/logger');
 const db = require('../db');
 const {
   AIProviderFactory,
@@ -6,6 +7,7 @@ const {
   EncryptionHelper
 } = require('../services/ai');
 const webhookService = require('../services/webhookService');
+const ragService = require('../services/ragService');
 
 /**
  * AI Controller
@@ -39,7 +41,7 @@ async function getAIConfig(req, res) {
       SELECT
         id, bot_id, provider, model, temperature, max_tokens,
         system_prompt, context_window, enable_streaming, is_enabled,
-        created_at, updated_at,
+        knowledge_base_id, created_at, updated_at,
         CASE WHEN api_key_encrypted IS NOT NULL THEN true ELSE false END as has_custom_key
       FROM ai_configurations
       WHERE bot_id = $1
@@ -66,11 +68,10 @@ async function getAIConfig(req, res) {
     });
 
   } catch (error) {
-    console.error('Get AI config error:', error);
+    log.error('Get AI config error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get AI configuration',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to get AI configuration'
     });
   }
 }
@@ -156,6 +157,9 @@ async function configureAI(req, res) {
 
     let result;
 
+    // Get knowledge_base_id from request
+    const { knowledge_base_id } = req.body;
+
     if (existingConfig.rows.length > 0) {
       // Update existing configuration
       const updateQuery = `
@@ -170,11 +174,12 @@ async function configureAI(req, res) {
           context_window = $7,
           enable_streaming = $8,
           is_enabled = $9,
+          knowledge_base_id = $10,
           updated_at = NOW()
-        WHERE bot_id = $10
+        WHERE bot_id = $11
         RETURNING id, bot_id, provider, model, temperature, max_tokens,
                   system_prompt, context_window, enable_streaming, is_enabled,
-                  created_at, updated_at
+                  knowledge_base_id, created_at, updated_at
       `;
 
       result = await db.query(updateQuery, [
@@ -187,6 +192,7 @@ async function configureAI(req, res) {
         context_window !== undefined ? context_window : 10,
         enable_streaming !== undefined ? enable_streaming : true,
         is_enabled !== undefined ? is_enabled : true,
+        knowledge_base_id || null,
         botId
       ]);
 
@@ -201,12 +207,12 @@ async function configureAI(req, res) {
       const insertQuery = `
         INSERT INTO ai_configurations (
           bot_id, provider, model, api_key_encrypted, temperature, max_tokens,
-          system_prompt, context_window, enable_streaming, is_enabled
+          system_prompt, context_window, enable_streaming, is_enabled, knowledge_base_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, bot_id, provider, model, temperature, max_tokens,
                   system_prompt, context_window, enable_streaming, is_enabled,
-                  created_at, updated_at
+                  knowledge_base_id, created_at, updated_at
       `;
 
       result = await db.query(insertQuery, [
@@ -219,7 +225,8 @@ async function configureAI(req, res) {
         system_prompt || 'You are a helpful assistant.',
         context_window !== undefined ? context_window : 10,
         enable_streaming !== undefined ? enable_streaming : true,
-        is_enabled !== undefined ? is_enabled : true
+        is_enabled !== undefined ? is_enabled : true,
+        knowledge_base_id || null
       ]);
 
       return res.status(201).json({
@@ -230,11 +237,10 @@ async function configureAI(req, res) {
     }
 
   } catch (error) {
-    console.error('Configure AI error:', error);
+    log.error('Configure AI error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to configure AI',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to configure AI'
     });
   }
 }
@@ -280,11 +286,10 @@ async function deleteAIConfig(req, res) {
     });
 
   } catch (error) {
-    console.error('Delete AI config error:', error);
+    log.error('Delete AI config error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to delete AI configuration',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to delete AI configuration'
     });
   }
 }
@@ -338,7 +343,7 @@ async function sendChat(req, res) {
     let apiKey;
     if (config.api_key_encrypted) {
       apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
-      console.log(`[AI Chat] Using custom encrypted API key for ${config.provider}`);
+      log.debug('Using custom encrypted API key', { provider: config.provider });
     } else {
       // Use platform API key
       apiKey = config.provider === 'openai'
@@ -351,12 +356,14 @@ async function sendChat(req, res) {
       }
 
       // Debug logging (show first 15 chars only for security)
-      console.log(`[AI Chat] Provider: ${config.provider}`);
-      console.log(`[AI Chat] Platform API key loaded: ${apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND'}`);
-      console.log(`[AI Chat] API key length: ${apiKey ? apiKey.length : 0}`);
+      log.debug('Platform API key status', {
+        provider: config.provider,
+        keyLoaded: apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND',
+        keyLength: apiKey ? apiKey.length : 0
+      });
 
       if (!apiKey) {
-        console.error(`❌ [AI Chat] Platform ${config.provider.toUpperCase()} API key not configured`);
+        log.error('Platform API key not configured', { provider: config.provider });
         return res.status(400).json({
           success: false,
           message: `Platform API key not configured for ${config.provider}. Please provide your own API key.`
@@ -371,12 +378,39 @@ async function sendChat(req, res) {
       model: config.model
     });
 
+    // RAG: Get relevant context from Knowledge Base
+    let systemPrompt = config.system_prompt;
+    let ragSources = [];
+    try {
+      log.debug('Starting RAG search', { botId });
+      const ragResult = await ragService.getContextForQuery(botId, message, {
+        maxChunks: 20,
+        threshold: 0.15  // Very low threshold for cross-language queries
+      });
+      log.debug('RAG result received', {
+        hasContext: ragResult.hasContext,
+        error: ragResult.error || 'none'
+      });
+
+      if (ragResult.hasContext && ragResult.context) {
+        systemPrompt = ragService.buildRAGPrompt(config.system_prompt, ragResult.context);
+        ragSources = ragResult.sources || [];
+        log.info('RAG context added', {
+          sourcesCount: ragSources.length,
+          promptLength: systemPrompt.length,
+          promptPreview: systemPrompt.substring(0, 500)
+        });
+      }
+    } catch (ragError) {
+      log.error('RAG error (continuing without context)', { error: ragError.message });
+    }
+
     // Build messages with context
     const messages = await AIMessageHandler.buildMessagesWithContext({
       botId: botId,
       sessionId: sessionId,
       userMessage: message,
-      systemPrompt: config.system_prompt,
+      systemPrompt: systemPrompt,
       contextWindow: config.context_window
     });
 
@@ -465,11 +499,12 @@ async function sendChat(req, res) {
       response: response.content,
       usage: response.usage,
       cost: cost,
-      responseTime: response.responseTime
+      responseTime: response.responseTime,
+      sources: ragSources.length > 0 ? ragSources : undefined
     });
 
   } catch (error) {
-    console.error('Send chat error:', error);
+    log.error('Send chat error', { error: error.message, stack: error.stack });
 
     // Log error to usage logs
     try {
@@ -488,13 +523,12 @@ async function sendChat(req, res) {
         ]
       );
     } catch (logError) {
-      console.error('Failed to log error:', logError);
+      log.error('Failed to log error to database', { error: logError.message });
     }
 
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to send chat message',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      message: error.message || 'Failed to send chat message'
     });
   }
 }
@@ -540,7 +574,7 @@ async function testAIConnection(req, res) {
     let apiKey;
     if (config.api_key_encrypted) {
       apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
-      console.log(`[AI Test] Using custom encrypted API key for ${config.provider}`);
+      log.debug('Using custom encrypted API key', { provider: config.provider });
     } else {
       apiKey = config.provider === 'openai'
         ? process.env.OPENAI_API_KEY
@@ -552,13 +586,15 @@ async function testAIConnection(req, res) {
       }
 
       // Debug logging (show first 15 chars only for security)
-      console.log(`[AI Test] Provider: ${config.provider}`);
-      console.log(`[AI Test] Platform API key loaded: ${apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND'}`);
-      console.log(`[AI Test] API key length: ${apiKey ? apiKey.length : 0}`);
+      log.debug('Platform API key status for test', {
+        provider: config.provider,
+        keyLoaded: apiKey ? apiKey.substring(0, 15) + '...' : 'NOT FOUND',
+        keyLength: apiKey ? apiKey.length : 0
+      });
     }
 
     if (!apiKey) {
-      console.error(`❌ [AI Test] No API key configured for ${config.provider}`);
+      log.error('No API key configured for test', { provider: config.provider });
       return res.status(400).json({
         success: false,
         message: 'No API key configured'
@@ -580,11 +616,10 @@ async function testAIConnection(req, res) {
     });
 
   } catch (error) {
-    console.error('Test AI connection error:', error);
+    log.error('Test AI connection error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to test AI connection',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to test AI connection'
     });
   }
 }
@@ -681,11 +716,10 @@ async function getAIUsage(req, res) {
     });
 
   } catch (error) {
-    console.error('Get AI usage error:', error);
+    log.error('Get AI usage error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get AI usage statistics',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to get AI usage statistics'
     });
   }
 }
@@ -768,11 +802,10 @@ async function getOrganizationAIBilling(req, res) {
     });
 
   } catch (error) {
-    console.error('Get organization AI billing error:', error);
+    log.error('Get organization AI billing error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get AI billing information',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to get AI billing information'
     });
   }
 }
@@ -797,11 +830,10 @@ function getProviders(req, res) {
     });
 
   } catch (error) {
-    console.error('Get providers error:', error);
+    log.error('Get providers error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get providers',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to get providers'
     });
   }
 }
@@ -830,12 +862,284 @@ function getModels(req, res) {
     });
 
   } catch (error) {
-    console.error('Get models error:', error);
+    log.error('Get models error', { error: error.message, stack: error.stack });
     return res.status(500).json({
       success: false,
-      message: 'Failed to get models',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to get models'
     });
+  }
+}
+
+/**
+ * Send streaming chat message to AI
+ * POST /api/bots/:botId/ai/chat/stream
+ * Uses Server-Sent Events (SSE) for real-time streaming
+ */
+async function sendChatStream(req, res) {
+  try {
+    const { botId } = req.params;
+    const organizationId = req.organization.id;
+    const { message, sessionId } = req.body;
+
+    if (!message || !sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message and sessionId are required'
+      });
+    }
+
+    // Verify bot belongs to organization
+    const botCheck = await db.query(
+      'SELECT id FROM bots WHERE id = $1 AND organization_id = $2',
+      [botId, organizationId]
+    );
+
+    if (botCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Bot not found or not accessible'
+      });
+    }
+
+    // Get AI configuration
+    const configResult = await db.query(
+      `SELECT * FROM ai_configurations WHERE bot_id = $1 AND is_enabled = true`,
+      [botId]
+    );
+
+    if (configResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'AI is not configured or enabled for this bot'
+      });
+    }
+
+    const config = configResult.rows[0];
+
+    // Get API key (custom or platform)
+    let apiKey;
+    if (config.api_key_encrypted) {
+      apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
+    } else {
+      apiKey = config.provider === 'openai'
+        ? process.env.OPENAI_API_KEY
+        : process.env.ANTHROPIC_API_KEY;
+
+      if (apiKey) {
+        apiKey = apiKey.trim();
+      }
+
+      if (!apiKey) {
+        return res.status(400).json({
+          success: false,
+          message: `Platform API key not configured for ${config.provider}. Please provide your own API key.`
+        });
+      }
+    }
+
+    // Get AI service
+    const aiService = AIProviderFactory.getProvider({
+      provider: config.provider,
+      apiKey: apiKey,
+      model: config.model
+    });
+
+    // RAG: Get relevant context from Knowledge Base
+    let systemPrompt = config.system_prompt;
+    let ragSources = [];
+    try {
+      log.debug('Starting RAG search for streaming', { botId });
+      const ragResult = await ragService.getContextForQuery(botId, message, {
+        maxChunks: 20,
+        threshold: 0.15  // Very low threshold for cross-language queries
+      });
+      log.debug('RAG result for streaming', {
+        hasContext: ragResult.hasContext,
+        error: ragResult.error || 'none'
+      });
+
+      if (ragResult.hasContext && ragResult.context) {
+        systemPrompt = ragService.buildRAGPrompt(config.system_prompt, ragResult.context);
+        ragSources = ragResult.sources || [];
+        log.info('RAG context added for streaming', { sourcesCount: ragSources.length });
+      }
+    } catch (ragError) {
+      log.error('RAG error for streaming (continuing without context)', { error: ragError.message });
+    }
+
+    // Build messages with context
+    const messages = await AIMessageHandler.buildMessagesWithContext({
+      botId: botId,
+      sessionId: sessionId,
+      userMessage: message,
+      systemPrompt: systemPrompt,
+      contextWindow: config.context_window
+    });
+
+    // Save user message to history
+    await AIMessageHandler.saveMessage({
+      botId: botId,
+      sessionId: sessionId,
+      role: 'user',
+      content: message
+    });
+
+    // Trigger webhook for user message
+    await webhookService.trigger(organizationId, 'message.sent', {
+      bot_id: botId,
+      session_id: sessionId,
+      message: {
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    res.flushHeaders();
+
+    const startTime = Date.now();
+
+    // Handle streaming with callbacks
+    await aiService.chatStream(
+      {
+        messages: messages,
+        temperature: parseFloat(config.temperature),
+        maxTokens: parseInt(config.max_tokens)
+      },
+      // onChunk callback - send each piece of text
+      (chunk) => {
+        const data = JSON.stringify({
+          type: 'chunk',
+          content: chunk.content,
+          fullContent: chunk.fullContent
+        });
+        res.write(`data: ${data}\n\n`);
+      },
+      // onComplete callback - finalize stream
+      async (result) => {
+        const responseTime = Date.now() - startTime;
+
+        // Calculate cost
+        const cost = AICostCalculator.calculateCost({
+          provider: config.provider,
+          model: config.model,
+          promptTokens: result.usage.promptTokens,
+          completionTokens: result.usage.completionTokens
+        });
+
+        // Save AI response to history
+        await AIMessageHandler.saveMessage({
+          botId: botId,
+          sessionId: sessionId,
+          role: 'assistant',
+          content: result.content
+        });
+
+        // Trigger webhook for AI response
+        await webhookService.trigger(organizationId, 'message.received', {
+          bot_id: botId,
+          session_id: sessionId,
+          message: {
+            role: 'assistant',
+            content: result.content,
+            timestamp: new Date().toISOString()
+          },
+          usage: result.usage,
+          cost_usd: cost
+        });
+
+        // Log usage for billing
+        await db.query(
+          `INSERT INTO ai_usage_logs (
+            organization_id, bot_id, provider, model,
+            prompt_tokens, completion_tokens, total_tokens,
+            cost_usd, response_time_ms, user_message, ai_response, status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          [
+            organizationId,
+            botId,
+            config.provider,
+            config.model,
+            result.usage.promptTokens,
+            result.usage.completionTokens,
+            result.usage.totalTokens,
+            cost,
+            responseTime,
+            message,
+            result.content,
+            'success'
+          ]
+        );
+
+        // Send completion event
+        const doneData = JSON.stringify({
+          type: 'done',
+          content: result.content,
+          usage: result.usage,
+          cost: cost,
+          responseTime: responseTime,
+          sources: ragSources.length > 0 ? ragSources : undefined
+        });
+        res.write(`data: ${doneData}\n\n`);
+        res.end();
+      },
+      // onError callback
+      async (error) => {
+        log.error('Streaming error', { error: error.message, stack: error.stack });
+
+        // Log error
+        try {
+          await db.query(
+            `INSERT INTO ai_usage_logs (
+              organization_id, bot_id, provider, model,
+              error_message, status
+            ) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              organizationId,
+              botId,
+              config.provider,
+              config.model,
+              error.message,
+              'error'
+            ]
+          );
+        } catch (logError) {
+          log.error('Failed to log streaming error to database', { error: logError.message });
+        }
+
+        // Send error event
+        const errorData = JSON.stringify({
+          type: 'error',
+          message: error.message || 'Streaming failed'
+        });
+        res.write(`data: ${errorData}\n\n`);
+        res.end();
+      }
+    );
+
+  } catch (error) {
+    log.error('Send chat stream error', { error: error.message, stack: error.stack });
+
+    // If headers not sent yet, send JSON error
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to start streaming'
+      });
+    }
+
+    // If streaming already started, send SSE error
+    const errorData = JSON.stringify({
+      type: 'error',
+      message: error.message || 'Streaming failed'
+    });
+    res.write(`data: ${errorData}\n\n`);
+    res.end();
   }
 }
 
@@ -844,6 +1148,7 @@ module.exports = {
   configureAI,
   deleteAIConfig,
   sendChat,
+  sendChatStream,
   testAIConnection,
   getAIUsage,
   getOrganizationAIBilling,

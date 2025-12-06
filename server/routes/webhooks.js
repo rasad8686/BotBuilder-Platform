@@ -5,6 +5,7 @@ const authenticateToken = require('../middleware/auth');
 const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const webhookService = require('../services/webhookService');
 const crypto = require('crypto');
+const log = require('../utils/logger');
 
 // Apply authentication and organization context to all routes
 router.use(authenticateToken);
@@ -17,7 +18,7 @@ router.use(requireOrganization);
  */
 router.get('/events/list', async (req, res) => {
   try {
-    console.log('[WEBHOOKS] Fetching available events');
+    log.info('Fetching available webhook events');
     const events = await webhookService.getAvailableEvents();
 
     res.json({
@@ -25,7 +26,10 @@ router.get('/events/list', async (req, res) => {
       data: events
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error fetching events:', error);
+    log.error('Error fetching webhook events', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch webhook events'
@@ -41,7 +45,7 @@ router.get('/', async (req, res) => {
   try {
     const organizationId = req.organization.id;
 
-    console.log(`[WEBHOOKS] Fetching webhooks for organization ${organizationId}`);
+    log.info('Fetching webhooks', { organizationId });
 
     const result = await db.query(
       `SELECT
@@ -92,7 +96,7 @@ router.get('/', async (req, res) => {
       data: webhooks
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error fetching webhooks:', error);
+    log.error('Error fetching webhooks', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch webhooks'
@@ -109,8 +113,7 @@ router.post('/', async (req, res) => {
     const organizationId = req.organization.id;
     const { name, url, events } = req.body;
 
-    console.log(`[WEBHOOKS] Creating webhook for organization ${organizationId}`);
-    console.log(`[WEBHOOKS] Name: ${name}, URL: ${url}, Events: ${events?.join(', ')}`);
+    log.info('Creating webhook', { organizationId, name, url, events: events?.join(', ') });
 
     // Validation
     if (!name || !url || !events || !Array.isArray(events) || events.length === 0) {
@@ -141,14 +144,14 @@ router.post('/', async (req, res) => {
       [organizationId, name, url, secret, events]
     );
 
-    console.log(`[WEBHOOKS] ✓ Webhook created with ID ${result.rows[0].id}`);
+    log.info('Webhook created successfully', { webhookId: result.rows[0].id });
 
     res.status(201).json({
       success: true,
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error creating webhook:', error);
+    log.error('Error creating webhook', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to create webhook'
@@ -166,7 +169,7 @@ router.put('/:id', async (req, res) => {
     const organizationId = req.organization.id;
     const { name, url, events, is_active } = req.body;
 
-    console.log(`[WEBHOOKS] Updating webhook ${webhookId}`);
+    log.info('Updating webhook', { webhookId });
 
     // Verify webhook belongs to organization
     const checkResult = await db.query(
@@ -235,14 +238,14 @@ router.put('/:id', async (req, res) => {
       values
     );
 
-    console.log(`[WEBHOOKS] ✓ Webhook ${webhookId} updated`);
+    log.info('Webhook updated successfully', { webhookId });
 
     res.json({
       success: true,
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error updating webhook:', error);
+    log.error('Error updating webhook', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to update webhook'
@@ -259,7 +262,7 @@ router.delete('/:id', async (req, res) => {
     const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
-    console.log(`[WEBHOOKS] Deleting webhook ${webhookId}`);
+    log.info('Deleting webhook', { webhookId });
 
     // Verify webhook belongs to organization and delete
     const result = await db.query(
@@ -274,14 +277,14 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    console.log(`[WEBHOOKS] ✓ Webhook ${webhookId} deleted`);
+    log.info('Webhook deleted successfully', { webhookId });
 
     res.json({
       success: true,
       message: 'Webhook deleted successfully'
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error deleting webhook:', error);
+    log.error('Error deleting webhook', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to delete webhook'
@@ -298,7 +301,7 @@ router.post('/:id/test', async (req, res) => {
     const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
-    console.log(`[WEBHOOKS] Testing webhook ${webhookId}`);
+    log.info('Testing webhook', { webhookId });
 
     // Verify webhook belongs to organization
     const checkResult = await db.query(
@@ -316,14 +319,14 @@ router.post('/:id/test', async (req, res) => {
     // Send test webhook
     const result = await webhookService.testWebhook(webhookId);
 
-    console.log(`[WEBHOOKS] Test result: ${result.success ? 'success' : 'failed'} (${result.statusCode})`);
+    log.info('Webhook test completed', { webhookId, success: result.success, statusCode: result.statusCode });
 
     res.json({
       success: true,
       data: result
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error testing webhook:', error);
+    log.error('Error testing webhook', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to test webhook: ' + error.message
@@ -341,7 +344,7 @@ router.get('/:id/logs', async (req, res) => {
     const organizationId = req.organization.id;
     const limit = parseInt(req.query.limit) || 50;
 
-    console.log(`[WEBHOOKS] Fetching logs for webhook ${webhookId}`);
+    log.info('Fetching webhook logs', { webhookId });
 
     // Verify webhook belongs to organization
     const checkResult = await db.query(
@@ -371,7 +374,7 @@ router.get('/:id/logs', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error fetching logs:', error);
+    log.error('Error fetching logs', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to fetch webhook logs'
@@ -388,7 +391,7 @@ router.post('/:id/regenerate-secret', async (req, res) => {
     const webhookId = req.params.id; // UUID string, no need to parseInt
     const organizationId = req.organization.id;
 
-    console.log(`[WEBHOOKS] Regenerating secret for webhook ${webhookId}`);
+    log.info('Regenerating webhook secret', { webhookId });
 
     // Verify webhook belongs to organization
     const checkResult = await db.query(
@@ -415,14 +418,14 @@ router.post('/:id/regenerate-secret', async (req, res) => {
       [secret, webhookId]
     );
 
-    console.log(`[WEBHOOKS] ✓ Secret regenerated for webhook ${webhookId}`);
+    log.info('Webhook secret regenerated successfully', { webhookId });
 
     res.json({
       success: true,
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('[WEBHOOKS] Error regenerating secret:', error);
+    log.error('Error regenerating secret', { error: error.message });
     res.status(500).json({
       success: false,
       message: 'Failed to regenerate secret'

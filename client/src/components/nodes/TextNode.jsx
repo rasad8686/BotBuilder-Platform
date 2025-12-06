@@ -1,5 +1,5 @@
+import { memo, useState } from 'react';
 import { Handle, Position } from 'reactflow';
-import { useState } from 'react';
 
 function TextNode({ data, id }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -42,4 +42,4 @@ function TextNode({ data, id }) {
   );
 }
 
-export default TextNode;
+export default memo(TextNode);

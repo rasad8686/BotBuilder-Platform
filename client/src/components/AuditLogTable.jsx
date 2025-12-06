@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import { ChevronDown, ChevronUp, Download } from 'lucide-react';
 
 /**
@@ -156,9 +156,8 @@ const AuditLogTable = ({ logs, loading = false }) => {
               const hasDetails = log.old_values || log.new_values || log.metadata;
 
               return (
-                <>
+                <Fragment key={log.id}>
                   <tr
-                    key={log.id}
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => hasDetails && toggleRow(log.id)}
                   >
@@ -202,7 +201,7 @@ const AuditLogTable = ({ logs, loading = false }) => {
 
                   {/* Expanded details row */}
                   {isExpanded && hasDetails && (
-                    <tr key={`${log.id}-details`}>
+                    <tr>
                       <td colSpan="6" className="px-6 py-4 bg-gray-50">
                         <div className="space-y-4">
                           {/* User Agent */}
@@ -248,7 +247,7 @@ const AuditLogTable = ({ logs, loading = false }) => {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>

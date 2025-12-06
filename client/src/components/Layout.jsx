@@ -1,5 +1,6 @@
 import Sidebar from './Sidebar';
 import DemoBanner from './DemoBanner';
+import Footer from './Footer';
 
 export default function Layout({ children }) {
   return (
@@ -10,6 +11,7 @@ export default function Layout({ children }) {
         {/* Demo Banner - Shows when in demo mode */}
         <DemoBanner />
         {children}
+        <Footer />
       </main>
     </div>
   );

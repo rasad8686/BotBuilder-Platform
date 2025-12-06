@@ -1,4 +1,5 @@
 const db = require('../../db');
+const log = require('../../utils/logger');
 
 /**
  * AI Message Handler
@@ -59,7 +60,7 @@ class AIMessageHandler {
           });
         }
       } catch (error) {
-        console.error('Error fetching conversation history:', error);
+        log.error('Error fetching conversation history:', { error: error.message, botId, sessionId });
         // Continue without history
       }
     }
@@ -100,7 +101,7 @@ class AIMessageHandler {
 
       return result.rows[0];
     } catch (error) {
-      console.error('Error saving message to conversation history:', error);
+      log.error('Error saving message to conversation history:', { error: error.message, botId, sessionId });
       throw error;
     }
   }
@@ -122,7 +123,7 @@ class AIMessageHandler {
 
       return result.rowCount;
     } catch (error) {
-      console.error('Error clearing conversation history:', error);
+      log.error('Error clearing conversation history:', { error: error.message, botId, sessionId });
       throw error;
     }
   }
@@ -149,7 +150,7 @@ class AIMessageHandler {
       // Return in chronological order (oldest first)
       return result.rows.reverse();
     } catch (error) {
-      console.error('Error getting conversation history:', error);
+      log.error('Error getting conversation history:', { error: error.message, botId, sessionId });
       throw error;
     }
   }
@@ -170,7 +171,7 @@ class AIMessageHandler {
 
       return result.rowCount;
     } catch (error) {
-      console.error('Error cleaning up old conversations:', error);
+      log.error('Error cleaning up old conversations:', { error: error.message, daysOld });
       throw error;
     }
   }
@@ -216,7 +217,7 @@ class AIMessageHandler {
 
       return result.rows[0];
     } catch (error) {
-      console.error('Error getting conversation stats:', error);
+      log.error('Error getting conversation stats:', { error: error.message, botId, sessionId });
       throw error;
     }
   }

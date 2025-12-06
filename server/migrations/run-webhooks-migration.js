@@ -7,6 +7,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const log = require('../utils/logger');
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -22,13 +23,13 @@ async function runMigration() {
   let client;
 
   try {
-    console.log('🔗 Connecting to database...');
+    log.info('Connecting to database...');
 
     // Test connection
     client = await pool.connect();
-    console.log('✅ Connected successfully!');
+    log.info('Connected successfully');
 
-    console.log('\n📖 Reading migration file...');
+    log.info('Reading migration file...');
 
     // Read the SQL migration files
     const migration009Path = path.join(__dirname, '../../migrations/009_add_webhooks.sql');
@@ -39,23 +40,23 @@ async function runMigration() {
     }
 
     const migration009SQL = fs.readFileSync(migration009Path, 'utf-8');
-    console.log('✅ Migration file loaded!');
+    log.info('Migration file loaded');
 
-    console.log('\n🚀 Running webhooks migration...');
+    log.info('Running webhooks migration...');
 
     // Run migration 009 (creates webhooks and webhook_delivery_logs tables)
     await client.query(migration009SQL);
 
     // Check if migration 010 exists and run it (fixes webhook_delivery_logs to use UUID)
     if (fs.existsSync(migration010Path)) {
-      console.log('🔄 Applying webhook_delivery_logs UUID fix...');
+      log.info('Applying webhook_delivery_logs UUID fix...');
       const migration010SQL = fs.readFileSync(migration010Path, 'utf-8');
       await client.query(migration010SQL);
     }
 
-    console.log('✅ Webhooks tables created successfully!');
+    log.info('Webhooks tables created successfully');
 
-    console.log('\n🔍 Verifying tables...');
+    log.info('Verifying tables...');
 
     // Verify tables were created
     const tablesResult = await client.query(`
@@ -66,25 +67,12 @@ async function runMigration() {
       ORDER BY table_name
     `);
 
-    console.log('✅ Tables created:');
-    tablesResult.rows.forEach(row => {
-      console.log(`   - ${row.table_name}`);
-    });
+    log.info('Tables created', { tables: [...tablesResult.rows.map(r => r.table_name), 'webhook_events (handled by webhookService)'] });
 
-    // Note: webhook_events is handled by the webhookService.js with predefined events
-    console.log('   - webhook_events (handled by webhookService)');
-
-    console.log('\n🎉 ========================================');
-    console.log('✅ Migration completed successfully!');
-    console.log('========================================\n');
+    log.info('Migration completed successfully');
 
   } catch (error) {
-    console.error('\n❌ ========================================');
-    console.error('❌ MIGRATION FAILED');
-    console.error('========================================');
-    console.error('Error:', error.message);
-    console.error('Stack:', error.stack);
-    console.error('========================================\n');
+    log.error('MIGRATION FAILED', { error: error.message, stack: error.stack });
     process.exit(1);
   } finally {
     if (client) {

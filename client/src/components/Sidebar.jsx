@@ -45,8 +45,26 @@ export default function Sidebar() {
     { path: '/webhooks', icon: '🔗', label: t('sidebar.webhooks') },
     { path: '/usage', icon: '📊', label: t('sidebar.usage') },
     { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
+    { path: '/team', icon: '👥', label: 'Team' },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
   ];
+
+  // Multi-Agent AI links (shown in bot context)
+  const agentLinks = [
+    { path: '/ai-flow', icon: '🤖', label: 'AI Flow Studio' },
+    { path: '/agent-studio', icon: '🎯', label: 'Agent Studio' },
+    { path: '/workflows', icon: '🔄', label: 'Workflows' },
+    { path: '/intents', icon: '🎯', label: 'Intent Builder' },
+    { path: '/orchestrations', icon: '🔀', label: 'Multi-Flow' },
+    { path: '/executions', icon: '📋', label: 'Executions' },
+    { path: '/knowledge', icon: '🧠', label: 'Knowledge Base' },
+    { path: '/channels', icon: '📱', label: 'Channels' },
+    { path: '/marketplace', icon: '🧩', label: 'Marketplace' },
+  ];
+
+  // Get botId from URL if on a bot-specific page
+  const botIdMatch = location.pathname.match(/\/bots\/(\d+)/);
+  const currentBotId = botIdMatch ? botIdMatch[1] : null;
 
   // Admin links - only shown to admins and owners
   const adminLinks = [
@@ -196,6 +214,97 @@ export default function Sidebar() {
                 </Link>
               </li>
             ))}
+
+            {/* Multi-Agent AI Section */}
+            <li className="pt-4 pb-2">
+              <div className="flex items-center gap-2 px-4">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
+                  AI Agents
+                </span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+            </li>
+            {agentLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActive(link.path)
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                        : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                    }
+                  `}
+                >
+                  <span className="text-xl">{link.icon}</span>
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </li>
+            ))}
+
+            {/* Bot-specific links - shown when on a bot page */}
+            {currentBotId && (
+              <>
+                <li>
+                  <Link
+                    to={`/bots/${currentBotId}/orchestrations`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg
+                      transition-all duration-200
+                      ${
+                        location.pathname.includes('/orchestrations')
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                      }
+                    `}
+                  >
+                    <span className="text-xl">🔀</span>
+                    <span className="font-medium">Multi-Flow</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/bots/${currentBotId}/tools`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg
+                      transition-all duration-200
+                      ${
+                        location.pathname.includes('/tools')
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                      }
+                    `}
+                  >
+                    <span className="text-xl">🔧</span>
+                    <span className="font-medium">Tools</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/bots/${currentBotId}/intents`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg
+                      transition-all duration-200
+                      ${
+                        location.pathname.includes('/intents')
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                      }
+                    `}
+                  >
+                    <span className="text-xl">🎯</span>
+                    <span className="font-medium">Intent Builder</span>
+                  </Link>
+                </li>
+              </>
+            )}
 
             {/* Admin Section - Only visible to admins */}
             {isAdmin && (

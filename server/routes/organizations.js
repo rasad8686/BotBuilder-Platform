@@ -13,6 +13,7 @@ const {
   logMemberRoleChanged,
   logMemberRemoved
 } = require('../middleware/audit');
+const log = require('../utils/logger');
 
 // Apply authentication to all routes
 router.use(authenticateToken);
@@ -73,7 +74,7 @@ router.post('/', async (req, res) => {
       data: organization
     });
   } catch (error) {
-    console.error('Create organization error:', error);
+    log.error('Create organization error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error creating organization',
@@ -106,15 +107,18 @@ router.get('/', async (req, res) => {
 
     const result = await db.query(query, [userId]);
 
-    console.log(`[Organizations] Fetched ${result.rows.length} organizations for user ${userId}`);
-    console.log(`[Organizations] Organizations:`, result.rows.map(o => ({ id: o.id, name: o.name, role: o.role })));
+    log.debug('Fetched organizations for user', {
+      userId,
+      count: result.rows.length,
+      organizations: result.rows.map(o => ({ id: o.id, name: o.name, role: o.role }))
+    });
 
     return res.status(200).json({
       success: true,
       organizations: result.rows  // Changed from 'data' to 'organizations' to match frontend expectation
     });
   } catch (error) {
-    console.error('List organizations error:', error);
+    log.error('List organizations error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error fetching organizations',
@@ -170,7 +174,7 @@ router.get('/:id', organizationContext, requireOrganization, async (req, res) =>
       }
     });
   } catch (error) {
-    console.error('Get organization error:', error);
+    log.error('Get organization error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error fetching organization',
@@ -256,7 +260,7 @@ router.put('/:id', organizationContext, requireOrganization, checkPermission('ad
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Update organization error:', error);
+    log.error('Update organization error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error updating organization',
@@ -306,7 +310,7 @@ router.delete('/:id', organizationContext, requireOrganization, checkPermission(
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Delete organization error:', error);
+    log.error('Delete organization error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error deleting organization',
@@ -352,14 +356,14 @@ router.get('/:id/members', organizationContext, requireOrganization, async (req,
 
     const result = await db.query(query, [orgId]);
 
-    console.log(`[Organizations] Fetched ${result.rows.length} members for organization ${orgId}`);
+    log.debug('Fetched organization members', { orgId, count: result.rows.length });
 
     return res.status(200).json({
       success: true,
       members: result.rows  // Changed from 'data' to 'members' to match frontend expectation
     });
   } catch (error) {
-    console.error('List members error:', error);
+    log.error('List members error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error fetching members',
@@ -445,7 +449,7 @@ router.post('/:id/members', organizationContext, requireOrganization, checkPermi
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Invite user error:', error);
+    log.error('Invite user error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error inviting user',
@@ -521,7 +525,7 @@ router.put('/:id/members/:userId', organizationContext, requireOrganization, che
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Update member error:', error);
+    log.error('Update member error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error updating member',
@@ -597,7 +601,7 @@ router.put('/:id/members/:userId/role', organizationContext, requireOrganization
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Update member role error:', error);
+    log.error('Update member role error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error updating member role',
@@ -659,7 +663,7 @@ router.delete('/:id/members/:userId', organizationContext, requireOrganization, 
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Remove member error:', error);
+    log.error('Remove member error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error removing member',
@@ -718,7 +722,7 @@ router.post('/:id/switch', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Switch organization error:', error);
+    log.error('Switch organization error', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Error switching organization',

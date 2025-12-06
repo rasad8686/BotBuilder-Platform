@@ -76,9 +76,9 @@ async function auditLog({
           JSON.stringify(metadata)
         ]);
 
-        console.log(`[Audit] Logged action: ${action} for user ${userId} in org ${organizationId}`);
+        log.info(`[Audit] Logged action: ${action} for user ${userId} in org ${organizationId}`);
       } catch (dbError) {
-        console.error('[Audit] Failed to write audit log to database:', {
+        log.error('[Audit] Failed to write audit log to database:', {
           error: dbError.message,
           code: dbError.code,
           detail: dbError.detail,

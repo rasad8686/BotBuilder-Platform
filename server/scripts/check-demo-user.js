@@ -1,8 +1,9 @@
 const db = require('../db');
+const log = require('../utils/logger');
 
 async function checkDemoUser() {
   try {
-    console.log('Checking for demo user...\n');
+    log.info('Checking for demo user...');
 
     const result = await db.query(
       'SELECT id, email, name FROM users WHERE email = $1',
@@ -10,10 +11,11 @@ async function checkDemoUser() {
     );
 
     if (result.rows.length > 0) {
-      console.log('✅ Demo user EXISTS in database:');
-      console.log('   ID:', result.rows[0].id);
-      console.log('   Email:', result.rows[0].email);
-      console.log('   Name:', result.rows[0].name);
+      log.info('Demo user EXISTS in database', {
+        id: result.rows[0].id,
+        email: result.rows[0].email,
+        name: result.rows[0].name
+      });
 
       // Check organization
       const orgResult = await db.query(
@@ -25,22 +27,22 @@ async function checkDemoUser() {
       );
 
       if (orgResult.rows.length > 0) {
-        console.log('\n✅ Demo organization:');
-        console.log('   Org ID:', orgResult.rows[0].org_id);
-        console.log('   Name:', orgResult.rows[0].name);
-        console.log('   Slug:', orgResult.rows[0].slug);
+        log.info('Demo organization found', {
+          orgId: orgResult.rows[0].org_id,
+          name: orgResult.rows[0].name,
+          slug: orgResult.rows[0].slug
+        });
       } else {
-        console.log('\n❌ No organization found for demo user');
+        log.warn('No organization found for demo user');
       }
 
       process.exit(0);
     } else {
-      console.log('❌ Demo user NOT found in database');
-      console.log('\nRun: node server/scripts/seed-demo-account.js');
+      log.warn('Demo user NOT found in database. Run: node server/scripts/seed-demo-account.js');
       process.exit(1);
     }
   } catch (error) {
-    console.error('Error checking demo user:', error.message);
+    log.error('Error checking demo user', { error: error.message });
     process.exit(1);
   }
 }

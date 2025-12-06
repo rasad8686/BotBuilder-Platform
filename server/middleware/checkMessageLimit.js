@@ -1,4 +1,5 @@
 const db = require('../db');
+const log = require('../utils/logger');
 
 /**
  * Message Limit Middleware
@@ -69,7 +70,7 @@ async function checkMessageLimit(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('[MIDDLEWARE] Error checking message limit:', error);
+    log.error('Error checking message limit', { error: error.message });
     // On error, allow the request to continue (fail open)
     next();
   }

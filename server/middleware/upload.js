@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const log = require('../utils/logger');
 
 /**
  * File Upload Middleware for White-label Assets
@@ -79,9 +80,9 @@ function deleteOldFile(filePath) {
   if (filePath && fs.existsSync(filePath)) {
     try {
       fs.unlinkSync(filePath);
-      console.log(`[Upload] Deleted old file: ${filePath}`);
+      log.info(`[Upload] Deleted old file: ${filePath}`);
     } catch (error) {
-      console.error(`[Upload] Error deleting file: ${error.message}`);
+      log.error(`[Upload] Error deleting file: ${error.message}`);
     }
   }
 }

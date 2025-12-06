@@ -6,6 +6,7 @@ const { organizationContext, requireOrganization } = require('../middleware/orga
 const { checkPermission } = require('../middleware/checkPermission');
 const { checkMessageLimit } = require('../middleware/checkMessageLimit');
 const webhookService = require('../services/webhookService');
+const log = require('../utils/logger');
 
 // Apply authentication and organization middleware to all routes
 router.use(authenticateToken);
@@ -113,10 +114,10 @@ router.post('/', checkMessageLimit, checkPermission('member'), async (req, res) 
         [organization_id]
       );
 
-      console.log(`[Message Usage] Org ${organization_id}: Incremented count`);
+      log.info('[Message Usage] Incremented count', { organizationId: organization_id });
     } catch (usageError) {
       // Log error but don't fail the request
-      console.error('[Message Usage] Failed to increment count:', usageError.message);
+      log.error('[Message Usage] Failed to increment count:', { error: usageError.message });
     }
 
     // Trigger webhook for message received
@@ -137,7 +138,7 @@ router.post('/', checkMessageLimit, checkPermission('member'), async (req, res) 
     });
 
   } catch (error) {
-    console.error('Create message error:', error);
+    log.error('Create message error:', { error: error.message });
 
     // Handle foreign key constraint error
     if (error.code === '23503') {
@@ -256,7 +257,7 @@ router.get('/bot/:botId', checkPermission('viewer'), async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Get messages error:', error);
+    log.error('Get messages error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve messages',
@@ -310,7 +311,7 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get message error:', error);
+    log.error('Get message error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve message',
@@ -422,7 +423,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update message error:', error);
+    log.error('Update message error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to update message',
@@ -478,7 +479,7 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete message error:', error);
+    log.error('Delete message error:', { error: error.message });
     return res.status(500).json({
       success: false,
       message: 'Failed to delete message',
