@@ -1,8 +1,27 @@
 const db = require('../db');
 const WorkflowExecution = require('../models/WorkflowExecution');
 
-// In-memory session variable storage
+// In-memory session variable storage with TTL
 const sessionVariables = new Map();
+const sessionLastAccess = new Map();
+const SESSION_TTL = 30 * 60 * 1000; // 30 minutes TTL
+const MAX_SESSIONS = 10000; // Maximum sessions to prevent memory overflow
+
+// Clean expired sessions every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  let cleaned = 0;
+  for (const [sessionId, lastAccess] of sessionLastAccess.entries()) {
+    if (now - lastAccess > SESSION_TTL) {
+      sessionVariables.delete(sessionId);
+      sessionLastAccess.delete(sessionId);
+      cleaned++;
+    }
+  }
+  if (cleaned > 0) {
+    // Session cleanup logged silently (no console.log in production)
+  }
+}, 5 * 60 * 1000);
 
 class OrchestrationManager {
   // ==================== ORCHESTRATION METHODS ====================
@@ -106,10 +125,24 @@ class OrchestrationManager {
   }
 
   setVariableValue(sessionId, variableName, value) {
+    // Check max sessions limit
+    if (!sessionVariables.has(sessionId) && sessionVariables.size >= MAX_SESSIONS) {
+      // Remove oldest session
+      const oldestSession = sessionLastAccess.entries().next().value;
+      if (oldestSession) {
+        sessionVariables.delete(oldestSession[0]);
+        sessionLastAccess.delete(oldestSession[0]);
+      }
+    }
+
     if (!sessionVariables.has(sessionId)) {
       sessionVariables.set(sessionId, new Map());
     }
     sessionVariables.get(sessionId).set(variableName, value);
+
+    // Update last access time
+    sessionLastAccess.set(sessionId, Date.now());
+
     return true;
   }
 
@@ -117,6 +150,8 @@ class OrchestrationManager {
     if (!sessionVariables.has(sessionId)) {
       return undefined;
     }
+    // Update last access time
+    sessionLastAccess.set(sessionId, Date.now());
     return sessionVariables.get(sessionId).get(variableName);
   }
 
@@ -287,6 +322,7 @@ class OrchestrationManager {
 
   clearSessionVariables(sessionId) {
     sessionVariables.delete(sessionId);
+    sessionLastAccess.delete(sessionId);
   }
 
   getAllSessionVariables(sessionId) {

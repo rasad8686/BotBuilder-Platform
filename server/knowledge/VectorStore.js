@@ -1,6 +1,20 @@
 const pool = require('../db');
 const log = require('../utils/logger');
 
+// Simple in-memory cache for search results (5 minute TTL)
+const searchCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Clean expired cache entries every minute
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of searchCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      searchCache.delete(key);
+    }
+  }
+}, 60 * 1000);
+
 class VectorStore {
   /**
    * Create a new knowledge base
@@ -179,7 +193,7 @@ class VectorStore {
   }
 
   /**
-   * Search across multiple knowledge bases using pgvector (optimized)
+   * Search across multiple knowledge bases using pgvector (optimized with cache)
    */
   async multiKnowledgeBaseSearch(knowledgeBaseIds, queryEmbedding, options = {}) {
     const { limit = 20, threshold = 0.7 } = options;
@@ -189,6 +203,14 @@ class VectorStore {
     if (!knowledgeBaseIds || knowledgeBaseIds.length === 0) {
       log.debug(`[VectorStore] No KB IDs provided`);
       return [];
+    }
+
+    // Check cache first (use first 8 values of embedding as cache key)
+    const cacheKey = `${knowledgeBaseIds.sort().join(',')}-${queryEmbedding?.slice(0, 8).map(v => v.toFixed(4)).join(',')}-${limit}-${threshold}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      log.debug(`[VectorStore] Cache hit for search`);
+      return cached.results;
     }
 
     // Try pgvector first (much faster for large datasets)
@@ -223,6 +245,10 @@ class VectorStore {
         );
 
         log.debug(`[VectorStore] pgvector multi-KB search returned ${result.rows.length} results`);
+
+        // Cache the results
+        searchCache.set(cacheKey, { results: result.rows, timestamp: Date.now() });
+
         return result.rows;
       }
     } catch (e) {
@@ -230,7 +256,12 @@ class VectorStore {
     }
 
     // Fallback: JavaScript-based similarity
-    return this.multiKnowledgeBaseSearchJS(knowledgeBaseIds, queryEmbedding, options);
+    const jsResults = await this.multiKnowledgeBaseSearchJS(knowledgeBaseIds, queryEmbedding, options);
+
+    // Cache fallback results too
+    searchCache.set(cacheKey, { results: jsResults, timestamp: Date.now() });
+
+    return jsResults;
   }
 
   /**
