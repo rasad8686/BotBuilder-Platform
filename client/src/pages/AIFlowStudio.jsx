@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import AIFlowGenerator from '../components/ai/AIFlowGenerator';
-import FlowTemplateSelector from '../components/ai/FlowTemplateSelector';
-import GeneratedFlowPreview from '../components/ai/GeneratedFlowPreview';
+import AIFlowGenerator from '../components/AI/AIFlowGenerator';
+import FlowTemplateSelector from '../components/AI/FlowTemplateSelector';
+import GeneratedFlowPreview from '../components/AI/GeneratedFlowPreview';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
