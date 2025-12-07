@@ -899,5 +899,21 @@
     "nodes": "Nodelar",
     "connections": "Əlaqələr",
     "chooseBotToImport": "Axını hansı bota idxal edəcəyinizi seçin:"
+  },
+  "notifications": {
+    "title": "Bildirişlər",
+    "unreadCount": "{{count}} oxunmamış",
+    "markAllRead": "Hamısını oxunmuş et",
+    "clearAll": "Hamısını sil",
+    "noNotifications": "Hələ bildiriş yoxdur",
+    "botOnline": "Bot Onlayn",
+    "botOffline": "Bot Oflayn",
+    "workflowCompleted": "İş Axını Tamamlandı",
+    "workflowFailed": "İş Axını Uğursuz",
+    "newMessage": "Yeni Mesaj",
+    "success": "Uğurlu",
+    "error": "Xəta",
+    "warning": "Xəbərdarlıq",
+    "info": "Məlumat"
   }
 }

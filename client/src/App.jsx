@@ -47,6 +47,8 @@ import TermsOfService from './pages/TermsOfService';
 import Layout from './components/Layout';
 import { OrganizationProvider } from './contexts/OrganizationContext';
 import { BrandProvider } from './contexts/BrandContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ToastContainer } from './components/notifications';
 import AdminRouteGuard from './utils/AdminRouteGuard';
 
 // Wrapper component for authenticated routes
@@ -57,6 +59,7 @@ function AuthenticatedApp({ children }) {
 function App() {
   return (
     <BrandProvider>
+      <NotificationProvider>
       <Router>
         <Routes>
           {/* Public Routes */}
@@ -121,7 +124,9 @@ function App() {
         <Route path="/admin/whitelabel" element={<AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/stats" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp>} />
       </Routes>
+      <ToastContainer />
       </Router>
+      </NotificationProvider>
     </BrandProvider>
   );
 }

@@ -899,5 +899,21 @@
     "platform": "Platform",
     "searchMessages": "Search messages...",
     "exportMessages": "Export"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "markAllRead": "Mark all read",
+    "clearAll": "Clear all",
+    "noNotifications": "No notifications yet",
+    "botOnline": "Bot Online",
+    "botOffline": "Bot Offline",
+    "workflowCompleted": "Workflow Completed",
+    "workflowFailed": "Workflow Failed",
+    "newMessage": "New Message",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
   }
 }

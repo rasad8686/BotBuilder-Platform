@@ -899,5 +899,21 @@
     "nodes": "Узлы",
     "connections": "Соединения",
     "chooseBotToImport": "Выберите бота для импорта потока:"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "unreadCount": "{{count}} непрочитанных",
+    "markAllRead": "Отметить все как прочитанные",
+    "clearAll": "Очистить все",
+    "noNotifications": "Пока нет уведомлений",
+    "botOnline": "Бот онлайн",
+    "botOffline": "Бот офлайн",
+    "workflowCompleted": "Рабочий процесс завершен",
+    "workflowFailed": "Рабочий процесс не удался",
+    "newMessage": "Новое сообщение",
+    "success": "Успех",
+    "error": "Ошибка",
+    "warning": "Предупреждение",
+    "info": "Информация"
   }
 }
