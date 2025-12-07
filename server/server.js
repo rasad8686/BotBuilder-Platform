@@ -635,8 +635,11 @@ app.use('/api/nlu', require('./routes/nlu'));
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 
-// ✅ Serve widget.js for embedding
+// ✅ Serve widget.js for embedding with CORS
 app.get('/widget.js', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Content-Type', 'application/javascript');
   res.sendFile(path.join(__dirname, '../public/widget.js'));
 });
 

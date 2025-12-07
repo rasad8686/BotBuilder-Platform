@@ -5,6 +5,25 @@ const authenticateToken = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const {
+  AIProviderFactory,
+  AIMessageHandler,
+  EncryptionHelper
+} = require('../services/ai');
+const ragService = require('../services/ragService');
+
+// CORS middleware for widget endpoints (allow cross-origin requests from any domain)
+router.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Configure file upload
 const storage = multer.diskStorage({
@@ -155,40 +174,108 @@ router.post('/:botId/message', async (req, res) => {
 
     const bot = botResult.rows[0];
 
-    // Store the message
+    // Store the user message
     await pool.query(`
       INSERT INTO widget_messages (bot_id, session_id, role, content, created_at)
       VALUES ($1, $2, 'user', $3, NOW())
     `, [botId, sessionId, message]);
 
-    // Get conversation history for context
-    const historyResult = await pool.query(`
-      SELECT role, content FROM widget_messages
-      WHERE bot_id = $1 AND session_id = $2
-      ORDER BY created_at DESC
-      LIMIT 10
-    `, [botId, sessionId]);
+    // Get AI configuration
+    const aiConfigResult = await pool.query(
+      'SELECT * FROM ai_configurations WHERE bot_id = $1 AND is_enabled = true',
+      [botId]
+    );
 
-    const conversationHistory = historyResult.rows.reverse();
+    let aiResponse = "AI is not configured for this bot. Please configure AI settings.";
 
-    // Generate AI response (simplified - in production use AI service)
-    let aiResponse = "Thank you for your message. Our team will respond shortly.";
+    if (aiConfigResult.rows.length > 0) {
+      const config = aiConfigResult.rows[0];
 
-    // If bot has AI config, try to get AI response
-    try {
-      const aiConfigResult = await pool.query(
-        'SELECT * FROM ai_configurations WHERE bot_id = $1',
-        [botId]
-      );
+      try {
+        // Get API key (custom or platform)
+        let apiKey;
+        if (config.api_key_encrypted) {
+          apiKey = EncryptionHelper.decrypt(config.api_key_encrypted);
+        } else {
+          // Use platform API key
+          apiKey = config.provider === 'openai'
+            ? process.env.OPENAI_API_KEY
+            : process.env.ANTHROPIC_API_KEY;
 
-      if (aiConfigResult.rows.length > 0) {
-        const aiConfig = aiConfigResult.rows[0];
-        // Here you would call your AI service
-        // For now, use a simple response
-        aiResponse = `I received your message: "${message}". How can I help you further?`;
+          if (apiKey) {
+            apiKey = apiKey.trim();
+          }
+        }
+
+        if (!apiKey) {
+          aiResponse = "API key not configured. Please add your API key in AI settings.";
+        } else {
+          // Get AI service
+          const aiService = AIProviderFactory.getProvider({
+            provider: config.provider,
+            apiKey: apiKey,
+            model: config.model
+          });
+
+          // RAG: Get relevant context from Knowledge Base
+          let systemPrompt = config.system_prompt || 'You are a helpful assistant.';
+          try {
+            const ragResult = await ragService.getContextForQuery(botId, message, {
+              maxChunks: 20,
+              threshold: 0.15
+            });
+
+            if (ragResult.hasContext && ragResult.context) {
+              systemPrompt = ragService.buildRAGPrompt(config.system_prompt, ragResult.context);
+            }
+          } catch (ragError) {
+            console.error('RAG error (continuing without context):', ragError.message);
+          }
+
+          // Get conversation history for context
+          const historyResult = await pool.query(`
+            SELECT role, content FROM widget_messages
+            WHERE bot_id = $1 AND session_id = $2
+            ORDER BY created_at DESC
+            LIMIT $3
+          `, [botId, sessionId, config.context_window || 10]);
+
+          // Build messages array
+          const messages = [
+            { role: 'system', content: systemPrompt }
+          ];
+
+          // Add history in chronological order
+          const history = historyResult.rows.reverse();
+          for (const msg of history) {
+            // Skip the current user message (already in history)
+            if (msg.role === 'user' && msg.content === message) continue;
+            messages.push({
+              role: msg.role,
+              content: msg.content
+            });
+          }
+
+          // Add current user message
+          messages.push({
+            role: 'user',
+            content: message
+          });
+
+          // Send to AI
+          const response = await aiService.chat({
+            messages: messages,
+            temperature: parseFloat(config.temperature) || 0.7,
+            maxTokens: parseInt(config.max_tokens) || 1024,
+            stream: false
+          });
+
+          aiResponse = response.content;
+        }
+      } catch (aiError) {
+        console.error('AI response error:', aiError);
+        aiResponse = "Sorry, there was an error processing your request. Please try again.";
       }
-    } catch (aiError) {
-      console.error('AI response error:', aiError);
     }
 
     // Store bot response
