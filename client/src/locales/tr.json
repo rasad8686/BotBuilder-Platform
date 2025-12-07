@@ -915,5 +915,33 @@
     "error": "Hata",
     "warning": "Uyarı",
     "info": "Bilgi"
+  },
+  "widget": {
+    "title": "Web Widget",
+    "forBot": "Bot için",
+    "subtitle": "Yerleştirilebilir sohbet widgetinizi yapılandırın",
+    "customization": "Widget Özelleştirme",
+    "primaryColor": "Ana Renk",
+    "position": "Widget Konumu",
+    "size": "Widget Boyutu",
+    "botName": "Bot Adı",
+    "botAvatar": "Bot Avatarı",
+    "welcomeMessage": "Karşılama Mesajı",
+    "placeholder": "Giriş Yer Tutucusu",
+    "offlineMessage": "Çevrimdışı Mesaj",
+    "saveSettings": "Ayarları Kaydet",
+    "saveSuccess": "Widget ayarları başarıyla kaydedildi",
+    "saveError": "Widget ayarları kaydedilemedi",
+    "loadError": "Widget ayarları yüklenemedi",
+    "embedCode": "Yerleştirme Kodu",
+    "embedInstructions": "Bu kodu web sitenizde kapanış </body> etiketinden önce ekleyin.",
+    "preview": "Önizleme",
+    "online": "Çevrimiçi",
+    "offline": "Çevrimdışı",
+    "sendMessage": "Mesaj gönder",
+    "typeMessage": "Bir mesaj yazın..."
+  },
+  "bots": {
+    "widget": "Widget"
   }
 }

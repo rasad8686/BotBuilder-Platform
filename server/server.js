@@ -632,6 +632,14 @@ app.use('/api/intents', require('./routes/intents'));
 app.use('/api/entities', require('./routes/entities'));
 app.use('/api/nlu', require('./routes/nlu'));
 
+// ✅ Widget routes (Web Chat Widget)
+app.use('/api/widget', require('./routes/widget'));
+
+// ✅ Serve widget.js for embedding
+app.get('/widget.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/widget.js'));
+});
+
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 

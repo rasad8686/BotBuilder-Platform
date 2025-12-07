@@ -22,6 +22,7 @@ import AIFlowStudio from './pages/AIFlowStudio';
 import Orchestrations from './pages/Orchestrations';
 import OrchestrationBuilder from './components/orchestration/OrchestrationBuilder';
 import IntentEntityBuilder from './pages/IntentEntityBuilder';
+import WidgetSettings from './pages/WidgetSettings';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -103,6 +104,7 @@ function App() {
         <Route path="/bots/:botId/orchestrations/:orchestrationId" element={<AuthenticatedApp><OrchestrationBuilder /></AuthenticatedApp>} />
         <Route path="/intents" element={<AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp>} />
         <Route path="/bots/:botId/intents" element={<AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp>} />
+        <Route path="/bots/:botId/widget" element={<AuthenticatedApp><WidgetSettings /></AuthenticatedApp>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
         <Route path="/billing" element={<AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp>} />
