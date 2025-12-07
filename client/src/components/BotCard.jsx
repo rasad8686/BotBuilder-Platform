@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PermissionGuard from './PermissionGuard';
 
 /**
@@ -8,6 +9,7 @@ import PermissionGuard from './PermissionGuard';
  */
 export default function BotCard({ bot, onDelete }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Platform icons and colors
   const platformConfig = {
@@ -151,6 +153,14 @@ export default function BotCard({ bot, onDelete }) {
             title="Manage messages"
           >
             💬 <span>Messages</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/bots/${bot.id}/widget`)}
+            className="flex-1 bg-orange-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-sm"
+            title="Widget Settings"
+          >
+            📟 <span>{t('bots.widget')}</span>
           </button>
 
           <PermissionGuard require="admin">

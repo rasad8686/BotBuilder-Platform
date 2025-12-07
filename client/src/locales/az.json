@@ -915,5 +915,33 @@
     "error": "Xəta",
     "warning": "Xəbərdarlıq",
     "info": "Məlumat"
+  },
+  "widget": {
+    "title": "Veb Widget",
+    "forBot": "Bot üçün",
+    "subtitle": "Yerləşdirilə bilən söhbət widgetinizi konfiqurasiya edin",
+    "customization": "Widget Fərdiləşdirmə",
+    "primaryColor": "Əsas Rəng",
+    "position": "Widget Mövqeyi",
+    "size": "Widget Ölçüsü",
+    "botName": "Bot Adı",
+    "botAvatar": "Bot Avatarı",
+    "welcomeMessage": "Qarşılama Mesajı",
+    "placeholder": "Giriş Yeri Mətni",
+    "offlineMessage": "Oflayn Mesaj",
+    "saveSettings": "Parametrləri Yadda Saxla",
+    "saveSuccess": "Widget parametrləri uğurla yadda saxlanıldı",
+    "saveError": "Widget parametrləri saxlanıla bilmədi",
+    "loadError": "Widget parametrləri yüklənə bilmədi",
+    "embedCode": "Yerləşdirmə Kodu",
+    "embedInstructions": "Bu kodu veb saytınızda bağlanan </body> etiketindən əvvəl əlavə edin.",
+    "preview": "Önbaxış",
+    "online": "Onlayn",
+    "offline": "Oflayn",
+    "sendMessage": "Mesaj göndər",
+    "typeMessage": "Mesaj yazın..."
+  },
+  "bots": {
+    "widget": "Vidcet"
   }
 }

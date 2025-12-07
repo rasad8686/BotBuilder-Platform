@@ -915,5 +915,33 @@
     "error": "Error",
     "warning": "Warning",
     "info": "Info"
+  },
+  "widget": {
+    "title": "Web Widget",
+    "forBot": "For bot",
+    "subtitle": "Configure your embeddable chat widget",
+    "customization": "Widget Customization",
+    "primaryColor": "Primary Color",
+    "position": "Widget Position",
+    "size": "Widget Size",
+    "botName": "Bot Name",
+    "botAvatar": "Bot Avatar",
+    "welcomeMessage": "Welcome Message",
+    "placeholder": "Input Placeholder",
+    "offlineMessage": "Offline Message",
+    "saveSettings": "Save Settings",
+    "saveSuccess": "Widget settings saved successfully",
+    "saveError": "Failed to save widget settings",
+    "loadError": "Failed to load widget settings",
+    "embedCode": "Embed Code",
+    "embedInstructions": "Add this code before the closing </body> tag on your website.",
+    "preview": "Preview",
+    "online": "Online",
+    "offline": "Offline",
+    "sendMessage": "Send message",
+    "typeMessage": "Type a message..."
+  },
+  "bots": {
+    "widget": "Widget"
   }
 }
