@@ -899,5 +899,21 @@
     "nodes": "Düğümler",
     "connections": "Bağlantılar",
     "chooseBotToImport": "Akışı hangi bota aktaracağınızı seçin:"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "unreadCount": "{{count}} okunmamış",
+    "markAllRead": "Tümünü okundu işaretle",
+    "clearAll": "Tümünü temizle",
+    "noNotifications": "Henüz bildirim yok",
+    "botOnline": "Bot Çevrimiçi",
+    "botOffline": "Bot Çevrimdışı",
+    "workflowCompleted": "İş Akışı Tamamlandı",
+    "workflowFailed": "İş Akışı Başarısız",
+    "newMessage": "Yeni Mesaj",
+    "success": "Başarılı",
+    "error": "Hata",
+    "warning": "Uyarı",
+    "info": "Bilgi"
   }
 }
