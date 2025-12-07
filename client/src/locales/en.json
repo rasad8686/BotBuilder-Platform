@@ -912,6 +912,18 @@
     "typeMessage": "Type a message..."
   },
   "bots": {
-    "widget": "Widget"
+    "widget": "Widget",
+    "active": "Active",
+    "inactive": "Inactive",
+    "created": "Created:",
+    "webhook": "Webhook:",
+    "noDescription": "No description provided",
+    "flowBuilder": "Flow Builder",
+    "aiConfig": "AI Config",
+    "agents": "Agents",
+    "tools": "Tools",
+    "workflows": "Workflows",
+    "edit": "Edit",
+    "messages": "Messages"
   }
 }

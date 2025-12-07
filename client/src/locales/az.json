@@ -912,6 +912,18 @@
     "typeMessage": "Mesaj yazın..."
   },
   "bots": {
-    "widget": "Vidcet"
+    "widget": "Vidcet",
+    "active": "Aktiv",
+    "inactive": "Qeyri-aktiv",
+    "created": "Yaradılıb:",
+    "webhook": "Webhook:",
+    "noDescription": "Təsvir verilməyib",
+    "flowBuilder": "Axın Qurucusu",
+    "aiConfig": "AI Konfiq",
+    "agents": "Agentlər",
+    "tools": "Alətlər",
+    "workflows": "İş Axınları",
+    "edit": "Redaktə",
+    "messages": "Mesajlar"
   }
 }

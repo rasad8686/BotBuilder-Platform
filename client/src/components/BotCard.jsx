@@ -58,7 +58,7 @@ export default function BotCard({ bot, onDelete }) {
                   : 'bg-gray-100 text-gray-800'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${bot.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
-                {bot.is_active ? 'Active' : 'Inactive'}
+                {bot.is_active ? t('bots.active') : t('bots.inactive')}
               </span>
             )}
           </div>
@@ -72,107 +72,98 @@ export default function BotCard({ bot, onDelete }) {
 
       {/* Description */}
       <p className="text-gray-600 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
-        {bot.description || 'No description provided'}
+        {bot.description || t('bots.noDescription')}
       </p>
 
       {/* Metadata */}
       <div className="text-xs text-gray-500 mb-4 space-y-1">
         <div className="flex items-center gap-2">
-          <span>📅 Created:</span>
+          <span>📅 {t('bots.created')}</span>
           <span>{formatDate(bot.created_at)}</span>
         </div>
         {bot.webhook_url && (
           <div className="flex items-center gap-2 truncate">
-            <span>🔗 Webhook:</span>
+            <span>🔗 {t('bots.webhook')}</span>
             <span className="truncate">{bot.webhook_url}</span>
           </div>
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="space-y-2">
-        {/* Flow Builder & AI Config - Full Width Row */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/flow`)}
-            className="flex-1 bg-purple-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Visual Flow Builder"
-          >
-            🔀 <span>Flow Builder</span>
-          </button>
+      {/* Action Buttons - Grid Layout */}
+      <div className="grid grid-cols-2 gap-1.5 mt-4">
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/flow`)}
+          className="bg-purple-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Visual Flow Builder"
+        >
+          🔀 <span className="truncate">{t('bots.flowBuilder')}</span>
+        </button>
 
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
-            className="flex-1 bg-indigo-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="AI Configuration"
-          >
-            🤖 <span>AI Config</span>
-          </button>
-        </div>
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
+          className="bg-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="AI Configuration"
+        >
+          🤖 <span className="truncate">{t('bots.aiConfig')}</span>
+        </button>
 
-        {/* Agent Studio, Tools & Workflow Builder */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/agents`)}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-3 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Agent Studio - Multi-Agent AI"
-          >
-            🎯 <span>Agents</span>
-          </button>
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/agents`)}
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Agent Studio - Multi-Agent AI"
+        >
+          🎯 <span className="truncate">{t('bots.agents')}</span>
+        </button>
 
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/tools`)}
-            className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-2 px-3 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Tool Studio - Function Calling"
-          >
-            🔧 <span>Tools</span>
-          </button>
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/tools`)}
+          className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Tool Studio - Function Calling"
+        >
+          🔧 <span className="truncate">{t('bots.tools')}</span>
+        </button>
 
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/workflows`)}
-            className="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-2 px-3 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Workflow Builder - Visual AI Workflows"
-          >
-            🔄 <span>Workflows</span>
-          </button>
-        </div>
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/workflows`)}
+          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Workflow Builder - Visual AI Workflows"
+        >
+          🔄 <span className="truncate">{t('bots.workflows')}</span>
+        </button>
 
-        {/* Other Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => navigate(`/bot/${bot.id}/edit`)}
-            className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Edit bot"
-          >
-            ✏️ <span>Edit</span>
-          </button>
+        <button
+          onClick={() => navigate(`/bots/${bot.id}/widget`)}
+          className="bg-orange-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Widget Settings"
+        >
+          📟 <span className="truncate">{t('bots.widget')}</span>
+        </button>
 
-          <button
-            onClick={() => navigate(`/bot/${bot.id}/messages`)}
-            className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Manage messages"
-          >
-            💬 <span>Messages</span>
-          </button>
+        <button
+          onClick={() => navigate(`/bot/${bot.id}/edit`)}
+          className="bg-blue-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Edit bot"
+        >
+          ✏️ <span className="truncate">{t('bots.edit')}</span>
+        </button>
 
-          <button
-            onClick={() => navigate(`/bots/${bot.id}/widget`)}
-            className="flex-1 bg-orange-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-sm"
-            title="Widget Settings"
-          >
-            📟 <span>{t('bots.widget')}</span>
-          </button>
+        <button
+          onClick={() => navigate(`/bot/${bot.id}/messages`)}
+          className="bg-green-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
+          title="Manage messages"
+        >
+          💬 <span className="truncate">{t('bots.messages')}</span>
+        </button>
 
-          <PermissionGuard require="admin">
-            <button
-              onClick={() => onDelete(bot)}
-              className="bg-red-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center text-sm"
-              title="Delete bot"
-            >
-              🗑️
-            </button>
-          </PermissionGuard>
-        </div>
+        <PermissionGuard require="admin">
+          <button
+            onClick={() => onDelete(bot)}
+            className="col-span-2 bg-red-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-1 text-xs"
+            title="Delete bot"
+          >
+            🗑️ <span>{t('common.delete')}</span>
+          </button>
+        </PermissionGuard>
       </div>
     </div>
   );
