@@ -8,10 +8,10 @@
 DROP TABLE IF EXISTS webhook_delivery_logs CASCADE;
 
 -- Create webhook_delivery_logs table with correct schema
--- Note: webhooks table uses UUID for id
+-- Note: webhooks table uses SERIAL (INTEGER) for id
 CREATE TABLE IF NOT EXISTS webhook_delivery_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    webhook_id UUID NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    webhook_id INTEGER NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
     event_type VARCHAR(100) NOT NULL,
     delivery_status VARCHAR(50) NOT NULL,
     status_code INTEGER,
