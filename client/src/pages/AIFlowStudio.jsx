@@ -70,8 +70,8 @@ export default function AIFlowStudio() {
   };
 
   const tabs = [
-    { id: 'generate', label: 'AI Generate', icon: '✨' },
-    { id: 'templates', label: 'Templates', icon: '📋' }
+    { id: 'generate', label: t('aiFlow.aiGenerate'), icon: '✨' },
+    { id: 'templates', label: t('aiFlow.templates'), icon: '📋' }
   ];
 
   return (
@@ -106,10 +106,10 @@ export default function AIFlowStudio() {
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '28px' }}>🤖</span>
-              AI Flow Studio
+              {t('aiFlow.title')}
             </h1>
             <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>
-              Create chatbot flows with AI assistance
+              {t('aiFlow.subtitle')}
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function AIFlowStudio() {
               gap: '8px'
             }}
           >
-            <span>🚀</span> Open in Workflow Builder
+            <span>🚀</span> {t('aiFlow.openInWorkflow')}
           </button>
         )}
       </div>
@@ -194,10 +194,10 @@ export default function AIFlowStudio() {
             {showPreview ? (
               <div>
                 <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>
-                  Generate Another
+                  {t('aiFlow.generateAnother')}
                 </h3>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>
-                  Not happy with the result? Generate a new flow or select a template.
+                  {t('aiFlow.notHappy')}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <button
@@ -217,7 +217,7 @@ export default function AIFlowStudio() {
                       gap: '8px'
                     }}
                   >
-                    <span>✨</span> Generate New with AI
+                    <span>✨</span> {t('aiFlow.generateNewWithAI')}
                   </button>
                   <button
                     onClick={() => { setActiveTab('templates'); handleBack(); }}
@@ -236,7 +236,7 @@ export default function AIFlowStudio() {
                       gap: '8px'
                     }}
                   >
-                    <span>📋</span> Browse Templates
+                    <span>📋</span> {t('aiFlow.browseTemplates')}
                   </button>
                 </div>
 
@@ -249,20 +249,20 @@ export default function AIFlowStudio() {
                     borderRadius: '12px'
                   }}>
                     <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: '600' }}>
-                      Current Flow
+                      {t('aiFlow.currentFlow')}
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
                         <div style={{ fontSize: '24px', fontWeight: '700', color: '#3b82f6' }}>
                           {generatedFlow.nodes?.length || 0}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>Nodes</div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{t('aiFlow.nodes')}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
                           {generatedFlow.edges?.length || 0}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>Connections</div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{t('aiFlow.connections')}</div>
                       </div>
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export default function AIFlowStudio() {
               marginBottom: '20px'
             }}>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
-                Select a Bot
+                {t('common.selectBot')}
               </h2>
               <button
                 onClick={() => setShowBotSelector(false)}
@@ -355,12 +355,12 @@ export default function AIFlowStudio() {
               </button>
             </div>
             <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
-              Choose which bot to import the flow into:
+              {t('aiFlow.chooseBotToImport')}
             </p>
 
             {loadingBots ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-                Loading bots...
+                {t('common.loading')}
               </div>
             ) : bots.length === 0 ? (
               <div style={{
@@ -370,7 +370,7 @@ export default function AIFlowStudio() {
                 borderRadius: '12px'
               }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-                <p style={{ color: '#6b7280', marginBottom: '16px' }}>No bots found</p>
+                <p style={{ color: '#6b7280', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
                 <button
                   onClick={() => navigate('/create-bot')}
                   style={{
@@ -382,7 +382,7 @@ export default function AIFlowStudio() {
                     cursor: 'pointer'
                   }}
                 >
-                  Create Your First Bot
+                  {t('agentStudio.createFirstBot')}
                 </button>
               </div>
             ) : (
