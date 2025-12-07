@@ -16,9 +16,9 @@ const securityHeaders = (req, res, next) => {
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", `'nonce-${nonce}'`],
-        scriptSrc: ["'self'", `'nonce-${nonce}'`, "https://js.stripe.com"],
+        scriptSrc: ["'self'", `'nonce-${nonce}'`, "https://js.stripe.com", "https://cdn.socket.io"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "https://api.stripe.com", "wss:", "ws:"],
+        connectSrc: ["'self'", "https://api.stripe.com", "https://cdn.socket.io", "wss:", "ws:"],
         frameSrc: ["'self'", "https://js.stripe.com"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],

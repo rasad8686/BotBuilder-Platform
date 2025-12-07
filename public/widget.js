@@ -103,6 +103,19 @@
 
   // Inject CSS styles
   function injectStyles() {
+    // Try to load external stylesheet first, fallback to inline
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = config.serverUrl + '/widget.css';
+    link.onerror = function() {
+      // Fallback: inject style tag if CSS file not found
+      injectInlineStyles();
+    };
+    document.head.appendChild(link);
+  }
+
+  // Fallback inline styles (used when CSP allows or CSS file missing)
+  function injectInlineStyles() {
     var style = document.createElement('style');
     style.textContent = [
       '.bb-widget-container { position: fixed; bottom: 20px; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }',
@@ -439,9 +452,9 @@
 
   // Connect to Socket.IO
   function connectSocket() {
-    // Load Socket.IO client
+    // Load Socket.IO client from CDN (more reliable)
     var script = document.createElement('script');
-    script.src = config.serverUrl + '/socket.io/socket.io.js';
+    script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
     script.onload = function() {
       state.socket = io(config.serverUrl, {
         path: '/ws',
