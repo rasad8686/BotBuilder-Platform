@@ -244,10 +244,10 @@ export default function MyBots() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              My Bots 🤖
+              {t('myBots.title')} 🤖
             </h1>
             <p className="text-gray-600 mt-1">
-              Manage and monitor all your chatbots
+              {t('myBots.subtitle')}
             </p>
           </div>
           <PermissionGuard require="member">
@@ -266,7 +266,7 @@ export default function MyBots() {
                     }`}
                     disabled={isAtLimit}
                   >
-                    {isAtLimit ? '⚠️ Limit Reached' : '+ Create New Bot'}
+                    {isAtLimit ? t('myBots.limitReached') : t('myBots.createNew')}
                   </button>
                   {subscription && (
                     <span className="text-xs text-gray-600">
@@ -300,13 +300,13 @@ export default function MyBots() {
               {/* Search */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Bots
+                  {t('myBots.searchBots')}
                 </label>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name or description..."
+                  placeholder={t('myBots.searchPlaceholder')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -314,14 +314,14 @@ export default function MyBots() {
               {/* Platform Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Filter by Platform
+                  {t('myBots.filterByPlatform')}
                 </label>
                 <select
                   value={filterPlatform}
                   onChange={(e) => setFilterPlatform(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="all">All Platforms</option>
+                  <option value="all">{t('myBots.allPlatforms')}</option>
                   <option value="telegram">Telegram</option>
                   <option value="whatsapp">WhatsApp</option>
                   <option value="discord">Discord</option>
@@ -333,7 +333,7 @@ export default function MyBots() {
 
             {/* Results count */}
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredBots.length} of {bots.length} bot{bots.length !== 1 ? 's' : ''}
+              {t('myBots.showingResults', { showing: filteredBots.length, total: bots.length })}
             </div>
           </div>
         )}
@@ -343,16 +343,16 @@ export default function MyBots() {
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <div className="text-6xl mb-4">🤖</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              No Bots Yet
+              {t('myBots.noBots')}
             </h2>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Get started by creating your first chatbot. It only takes a minute!
+              {t('myBots.noBotsDesc')}
             </p>
             <PermissionGuard
               require="member"
               fallback={
                 <p className="text-gray-500 italic">
-                  Contact your organization admin to create bots
+                  {t('myBots.contactAdmin')}
                 </p>
               }
             >
@@ -360,7 +360,7 @@ export default function MyBots() {
                 onClick={handleCreateBot}
                 className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
               >
-                Create Your First Bot
+                {t('myBots.createFirst')}
               </button>
             </PermissionGuard>
           </div>
@@ -368,10 +368,10 @@ export default function MyBots() {
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <div className="text-6xl mb-4">🔍</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              No Bots Found
+              {t('myBots.noBotsFound')}
             </h2>
             <p className="text-gray-600 mb-6">
-              Try adjusting your search or filter criteria
+              {t('myBots.adjustSearch')}
             </p>
             <button
               onClick={() => {
@@ -380,7 +380,7 @@ export default function MyBots() {
               }}
               className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
             >
-              Clear Filters
+              {t('myBots.clearFilters')}
             </button>
           </div>
         ) : (
