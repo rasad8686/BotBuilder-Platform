@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import PluginBuilder from '../components/plugins/PluginBuilder';
 import PluginUpload from '../components/plugins/PluginUpload';
 import PluginAnalytics from '../components/plugins/PluginAnalytics';
@@ -6,6 +7,7 @@ import PluginAnalytics from '../components/plugins/PluginAnalytics';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const PluginDeveloper = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [myPlugins, setMyPlugins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ const PluginDeveloper = () => {
     return (
       <div className="developer-loading">
         <div className="spinner"></div>
-        <p>Loading developer portal...</p>
+        <p>{t('pluginDeveloper.loading')}</p>
       </div>
     );
   }
@@ -114,11 +116,11 @@ const PluginDeveloper = () => {
     <div className="plugin-developer-page">
       <div className="developer-header">
         <div className="header-content">
-          <h1>Plugin Developer Portal</h1>
-          <p>Create, manage, and monetize your plugins</p>
+          <h1>{t('pluginDeveloper.title')}</h1>
+          <p>{t('pluginDeveloper.subtitle')}</p>
         </div>
         <button className="btn-create" onClick={() => setShowBuilder(true)}>
-          + Create New Plugin
+          + {t('pluginDeveloper.createPlugin')}
         </button>
       </div>
 
@@ -128,28 +130,28 @@ const PluginDeveloper = () => {
           <div className="stat-icon">📦</div>
           <div className="stat-info">
             <span className="stat-value">{stats.totalPlugins}</span>
-            <span className="stat-label">Total Plugins</span>
+            <span className="stat-label">{t('pluginDeveloper.totalPlugins')}</span>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">⬇️</div>
           <div className="stat-info">
             <span className="stat-value">{stats.totalDownloads.toLocaleString()}</span>
-            <span className="stat-label">Total Downloads</span>
+            <span className="stat-label">{t('pluginDeveloper.totalDownloads')}</span>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-info">
             <span className="stat-value">${stats.totalRevenue.toFixed(2)}</span>
-            <span className="stat-label">Total Revenue</span>
+            <span className="stat-label">{t('pluginDeveloper.totalRevenue')}</span>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">⭐</div>
           <div className="stat-info">
             <span className="stat-value">{stats.avgRating}</span>
-            <span className="stat-label">Avg Rating</span>
+            <span className="stat-label">{t('pluginDeveloper.avgRating')}</span>
           </div>
         </div>
       </div>
@@ -160,19 +162,19 @@ const PluginDeveloper = () => {
           className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
           onClick={() => setActiveTab('dashboard')}
         >
-          My Plugins
+          {t('pluginDeveloper.myPlugins')}
         </button>
         <button
           className={`tab ${activeTab === 'analytics' ? 'active' : ''}`}
           onClick={() => setActiveTab('analytics')}
         >
-          Analytics
+          {t('analytics.title')}
         </button>
         <button
           className={`tab ${activeTab === 'docs' ? 'active' : ''}`}
           onClick={() => setActiveTab('docs')}
         >
-          Documentation
+          {t('pluginDeveloper.documentation')}
         </button>
       </div>
 
@@ -183,10 +185,10 @@ const PluginDeveloper = () => {
             {myPlugins.length === 0 ? (
               <div className="empty-state">
                 <span className="empty-icon">🧩</span>
-                <h3>No plugins yet</h3>
-                <p>Create your first plugin to start earning</p>
+                <h3>{t('pluginDeveloper.noPlugins')}</h3>
+                <p>{t('pluginDeveloper.noPluginsDesc')}</p>
                 <button className="btn-create" onClick={() => setShowBuilder(true)}>
-                  Create Plugin
+                  {t('pluginDeveloper.createPlugin')}
                 </button>
               </div>
             ) : (

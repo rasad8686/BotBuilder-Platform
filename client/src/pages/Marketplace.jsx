@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import PluginCard from '../components/plugins/PluginCard';
 import PluginFilters from '../components/plugins/PluginFilters';
 import PluginDetails from '../components/plugins/PluginDetails';
@@ -6,6 +7,7 @@ import PluginDetails from '../components/plugins/PluginDetails';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Marketplace = () => {
+  const { t } = useTranslation();
   const [plugins, setPlugins] = useState([]);
   const [featuredPlugins, setFeaturedPlugins] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -184,7 +186,7 @@ const Marketplace = () => {
     return (
       <div className="marketplace-loading">
         <div className="spinner"></div>
-        <p>Loading marketplace...</p>
+        <p>{t('marketplace.loading')}</p>
       </div>
     );
   }
@@ -192,13 +194,13 @@ const Marketplace = () => {
   return (
     <div className="marketplace-page">
       <div className="marketplace-header">
-        <h1>Plugin Marketplace</h1>
-        <p>Discover and install plugins to extend your bot capabilities</p>
+        <h1>{t('marketplace.title')}</h1>
+        <p>{t('marketplace.subtitle')}</p>
       </div>
 
       {featuredPlugins.length > 0 && !searchQuery && !selectedCategory && (
         <div className="featured-section">
-          <h2>Featured Plugins</h2>
+          <h2>{t('marketplace.featuredPlugins')}</h2>
           <div className="featured-grid">
             {featuredPlugins.map(plugin => (
               <PluginCard
@@ -229,10 +231,10 @@ const Marketplace = () => {
       <div className="plugins-section">
         <h2>
           {searchQuery
-            ? `Search Results for "${searchQuery}"`
+            ? `${t('marketplace.searchResults')} "${searchQuery}"`
             : selectedCategory
-              ? categories.find(c => c.slug === selectedCategory)?.name || 'Plugins'
-              : 'All Plugins'
+              ? categories.find(c => c.slug === selectedCategory)?.name || t('marketplace.plugins')
+              : t('marketplace.allPlugins')
           }
           <span className="plugin-count">({plugins.length})</span>
         </h2>
@@ -240,8 +242,8 @@ const Marketplace = () => {
         {plugins.length === 0 ? (
           <div className="no-plugins">
             <span className="empty-icon">🔍</span>
-            <p>No plugins found</p>
-            <p className="hint">Try adjusting your filters or search query</p>
+            <p>{t('marketplace.noPlugins')}</p>
+            <p className="hint">{t('marketplace.noPluginsHint')}</p>
           </div>
         ) : (
           <div className="plugins-grid">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Filter, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import AuditLogTable from '../components/AuditLogTable';
 import { getAuditLogs, getAuditActions } from '../api/admin';
@@ -8,6 +9,7 @@ import { getAuditLogs, getAuditActions } from '../api/admin';
  * Comprehensive audit log viewer with filters, search, and pagination
  */
 const AdminAuditLogs = () => {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState([]);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,13 +103,13 @@ const AdminAuditLogs = () => {
       <div className="p-6">
         <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-200">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Audit Logs</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.failedToLoadAuditLogs')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={fetchAuditLogs}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
-            Try Again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -118,8 +120,8 @@ const AdminAuditLogs = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-gray-600 mt-1">View and analyze all system activities</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.auditLogs')}</h1>
+        <p className="text-gray-600 mt-1">{t('admin.auditLogsSubtitle')}</p>
       </div>
 
       {/* Filters and Search */}
@@ -130,7 +132,7 @@ const AdminAuditLogs = () => {
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             <Filter className="w-4 h-4" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
+            {showFilters ? t('common.hideFilters') : t('common.showFilters')}
           </button>
 
           <div className="flex items-center gap-2">
@@ -139,7 +141,7 @@ const AdminAuditLogs = () => {
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               <RefreshCw className="w-4 h-4" />
-              Refresh
+              {t('common.refresh')}
             </button>
           </div>
         </div>
@@ -150,14 +152,14 @@ const AdminAuditLogs = () => {
             {/* Action Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Action
+                {t('admin.action')}
               </label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">All Actions</option>
+                <option value="">{t('admin.allActions')}</option>
                 {actions.map((action) => (
                   <option key={action} value={action}>
                     {action}
@@ -169,14 +171,14 @@ const AdminAuditLogs = () => {
             {/* Resource Type Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Resource Type
+                {t('admin.resourceType')}
               </label>
               <select
                 value={filters.resource_type}
                 onChange={(e) => handleFilterChange('resource_type', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">All Resources</option>
+                <option value="">{t('admin.allResources')}</option>
                 {resourceTypes.map((type) => (
                   <option key={type} value={type}>
                     {type}
@@ -188,7 +190,7 @@ const AdminAuditLogs = () => {
             {/* Start Date Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
+                {t('executionHistory.fromDate')}
               </label>
               <input
                 type="date"
@@ -201,7 +203,7 @@ const AdminAuditLogs = () => {
             {/* End Date Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
+                {t('executionHistory.toDate')}
               </label>
               <input
                 type="date"
@@ -217,7 +219,7 @@ const AdminAuditLogs = () => {
                 onClick={handleClearFilters}
                 className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                Clear Filters
+                {t('common.clearFilters')}
               </button>
             </div>
           </div>
@@ -246,7 +248,7 @@ const AdminAuditLogs = () => {
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
-            Previous
+            {t('common.previous')}
           </button>
 
           <div className="flex items-center gap-2">
@@ -283,7 +285,7 @@ const AdminAuditLogs = () => {
             disabled={pagination.page === pagination.totalPages}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            {t('common.next')}
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

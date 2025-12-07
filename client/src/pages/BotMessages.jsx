@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import Pagination from '../components/Pagination';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
 function BotMessages() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { botId } = useParams();
   const [bot, setBot] = useState(null);
@@ -121,7 +123,7 @@ function BotMessages() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-2xl font-bold text-gray-700">Loading...</div>
+        <div className="text-2xl font-bold text-gray-700">{t('common.loading')}</div>
       </div>
     );
   }
@@ -135,7 +137,7 @@ function BotMessages() {
             onClick={handleLogout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
           >
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       </nav>
@@ -146,7 +148,7 @@ function BotMessages() {
             onClick={() => navigate('/my-bots')}
             className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
           >
-            ← Back to My Bots
+            ← {t('myBots.title')}
           </button>
         </div>
 
@@ -164,12 +166,12 @@ function BotMessages() {
         </div>
 
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-800">Bot Messages 💬</h3>
+          <h3 className="text-2xl font-bold text-gray-800">{t('botMessages.title')} 💬</h3>
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700"
           >
-            {showForm ? 'Cancel' : '+ Add Message'}
+            {showForm ? t('common.cancel') : '+ ' + t('common.add')}
           </button>
         </div>
 
@@ -227,8 +229,8 @@ function BotMessages() {
         {messages.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No messages yet</h3>
-            <p className="text-gray-600 mb-6">Add your first message to get started!</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('botMessages.noMessages')}</h3>
+            <p className="text-gray-600 mb-6">{t('botMessages.noMessagesDesc')}</p>
           </div>
         ) : (
           <>
@@ -257,7 +259,7 @@ function BotMessages() {
                       onClick={() => handleDelete(msg.id)}
                       className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
                     >
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </div>
                   <p className="text-gray-700">{msg.content}</p>

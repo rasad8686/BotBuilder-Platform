@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function Usage() {
+  const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function Usage() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading usage data...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -78,8 +80,8 @@ export default function Usage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Usage & Analytics</h1>
-          <p className="text-gray-600">Monitor your platform usage and statistics</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('usage.title')}</h1>
+          <p className="text-gray-600">{t('usage.subtitle')}</p>
         </div>
 
         {dashboardData && (
@@ -118,7 +120,7 @@ export default function Usage() {
                     {dashboardData.bots.total}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">Total Bots</h3>
+                <h3 className="text-gray-600 font-semibold mb-2">{t('analytics.totalBots')}</h3>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">
                     Limit: {dashboardData.bots.limit === -1 ? '∞' : dashboardData.bots.limit}
@@ -160,7 +162,7 @@ export default function Usage() {
                     {dashboardData.messages.total.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">Messages (Month)</h3>
+                <h3 className="text-gray-600 font-semibold mb-2">{t('usage.messages')}</h3>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">
                     Limit: {dashboardData.messages.limit === -1 ? '∞' : dashboardData.messages.limit.toLocaleString()}
@@ -271,23 +273,23 @@ export default function Usage() {
             {analyticsData && (
               <>
                 <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Analytics Overview</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.overview')}</h2>
                   <div className="grid md:grid-cols-4 gap-6">
                     <div className="text-center">
                       <div className="text-4xl font-bold text-purple-600">{analyticsData.overview.totalMessages}</div>
-                      <p className="text-gray-600 mt-2">Total Messages</p>
+                      <p className="text-gray-600 mt-2">{t('analytics.totalMessages')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-blue-600">{analyticsData.overview.totalBots}</div>
-                      <p className="text-gray-600 mt-2">Total Bots</p>
+                      <p className="text-gray-600 mt-2">{t('analytics.totalBots')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-green-600">{analyticsData.overview.apiCalls}</div>
-                      <p className="text-gray-600 mt-2">API Calls</p>
+                      <p className="text-gray-600 mt-2">{t('usage.apiCalls')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-orange-600">{analyticsData.overview.activeUsers}</div>
-                      <p className="text-gray-600 mt-2">Active Users</p>
+                      <p className="text-gray-600 mt-2">{t('analytics.users')}</p>
                     </div>
                   </div>
                 </div>
@@ -295,7 +297,7 @@ export default function Usage() {
                 {/* Messages Over Time Chart */}
                 <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Messages Over Time</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">{t('usage.messagesChart')}</h2>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setTimeRange(7)}
@@ -338,7 +340,7 @@ export default function Usage() {
 
                 {/* Messages By Bot Chart */}
                 <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Messages by Bot</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('usage.botsActivity')}</h2>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={analyticsData.byBot}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -353,7 +355,7 @@ export default function Usage() {
 
                 {/* Recent Activity Table */}
                 <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Activity</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('common.history')}</h2>
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
@@ -402,15 +404,15 @@ export default function Usage() {
 
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('admin.quickActions')}</h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <button
                   onClick={() => navigate('/my-bots')}
                   className="p-6 border-2 border-purple-200 rounded-xl hover:border-purple-600 hover:bg-purple-50 transition-all"
                 >
                   <div className="text-4xl mb-3">🤖</div>
-                  <h3 className="font-bold text-gray-800 mb-2">Manage Bots</h3>
-                  <p className="text-sm text-gray-600">View and edit your bots</p>
+                  <h3 className="font-bold text-gray-800 mb-2">{t('analytics.manageBots')}</h3>
+                  <p className="text-sm text-gray-600">{t('analytics.manageBotsDesc')}</p>
                 </button>
 
                 <button
@@ -418,8 +420,8 @@ export default function Usage() {
                   className="p-6 border-2 border-blue-200 rounded-xl hover:border-blue-600 hover:bg-blue-50 transition-all"
                 >
                   <div className="text-4xl mb-3">🔑</div>
-                  <h3 className="font-bold text-gray-800 mb-2">API Tokens</h3>
-                  <p className="text-sm text-gray-600">Generate API keys</p>
+                  <h3 className="font-bold text-gray-800 mb-2">{t('apiTokens.title')}</h3>
+                  <p className="text-sm text-gray-600">{t('apiTokens.subtitle')}</p>
                 </button>
 
                 <button
@@ -427,8 +429,8 @@ export default function Usage() {
                   className="p-6 border-2 border-green-200 rounded-xl hover:border-green-600 hover:bg-green-50 transition-all"
                 >
                   <div className="text-4xl mb-3">🔗</div>
-                  <h3 className="font-bold text-gray-800 mb-2">Webhooks</h3>
-                  <p className="text-sm text-gray-600">Configure webhooks</p>
+                  <h3 className="font-bold text-gray-800 mb-2">{t('webhooks.title')}</h3>
+                  <p className="text-sm text-gray-600">{t('webhooks.subtitle')}</p>
                 </button>
               </div>
             </div>

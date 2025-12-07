@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   FaRobot,
   FaBrain,
@@ -13,6 +14,7 @@ import {
 import Footer from '../components/Footer';
 
 function Landing() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const features = [
@@ -131,20 +133,20 @@ function Landing() {
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-purple-600 transition">Features</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-purple-600 transition">How It Works</a>
-              <a href="#pricing" className="text-gray-600 hover:text-purple-600 transition">Pricing</a>
+              <a href="#features" className="text-gray-600 hover:text-purple-600 transition">{t('landing.features')}</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-purple-600 transition">{t('landing.howItWorks')}</a>
+              <a href="#pricing" className="text-gray-600 hover:text-purple-600 transition">{t('landing.pricing')}</a>
               <button
                 onClick={() => navigate('/login')}
                 className="text-purple-600 hover:text-purple-700 font-semibold transition"
               >
-                Login
+                {t('auth.login')}
               </button>
               <button
                 onClick={() => navigate('/register')}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition transform hover:-translate-y-0.5"
               >
-                Get Started
+                {t('landing.getStarted')}
               </button>
             </div>
           </div>
@@ -157,42 +159,41 @@ function Landing() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-semibold mb-6 animate-pulse">
               <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
-              <span>Multi-tenant SaaS Platform</span>
+              <span>{t('landing.multiTenant')}</span>
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
-              Build & Manage{' '}
+              {t('landing.heroTitle1')}{' '}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI Chatbots
+                {t('landing.heroTitle2')}
               </span>
-              {' '}in Minutes
+              {' '}{t('landing.heroTitle3')}
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed">
-              Multi-tenant SaaS platform with OpenAI & Claude integration.
-              Create intelligent chatbots without coding.
+              {t('landing.heroSubtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button
                 onClick={() => navigate('/register')}
                 className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex items-center justify-center space-x-2"
               >
-                <span>Start Free Trial</span>
+                <span>{t('landing.startFreeTrial')}</span>
                 <FaArrowRight />
               </button>
               <button
                 onClick={() => navigate('/demo')}
                 className="w-full sm:w-auto bg-white text-purple-600 px-8 py-4 rounded-xl font-bold text-lg border-2 border-purple-600 hover:bg-purple-50 transition"
               >
-                View Demo
+                {t('landing.viewDemo')}
               </button>
             </div>
             <div className="mt-12 flex items-center justify-center space-x-8 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
                 <FaCheck className="text-green-500" />
-                <span>No credit card required</span>
+                <span>{t('landing.noCreditCard')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <FaCheck className="text-green-500" />
-                <span>14-day free trial</span>
+                <span>{t('landing.freeTrial')}</span>
               </div>
             </div>
           </div>
@@ -228,10 +229,10 @@ function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Everything You Need to Build Powerful Bots
+              {t('landing.featuresTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Professional-grade features for modern chatbot development
+              {t('landing.featuresSubtitle')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -254,10 +255,10 @@ function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Get Started in 3 Simple Steps
+              {t('landing.stepsTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              From idea to deployment in minutes
+              {t('landing.stepsSubtitle')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -286,10 +287,10 @@ function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Simple, Transparent Pricing
+              {t('landing.pricingTitle')}
             </h2>
             <p className="text-xl text-gray-600">
-              Choose the perfect plan for your needs
+              {t('landing.pricingSubtitle')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -304,7 +305,7 @@ function Landing() {
               >
                 {tier.highlighted && (
                   <div className="bg-white text-purple-600 text-sm font-bold px-4 py-1 rounded-full inline-block mb-4">
-                    MOST POPULAR
+                    {t('landing.mostPopular')}
                   </div>
                 )}
                 <h3 className={`text-2xl font-bold mb-2 ${tier.highlighted ? 'text-white' : 'text-gray-900'}`}>
@@ -349,23 +350,23 @@ function Landing() {
       <section className="py-20 px-4 bg-gradient-to-br from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Get Started?
+            {t('landing.ctaTitle')}
           </h2>
           <p className="text-xl text-white/90 mb-10">
-            Join thousands of businesses building intelligent chatbots with BotBuilder
+            {t('landing.ctaSubtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
               onClick={() => navigate('/register')}
               className="w-full sm:w-auto bg-white text-purple-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
             >
-              Start Free Trial
+              {t('landing.startFreeTrial')}
             </button>
             <button
               onClick={() => navigate('/login')}
               className="w-full sm:w-auto bg-transparent text-white px-8 py-4 rounded-xl font-bold text-lg border-2 border-white hover:bg-white/10 transition"
             >
-              Sign In
+              {t('landing.signIn')}
             </button>
           </div>
         </div>

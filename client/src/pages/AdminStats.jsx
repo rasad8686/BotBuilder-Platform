@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminStats() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -56,7 +58,7 @@ export default function AdminStats() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading statistics...</p>
+          <p className="text-gray-600">{t('admin.loadingStatistics')}</p>
         </div>
       </div>
     );
@@ -113,10 +115,10 @@ export default function AdminStats() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-            📈 Admin Statistics
+            📈 {t('admin.statistics')}
           </h1>
           <p className="text-gray-600">
-            Platform-wide metrics and analytics
+            {t('admin.statisticsSubtitle')}
           </p>
         </div>
 
@@ -152,29 +154,29 @@ export default function AdminStats() {
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              ⚡ Quick Actions
+              ⚡ {t('admin.quickActions')}
             </h2>
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/admin/dashboard')}
                 className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
               >
-                <span className="font-semibold text-purple-900">Dashboard</span>
-                <p className="text-sm text-purple-700">View admin dashboard</p>
+                <span className="font-semibold text-purple-900">{t('admin.dashboard')}</span>
+                <p className="text-sm text-purple-700">{t('admin.viewAdminDashboard')}</p>
               </button>
               <button
                 onClick={() => navigate('/admin/audit-logs')}
                 className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
-                <span className="font-semibold text-blue-900">Audit Logs</span>
-                <p className="text-sm text-blue-700">Review system activity</p>
+                <span className="font-semibold text-blue-900">{t('admin.auditLogs')}</span>
+                <p className="text-sm text-blue-700">{t('admin.reviewSystemActivity')}</p>
               </button>
               <button
                 onClick={() => navigate('/admin/health')}
                 className="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
               >
-                <span className="font-semibold text-green-900">System Health</span>
-                <p className="text-sm text-green-700">Check system status</p>
+                <span className="font-semibold text-green-900">{t('admin.systemHealth')}</span>
+                <p className="text-sm text-green-700">{t('admin.checkSystemStatus')}</p>
               </button>
             </div>
           </div>
@@ -182,29 +184,29 @@ export default function AdminStats() {
           {/* System Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              ℹ️ System Information
+              ℹ️ {t('admin.systemInformation')}
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center pb-3 border-b">
-                <span className="text-gray-600">Platform Status</span>
+                <span className="text-gray-600">{t('admin.platformStatus')}</span>
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  Operational
+                  {t('admin.operational')}
                 </span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b">
-                <span className="text-gray-600">Database</span>
+                <span className="text-gray-600">{t('admin.database')}</span>
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  Connected
+                  {t('admin.connected')}
                 </span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b">
-                <span className="text-gray-600">API Status</span>
+                <span className="text-gray-600">{t('admin.apiStatus')}</span>
                 <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  Healthy
+                  {t('admin.healthy')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Last Updated</span>
+                <span className="text-gray-600">{t('admin.lastUpdated')}</span>
                 <span className="text-gray-900 font-medium">
                   {new Date().toLocaleTimeString()}
                 </span>
@@ -219,7 +221,7 @@ export default function AdminStats() {
             onClick={fetchStats}
             className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-flex items-center gap-2"
           >
-            🔄 Refresh Statistics
+            🔄 {t('admin.refreshStatistics')}
           </button>
         </div>
       </div>

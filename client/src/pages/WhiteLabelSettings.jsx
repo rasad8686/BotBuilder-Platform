@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Save, Upload, Palette, Globe, Mail, FileText, Settings as SettingsIcon, CheckCircle, AlertCircle } from 'lucide-react';
 import ColorPicker from '../components/ColorPicker';
 import { getSettings, updateSettings, uploadLogo, uploadFavicon } from '../api/whitelabel';
@@ -10,6 +11,7 @@ import { useBrand } from '../contexts/BrandContext';
  */
 
 export default function WhiteLabelSettings() {
+  const { t } = useTranslation();
   const { refreshBrand } = useBrand();
 
   const [settings, setSettings] = useState(null);
@@ -171,7 +173,7 @@ export default function WhiteLabelSettings() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading settings...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -181,9 +183,9 @@ export default function WhiteLabelSettings() {
     <div className="max-w-5xl mx-auto p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">White-label Settings</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('whiteLabel.title')}</h1>
         <p className="text-gray-600">
-          Customize your platform branding, colors, and appearance to match your brand identity.
+          {t('whiteLabel.subtitle')}
         </p>
       </div>
 
@@ -206,14 +208,14 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Palette className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Brand Identity</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.brandIdentity')}</h2>
           </div>
 
           <div className="space-y-6">
             {/* Brand Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Brand Name
+                {t('whiteLabel.brandName')}
               </label>
               <input
                 type="text"
@@ -231,7 +233,7 @@ export default function WhiteLabelSettings() {
             {/* Logo Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Logo
+                {t('whiteLabel.logo')}
               </label>
               {settings?.logo_url && (
                 <div className="mb-3">
@@ -245,7 +247,7 @@ export default function WhiteLabelSettings() {
               <div className="flex items-center gap-3">
                 <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                   <Upload className="w-4 h-4" />
-                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                  {uploadingLogo ? t('common.uploading') : t('whiteLabel.uploadLogo')}
                   <input
                     type="file"
                     accept=".png,.jpg,.jpeg,.svg"
@@ -263,7 +265,7 @@ export default function WhiteLabelSettings() {
             {/* Favicon Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Favicon
+                {t('whiteLabel.favicon')}
               </label>
               {settings?.favicon_url && (
                 <div className="mb-3">
@@ -277,7 +279,7 @@ export default function WhiteLabelSettings() {
               <div className="flex items-center gap-3">
                 <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                   <Upload className="w-4 h-4" />
-                  {uploadingFavicon ? 'Uploading...' : 'Upload Favicon'}
+                  {uploadingFavicon ? t('common.uploading') : t('whiteLabel.uploadFavicon')}
                   <input
                     type="file"
                     accept=".ico,.png"
@@ -298,7 +300,7 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Palette className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Color Scheme</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.colorScheme')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -348,13 +350,13 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Globe className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Custom Domain</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.customDomain')}</h2>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Custom Domain
+                {t('whiteLabel.customDomain')}
               </label>
               <input
                 type="text"
@@ -382,13 +384,13 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Mail className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Contact Information</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.contactInfo')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Support Email
+                {t('whiteLabel.supportEmail')}
               </label>
               <input
                 type="email"
@@ -402,7 +404,7 @@ export default function WhiteLabelSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Name
+                {t('whiteLabel.companyName')}
               </label>
               <input
                 type="text"
@@ -416,7 +418,7 @@ export default function WhiteLabelSettings() {
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company Website
+                {t('whiteLabel.companyWebsite')}
               </label>
               <input
                 type="url"
@@ -434,7 +436,7 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Mail className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Email Branding</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.emailBranding')}</h2>
           </div>
 
           <div className="space-y-6">
@@ -496,7 +498,7 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <FileText className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Legal Links</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.legalLinks')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -534,7 +536,7 @@ export default function WhiteLabelSettings() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <SettingsIcon className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-900">Advanced Settings</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('whiteLabel.advancedSettings')}</h2>
           </div>
 
           <div className="space-y-6">
@@ -581,7 +583,7 @@ export default function WhiteLabelSettings() {
             className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Save className="w-5 h-5" />
-            {saving ? 'Saving...' : 'Save Settings'}
+            {saving ? t('common.saving') : t('common.saveSettings')}
           </button>
         </div>
       </form>

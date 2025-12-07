@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Footer from '../components/Footer';
 
 export default function PrivacyPolicy() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-lg shadow-md p-8">
           <Link to="/" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
-            &larr; Back to Home
+            &larr; {t('common.back')}
           </Link>
 
           <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>

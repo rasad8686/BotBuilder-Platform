@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { ToolList, ToolForm, ToolTestPanel, ToolAssignModal } from '../components/tools';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ToolStudio = () => {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const [tools, setTools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +147,7 @@ const ToolStudio = () => {
     return (
       <div className="tool-studio loading">
         <div className="spinner"></div>
-        <p>Loading tools...</p>
+        <p>{t('toolStudio.loading')}</p>
       </div>
     );
   }
@@ -153,8 +155,8 @@ const ToolStudio = () => {
   if (error) {
     return (
       <div className="tool-studio error">
-        <p>Error: {error}</p>
-        <button onClick={fetchTools}>Retry</button>
+        <p>{t('common.error')}: {error}</p>
+        <button onClick={fetchTools}>{t('common.tryAgain')}</button>
       </div>
     );
   }

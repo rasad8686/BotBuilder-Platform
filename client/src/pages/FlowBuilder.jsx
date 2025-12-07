@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
   Controls,
@@ -21,6 +22,7 @@ import NodeEditor from '../components/NodeEditor';
 
 
 function FlowBuilder() {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const navigate = useNavigate();
 
@@ -66,7 +68,7 @@ function FlowBuilder() {
           if (flowResponse.success && flowResponse.data) {
             setCurrentFlowId(flowResponse.data.id);
             loadFlow(flowResponse.data.flow_data);
-            showNotification('Flow loaded successfully', 'success');
+            showNotification(t('flowBuilder.flowLoaded'), 'success');
           }
         } catch (flowError) {
           // No flow exists yet - that's okay
@@ -74,7 +76,7 @@ function FlowBuilder() {
         }
       } catch (error) {
         // Silent fail
-        showNotification('Error loading flow builder', 'error');
+        showNotification(t('flowBuilder.loadError'), 'error');
       } finally {
         setIsLoading(false);
       }
@@ -102,7 +104,7 @@ function FlowBuilder() {
       y: Math.random() * 300 + 100
     };
     addNode(nodeType, position);
-    showNotification(`${nodeType} node added`, 'success');
+    showNotification(`${nodeType} ${t('flowBuilder.nodeAdded')}`, 'success');
   }, [addNode]);
 
   // Save flow to backend
@@ -113,7 +115,7 @@ function FlowBuilder() {
 
       // Validate flow has at least one node
       if (flowData.nodes.length === 0) {
-        showNotification('Cannot save empty flow', 'error');
+        showNotification(t('flowBuilder.emptyFlowError'), 'error');
         return;
       }
 
@@ -121,11 +123,11 @@ function FlowBuilder() {
       if (currentFlowId) {
         // Update existing flow (creates new version)
         response = await flowsApi.updateFlow(botId, currentFlowId, flowData);
-        showNotification('Flow updated successfully (new version created)', 'success');
+        showNotification(t('flowBuilder.flowUpdated'), 'success');
       } else {
         // Create new flow
         response = await flowsApi.saveFlow(botId, flowData);
-        showNotification('Flow saved successfully', 'success');
+        showNotification(t('flowBuilder.flowSaved'), 'success');
       }
 
       if (response.success && response.data) {
@@ -134,7 +136,7 @@ function FlowBuilder() {
       }
     } catch (error) {
       // Silent fail
-      showNotification(error.response?.data?.message || 'Error saving flow', 'error');
+      showNotification(error.response?.data?.message || t('flowBuilder.saveError'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -151,21 +153,21 @@ function FlowBuilder() {
     link.download = `bot-${botId}-flow-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    showNotification('Flow exported successfully', 'success');
+    showNotification(t('flowBuilder.flowExported'), 'success');
   };
 
   // Clear canvas
   const handleClear = () => {
-    if (window.confirm('Are you sure you want to clear the entire canvas? This cannot be undone.')) {
+    if (window.confirm(t('flowBuilder.clearConfirm'))) {
       clearFlow();
-      showNotification('Canvas cleared', 'info');
+      showNotification(t('flowBuilder.canvasCleared'), 'info');
     }
   };
 
   // Handle node editor save
   const handleEditorSave = (nodeId, newData) => {
     updateNode(nodeId, newData);
-    showNotification('Node updated', 'success');
+    showNotification(t('flowBuilder.nodeUpdated'), 'success');
   };
 
   // Handle node deletion (on Delete key press)
@@ -173,8 +175,8 @@ function FlowBuilder() {
     nodesToDelete.forEach((node) => {
       deleteNode(node.id);
     });
-    showNotification(`${nodesToDelete.length} node(s) deleted`, 'info');
-  }, [deleteNode]);
+    showNotification(`${nodesToDelete.length} ${t('flowBuilder.nodesDeleted')}`, 'info');
+  }, [deleteNode, t]);
 
   // Show notification helper
   const showNotification = (message, type = 'info') => {
@@ -187,7 +189,7 @@ function FlowBuilder() {
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading Flow Builder...</p>
+          <p className="text-gray-600 font-medium">{t('flowBuilder.loading')}</p>
         </div>
       </div>
     );
@@ -202,19 +204,19 @@ function FlowBuilder() {
             onClick={() => navigate('/my-bots')}
             className="text-gray-600 hover:text-gray-800 transition"
           >
-            ← Back to Bots
+            ← {t('flowBuilder.backToBots')}
           </button>
           <div className="border-l border-gray-300 pl-4">
-            <h1 className="text-2xl font-bold text-gray-800">Bot #{botId}</h1>
-            <p className="text-sm text-gray-600">Visual Flow Builder</p>
+            <h1 className="text-2xl font-bold text-gray-800">{t('flowBuilder.botTitle')} #{botId}</h1>
+            <p className="text-sm text-gray-600">{t('flowBuilder.title')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {isModified && (
-            <span className="text-sm text-orange-600 font-medium">● Unsaved changes</span>
+            <span className="text-sm text-orange-600 font-medium">● {t('flowBuilder.unsavedChanges')}</span>
           )}
           <span className="text-sm text-gray-600">
-            {nodes.length} node(s) | {edges.length} connection(s)
+            {nodes.length} {t('flowBuilder.nodes')} | {edges.length} {t('flowBuilder.connections')}
           </span>
         </div>
       </div>
@@ -287,12 +289,12 @@ function FlowBuilder() {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center bg-white p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300">
                 <div className="text-6xl mb-4">🤖</div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Start Building Your Flow</h2>
-                <p className="text-gray-600 mb-4">Click on nodes in the toolbox to add them to the canvas</p>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('flowBuilder.emptyState.title')}</h2>
+                <p className="text-gray-600 mb-4">{t('flowBuilder.emptyState.description')}</p>
                 <div className="text-sm text-gray-500 space-y-1">
-                  <p>💡 Tip: Drag from node handles to create connections</p>
-                  <p>💡 Tip: Select and press Delete to remove nodes</p>
-                  <p>💡 Tip: Use scroll wheel to zoom in/out</p>
+                  <p>💡 {t('flowBuilder.emptyState.tip1')}</p>
+                  <p>💡 {t('flowBuilder.emptyState.tip2')}</p>
+                  <p>💡 {t('flowBuilder.emptyState.tip3')}</p>
                 </div>
               </div>
             </div>

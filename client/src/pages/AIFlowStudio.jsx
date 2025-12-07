@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import AIFlowGenerator from '../components/AI/AIFlowGenerator';
 import FlowTemplateSelector from '../components/AI/FlowTemplateSelector';
 import GeneratedFlowPreview from '../components/AI/GeneratedFlowPreview';
@@ -7,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function AIFlowStudio() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('generate'); // 'generate' or 'templates'
   const [generatedFlow, setGeneratedFlow] = useState(null);
