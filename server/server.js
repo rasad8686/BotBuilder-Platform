@@ -199,6 +199,18 @@ app.use('/api/', apiLimiter);
 // ✅ Serve uploaded files (logos, favicons, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// ✅ Serve widget.js with CORS headers for cross-origin embedding
+app.get('/widget.js', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, '../public/widget.js'));
+});
+
+// ✅ Serve public static files (widget assets)
+app.use(express.static(path.join(__dirname, '../public')));
+
 // ✅ Test route
 app.get('/test', (req, res) => {
   res.json({ 
@@ -634,14 +646,6 @@ app.use('/api/nlu', require('./routes/nlu'));
 
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
-
-// ✅ Serve widget.js for embedding with CORS
-app.get('/widget.js', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(path.join(__dirname, '../public/widget.js'));
-});
 
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

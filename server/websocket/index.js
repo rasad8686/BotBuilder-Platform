@@ -58,11 +58,25 @@ function initializeWebSocket(server) {
     socket.on('widget:message', async (data) => {
       const { sessionId, message } = data;
       const botId = parseInt(data.botId, 10);
-      const room = `widget:${botId}:${sessionId}`;
+      const room = `widget:${data.botId}:${sessionId}`;
+
+      // Validate botId is a valid number
+      if (isNaN(botId)) {
+        log.warn('[WebSocket] Invalid botId:', data.botId);
+        socket.emit('widget:message', { message: 'Bot ID is invalid. Please use a valid bot ID.' });
+        return;
+      }
 
       try {
         // Emit typing indicator
         socket.emit('widget:typing');
+
+        // Check if bot exists
+        const botCheck = await pool.query('SELECT id, name FROM bots WHERE id = $1', [botId]);
+        if (botCheck.rows.length === 0) {
+          socket.emit('widget:message', { message: 'Bu bot mövcud deyil. Zəhmət olmasa düzgün bot ID istifadə edin.' });
+          return;
+        }
 
         // Store user message
         await pool.query(`
