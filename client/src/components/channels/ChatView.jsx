@@ -292,7 +292,7 @@ export default function ChatView({ channel, conversation, onBack }) {
               </div>
 
               {/* Messages */}
-              {dateMessages.map((message, index) => (
+              {dateMessages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.direction === 'outbound' ? 'justify-end' : 'justify-start'} mb-2`}

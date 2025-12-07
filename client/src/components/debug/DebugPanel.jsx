@@ -6,7 +6,6 @@ import ErrorLog from './ErrorLog';
 
 const DebugPanel = ({
   nodes = [],
-  edges = [],
   isRunning = false,
   executionState = null,
   onNodeHighlight = () => {},

@@ -5,7 +5,7 @@ import botApi from '../api/bots';
 import UpgradeLimitModal from '../components/UpgradeLimitModal';
 
 export default function CreateBot() {
-  const { t } = useTranslation();
+  useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     platform: 'telegram',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import ExecutionTimeline from './ExecutionTimeline';
 import AgentMessageLog from './AgentMessageLog';
 import ExecutionStats from './ExecutionStats';
@@ -9,7 +9,7 @@ import useExecutionSocket from '../../hooks/useExecutionSocket';
 const ExecutionMonitor = ({ workflowId, onClose, onExecutionUpdate }) => {
   const [testInput, setTestInput] = useState('');
   const [selectedStep, setSelectedStep] = useState(null);
-  const [executionId, setExecutionId] = useState(null);
+  const [, setExecutionId] = useState(null);
 
   const {
     status,

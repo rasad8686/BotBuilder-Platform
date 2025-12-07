@@ -7,8 +7,7 @@ import ReactFlow, {
   BackgroundVariant,
   ReactFlowProvider,
   useNodesState,
-  useEdgesState,
-  addEdge
+  useEdgesState
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import FlowConnector from './FlowConnector';
@@ -21,7 +20,7 @@ function OrchestrationBuilderInner() {
   const navigate = useNavigate();
   const [orchestration, setOrchestration] = useState(null);
   const [flows, setFlows] = useState([]);
-  const [transitions, setTransitions] = useState([]);
+  const [, setTransitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -225,7 +224,7 @@ function OrchestrationBuilderInner() {
       });
 
       if (res.ok) {
-        const result = await res.json();
+        await res.json();
         showNotification('Workflow started successfully!', 'success');
         // Navigate to executions page after short delay
         setTimeout(() => {

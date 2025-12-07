@@ -41,8 +41,6 @@ export default function WhiteLabelSettings() {
     custom_css: ''
   });
 
-  const [logoFile, setLogoFile] = useState(null);
-  const [faviconFile, setFaviconFile] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
 

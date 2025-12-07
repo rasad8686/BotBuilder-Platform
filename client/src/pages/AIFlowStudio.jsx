@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AIFlowGenerator from '../components/AI/AIFlowGenerator';
 import FlowTemplateSelector from '../components/AI/FlowTemplateSelector';

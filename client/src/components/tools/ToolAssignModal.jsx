@@ -27,7 +27,7 @@ const ToolAssignModal = ({ tool, botId, onClose, onSave }) => {
       setAgents(agentsData);
 
       // Fetch current assignments for this tool
-      const assignmentsRes = await fetch(`${API_URL}/api/tools/${tool.id}`, {
+      await fetch(`${API_URL}/api/tools/${tool.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

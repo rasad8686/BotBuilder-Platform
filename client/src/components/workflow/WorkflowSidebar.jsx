@@ -28,7 +28,7 @@ const nodeCategories = [
   }
 ];
 
-const WorkflowSidebar = ({ agents = [], onAgentSelect }) => {
+const WorkflowSidebar = ({ agents = [] }) => {
   const onDragStart = (event, nodeType, data = {}) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify({ type: nodeType, data }));
     event.dataTransfer.effectAllowed = 'move';

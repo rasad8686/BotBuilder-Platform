@@ -26,7 +26,7 @@ export default function MyBots() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [pagination, setPagination] = useState(null);
-  const [usePagination, setUsePagination] = useState(true);
+  const [usePagination] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 

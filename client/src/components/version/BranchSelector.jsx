@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function BranchSelector({ entityType, entityId, currentBranch, onBranchChange }) {
   const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showMergeModal, setShowMergeModal] = useState(false);

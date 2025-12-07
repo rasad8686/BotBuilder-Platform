@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
-function EndNode({ data }) {
+function EndNode() {
   return (
     <div className="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg border-2 border-red-600 min-w-[150px]">
       <Handle

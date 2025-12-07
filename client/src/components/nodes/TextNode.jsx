@@ -1,8 +1,7 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 function TextNode({ data, id }) {
-  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div className="bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg border-2 border-blue-600 min-w-[200px] max-w-[300px]">

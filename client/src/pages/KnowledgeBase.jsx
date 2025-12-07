@@ -14,7 +14,7 @@ const KnowledgeBase = () => {
   const [selectedKB, setSelectedKB] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assigningKB, setAssigningKB] = useState(null);

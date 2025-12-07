@@ -16,7 +16,6 @@ export default function Webhooks() {
   const [selectedWebhook, setSelectedWebhook] = useState(null);
   const [webhookLogs, setWebhookLogs] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
-  const [copiedSecret, setCopiedSecret] = useState(false);
   const navigate = useNavigate();
 
   // Form state
