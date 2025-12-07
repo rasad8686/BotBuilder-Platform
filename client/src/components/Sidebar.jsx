@@ -45,21 +45,21 @@ export default function Sidebar() {
     { path: '/webhooks', icon: '🔗', label: t('sidebar.webhooks') },
     { path: '/usage', icon: '📊', label: t('sidebar.usage') },
     { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
-    { path: '/team', icon: '👥', label: 'Team' },
+    { path: '/team', icon: '👥', label: t('sidebar.team') },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
   ];
 
   // Multi-Agent AI links (shown in bot context)
   const agentLinks = [
-    { path: '/ai-flow', icon: '🤖', label: 'AI Flow Studio' },
-    { path: '/agent-studio', icon: '🎯', label: 'Agent Studio' },
-    { path: '/workflows', icon: '🔄', label: 'Workflows' },
-    { path: '/intents', icon: '🎯', label: 'Intent Builder' },
-    { path: '/orchestrations', icon: '🔀', label: 'Multi-Flow' },
-    { path: '/executions', icon: '📋', label: 'Executions' },
-    { path: '/knowledge', icon: '🧠', label: 'Knowledge Base' },
-    { path: '/channels', icon: '📱', label: 'Channels' },
-    { path: '/marketplace', icon: '🧩', label: 'Marketplace' },
+    { path: '/ai-flow', icon: '🤖', label: t('sidebar.aiFlowStudio') },
+    { path: '/agent-studio', icon: '🎯', label: t('sidebar.agentStudio') },
+    { path: '/workflows', icon: '🔄', label: t('sidebar.workflows') },
+    { path: '/intents', icon: '🎯', label: t('sidebar.intentBuilder') },
+    { path: '/orchestrations', icon: '🔀', label: t('sidebar.multiFlow') },
+    { path: '/executions', icon: '📋', label: t('sidebar.executions') },
+    { path: '/knowledge', icon: '🧠', label: t('sidebar.knowledgeBase') },
+    { path: '/channels', icon: '📱', label: t('sidebar.channels') },
+    { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
   ];
 
   // Get botId from URL if on a bot-specific page
@@ -68,10 +68,10 @@ export default function Sidebar() {
 
   // Admin links - only shown to admins and owners
   const adminLinks = [
-    { path: '/admin/dashboard', icon: '📊', label: 'Admin Dashboard' },
-    { path: '/admin/audit-logs', icon: '📋', label: 'Audit Logs' },
-    { path: '/admin/health', icon: '🔧', label: 'System Health' },
-    { path: '/admin/whitelabel', icon: '🎨', label: 'White-label Settings' },
+    { path: '/admin/dashboard', icon: '📊', label: t('sidebar.adminDashboard') },
+    { path: '/admin/audit-logs', icon: '📋', label: t('sidebar.auditLogs') },
+    { path: '/admin/health', icon: '🔧', label: t('sidebar.systemHealth') },
+    { path: '/admin/whitelabel', icon: '🎨', label: t('sidebar.whiteLabelSettings') },
   ];
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
@@ -220,7 +220,7 @@ export default function Sidebar() {
               <div className="flex items-center gap-2 px-4">
                 <div className="flex-1 h-px bg-gray-200"></div>
                 <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
-                  AI Agents
+                  {t('sidebar.aiAgents')}
                 </span>
                 <div className="flex-1 h-px bg-gray-200"></div>
               </div>
@@ -264,7 +264,7 @@ export default function Sidebar() {
                     `}
                   >
                     <span className="text-xl">🔀</span>
-                    <span className="font-medium">Multi-Flow</span>
+                    <span className="font-medium">{t('sidebar.multiFlow')}</span>
                   </Link>
                 </li>
                 <li>
@@ -282,7 +282,7 @@ export default function Sidebar() {
                     `}
                   >
                     <span className="text-xl">🔧</span>
-                    <span className="font-medium">Tools</span>
+                    <span className="font-medium">{t('sidebar.tools')}</span>
                   </Link>
                 </li>
                 <li>
@@ -300,7 +300,7 @@ export default function Sidebar() {
                     `}
                   >
                     <span className="text-xl">🎯</span>
-                    <span className="font-medium">Intent Builder</span>
+                    <span className="font-medium">{t('sidebar.intentBuilder')}</span>
                   </Link>
                 </li>
               </>
@@ -313,7 +313,7 @@ export default function Sidebar() {
                   <div className="flex items-center gap-2 px-4">
                     <div className="flex-1 h-px bg-gray-200"></div>
                     <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
-                      Admin
+                      {t('sidebar.admin')}
                     </span>
                     <div className="flex-1 h-px bg-gray-200"></div>
                   </div>
