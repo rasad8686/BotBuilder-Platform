@@ -912,6 +912,18 @@
     "typeMessage": "Bir mesaj yazın..."
   },
   "bots": {
-    "widget": "Widget"
+    "widget": "Widget",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "created": "Oluşturuldu:",
+    "webhook": "Webhook:",
+    "noDescription": "Açıklama sağlanmadı",
+    "flowBuilder": "Akış Oluşturucu",
+    "aiConfig": "AI Yapılandırma",
+    "agents": "Ajanlar",
+    "tools": "Araçlar",
+    "workflows": "İş Akışları",
+    "edit": "Düzenle",
+    "messages": "Mesajlar"
   }
 }
