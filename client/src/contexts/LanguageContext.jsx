@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const LanguageContext = createContext();
 
@@ -12,14 +12,13 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const { i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(
     localStorage.getItem('language') || 'en'
   );
 
   useEffect(() => {
     i18n.changeLanguage(currentLanguage);
-  }, [currentLanguage, i18n]);
+  }, [currentLanguage]);
 
   const changeLanguage = (lang) => {
     setCurrentLanguage(lang);

@@ -836,36 +836,6 @@
     "trained": "Öyrədilib",
     "deleteConfirm": "Bunu silmək istədiyinizə əminsiniz?"
   },
-  "landing": {
-    "hero": {
-      "title": "Güclü AI Söhbət Botları Qurun",
-      "subtitle": "Ağıllı söhbət botlarını asanlıqla yaradın, yerləşdirin və idarə edin",
-      "getStarted": "Başla",
-      "watchDemo": "Demo İzlə"
-    },
-    "features": {
-      "title": "Xüsusiyyətlər",
-      "multiChannel": "Çox Kanallı Dəstək",
-      "multiChannelDesc": "Telegram, WhatsApp, Discord və s. platformalara yerləşdirin",
-      "aiPowered": "AI ilə Gücləndirilmiş",
-      "aiPoweredDesc": "Ağıllı cavablar üçün quraşdırılmış GPT inteqrasiyası",
-      "analytics": "Analitika",
-      "analyticsDesc": "Detallı anlayışlarla performansı izləyin",
-      "customization": "Fərdiləşdirmə",
-      "customizationDesc": "Tam fərdiləşdirilə bilən axınlar və cavablar"
-    },
-    "pricing": {
-      "title": "Qiymətlər",
-      "monthly": "Aylıq",
-      "yearly": "İllik",
-      "getStarted": "Başla"
-    },
-    "cta": {
-      "title": "Botunuzu Qurmağa Hazırsınız?",
-      "subtitle": "Pulsuz başlayın və daha çoxuna ehtiyacınız olanda yüksəldin",
-      "button": "İlk Botunuzu Yaradın"
-    }
-  },
   "demo": {
     "title": "Demo Rejimi",
     "subtitle": "BotBuilder xüsusiyyətlərini araşdırın",
