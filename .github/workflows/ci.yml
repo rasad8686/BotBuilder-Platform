@@ -20,11 +20,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
-        run: cd server && npm ci
+        run: cd server && npm install
 
       - name: Lint check
         run: cd server && npm run lint --if-present
