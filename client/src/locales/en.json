@@ -836,36 +836,6 @@
     "trained": "Trained",
     "deleteConfirm": "Are you sure you want to delete this?"
   },
-  "landing": {
-    "hero": {
-      "title": "Build Powerful AI Chatbots",
-      "subtitle": "Create, deploy, and manage intelligent chatbots with ease",
-      "getStarted": "Get Started",
-      "watchDemo": "Watch Demo"
-    },
-    "features": {
-      "title": "Features",
-      "multiChannel": "Multi-Channel Support",
-      "multiChannelDesc": "Deploy to Telegram, WhatsApp, Discord, and more",
-      "aiPowered": "AI Powered",
-      "aiPoweredDesc": "Built-in GPT integration for intelligent responses",
-      "analytics": "Analytics",
-      "analyticsDesc": "Track performance with detailed insights",
-      "customization": "Customization",
-      "customizationDesc": "Fully customizable flows and responses"
-    },
-    "pricing": {
-      "title": "Pricing",
-      "monthly": "Monthly",
-      "yearly": "Yearly",
-      "getStarted": "Get Started"
-    },
-    "cta": {
-      "title": "Ready to Build Your Bot?",
-      "subtitle": "Start for free and upgrade when you need more",
-      "button": "Create Your First Bot"
-    }
-  },
   "demo": {
     "title": "Demo Mode",
     "subtitle": "Explore BotBuilder features",

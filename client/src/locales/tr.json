@@ -836,36 +836,6 @@
     "trained": "Eğitildi",
     "deleteConfirm": "Bunu silmek istediğinizden emin misiniz?"
   },
-  "landing": {
-    "hero": {
-      "title": "Güçlü AI Sohbet Botları Oluşturun",
-      "subtitle": "Akıllı sohbet botlarını kolayca oluşturun, dağıtın ve yönetin",
-      "getStarted": "Başlayın",
-      "watchDemo": "Demo İzle"
-    },
-    "features": {
-      "title": "Özellikler",
-      "multiChannel": "Çoklu Kanal Desteği",
-      "multiChannelDesc": "Telegram, WhatsApp, Discord ve daha fazlasına dağıtın",
-      "aiPowered": "AI Destekli",
-      "aiPoweredDesc": "Akıllı yanıtlar için yerleşik GPT entegrasyonu",
-      "analytics": "Analitik",
-      "analyticsDesc": "Detaylı içgörülerle performansı izleyin",
-      "customization": "Özelleştirme",
-      "customizationDesc": "Tamamen özelleştirilebilir akışlar ve yanıtlar"
-    },
-    "pricing": {
-      "title": "Fiyatlandırma",
-      "monthly": "Aylık",
-      "yearly": "Yıllık",
-      "getStarted": "Başlayın"
-    },
-    "cta": {
-      "title": "Botunuzu Oluşturmaya Hazır mısınız?",
-      "subtitle": "Ücretsiz başlayın ve daha fazlasına ihtiyaç duyduğunuzda yükseltin",
-      "button": "İlk Botunuzu Oluşturun"
-    }
-  },
   "demo": {
     "title": "Demo Modu",
     "subtitle": "BotBuilder özelliklerini keşfedin",
