@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
-const useExecutionSocket = (workflowId) => {
+const useExecutionSocket = () => {
   const [status, setStatus] = useState('idle');
   const [currentStep, setCurrentStep] = useState(null);
   const [steps, setSteps] = useState([]);

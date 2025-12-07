@@ -70,7 +70,7 @@ function FlowBuilder() {
             loadFlow(flowResponse.data.flow_data);
             showNotification(t('flowBuilder.flowLoaded'), 'success');
           }
-        } catch (flowError) {
+        } catch {
           // No flow exists yet - that's okay
           // No existing flow found - starting fresh
         }

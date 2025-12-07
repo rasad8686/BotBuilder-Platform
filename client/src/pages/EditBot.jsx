@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import botApi from '../api/bots';
 
 export default function EditBot() {
-  const { t } = useTranslation();
+  useTranslation();
   const { botId } = useParams();
   const [formData, setFormData] = useState({
     name: '',
@@ -111,7 +111,7 @@ export default function EditBot() {
         updateData.description = null;
       }
 
-      const response = await botApi.updateBot(botId, updateData);
+      await botApi.updateBot(botId, updateData);
       setSuccess(true);
 
       // Redirect after short delay

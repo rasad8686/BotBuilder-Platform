@@ -63,7 +63,7 @@ const ExecutionPath = ({
           <div style={styles.nodePreview}>
             <p style={styles.previewTitle}>Workflow nodes:</p>
             <div style={styles.previewNodes}>
-              {nodes.slice(0, 8).map((node, index) => (
+              {nodes.slice(0, 8).map((node) => (
                 <div key={node.id} style={styles.previewNode}>
                   <span>{getNodeTypeIcon(node.type)}</span>
                   <span style={styles.previewNodeName}>

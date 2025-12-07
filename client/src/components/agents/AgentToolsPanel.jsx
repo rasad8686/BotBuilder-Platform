@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const AgentToolsPanel = ({ agentId, botId, onAddTool }) => {
+const AgentToolsPanel = ({ agentId, onAddTool }) => {
   const [tools, setTools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

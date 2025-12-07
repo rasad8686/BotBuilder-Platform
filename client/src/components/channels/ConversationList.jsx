@@ -35,7 +35,7 @@ const channelColors = {
 export default function ConversationList({ channel, onSelectConversation, onBack }) {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const Icon = channelIcons[channel.type] || MessageSquare;

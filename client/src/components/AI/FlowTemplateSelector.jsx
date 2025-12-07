@@ -23,9 +23,9 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const selectedTemplate = null; // TODO: implement selection UI
   const [previewTemplate, setPreviewTemplate] = useState(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [, setLoadingPreview] = useState(false);
 
   const getToken = () => localStorage.getItem('token');
 

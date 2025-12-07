@@ -41,7 +41,7 @@ const WorkflowBuilder = () => {
 
   const [bot, setBot] = useState(null);
   const [agents, setAgents] = useState([]);
-  const [workflow, setWorkflow] = useState(null);
+  const [, setWorkflow] = useState(null);
   const [workflowName, setWorkflowName] = useState('New Workflow');
 
   const [nodes, setNodes] = useState(initialNodes);
@@ -50,12 +50,12 @@ const WorkflowBuilder = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState(null);
+  const [isRunning] = useState(false);
+  const [, setError] = useState(null);
 
   const [showExecutionMonitor, setShowExecutionMonitor] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [highlightedNodeId, setHighlightedNodeId] = useState(null);
+  const [, setHighlightedNodeId] = useState(null);
 
   // Debug panel execution state - updated from ExecutionMonitor
   const [debugExecutionState, setDebugExecutionState] = useState(null);
@@ -240,31 +240,31 @@ const WorkflowBuilder = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleNodesChange = useCallback((changes) => {
+  const handleNodesChange = useCallback(() => {
     // changes is ReactFlow changes array, not nodes - just ignore it here
     // WorkflowCanvas handles internal state with useNodesState
   }, []);
 
-  const handleEdgesChange = useCallback((changes) => {
+  const handleEdgesChange = useCallback(() => {
     // changes is ReactFlow changes array, not edges - just ignore it here
     // WorkflowCanvas handles internal state with useEdgesState
   }, []);
 
-  const handleConnect = useCallback((params) => {
+  const handleConnect = useCallback(() => {
     // Handled by WorkflowCanvas
   }, []);
 
   // Save state after significant changes (called from WorkflowCanvas)
-  const handleStateChange = useCallback((newNodes, newEdges) => {
+  const handleStateChange = useCallback(() => {
     // State is now managed in WorkflowCanvas
   }, []);
 
-  const handleNodeClick = useCallback((event, node) => {
+  const handleNodeClick = useCallback((_event, node) => {
     setSelectedNode(node);
   }, []);
 
   // Drop is now handled in WorkflowCanvas
-  const handleDrop = useCallback((event, reactFlowWrapper) => {
+  const handleDrop = useCallback(() => {
     // Drop logic moved to WorkflowCanvas
   }, []);
 

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
-function StartNode({ data }) {
+function StartNode() {
   return (
     <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg border-2 border-green-600 min-w-[150px]">
       <div className="flex items-center justify-between gap-3">
