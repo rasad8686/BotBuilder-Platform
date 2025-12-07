@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, Bot, Activity, Calendar, AlertCircle } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import ActivityTimeline from '../components/ActivityTimeline';
@@ -9,6 +10,7 @@ import { getStats } from '../api/admin';
  * Main admin dashboard with statistics and activity overview
  */
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,13 +38,13 @@ const AdminDashboard = () => {
       <div className="p-6">
         <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-200">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.failedToLoad')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={fetchStats}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
-            Try Again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -53,35 +55,35 @@ const AdminDashboard = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-1">Monitor your organization's activity and performance</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard')}</h1>
+        <p className="text-gray-600 mt-1">{t('admin.dashboardSubtitle')}</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Members"
+          title={t('admin.totalMembers')}
           value={stats?.totalMembers || 0}
           icon={Users}
           color="indigo"
           loading={loading}
         />
         <StatCard
-          title="Total Bots"
+          title={t('admin.totalBots')}
           value={stats?.totalBots || 0}
           icon={Bot}
           color="green"
           loading={loading}
         />
         <StatCard
-          title="Active Bots"
+          title={t('admin.activeBots')}
           value={stats?.activeBots || 0}
           icon={Activity}
           color="blue"
           loading={loading}
         />
         <StatCard
-          title="Messages (30d)"
+          title={t('admin.messages30d')}
           value={stats?.messagesLast30Days || 0}
           icon={Calendar}
           color="purple"
@@ -98,7 +100,7 @@ const AdminDashboard = () => {
 
         {/* Top Users */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Active Users</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.topActiveUsers')}</h3>
           {loading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
@@ -138,14 +140,14 @@ const AdminDashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">No user activity data</p>
+            <p className="text-gray-500 text-center py-8">{t('admin.noUserActivity')}</p>
           )}
         </div>
       </div>
 
       {/* Recent Activity Breakdown */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Breakdown (24h)</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.activityBreakdown')}</h3>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
@@ -165,14 +167,14 @@ const AdminDashboard = () => {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">No recent activity</p>
+          <p className="text-gray-500 text-center py-8">{t('admin.noRecentActivity')}</p>
         )}
       </div>
 
       {/* Organization Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Organization Info</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.organizationInfo')}</h3>
           {loading ? (
             <div className="space-y-3">
               <div className="animate-pulse">
@@ -183,13 +185,13 @@ const AdminDashboard = () => {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Plan</p>
+                <p className="text-sm text-gray-600">{t('admin.plan')}</p>
                 <p className="text-lg font-semibold text-gray-900 capitalize">
-                  {stats?.planTier || 'Free'}
+                  {stats?.planTier || t('billing.free')}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Created</p>
+                <p className="text-sm text-gray-600">{t('admin.created')}</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {stats?.organizationCreatedAt
                     ? new Date(stats.organizationCreatedAt).toLocaleDateString('en-US', {
@@ -205,7 +207,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Audit Statistics</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('admin.auditStatistics')}</h3>
           {loading ? (
             <div className="space-y-3">
               <div className="animate-pulse">
@@ -216,7 +218,7 @@ const AdminDashboard = () => {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Audit Events (30d)</p>
+                <p className="text-sm text-gray-600">{t('admin.auditEvents30d')}</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {stats?.auditEventsLast30Days || 0}
                 </p>

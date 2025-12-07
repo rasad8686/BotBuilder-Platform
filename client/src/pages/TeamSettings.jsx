@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import MemberList from '../components/team/MemberList';
 import InviteModal from '../components/team/InviteModal';
 import RoleEditor from '../components/team/RoleEditor';
@@ -7,6 +8,7 @@ import ActivityLog from '../components/team/ActivityLog';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function TeamSettings() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('members');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [members, setMembers] = useState([]);
@@ -65,9 +67,9 @@ export default function TeamSettings() {
   };
 
   const tabs = [
-    { id: 'members', label: 'Members', icon: '👥' },
-    { id: 'roles', label: 'Roles', icon: '🔐' },
-    { id: 'activity', label: 'Activity', icon: '📋' }
+    { id: 'members', label: t('team.members'), icon: '👥' },
+    { id: 'roles', label: t('team.roles'), icon: '🔐' },
+    { id: 'activity', label: t('team.activity'), icon: '📋' }
   ];
 
   return (
@@ -80,9 +82,9 @@ export default function TeamSettings() {
         marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Team Settings</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>{t('team.settings')}</h1>
           <p style={{ color: '#6b7280', marginTop: '4px' }}>
-            Manage your team members, roles, and permissions
+            {t('team.settingsSubtitle')}
           </p>
         </div>
         {activeTab === 'members' && (
@@ -101,7 +103,7 @@ export default function TeamSettings() {
               gap: '8px'
             }}
           >
-            <span>+</span> Invite Member
+            <span>+</span> {t('team.inviteMember')}
           </button>
         )}
       </div>
@@ -123,7 +125,7 @@ export default function TeamSettings() {
             <div style={{ fontSize: '32px', fontWeight: '700', color: '#0369a1' }}>
               {stats.members?.total_members || 0}
             </div>
-            <div style={{ color: '#0c4a6e', fontSize: '14px' }}>Total Members</div>
+            <div style={{ color: '#0c4a6e', fontSize: '14px' }}>{t('team.totalMembers')}</div>
           </div>
           <div style={{
             padding: '20px',
@@ -134,7 +136,7 @@ export default function TeamSettings() {
             <div style={{ fontSize: '32px', fontWeight: '700', color: '#15803d' }}>
               {stats.members?.active_members || 0}
             </div>
-            <div style={{ color: '#14532d', fontSize: '14px' }}>Active Members</div>
+            <div style={{ color: '#14532d', fontSize: '14px' }}>{t('team.activeMembers')}</div>
           </div>
           <div style={{
             padding: '20px',
@@ -145,7 +147,7 @@ export default function TeamSettings() {
             <div style={{ fontSize: '32px', fontWeight: '700', color: '#a16207' }}>
               {stats.invitations?.pending_invitations || 0}
             </div>
-            <div style={{ color: '#713f12', fontSize: '14px' }}>Pending Invites</div>
+            <div style={{ color: '#713f12', fontSize: '14px' }}>{t('team.pendingInvites')}</div>
           </div>
           <div style={{
             padding: '20px',
@@ -156,7 +158,7 @@ export default function TeamSettings() {
             <div style={{ fontSize: '32px', fontWeight: '700', color: '#7e22ce' }}>
               {stats.roles?.length || 0}
             </div>
-            <div style={{ color: '#581c87', fontSize: '14px' }}>Roles</div>
+            <div style={{ color: '#581c87', fontSize: '14px' }}>{t('team.roles')}</div>
           </div>
         </div>
       )}
@@ -195,7 +197,7 @@ export default function TeamSettings() {
       {/* Content */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
-          Loading...
+          {t('common.loading')}
         </div>
       ) : error ? (
         <div style={{

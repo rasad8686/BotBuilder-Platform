@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ReactFlowProvider, useReactFlow } from 'reactflow';
 import {
   WorkflowCanvas,
@@ -34,6 +35,7 @@ const WorkflowToolbarWrapper = (props) => {
 };
 
 const WorkflowBuilder = () => {
+  const { t } = useTranslation();
   const { botId, workflowId } = useParams();
   const navigate = useNavigate();
 
@@ -376,27 +378,27 @@ const WorkflowBuilder = () => {
           <div style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '32px' }}>🔄</span>
-              Workflow Builder
+              {t('workflows.title')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
-              Create and manage agent workflows for your bots
+              {t('workflows.subtitle')}
             </p>
           </div>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a2e', marginTop: 0, marginBottom: '16px' }}>
-              Select a Bot
+              {t('common.selectBot')}
             </h2>
             <p style={{ color: '#6c757d', marginBottom: '24px' }}>
-              Choose a bot to manage its workflows
+              {t('common.selectBotDesc')}
             </p>
             {loadingBots ? (
               <div style={{ textAlign: 'center', padding: '32px', color: '#6c757d' }}>
-                Loading bots...
+                {t('common.loading')}
               </div>
             ) : bots.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-                <p style={{ color: '#6c757d', marginBottom: '16px' }}>No bots found</p>
+                <p style={{ color: '#6c757d', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
                 <button
                   type="button"
                   onClick={() => navigate('/create-bot')}
@@ -410,7 +412,7 @@ const WorkflowBuilder = () => {
                     fontWeight: '500'
                   }}
                 >
-                  Create Your First Bot
+                  {t('agentStudio.createFirstBot')}
                 </button>
               </div>
             ) : (
@@ -453,7 +455,7 @@ const WorkflowBuilder = () => {
     return (
       <div className="workflow-builder loading">
         <div className="spinner"></div>
-        <p>Loading Workflow Builder...</p>
+        <p>{t('common.loading')}</p>
       </div>
     );
   }

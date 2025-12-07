@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import KBList from '../components/knowledge/KBList';
 import DocumentUpload from '../components/knowledge/DocumentUpload';
 import DocumentList from '../components/knowledge/DocumentList';
@@ -8,6 +9,7 @@ import KBAssignModal from '../components/knowledge/KBAssignModal';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const KnowledgeBase = () => {
+  const { t } = useTranslation();
   const [knowledgeBases, setKnowledgeBases] = useState([]);
   const [selectedKB, setSelectedKB] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -88,7 +90,7 @@ const KnowledgeBase = () => {
   };
 
   const handleDeleteKB = async (kb) => {
-    if (!confirm(`Delete "${kb.name}"? This will remove all documents and chunks.`)) return;
+    if (!confirm(t('knowledgeBase.deleteConfirm'))) return;
     try {
       const response = await fetch(`${API_URL}/api/knowledge/${kb.id}`, {
         method: 'DELETE',
@@ -111,7 +113,7 @@ const KnowledgeBase = () => {
   };
 
   const handleDeleteDocument = async (docId) => {
-    if (!confirm('Delete this document?')) return;
+    if (!confirm(t('knowledgeBase.deleteDocConfirm'))) return;
     try {
       const response = await fetch(`${API_URL}/api/knowledge/${selectedKB.id}/documents/${docId}`, {
         method: 'DELETE',
@@ -129,7 +131,7 @@ const KnowledgeBase = () => {
     return (
       <div className="kb-page loading">
         <div className="spinner"></div>
-        <p>Loading knowledge bases...</p>
+        <p>{t('knowledgeBase.loading')}</p>
       </div>
     );
   }
@@ -137,10 +139,10 @@ const KnowledgeBase = () => {
   return (
     <div className="kb-page">
       <div className="kb-header">
-        <h1>Knowledge Base</h1>
-        <p>Manage your AI knowledge bases with vector embeddings for semantic search</p>
+        <h1>{t('knowledgeBase.title')}</h1>
+        <p>{t('knowledgeBase.subtitle')}</p>
         <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-          + Create Knowledge Base
+          + {t('knowledgeBase.createKB')}
         </button>
       </div>
 
@@ -162,11 +164,11 @@ const KnowledgeBase = () => {
           <div className="kb-main">
             <div className="kb-detail-header">
               <h2>{selectedKB.name}</h2>
-              <p>{selectedKB.description || 'No description'}</p>
+              <p>{selectedKB.description || t('common.noDescription')}</p>
               <div className="kb-stats">
-                <span>{selectedKB.document_count || 0} documents</span>
-                <span>{selectedKB.total_chunks || 0} chunks</span>
-                <span>Chunk size: {selectedKB.chunk_size}</span>
+                <span>{selectedKB.document_count || 0} {t('knowledgeBase.documents')}</span>
+                <span>{selectedKB.total_chunks || 0} {t('knowledgeBase.chunks')}</span>
+                <span>{t('knowledgeBase.chunkSize')}: {selectedKB.chunk_size}</span>
               </div>
             </div>
 
@@ -175,19 +177,19 @@ const KnowledgeBase = () => {
                 className={`tab ${activeTab === 'documents' ? 'active' : ''}`}
                 onClick={() => setActiveTab('documents')}
               >
-                Documents
+                {t('knowledgeBase.documents')}
               </button>
               <button
                 className={`tab ${activeTab === 'upload' ? 'active' : ''}`}
                 onClick={() => setActiveTab('upload')}
               >
-                Upload
+                {t('knowledgeBase.upload')}
               </button>
               <button
                 className={`tab ${activeTab === 'search' ? 'active' : ''}`}
                 onClick={() => setActiveTab('search')}
               >
-                Search Test
+                {t('knowledgeBase.searchTest')}
               </button>
             </div>
 
@@ -214,8 +216,8 @@ const KnowledgeBase = () => {
           <div className="kb-main empty">
             <div className="empty-state">
               <span className="empty-icon">🧠</span>
-              <h3>Select a Knowledge Base</h3>
-              <p>Choose a knowledge base from the list or create a new one to get started.</p>
+              <h3>{t('knowledgeBase.selectKB')}</h3>
+              <p>{t('knowledgeBase.selectKBDesc')}</p>
             </div>
           </div>
         )}
@@ -224,30 +226,30 @@ const KnowledgeBase = () => {
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Create Knowledge Base</h2>
+            <h2>{t('knowledgeBase.createKB')}</h2>
             <form onSubmit={handleCreateKB}>
               <div className="form-group">
-                <label>Name *</label>
+                <label>{t('common.name')} *</label>
                 <input
                   type="text"
                   value={newKB.name}
                   onChange={e => setNewKB({ ...newKB, name: e.target.value })}
-                  placeholder="e.g., Product Documentation"
+                  placeholder={t('knowledgeBase.namePlaceholder')}
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>{t('common.description')}</label>
                 <textarea
                   value={newKB.description}
                   onChange={e => setNewKB({ ...newKB, description: e.target.value })}
-                  placeholder="What knowledge will this contain?"
+                  placeholder={t('knowledgeBase.descriptionPlaceholder')}
                   rows={3}
                 />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Chunk Size</label>
+                  <label>{t('knowledgeBase.chunkSize')}</label>
                   <input
                     type="number"
                     value={newKB.chunk_size}
@@ -257,7 +259,7 @@ const KnowledgeBase = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Chunk Overlap</label>
+                  <label>{t('knowledgeBase.chunkOverlap')}</label>
                   <input
                     type="number"
                     value={newKB.chunk_overlap}
@@ -269,9 +271,9 @@ const KnowledgeBase = () => {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </button>
-                <button type="submit" className="btn btn-primary">Create</button>
+                <button type="submit" className="btn btn-primary">{t('common.create')}</button>
               </div>
             </form>
           </div>

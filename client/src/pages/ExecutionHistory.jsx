@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ExecutionMonitor } from '../components/execution';
 
 const ExecutionHistory = () => {
+  const { t } = useTranslation();
   const { botId: urlBotId, executionId } = useParams();
   const navigate = useNavigate();
 
@@ -129,7 +131,7 @@ const ExecutionHistory = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this execution?')) return;
+    if (!window.confirm(t('executionHistory.deleteConfirm'))) return;
 
     try {
       const res = await fetch(`/api/executions/${id}`, {
@@ -223,16 +225,16 @@ const ExecutionHistory = () => {
         <div className="header-left">
           {botId && (
             <Link to={`/bots/${botId}/workflows`} className="back-link">
-              ← Back to Workflows
+              ← {t('executionHistory.backToWorkflows')}
             </Link>
           )}
-          <h1>Execution History</h1>
+          <h1>{t('executionHistory.title')}</h1>
         </div>
         <div className="header-right">
           <div className="bot-selector">
-            <label>Select Bot</label>
+            <label>{t('executionHistory.selectBot')}</label>
             <select value={selectedBotId} onChange={handleBotChange}>
-              <option value="">-- Select a Bot --</option>
+              <option value="">-- {t('executionHistory.selectBot')} --</option>
               {bots.map((bot) => (
                 <option key={bot.id} value={bot.id}>{bot.name}</option>
               ))}
@@ -244,19 +246,19 @@ const ExecutionHistory = () => {
       {!botId ? (
         <div className="no-bot-selected">
           <span className="empty-icon">📋</span>
-          <h3>Select a Bot</h3>
-          <p>Please select a bot from the dropdown above to view execution history.</p>
+          <h3>{t('executionHistory.selectBot')}</h3>
+          <p>{t('executionHistory.selectBotDesc')}</p>
         </div>
       ) : (
         <>
           <div className="filters-section">
             <div className="filter-group">
-              <label>Workflow</label>
+              <label>{t('executionHistory.workflow')}</label>
               <select
                 value={selectedWorkflow}
                 onChange={(e) => setSelectedWorkflow(e.target.value)}
               >
-                <option value="all">All Workflows</option>
+                <option value="all">{t('executionHistory.allWorkflows')}</option>
                 {workflows.map((w) => (
                   <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
@@ -264,21 +266,21 @@ const ExecutionHistory = () => {
             </div>
 
             <div className="filter-group">
-              <label>Status</label>
+              <label>{t('executionHistory.status')}</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-                <option value="running">Running</option>
-                <option value="pending">Pending</option>
+                <option value="all">{t('executionHistory.allStatuses')}</option>
+                <option value="completed">{t('common.completed')}</option>
+                <option value="failed">{t('common.failed')}</option>
+                <option value="running">{t('common.running')}</option>
+                <option value="pending">{t('common.pending')}</option>
               </select>
             </div>
 
             <div className="filter-group">
-              <label>From Date</label>
+              <label>{t('executionHistory.fromDate')}</label>
               <input
                 type="date"
                 value={dateRange.start}
@@ -287,7 +289,7 @@ const ExecutionHistory = () => {
             </div>
 
             <div className="filter-group">
-              <label>To Date</label>
+              <label>{t('executionHistory.toDate')}</label>
               <input
                 type="date"
                 value={dateRange.end}
@@ -300,24 +302,24 @@ const ExecutionHistory = () => {
         {isLoading ? (
           <div className="loading-state">
             <div className="spinner" />
-            <p>Loading executions...</p>
+            <p>{t('executionHistory.loading')}</p>
           </div>
         ) : executions.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">📋</span>
-            <h3>No Executions Found</h3>
-            <p>Run a workflow to see execution history here.</p>
+            <h3>{t('executionHistory.noExecutions')}</h3>
+            <p>{t('executionHistory.noExecutionsDesc')}</p>
           </div>
         ) : (
           <table className="executions-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Workflow</th>
-                <th>Status</th>
-                <th>Duration</th>
-                <th>Tokens</th>
-                <th>Actions</th>
+                <th>{t('executionHistory.date')}</th>
+                <th>{t('executionHistory.workflow')}</th>
+                <th>{t('executionHistory.status')}</th>
+                <th>{t('executionHistory.duration')}</th>
+                <th>{t('executionHistory.tokens')}</th>
+                <th>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -334,7 +336,7 @@ const ExecutionHistory = () => {
                         className="btn-view"
                         onClick={() => handleViewExecution(execution)}
                       >
-                        👁️ View
+                        👁️ {t('common.view')}
                       </button>
                       <button
                         className="btn-delete"

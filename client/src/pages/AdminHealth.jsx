@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Server,
   Database,
@@ -16,6 +17,7 @@ import { getHealth } from '../api/admin';
  * System health monitoring and status
  */
 const AdminHealth = () => {
+  const { t } = useTranslation();
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -93,8 +95,8 @@ const AdminHealth = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Health</h1>
-          <p className="text-gray-600 mt-1">Monitor system status and performance</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.systemHealth')}</h1>
+          <p className="text-gray-600 mt-1">{t('admin.systemHealthSubtitle')}</p>
         </div>
         <button
           onClick={fetchHealth}
@@ -102,7 +104,7 @@ const AdminHealth = () => {
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -124,7 +126,7 @@ const AdminHealth = () => {
             )}
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                System Status
+                {t('admin.systemStatus')}
               </h2>
               {health && (
                 <span className={`inline-block mt-2 px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(health.status)}`}>
@@ -141,7 +143,7 @@ const AdminHealth = () => {
         {/* Server Status */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Server</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('admin.server')}</h3>
             <Server className="w-6 h-6 text-indigo-600" />
           </div>
           {loading ? (
@@ -154,15 +156,15 @@ const AdminHealth = () => {
           ) : (
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Uptime</p>
+                <p className="text-sm text-gray-600">{t('admin.uptime')}</p>
                 <p className="text-xl font-semibold text-gray-900">
                   {formatUptime(health?.uptime)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Status</p>
+                <p className="text-sm text-gray-600">{t('common.status')}</p>
                 <p className={`text-xl font-semibold ${health?.status === 'healthy' ? 'text-green-600' : 'text-red-600'}`}>
-                  {health?.status === 'healthy' ? 'Running' : 'Error'}
+                  {health?.status === 'healthy' ? t('admin.running') : t('common.error')}
                 </p>
               </div>
             </div>
@@ -172,7 +174,7 @@ const AdminHealth = () => {
         {/* Database Status */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Database</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('admin.database')}</h3>
             <Database className="w-6 h-6 text-green-600" />
           </div>
           {loading ? (
@@ -185,9 +187,9 @@ const AdminHealth = () => {
           ) : (
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Connection</p>
+                <p className="text-sm text-gray-600">{t('admin.connection')}</p>
                 <p className={`text-xl font-semibold ${health?.database === 'connected' ? 'text-green-600' : 'text-red-600'}`}>
-                  {health?.database === 'connected' ? 'Connected' : 'Disconnected'}
+                  {health?.database === 'connected' ? t('admin.connected') : t('admin.disconnected')}
                 </p>
               </div>
               {health?.databaseError && (
@@ -203,7 +205,7 @@ const AdminHealth = () => {
         {/* Timestamp */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Timestamp</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('admin.timestamp')}</h3>
             <Clock className="w-6 h-6 text-blue-600" />
           </div>
           {loading ? (
@@ -216,7 +218,7 @@ const AdminHealth = () => {
           ) : (
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Server Time</p>
+                <p className="text-sm text-gray-600">{t('admin.serverTime')}</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {health?.timestamp
                     ? new Date(health.timestamp).toLocaleString()
@@ -232,7 +234,7 @@ const AdminHealth = () => {
       {health?.memory && (
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Memory Usage</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('admin.memoryUsage')}</h3>
             <Activity className="w-6 h-6 text-purple-600" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -270,7 +272,7 @@ const AdminHealth = () => {
           <div className="flex items-start gap-3">
             <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-sm font-semibold text-red-900 mb-1">Health Check Failed</h4>
+              <h4 className="text-sm font-semibold text-red-900 mb-1">{t('admin.healthCheckFailed')}</h4>
               <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>

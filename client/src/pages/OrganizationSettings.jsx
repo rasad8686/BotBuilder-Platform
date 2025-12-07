@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useOrganization } from '../contexts/OrganizationContext';
 import axiosInstance from '../api/axios';
 import InviteMemberModal from '../components/InviteMemberModal';
 import ConfirmModal from '../components/ConfirmModal';
 
 export default function OrganizationSettings() {
+  const { t } = useTranslation();
   const { currentOrganization, userRole, hasPermission, refreshOrganizations, loading: orgLoading, isAuthenticated } = useOrganization();
   const navigate = useNavigate();
 
@@ -170,7 +172,7 @@ export default function OrganizationSettings() {
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg">
-            ⚠️ You do not have permission to view organization settings
+            {t('organization.noPermission')}
           </div>
         </div>
       </div>
@@ -183,10 +185,10 @@ export default function OrganizationSettings() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            ⚙️ Organization Settings
+            {t('organization.settings')}
           </h1>
           <p className="text-gray-600 mt-1">
-            Manage your organization and team members
+            {t('organization.settingsSubtitle')}
           </p>
         </div>
 
@@ -207,13 +209,13 @@ export default function OrganizationSettings() {
         {/* Organization Details */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Organization Details</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('organization.details')}</h2>
             {userRole === 'owner' && !isEditingOrg && (
               <button
                 onClick={() => setIsEditingOrg(true)}
                 className="text-purple-600 hover:text-purple-700 font-medium text-sm"
               >
-                ✏️ Edit
+                {t('common.edit')}
               </button>
             )}
           </div>
@@ -221,7 +223,7 @@ export default function OrganizationSettings() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Organization Name
+                {t('organization.name')}
               </label>
               {isEditingOrg ? (
                 <input
@@ -237,7 +239,7 @@ export default function OrganizationSettings() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Organization Slug
+                {t('organization.slug')}
               </label>
               {isEditingOrg ? (
                 <input
@@ -258,7 +260,7 @@ export default function OrganizationSettings() {
                   onClick={handleUpdateOrganization}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
                 >
-                  Save Changes
+                  {t('common.saveChanges')}
                 </button>
                 <button
                   onClick={() => {
@@ -268,7 +270,7 @@ export default function OrganizationSettings() {
                   }}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             )}
@@ -278,13 +280,13 @@ export default function OrganizationSettings() {
         {/* Members Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Team Members</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('team.members')}</h2>
             {hasPermission('admin') && (
               <button
                 onClick={() => setInviteModalOpen(true)}
                 className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
               >
-                ➕ Invite Member
+                {t('team.inviteMember')}
               </button>
             )}
           </div>
@@ -342,7 +344,7 @@ export default function OrganizationSettings() {
                         onClick={() => setRemoveMemberModal({ open: true, member })}
                         className="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-1.5 hover:bg-red-50 rounded transition-colors"
                       >
-                        Remove
+                        {t('common.remove')}
                       </button>
                     )}
                   </div>
@@ -355,15 +357,15 @@ export default function OrganizationSettings() {
         {/* Danger Zone */}
         {userRole === 'owner' && (
           <div className="bg-white rounded-lg shadow-md p-6 border-2 border-red-200">
-            <h2 className="text-xl font-bold text-red-600 mb-2">⚠️ Danger Zone</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">{t('organization.dangerZone')}</h2>
             <p className="text-gray-600 mb-4">
-              Once you delete an organization, there is no going back. Please be certain.
+              {t('organization.deleteWarning')}
             </p>
             <button
               onClick={() => setDeleteOrgModalOpen(true)}
               className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold"
             >
-              Delete Organization
+              {t('organization.deleteOrganization')}
             </button>
           </div>
         )}

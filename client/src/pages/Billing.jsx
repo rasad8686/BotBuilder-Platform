@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import UsageBar from '../components/UsageBar';
 import { API_URL } from '../config/api';
 
@@ -7,6 +8,7 @@ let upgradeInProgress = false;
 const UPGRADE_COOLDOWN = 3000; // 3 seconds
 
 export default function Billing() {
+  const { t } = useTranslation();
   const [subscription, setSubscription] = useState(null);
   const [fetchingSubscription, setFetchingSubscription] = useState(true);
   const [canceling, setCanceling] = useState(false);
@@ -152,7 +154,7 @@ export default function Billing() {
   // Get button text and state for each plan
   const getPlanButton = (planName) => {
     if (fetchingSubscription) {
-      return { text: 'Loading...', disabled: true, className: 'bg-gray-300 text-gray-500' };
+      return { text: t('common.loading'), disabled: true, className: 'bg-gray-300 text-gray-500' };
     }
 
     const isCurrent = isCurrentPlan(planName);
@@ -160,7 +162,7 @@ export default function Billing() {
     // CURRENT PLAN: Always show "Current Plan" and disable
     if (isCurrent) {
       return {
-        text: 'Current Plan',
+        text: t('billing.currentPlan'),
         disabled: true,
         className: 'bg-green-100 text-green-700 border-2 border-green-500'
       };
@@ -169,7 +171,7 @@ export default function Billing() {
     // FREE PLAN: Always disabled (can't downgrade to free manually)
     if (planName === 'Free') {
       return {
-        text: 'Downgrade to Free',
+        text: t('billing.downgradeToFree'),
         disabled: true,
         className: 'bg-gray-300 text-gray-500'
       };
@@ -177,7 +179,7 @@ export default function Billing() {
 
     // UPGRADE PLANS: Always enabled (lock handled in handleUpgrade)
     return {
-      text: 'Upgrade to ' + planName,
+      text: t('billing.upgradeTo', { plan: planName }),
       disabled: false,
       className: 'bg-blue-600 text-white hover:bg-blue-700'
     };
@@ -188,8 +190,8 @@ export default function Billing() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Billing & Plans</h1>
-          <p className="text-gray-600">Choose the plan that fits your needs</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('billing.title')}</h1>
+          <p className="text-gray-600">{t('billing.subtitle')}</p>
         </div>
 
         {/* Usage Bar */}
@@ -225,7 +227,7 @@ export default function Billing() {
                         disabled={canceling}
                         className="text-sm text-red-600 hover:text-red-700 hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                       >
-                        {canceling ? 'Canceling...' : 'Cancel Subscription'}
+                        {canceling ? t('billing.canceling') : t('billing.cancelSubscription')}
                       </button>
                     )}
                   </div>

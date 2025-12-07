@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function Orchestrations() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { botId } = useParams();
   const [orchestrations, setOrchestrations] = useState([]);
@@ -107,7 +109,7 @@ export default function Orchestrations() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this orchestration?')) return;
+    if (!window.confirm(t('orchestrations.deleteConfirm'))) return;
     try {
       const res = await fetch(`${API_URL}/api/orchestrations/${id}`, {
         method: 'DELETE',
@@ -131,7 +133,7 @@ export default function Orchestrations() {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, border: '4px solid #8b5cf6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
-          <p style={{ color: '#6b7280' }}>Loading orchestrations...</p>
+          <p style={{ color: '#6b7280' }}>{t('orchestrations.loading')}</p>
         </div>
       </div>
     );
@@ -145,10 +147,10 @@ export default function Orchestrations() {
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1f2937', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 32 }}>🔀</span>
-              Multi-Flow Orchestrations
+              {t('orchestrations.title')}
             </h1>
             <p style={{ color: '#6b7280', marginTop: 4 }}>
-              Connect multiple flows together to create complex conversation journeys
+              {t('orchestrations.subtitle')}
             </p>
           </div>
         </div>
@@ -159,19 +161,19 @@ export default function Orchestrations() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, color: '#1f2937', marginBottom: 16 }}>
-            Select a Bot
+            {t('orchestrations.selectBot')}
           </h2>
           <p style={{ color: '#6b7280', marginBottom: 24 }}>
-            Choose a bot to manage its orchestrations
+            {t('orchestrations.selectBotDesc')}
           </p>
           {loadingBots ? (
             <div style={{ textAlign: 'center', padding: 32, color: '#6b7280' }}>
-              Loading bots...
+              {t('common.loading')}
             </div>
           ) : bots.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 32 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
-              <p style={{ color: '#6b7280', marginBottom: 16 }}>No bots found</p>
+              <p style={{ color: '#6b7280', marginBottom: 16 }}>{t('orchestrations.noBotsFound')}</p>
               <button
                 onClick={() => navigate('/create-bot')}
                 style={{
@@ -184,7 +186,7 @@ export default function Orchestrations() {
                   fontWeight: 500
                 }}
               >
-                Create Your First Bot
+                {t('orchestrations.createFirstBot')}
               </button>
             </div>
           ) : (
@@ -229,7 +231,7 @@ export default function Orchestrations() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 15 }}>{bot.name}</div>
                     <div style={{ fontSize: 13, color: '#6b7280' }}>
-                      {bot.platform || 'telegram'} • {bot.description || 'No description'}
+                      {bot.platform || 'telegram'} • {bot.description || t('common.noDescription')}
                     </div>
                   </div>
                   <span style={{ color: '#8b5cf6', fontSize: 20 }}>→</span>
@@ -254,10 +256,10 @@ export default function Orchestrations() {
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1f2937', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 32 }}>🔀</span>
-            Multi-Flow Orchestrations
+            {t('orchestrations.title')}
           </h1>
           <p style={{ color: '#6b7280', marginTop: 4 }}>
-            Connect multiple flows together to create complex conversation journeys
+            {t('orchestrations.subtitle')}
           </p>
         </div>
         <button
@@ -275,7 +277,7 @@ export default function Orchestrations() {
             gap: 8
           }}
         >
-          <span>+</span> New Orchestration
+          <span>+</span> {t('orchestrations.newOrchestration')}
         </button>
       </div>
 
@@ -290,10 +292,10 @@ export default function Orchestrations() {
         }}>
           <div style={{ fontSize: 64, marginBottom: 16 }}>🔀</div>
           <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1f2937', marginBottom: 8 }}>
-            No Orchestrations Yet
+            {t('orchestrations.noOrchestrations')}
           </h2>
           <p style={{ color: '#6b7280', marginBottom: 24 }}>
-            Create your first orchestration to connect multiple flows together
+            {t('orchestrations.noOrchestrationsDesc')}
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -307,7 +309,7 @@ export default function Orchestrations() {
               fontWeight: 600
             }}
           >
-            Create Orchestration
+            {t('orchestrations.createOrchestration')}
           </button>
         </div>
       ) : (
@@ -346,14 +348,14 @@ export default function Orchestrations() {
                       backgroundColor: orch.is_active ? '#dcfce7' : '#fee2e2',
                       color: orch.is_active ? '#166534' : '#991b1b'
                     }}>
-                      {orch.is_active ? 'Active' : 'Inactive'}
+                      {orch.is_active ? t('common.active') : t('common.inactive')}
                     </span>
                   </div>
                 </div>
               </div>
 
               <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 16, minHeight: 40 }}>
-                {orch.description || 'No description'}
+                {orch.description || t('common.noDescription')}
               </p>
 
               <div style={{ display: 'flex', gap: 8 }}>
@@ -371,7 +373,7 @@ export default function Orchestrations() {
                     fontSize: 14
                   }}
                 >
-                  Open Builder
+                  {t('orchestrations.openBuilder')}
                 </button>
                 <button
                   onClick={() => openEditModal(orch)}
@@ -386,7 +388,7 @@ export default function Orchestrations() {
                     fontSize: 14
                   }}
                 >
-                  Edit
+                  {t('common.edit')}
                 </button>
                 <button
                   onClick={() => handleDelete(orch.id)}
@@ -401,7 +403,7 @@ export default function Orchestrations() {
                     fontSize: 14
                   }}
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -430,14 +432,14 @@ export default function Orchestrations() {
             width: '100%',
             maxWidth: 480
           }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Create New Orchestration</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{t('orchestrations.createNewOrchestration')}</h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Name</label>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>{t('common.name')}</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Customer Support Flow"
+                placeholder={t('orchestrations.namePlaceholder')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -448,11 +450,11 @@ export default function Orchestrations() {
               />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Description</label>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>{t('common.description')}</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe what this orchestration does..."
+                placeholder={t('orchestrations.descriptionPlaceholder')}
                 rows={3}
                 style={{
                   width: '100%',
@@ -477,7 +479,7 @@ export default function Orchestrations() {
                   fontWeight: 500
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreate}
@@ -492,7 +494,7 @@ export default function Orchestrations() {
                   fontWeight: 500
                 }}
               >
-                Create
+                {t('common.create')}
               </button>
             </div>
           </div>
@@ -520,9 +522,9 @@ export default function Orchestrations() {
             width: '100%',
             maxWidth: 480
           }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Edit Orchestration</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>{t('orchestrations.editOrchestration')}</h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Name</label>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>{t('common.name')}</label>
               <input
                 type="text"
                 value={formData.name}
@@ -537,7 +539,7 @@ export default function Orchestrations() {
               />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Description</label>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>{t('common.description')}</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -565,7 +567,7 @@ export default function Orchestrations() {
                   fontWeight: 500
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleUpdate}
@@ -580,7 +582,7 @@ export default function Orchestrations() {
                   fontWeight: 500
                 }}
               >
-                Save Changes
+                {t('common.saveChanges')}
               </button>
             </div>
           </div>

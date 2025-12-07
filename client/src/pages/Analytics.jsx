@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
 function Analytics() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalBots: 0,
@@ -77,7 +79,7 @@ function Analytics() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
-        <div className="text-2xl font-bold text-gray-700">Loading analytics...</div>
+        <div className="text-2xl font-bold text-gray-700">{t('analytics.loading')}</div>
       </div>
     );
   }
@@ -91,7 +93,7 @@ function Analytics() {
             onClick={handleLogout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
           >
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       </nav>
@@ -102,30 +104,30 @@ function Analytics() {
             onClick={() => navigate('/dashboard')}
             className="text-purple-600 hover:text-purple-800 flex items-center gap-2"
           >
-            ← Back to Dashboard
+            ← {t('common.backToDashboard')}
           </button>
         </div>
 
-        <h2 className="text-4xl font-bold text-gray-800 mb-2">Analytics 📊</h2>
-        <p className="text-gray-600 mb-8">Overview of your chatbot statistics</p>
+        <h2 className="text-4xl font-bold text-gray-800 mb-2">{t('analytics.title')}</h2>
+        <p className="text-gray-600 mb-8">{t('analytics.subtitle')}</p>
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white">
             <div className="text-5xl mb-4">🤖</div>
-            <h3 className="text-2xl font-bold mb-2">Total Bots</h3>
+            <h3 className="text-2xl font-bold mb-2">{t('analytics.totalBots')}</h3>
             <p className="text-5xl font-bold">{stats.totalBots}</p>
           </div>
 
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white">
             <div className="text-5xl mb-4">💬</div>
-            <h3 className="text-2xl font-bold mb-2">Total Messages</h3>
+            <h3 className="text-2xl font-bold mb-2">{t('analytics.totalMessages')}</h3>
             <p className="text-5xl font-bold">{stats.totalMessages}</p>
           </div>
 
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
             <div className="text-5xl mb-4">📈</div>
-            <h3 className="text-2xl font-bold mb-2">Avg Messages/Bot</h3>
+            <h3 className="text-2xl font-bold mb-2">{t('analytics.avgMessagesPerBot')}</h3>
             <p className="text-5xl font-bold">
               {stats.totalBots > 0 ? Math.round(stats.totalMessages / stats.totalBots) : 0}
             </p>
@@ -134,23 +136,23 @@ function Analytics() {
 
         {/* Message Types Breakdown */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">Messages by Type</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.messagesByType')}</h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center p-6 bg-yellow-50 rounded-xl">
               <div className="text-4xl mb-2">👋</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">Greeting</h4>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.greeting')}</h4>
               <p className="text-3xl font-bold text-yellow-600">{stats.messagesByType.greeting}</p>
             </div>
             
             <div className="text-center p-6 bg-blue-50 rounded-xl">
               <div className="text-4xl mb-2">💬</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">Response</h4>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.response')}</h4>
               <p className="text-3xl font-bold text-blue-600">{stats.messagesByType.response}</p>
             </div>
             
             <div className="text-center p-6 bg-red-50 rounded-xl">
               <div className="text-4xl mb-2">🤷</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">Fallback</h4>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.fallback')}</h4>
               <p className="text-3xl font-bold text-red-600">{stats.messagesByType.fallback}</p>
             </div>
           </div>
@@ -158,9 +160,9 @@ function Analytics() {
 
         {/* Recent Bots */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">Recent Bots</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.recentBots')}</h3>
           {stats.recentBots.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No bots created yet</p>
+            <p className="text-gray-600 text-center py-8">{t('analytics.noBotsYet')}</p>
           ) : (
             <div className="space-y-4">
               {stats.recentBots.map((bot) => (
@@ -197,8 +199,8 @@ function Analytics() {
             className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition text-left"
           >
             <div className="text-4xl mb-2">➕</div>
-            <h4 className="text-xl font-bold mb-1">Create New Bot</h4>
-            <p className="text-sm opacity-90">Build a new chatbot from scratch</p>
+            <h4 className="text-xl font-bold mb-1">{t('analytics.createNewBot')}</h4>
+            <p className="text-sm opacity-90">{t('analytics.createNewBotDesc')}</p>
           </button>
 
           <button
@@ -206,8 +208,8 @@ function Analytics() {
             className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition text-left"
           >
             <div className="text-4xl mb-2">📋</div>
-            <h4 className="text-xl font-bold mb-1">Manage Bots</h4>
-            <p className="text-sm opacity-90">View and edit your existing bots</p>
+            <h4 className="text-xl font-bold mb-1">{t('analytics.manageBots')}</h4>
+            <p className="text-sm opacity-90">{t('analytics.manageBotsDesc')}</p>
           </button>
         </div>
       </div>

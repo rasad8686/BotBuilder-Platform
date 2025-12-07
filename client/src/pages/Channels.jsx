@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MessageSquare,
   Plus,
@@ -21,6 +22,7 @@ import ChatView from '../components/channels/ChatView';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function Channels() {
+  const { t } = useTranslation();
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -153,10 +155,10 @@ export default function Channels() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-7 h-7 text-blue-400" />
-            Channels
+            {t('channels.title')}
           </h1>
           <p className="text-gray-400 mt-1">
-            Manage your messaging channels - WhatsApp, Instagram, Telegram
+            {t('channels.subtitle')}
           </p>
         </div>
         <button
@@ -164,7 +166,7 @@ export default function Channels() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Add Channel
+          {t('channels.addChannel')}
         </button>
       </div>
 
@@ -176,7 +178,7 @@ export default function Channels() {
               <MessageSquare className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Channels</p>
+              <p className="text-gray-400 text-sm">{t('channels.totalChannels')}</p>
               <p className="text-xl font-bold text-white">{channels.length}</p>
             </div>
           </div>
@@ -187,7 +189,7 @@ export default function Channels() {
               <CheckCircle className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Active</p>
+              <p className="text-gray-400 text-sm">{t('channels.active')}</p>
               <p className="text-xl font-bold text-white">
                 {channels.filter(c => c.status === 'active').length}
               </p>
@@ -200,7 +202,7 @@ export default function Channels() {
               <AlertCircle className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Pending</p>
+              <p className="text-gray-400 text-sm">{t('channels.pending')}</p>
               <p className="text-xl font-bold text-white">
                 {channels.filter(c => c.status === 'pending').length}
               </p>
@@ -213,7 +215,7 @@ export default function Channels() {
               <MessageCircle className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Messages</p>
+              <p className="text-gray-400 text-sm">{t('channels.totalMessages')}</p>
               <p className="text-xl font-bold text-white">
                 {channels.reduce((sum, c) => sum + (c.messageCount || 0), 0)}
               </p>
@@ -228,7 +230,7 @@ export default function Channels() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search channels..."
+            placeholder={t('channels.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
@@ -240,11 +242,11 @@ export default function Channels() {
             onChange={(e) => setFilterType(e.target.value)}
             className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
           >
-            <option value="all">All Types</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="instagram">Instagram</option>
-            <option value="telegram">Telegram</option>
-            <option value="messenger">Messenger</option>
+            <option value="all">{t('channels.allTypes')}</option>
+            <option value="whatsapp">{t('channels.whatsapp')}</option>
+            <option value="instagram">{t('channels.instagram')}</option>
+            <option value="telegram">{t('channels.telegram')}</option>
+            <option value="messenger">{t('channels.messenger')}</option>
           </select>
           <button
             onClick={fetchChannels}
@@ -271,11 +273,11 @@ export default function Channels() {
         /* Empty State */
         <div className="text-center py-12">
           <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">No channels found</h3>
+          <h3 className="text-xl font-semibold text-white mb-2">{t('channels.noChannels')}</h3>
           <p className="text-gray-400 mb-6">
             {searchTerm || filterType !== 'all'
-              ? 'Try adjusting your search or filter'
-              : 'Connect your first messaging channel to get started'}
+              ? t('channels.tryAdjusting')
+              : t('channels.connectFirst')}
           </p>
           {!searchTerm && filterType === 'all' && (
             <button
@@ -283,7 +285,7 @@ export default function Channels() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-5 h-5" />
-              Add Your First Channel
+              {t('channels.addFirstChannel')}
             </button>
           )}
         </div>
@@ -306,7 +308,7 @@ export default function Channels() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-full max-w-lg mx-4 border border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Add New Channel</h2>
+              <h2 className="text-xl font-bold text-white">{t('channels.addNewChannel')}</h2>
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-white"
@@ -316,7 +318,7 @@ export default function Channels() {
             </div>
 
             <p className="text-gray-400 mb-6">
-              Select a messaging platform to connect
+              {t('channels.selectPlatform')}
             </p>
 
             <div className="grid grid-cols-2 gap-4">

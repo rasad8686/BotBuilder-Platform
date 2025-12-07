@@ -1,10 +1,12 @@
 ﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
 export default function Register() {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function Register() {
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-2">BotBuilder</h1>
-        <p className="text-gray-600 text-center mb-6">Create Account</p>
+        <p className="text-gray-600 text-center mb-6">{t('auth.createAccount')}</p>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -50,7 +52,7 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">Name</label>
+            <label className="block text-gray-700 font-semibold mb-2">{t('auth.name')}</label>
             <input
               type="text"
               value={formData.name}
@@ -61,7 +63,7 @@ export default function Register() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">Email</label>
+            <label className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
             <input
               type="email"
               value={formData.email}
@@ -72,7 +74,7 @@ export default function Register() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-700 font-semibold mb-2">Password</label>
+            <label className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
             <input
               type="password"
               value={formData.password}
@@ -87,12 +89,12 @@ export default function Register() {
             disabled={loading}
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50"
           >
-            {loading ? 'Creating...' : 'Register'}
+            {loading ? t('auth.creating') : t('auth.register')}
           </button>
         </form>
 
         <p className="text-center mt-6 text-gray-600">
-          Already have an account? <Link to="/login" className="text-purple-600 hover:underline">Login</Link>
+          {t('auth.haveAccount')} <Link to="/login" className="text-purple-600 hover:underline">{t('auth.login')}</Link>
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaRobot, FaSpinner } from 'react-icons/fa';
 
 /**
@@ -7,9 +8,10 @@ import { FaRobot, FaSpinner } from 'react-icons/fa';
  * Automatically logs in to demo@botbuilder.com and redirects to dashboard
  */
 function Demo() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [status, setStatus] = useState('loading'); // loading, success, error
-  const [message, setMessage] = useState('Preparing demo account...');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     loginToDemo();
@@ -69,10 +71,10 @@ function Demo() {
               <FaRobot className="text-3xl text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              BotBuilder Demo
+              {t('demo.title')}
             </h1>
             <p className="text-gray-600">
-              Experience the full platform with sample data
+              {t('demo.subtitle')}
             </p>
           </div>
 
@@ -112,13 +114,13 @@ function Demo() {
                     onClick={loginToDemo}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
                   >
-                    Try Again
+                    {t('common.tryAgain')}
                   </button>
                   <button
                     onClick={() => navigate('/')}
                     className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
                   >
-                    Back to Home
+                    {t('common.back')}
                   </button>
                 </div>
               </div>
@@ -141,7 +143,7 @@ function Demo() {
 
         {/* Footer Note */}
         <p className="text-center text-sm text-gray-600 mt-6">
-          Demo accounts are read-only with limited actions
+          {t('demo.notice')}
         </p>
       </div>
     </div>

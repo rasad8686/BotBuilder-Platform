@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AgentList, AgentForm, AgentTestPanel } from '../components/agents';
 
 const AgentStudio = () => {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const navigate = useNavigate();
 
@@ -100,7 +102,7 @@ const AgentStudio = () => {
   };
 
   const handleDelete = async (agent) => {
-    if (!window.confirm(`Are you sure you want to delete "${agent.name}"?`)) {
+    if (!window.confirm(t('agentStudio.deleteConfirm'))) {
       return;
     }
 
@@ -116,7 +118,7 @@ const AgentStudio = () => {
 
       setAgents(prev => prev.filter(a => a.id !== agent.id));
     } catch (err) {
-      alert('Error deleting agent: ' + err.message);
+      alert(t('agentStudio.error') + ': ' + err.message);
     }
   };
 
@@ -164,7 +166,7 @@ const AgentStudio = () => {
       setShowForm(false);
       setEditingAgent(null);
     } catch (err) {
-      alert('Error saving agent: ' + err.message);
+      alert(t('agentStudio.error') + ': ' + err.message);
     } finally {
       setIsSaving(false);
     }
@@ -187,27 +189,27 @@ const AgentStudio = () => {
           <div style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '32px' }}>🎯</span>
-              Agent Studio
+              {t('agentStudio.title')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
-              Create and manage AI agents for your bots
+              {t('agentStudio.subtitle')}
             </p>
           </div>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a2e', marginTop: 0, marginBottom: '16px' }}>
-              Select a Bot
+              {t('agentStudio.selectBot')}
             </h2>
             <p style={{ color: '#6c757d', marginBottom: '24px' }}>
-              Choose a bot to manage its agents
+              {t('agentStudio.selectBotDesc')}
             </p>
             {loadingBots ? (
               <div style={{ textAlign: 'center', padding: '32px', color: '#6c757d' }}>
-                Loading bots...
+                {t('common.loading')}
               </div>
             ) : bots.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-                <p style={{ color: '#6c757d', marginBottom: '16px' }}>No bots found</p>
+                <p style={{ color: '#6c757d', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
                 <button
                   type="button"
                   onClick={() => navigate('/create-bot')}
@@ -221,7 +223,7 @@ const AgentStudio = () => {
                     fontWeight: '500'
                   }}
                 >
-                  Create Your First Bot
+                  {t('agentStudio.createFirstBot')}
                 </button>
               </div>
             ) : (
@@ -265,7 +267,7 @@ const AgentStudio = () => {
       <div className="agent-studio loading">
         <div className="spinner-container">
           <div className="spinner"></div>
-          <p>Loading Agent Studio...</p>
+          <p>{t('agentStudio.loading')}</p>
         </div>
       </div>
     );
@@ -275,9 +277,9 @@ const AgentStudio = () => {
     return (
       <div className="agent-studio error">
         <div className="error-container">
-          <h2>Error</h2>
+          <h2>{t('common.error')}</h2>
           <p>{error}</p>
-          <button onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+          <button onClick={() => navigate('/dashboard')}>{t('agentStudio.backToDashboard')}</button>
         </div>
       </div>
     );
@@ -288,19 +290,19 @@ const AgentStudio = () => {
       <header className="studio-header">
         <div className="header-left">
           <Link to="/dashboard" className="back-link">
-            ← Back to Dashboard
+            ← {t('agentStudio.backToDashboard')}
           </Link>
           <div className="header-title">
-            <h1>Agent Studio</h1>
+            <h1>{t('agentStudio.title')}</h1>
             {bot && <span className="bot-name">{bot.name}</span>}
           </div>
         </div>
         <div className="header-right">
           <Link to={`/bots/${botId}/tools`} className="btn btn-tools">
-            🔧 Tools
+            🔧 {t('agentStudio.tools')}
           </Link>
           <Link to={`/bots/${botId}/workflows`} className="btn btn-secondary">
-            Workflows
+            {t('agentStudio.workflows')}
           </Link>
         </div>
       </header>

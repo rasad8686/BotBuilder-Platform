@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function ApiTokens() {
+  const { t } = useTranslation();
   const [tokens, setTokens] = useState([]);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +119,7 @@ export default function ApiTokens() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading API tokens...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -129,14 +131,14 @@ export default function ApiTokens() {
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">API Tokens</h1>
-            <p className="text-gray-600">Generate and manage API tokens for programmatic access</p>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('apiTokens.title')}</h1>
+            <p className="text-gray-600">{t('apiTokens.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
           >
-            + Create Token
+            + {t('apiTokens.createNew')}
           </button>
         </div>
 
@@ -181,13 +183,13 @@ export default function ApiTokens() {
         {tokens.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
             <div className="text-6xl mb-4">🔑</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">No API Tokens Yet</h2>
-            <p className="text-gray-600 mb-6">Create your first API token to start using the BotBuilder API</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('apiTokens.noTokens')}</h2>
+            <p className="text-gray-600 mb-6">{t('apiTokens.noTokensDesc')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
-              Create Your First Token
+              {t('apiTokens.createFirst')}
             </button>
           </div>
         ) : (

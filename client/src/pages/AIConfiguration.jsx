@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import aiApi from '../api/ai';
 
 /**
@@ -7,6 +8,7 @@ import aiApi from '../api/ai';
  * Recreated to match exact screenshots
  */
 export default function AIConfiguration() {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const [activeTab, setActiveTab] = useState('setup');
   const [loading, setLoading] = useState(true);
@@ -325,7 +327,7 @@ export default function AIConfiguration() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4 animate-pulse">⏳</div>
-          <div className="text-xl text-gray-600">Loading AI configuration...</div>
+          <div className="text-xl text-gray-600">{t('common.loading')}</div>
         </div>
       </div>
     );

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function IntentEntityBuilder() {
+  const { t } = useTranslation();
   const { botId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('intents');
@@ -424,7 +426,7 @@ export default function IntentEntityBuilder() {
   if (loading) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Yüklənir...</div>
+        <div style={styles.loading}>{t('common.loading')}</div>
       </div>
     );
   }
@@ -434,22 +436,22 @@ export default function IntentEntityBuilder() {
     return (
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>🎯 Intent & Entity Builder</h1>
+          <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
         </div>
         <div style={styles.botSelectorPanel}>
-          <h2 style={styles.botSelectorTitle}>Bot Seçin</h2>
-          <p style={styles.botSelectorDesc}>Intent və entity idarə etmək üçün bir bot seçin</p>
+          <h2 style={styles.botSelectorTitle}>{t('common.selectBot')}</h2>
+          <p style={styles.botSelectorDesc}>{t('common.selectBotDesc')}</p>
           {loadingBots ? (
-            <div style={styles.loading}>Botlar yüklənir...</div>
+            <div style={styles.loading}>{t('common.loading')}</div>
           ) : bots.length === 0 ? (
             <div style={styles.emptyState}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-              <p>Heç bir bot tapılmadı</p>
+              <p>{t('agentStudio.noBotsFound')}</p>
               <button
                 style={styles.addButton}
                 onClick={() => navigate('/create-bot')}
               >
-                İlk Botunuzu Yaradın
+                {t('agentStudio.createFirstBot')}
               </button>
             </div>
           ) : (
@@ -478,7 +480,7 @@ export default function IntentEntityBuilder() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>🎯 Intent & Entity Builder</h1>
+        <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
         <span style={styles.botName}>{botName}</span>
       </div>
 
@@ -491,7 +493,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('intents')}
         >
-          🎯 Intents ({intents.length})
+          🎯 {t('intentEntity.intents')} ({intents.length})
         </button>
         <button
           style={{
@@ -500,7 +502,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('entities')}
         >
-          📦 Entities ({entities.length})
+          📦 {t('intentEntity.entities')} ({entities.length})
         </button>
       </div>
 
@@ -511,7 +513,7 @@ export default function IntentEntityBuilder() {
             {/* Intents List */}
             <div style={styles.leftPanel}>
               <button type="button" style={styles.addButton} onClick={createIntent}>
-                + New Intent
+                + {t('intentEntity.createIntent')}
               </button>
               <div style={styles.list}>
                 {intents.map(intent => (
@@ -534,7 +536,7 @@ export default function IntentEntityBuilder() {
                   </div>
                 ))}
                 {intents.length === 0 && (
-                  <div style={styles.emptyState}>Heç bir intent yoxdur</div>
+                  <div style={styles.emptyState}>{t('intentEntity.noIntents')}</div>
                 )}
               </div>
             </div>
@@ -621,10 +623,10 @@ export default function IntentEntityBuilder() {
 
                     <div style={styles.buttonRow}>
                       <button type="button" style={styles.saveButton} onClick={saveIntent}>
-                        💾 Save
+                        💾 {t('common.save')}
                       </button>
                       <button type="button" style={styles.deleteButton} onClick={deleteIntent}>
-                        🗑️ Delete
+                        🗑️ {t('common.delete')}
                       </button>
                     </div>
                   </div>
@@ -639,7 +641,7 @@ export default function IntentEntityBuilder() {
             {/* Entities List */}
             <div style={styles.leftPanel}>
               <button type="button" style={styles.addButton} onClick={createEntity}>
-                + New Entity
+                + {t('intentEntity.createEntity')}
               </button>
               <div style={styles.list}>
                 {entities.map(entity => (
@@ -663,7 +665,7 @@ export default function IntentEntityBuilder() {
                   </div>
                 ))}
                 {entities.length === 0 && (
-                  <div style={styles.emptyState}>Heç bir entity yoxdur</div>
+                  <div style={styles.emptyState}>{t('intentEntity.noEntities')}</div>
                 )}
               </div>
             </div>
@@ -758,10 +760,10 @@ export default function IntentEntityBuilder() {
                     {!selectedEntity.is_system && (
                       <div style={styles.buttonRow}>
                         <button type="button" style={styles.saveButton} onClick={saveEntity}>
-                          💾 Save
+                          💾 {t('common.save')}
                         </button>
                         <button type="button" style={styles.deleteButton} onClick={deleteEntity}>
-                          🗑️ Delete
+                          🗑️ {t('common.delete')}
                         </button>
                       </div>
                     )}
