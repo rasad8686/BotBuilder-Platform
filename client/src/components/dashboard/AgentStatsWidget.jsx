@@ -12,6 +12,7 @@ const AgentStatsWidget = ({ botId }) => {
     if (botId) {
       fetchStats();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchStats = async () => {

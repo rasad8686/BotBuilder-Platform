@@ -31,6 +31,7 @@ const AgentStudio = () => {
       setIsLoading(false);
       fetchBots();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchBots = async () => {

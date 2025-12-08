@@ -46,6 +46,7 @@ const ActivityTimeline = ({ days = 7, limit = 20, autoRefresh = true }) => {
 
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, limit, autoRefresh]);
 
   // Get icon for action type

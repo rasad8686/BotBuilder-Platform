@@ -21,6 +21,7 @@ const ToolStudio = () => {
 
   useEffect(() => {
     fetchTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchTools = async () => {

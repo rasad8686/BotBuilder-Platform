@@ -16,6 +16,7 @@ export default function VersionHistory({ entityType, entityId, onVersionRestored
 
   useEffect(() => {
     fetchVersions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, entityId]);
 
   const fetchVersions = async () => {

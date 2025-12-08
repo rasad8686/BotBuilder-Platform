@@ -43,6 +43,7 @@ export default function ConversationList({ channel, onSelectConversation, onBack
 
   useEffect(() => {
     fetchConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id]);
 
   const fetchConversations = async () => {

@@ -157,6 +157,7 @@ const WorkflowBuilder = () => {
       setIsLoading(false);
       fetchBots();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId, workflowId]);
 
   const fetchBots = async () => {

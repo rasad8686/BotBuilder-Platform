@@ -45,6 +45,7 @@ export default function AIConfiguration() {
   useEffect(() => {
     loadConfig();
     loadKnowledgeBases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const loadKnowledgeBases = async () => {

@@ -51,6 +51,7 @@ export default function OrganizationSettings() {
     setOrgName(currentOrganization.name);
     setOrgSlug(currentOrganization.slug);
     fetchMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization, orgLoading, isAuthenticated, hasPermission, navigate]);
 
   const fetchMembers = async () => {

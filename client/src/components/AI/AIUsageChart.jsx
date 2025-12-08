@@ -15,6 +15,7 @@ export default function AIUsageChart() {
 
   useEffect(() => {
     loadUsageData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId, timeRange]);
 
   const loadUsageData = async () => {

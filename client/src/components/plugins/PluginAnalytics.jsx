@@ -13,6 +13,7 @@ const PluginAnalytics = ({ plugin, plugins, onSelectPlugin }) => {
     if (plugin) {
       fetchAnalytics(plugin.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plugin, timeRange]);
 
   const fetchAnalytics = async (pluginId) => {

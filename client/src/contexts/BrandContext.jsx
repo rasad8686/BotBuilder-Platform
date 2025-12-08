@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getSettings } from '../api/whitelabel';
 
@@ -15,6 +16,7 @@ export function BrandProvider({ children }) {
 
   useEffect(() => {
     loadBrandSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBrandSettings = async () => {

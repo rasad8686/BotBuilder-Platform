@@ -13,6 +13,7 @@ const ToolAssignModal = ({ tool, botId, onClose, onSave }) => {
 
   useEffect(() => {
     fetchAgentsAndAssignments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId, tool.id]);
 
   const fetchAgentsAndAssignments = async () => {

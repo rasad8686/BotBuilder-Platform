@@ -11,6 +11,7 @@ export default function DiffViewer({ entityType, entityId, versionA, versionB, o
 
   useEffect(() => {
     fetchDiff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versionA, versionB]);
 
   const fetchDiff = async () => {

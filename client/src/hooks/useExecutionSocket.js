@@ -102,6 +102,7 @@ const useExecutionSocket = () => {
     } catch (err) {
       setError('Failed to connect');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const disconnect = useCallback(() => {

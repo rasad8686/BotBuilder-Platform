@@ -25,10 +25,12 @@ const Marketplace = () => {
 
   useEffect(() => {
     fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchPlugins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, sortBy]);
 
   useEffect(() => {
@@ -37,6 +39,7 @@ const Marketplace = () => {
     } else if (searchQuery.length === 0) {
       fetchPlugins();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const fetchInitialData = async () => {

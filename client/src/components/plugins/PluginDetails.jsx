@@ -15,6 +15,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
     if (activeTab === 'reviews') {
       fetchReviews();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, plugin.id]);
 
   const fetchReviews = async () => {

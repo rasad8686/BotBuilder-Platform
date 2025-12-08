@@ -11,6 +11,7 @@ export default function AIModelSelector({ provider, selectedModel, onModelChange
 
   useEffect(() => {
     loadModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
 
   const loadModels = async () => {
