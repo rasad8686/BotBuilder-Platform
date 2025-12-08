@@ -29,7 +29,7 @@ import WidgetSettings from './pages/WidgetSettings';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
-import ApiTokens from './pages/ApiTokens';
+import ApiTokens from './pages/APITokens';
 import Webhooks from './pages/Webhooks';
 import Usage from './pages/Usage';
 import Settings from './pages/Settings';
