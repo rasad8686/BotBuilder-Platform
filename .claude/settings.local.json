@@ -44,7 +44,10 @@
       "Bash(dir:*)",
       "Bash(mkdir:*)",
       "Bash(npm run lint)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: remove insecure default value checks from env validator\n\n- Remove pattern matching for insecure defaults (was too strict)\n- Only validate: required fields and minimum length\n- Minimum lengths: JWT_SECRET (32), AI_ENCRYPTION_SECRET (32), ADMIN_PASSWORD (8)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
