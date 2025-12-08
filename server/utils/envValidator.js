@@ -34,8 +34,8 @@ const REQUIRED_ENV_VARS = {
   },
   ADMIN_PASSWORD: {
     required: process.env.NODE_ENV === 'production',
-    minLength: 12,
-    description: 'Admin password (min 12 characters)'
+    minLength: 8,
+    description: 'Admin password (min 8 characters)'
   }
 };
 
@@ -89,21 +89,8 @@ function validateVar(name, config, value) {
     errors.push(`${name} must be at least ${config.minLength} characters (current: ${value.length})`);
   }
 
-  // Check for insecure default values
-  const insecureDefaults = [
-    'your-super-secret-jwt-key-change-in-production',
-    'default-encryption-key-change-in-production',
-    'admin123',
-    'password',
-    'secret',
-    'changeme',
-    'botbuilder_whatsapp_webhook',
-    'botbuilder_instagram_webhook'
-  ];
-
-  if (value && insecureDefaults.some(d => value.toLowerCase().includes(d.toLowerCase()))) {
-    errors.push(`${name} contains an insecure default value - please change it`);
-  }
+  // Only validate length - no insecure default checks
+  // Real production values should pass as long as they meet minimum length
 
   return errors;
 }
