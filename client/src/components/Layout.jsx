@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import DemoBanner from './DemoBanner';
+import EmailVerificationBanner from './EmailVerificationBanner';
 import Footer from './Footer';
 import { NotificationCenter } from './notifications';
 
@@ -45,6 +46,12 @@ export default function Layout({ children }) {
 
         {/* Demo Banner - Shows when in demo mode */}
         <DemoBanner />
+
+        {/* Email Verification Banner - Shows when email not verified */}
+        <div className="px-6 pt-4">
+          <EmailVerificationBanner user={user} />
+        </div>
+
         {children}
         <Footer />
       </main>

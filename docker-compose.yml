@@ -43,7 +43,7 @@ services:
       - PORT=5000
       - DATABASE_URL=postgresql://${POSTGRES_USER:-botbuilder}:${POSTGRES_PASSWORD:-botbuilder123}@db:5432/${POSTGRES_DB:-botbuilder}
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_SECRET=${JWT_SECRET:-BotBuilder_Docker_JWT_Secret_Key_2025_Production}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
@@ -53,6 +53,9 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
       - CLIENT_URL=${CLIENT_URL:-http://localhost}
+      - AI_ENCRYPTION_SECRET=${AI_ENCRYPTION_SECRET:-BotBuilder_Default_AI_Encryption_Key_32chars}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@local.dev}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-AdminPass123!Secure}
     volumes:
       - uploads:/app/uploads
     networks:

@@ -285,6 +285,28 @@
     "minChars": "At least 8 characters",
     "passwordsMatch": "Passwords match"
   },
+  "verifyEmail": {
+    "verifying": "Verifying your email...",
+    "noToken": "No verification token provided.",
+    "invalidToken": "Invalid or expired token.",
+    "networkError": "Network error. Please try again.",
+    "errorTitle": "Verification Failed",
+    "successTitle": "Email Verified!",
+    "successMessage": "Your email has been verified successfully. You can now access all features.",
+    "alreadyVerifiedTitle": "Already Verified",
+    "alreadyVerifiedMessage": "Your email has already been verified.",
+    "goToDashboard": "Go to Dashboard",
+    "resendTitle": "Need a new verification link?",
+    "resendButton": "Resend Verification Email",
+    "resendSuccess": "If an account exists with this email, you will receive a new verification link.",
+    "emailPlaceholder": "Enter your email",
+    "backToLogin": "Back to Login"
+  },
+  "emailVerification": {
+    "bannerMessage": "Please verify your email address to access all features.",
+    "resendLink": "Resend verification email",
+    "resendSuccess": "Verification email sent!"
+  },
   "landing": {
     "features": "Features",
     "howItWorks": "How It Works",

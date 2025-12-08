@@ -285,6 +285,28 @@
     "minChars": "Ən azı 8 simvol",
     "passwordsMatch": "Şifrələr uyğun gəlir"
   },
+  "verifyEmail": {
+    "verifying": "E-poçtunuz yoxlanılır...",
+    "noToken": "Təsdiq tokeni tapılmadı.",
+    "invalidToken": "Keçərsiz və ya vaxtı bitmiş token.",
+    "networkError": "Şəbəkə xətası. Zəhmət olmasa yenidən cəhd edin.",
+    "errorTitle": "Təsdiq Uğursuz",
+    "successTitle": "E-poçt Təsdiqləndi!",
+    "successMessage": "E-poçtunuz uğurla təsdiqləndi. İndi bütün xüsusiyyətlərə daxil ola bilərsiniz.",
+    "alreadyVerifiedTitle": "Artıq Təsdiqlənib",
+    "alreadyVerifiedMessage": "E-poçtunuz artıq təsdiqlənib.",
+    "goToDashboard": "İdarə Panelinə Keç",
+    "resendTitle": "Yeni təsdiq linki lazımdır?",
+    "resendButton": "Təsdiq E-poçtunu Yenidən Göndər",
+    "resendSuccess": "Əgər bu e-poçtla hesab varsa, yeni təsdiq linki alacaqsınız.",
+    "emailPlaceholder": "E-poçtunuzu daxil edin",
+    "backToLogin": "Girişə Qayıt"
+  },
+  "emailVerification": {
+    "bannerMessage": "Bütün xüsusiyyətlərə daxil olmaq üçün e-poçtunuzu təsdiqləyin.",
+    "resendLink": "Təsdiq e-poçtunu yenidən göndər",
+    "resendSuccess": "Təsdiq e-poçtu göndərildi!"
+  },
   "landing": {
     "features": "Xüsusiyyətlər",
     "howItWorks": "Necə İşləyir",
