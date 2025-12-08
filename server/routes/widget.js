@@ -11,6 +11,7 @@ const {
   EncryptionHelper
 } = require('../services/ai');
 const ragService = require('../services/ragService');
+const log = require('../utils/logger');
 
 // CORS middleware for widget endpoints (allow cross-origin requests from any domain)
 router.use((req, res, next) => {
@@ -81,7 +82,7 @@ router.get('/:botId/config', authenticateToken, async (req, res) => {
 
     res.json({ config: configResult.rows[0].config });
   } catch (error) {
-    console.error('Error fetching widget config:', error);
+    log.error('Error fetching widget config', { error: error.message });
     res.status(500).json({ error: 'Failed to fetch widget config' });
   }
 });
@@ -113,7 +114,7 @@ router.put('/:botId/config', authenticateToken, async (req, res) => {
 
     res.json({ success: true, config: result.rows[0].config });
   } catch (error) {
-    console.error('Error saving widget config:', error);
+    log.error('Error saving widget config', { error: error.message });
     res.status(500).json({ error: 'Failed to save widget config' });
   }
 });
@@ -147,7 +148,7 @@ router.get('/:botId/public-config', async (req, res) => {
       config: typeof config === 'string' ? JSON.parse(config) : config
     });
   } catch (error) {
-    console.error('Error fetching public widget config:', error);
+    log.error('Error fetching public widget config', { error: error.message });
     res.status(500).json({ error: 'Failed to fetch widget config' });
   }
 });
@@ -229,7 +230,7 @@ router.post('/:botId/message', async (req, res) => {
               systemPrompt = ragService.buildRAGPrompt(config.system_prompt, ragResult.context);
             }
           } catch (ragError) {
-            console.error('RAG error (continuing without context):', ragError.message);
+            log.warn('RAG error (continuing without context)', { error: ragError.message });
           }
 
           // Get conversation history for context
@@ -273,7 +274,7 @@ router.post('/:botId/message', async (req, res) => {
           aiResponse = response.content;
         }
       } catch (aiError) {
-        console.error('AI response error:', aiError);
+        log.error('AI response error', { error: aiError.message });
         aiResponse = "Sorry, there was an error processing your request. Please try again.";
       }
     }
@@ -289,7 +290,7 @@ router.post('/:botId/message', async (req, res) => {
       message: aiResponse
     });
   } catch (error) {
-    console.error('Error handling widget message:', error);
+    log.error('Error handling widget message', { error: error.message });
     res.status(500).json({ error: 'Failed to process message' });
   }
 });
@@ -308,7 +309,7 @@ router.get('/:botId/history/:sessionId', async (req, res) => {
 
     res.json({ messages: result.rows });
   } catch (error) {
-    console.error('Error fetching widget history:', error);
+    log.error('Error fetching widget history', { error: error.message });
     res.status(500).json({ error: 'Failed to fetch history' });
   }
 });
@@ -329,7 +330,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       size: req.file.size
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
+    log.error('Error uploading file', { error: error.message });
     res.status(500).json({ error: 'Failed to upload file' });
   }
 });
@@ -365,7 +366,7 @@ router.get('/:botId/analytics', authenticateToken, async (req, res) => {
       daily: dailyResult.rows
     });
   } catch (error) {
-    console.error('Error fetching widget analytics:', error);
+    log.error('Error fetching widget analytics', { error: error.message });
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
