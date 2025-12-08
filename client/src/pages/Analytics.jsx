@@ -1,221 +1,547 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// Chart color palette
+const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+const MESSAGE_TYPE_COLORS = {
+  user_message: '#3b82f6',
+  response: '#10b981',
+  greeting: '#f59e0b',
+  fallback: '#ef4444'
+};
 
 function Analytics() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    totalBots: 0,
-    totalMessages: 0,
-    recentBots: [],
-    messagesByType: {
-      greeting: 0,
-      response: 0,
-      fallback: 0
-    }
-  });
+
+  // State
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dateRange, setDateRange] = useState(30);
+  const [selectedBot, setSelectedBot] = useState('all');
+  const [bots, setBots] = useState([]);
+
+  // Analytics data
+  const [overview, setOverview] = useState({
+    totalMessages: 0,
+    totalSessions: 0,
+    activeBots: 0
+  });
+  const [dailyTrend, setDailyTrend] = useState([]);
+  const [hourlyDistribution, setHourlyDistribution] = useState([]);
+  const [messageTypes, setMessageTypes] = useState([]);
+  const [botStats, setBotStats] = useState([]);
+  const [topQuestions, setTopQuestions] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [responseMetrics, setResponseMetrics] = useState({
+    successRate: 100,
+    fallbackRate: 0,
+    uniqueSessions: 0
+  });
+
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch comprehensive data
+      const params = new URLSearchParams({ days: dateRange });
+      if (selectedBot !== 'all') {
+        params.append('botId', selectedBot);
+      }
+
+      const [comprehensiveRes, topQuestionsRes, recentRes, metricsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/analytics/comprehensive?${params}`, { headers }),
+        axios.get(`${API_BASE_URL}/api/analytics/top-questions?limit=10`, { headers }),
+        axios.get(`${API_BASE_URL}/api/analytics/recent-activity`, { headers }),
+        axios.get(`${API_BASE_URL}/api/analytics/response-metrics`, { headers })
+      ]);
+
+      if (comprehensiveRes.data.success) {
+        const data = comprehensiveRes.data.data;
+        setOverview(data.overview);
+        setDailyTrend(data.dailyTrend);
+        setHourlyDistribution(data.hourlyDistribution);
+        setMessageTypes(data.messageTypes);
+        setBotStats(data.botStats);
+        setBots(data.botStats.map(b => ({ id: b.id, name: b.name })));
+      }
+
+      if (topQuestionsRes.data.success) {
+        setTopQuestions(topQuestionsRes.data.data);
+      }
+
+      if (recentRes.data.success) {
+        setRecentActivity(recentRes.data.data);
+      }
+
+      if (metricsRes.data.success) {
+        setResponseMetrics(metricsRes.data.data);
+      }
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch analytics');
+    } finally {
+      setLoading(false);
+    }
+  }, [dateRange, selectedBot]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [fetchAnalytics]);
 
-  const fetchAnalytics = async () => {
+  // Export handlers
+  const handleExportCSV = async (type = 'messages') => {
     try {
       const token = localStorage.getItem('token');
-
-      // Fetch bots
-      const botsResponse = await axios.get(`${API_BASE_URL}/bots`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const bots = botsResponse.data.bots || botsResponse.data || [];
-      let totalMessages = 0;
-      const messageTypes = { greeting: 0, response: 0, fallback: 0 };
-
-      // Fetch messages for each bot
-      for (const bot of bots) {
-        try {
-          const messagesResponse = await axios.get(
-            `${API_BASE_URL}/bots/${bot.id}/messages`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const messages = messagesResponse.data;
-          totalMessages += messages.length;
-
-          messages.forEach(msg => {
-            if (messageTypes[msg.message_type] !== undefined) {
-              messageTypes[msg.message_type]++;
-            }
-          });
-        } catch (err) {
-          // Silent fail
+      const response = await axios.get(
+        `${API_BASE_URL}/api/analytics/export?type=${type}&days=${dateRange}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
         }
-      }
+      );
 
-      setStats({
-        totalBots: bots.length,
-        totalMessages,
-        recentBots: bots.slice(0, 5),
-        messagesByType: messageTypes
-      });
-
-      setLoading(false);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${type}_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } catch (err) {
-      // Silent fail
-      setLoading(false);
+      alert('Export failed. Please try again.');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  // Format date for display
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Format hour for display
+  const formatHour = (hour) => {
+    if (hour === 0) return '12 AM';
+    if (hour === 12) return '12 PM';
+    return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
-        <div className="text-2xl font-bold text-gray-700">{t('analytics.loading')}</div>
+      <div className="p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
+            ))}
+          </div>
+          <div className="h-80 bg-gray-200 rounded-xl"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">BotBuilder</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+    <div className="p-6 space-y-6">
+      {/* Header with Filters */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('analytics.title', 'Analytics Dashboard')}</h1>
+          <p className="text-gray-500 mt-1">{t('analytics.subtitle', 'Monitor your bot performance and user engagement')}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Date Range Filter */}
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(Number(e.target.value))}
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
-            {t('common.logout')}
-          </button>
-        </div>
-      </nav>
+            <option value={7}>{t('analytics.last7Days', 'Last 7 days')}</option>
+            <option value={30}>{t('analytics.last30Days', 'Last 30 days')}</option>
+            <option value={90}>{t('analytics.last90Days', 'Last 90 days')}</option>
+          </select>
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-purple-600 hover:text-purple-800 flex items-center gap-2"
+          {/* Bot Filter */}
+          <select
+            value={selectedBot}
+            onChange={(e) => setSelectedBot(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
-            ← {t('common.backToDashboard')}
-          </button>
-        </div>
+            <option value="all">{t('analytics.allBots', 'All Bots')}</option>
+            {bots.map(bot => (
+              <option key={bot.id} value={bot.id}>{bot.name}</option>
+            ))}
+          </select>
 
-        <h2 className="text-4xl font-bold text-gray-800 mb-2">{t('analytics.title')}</h2>
-        <p className="text-gray-600 mb-8">{t('analytics.subtitle')}</p>
-
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-8 text-white">
-            <div className="text-5xl mb-4">🤖</div>
-            <h3 className="text-2xl font-bold mb-2">{t('analytics.totalBots')}</h3>
-            <p className="text-5xl font-bold">{stats.totalBots}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white">
-            <div className="text-5xl mb-4">💬</div>
-            <h3 className="text-2xl font-bold mb-2">{t('analytics.totalMessages')}</h3>
-            <p className="text-5xl font-bold">{stats.totalMessages}</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
-            <div className="text-5xl mb-4">📈</div>
-            <h3 className="text-2xl font-bold mb-2">{t('analytics.avgMessagesPerBot')}</h3>
-            <p className="text-5xl font-bold">
-              {stats.totalBots > 0 ? Math.round(stats.totalMessages / stats.totalBots) : 0}
-            </p>
-          </div>
-        </div>
-
-        {/* Message Types Breakdown */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.messagesByType')}</h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-6 bg-yellow-50 rounded-xl">
-              <div className="text-4xl mb-2">👋</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.greeting')}</h4>
-              <p className="text-3xl font-bold text-yellow-600">{stats.messagesByType.greeting}</p>
-            </div>
-            
-            <div className="text-center p-6 bg-blue-50 rounded-xl">
-              <div className="text-4xl mb-2">💬</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.response')}</h4>
-              <p className="text-3xl font-bold text-blue-600">{stats.messagesByType.response}</p>
-            </div>
-            
-            <div className="text-center p-6 bg-red-50 rounded-xl">
-              <div className="text-4xl mb-2">🤷</div>
-              <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('analytics.fallback')}</h4>
-              <p className="text-3xl font-bold text-red-600">{stats.messagesByType.fallback}</p>
+          {/* Export Button */}
+          <div className="relative group">
+            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {t('analytics.export', 'Export')}
+            </button>
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <button
+                onClick={() => handleExportCSV('messages')}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 rounded-t-lg"
+              >
+                {t('analytics.exportMessages', 'Export Messages (CSV)')}
+              </button>
+              <button
+                onClick={() => handleExportCSV('daily')}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 rounded-b-lg"
+              >
+                {t('analytics.exportDaily', 'Export Daily Stats (CSV)')}
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Recent Bots */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.recentBots')}</h3>
-          {stats.recentBots.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">{t('analytics.noBotsYet')}</p>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Overview Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{t('analytics.totalMessages', 'Total Messages')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{overview.totalMessages.toLocaleString()}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{t('analytics.uniqueSessions', 'Unique Sessions')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{overview.totalSessions.toLocaleString()}</p>
+            </div>
+            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{t('analytics.successRate', 'Success Rate')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{responseMetrics.successRate}%</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{t('analytics.activeBots', 'Active Bots')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{overview.activeBots}</p>
+            </div>
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row 1: Daily Trend + Hourly Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Daily Messages Trend - Line Chart */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.messagesTrend', 'Messages Trend')}</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={dailyTrend}>
+              <defs>
+                <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <YAxis stroke="#9ca3af" fontSize={12} />
+              <Tooltip
+                labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="count"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                fill="url(#colorMessages)"
+                name={t('analytics.messages', 'Messages')}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Hourly Activity - Bar Chart */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.hourlyActivity', 'Hourly Activity')}</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={hourlyDistribution}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="hour"
+                tickFormatter={formatHour}
+                stroke="#9ca3af"
+                fontSize={10}
+                interval={2}
+              />
+              <YAxis stroke="#9ca3af" fontSize={12} />
+              <Tooltip
+                labelFormatter={(value) => formatHour(value)}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Bar
+                dataKey="count"
+                fill="#06b6d4"
+                radius={[4, 4, 0, 0]}
+                name={t('analytics.messages', 'Messages')}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Charts Row 2: Message Types + Bot Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Message Types - Pie Chart */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.messageTypes', 'Message Types')}</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={messageTypes}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="count"
+                nameKey="type"
+                label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {messageTypes.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={MESSAGE_TYPE_COLORS[entry.type] || COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Bot Performance - Bar Chart */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.botPerformance', 'Bot Performance')}</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={botStats.slice(0, 5)} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis type="number" stroke="#9ca3af" fontSize={12} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={100}
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Bar
+                dataKey="messageCount"
+                fill="#10b981"
+                radius={[0, 4, 4, 0]}
+                name={t('analytics.messages', 'Messages')}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Tables Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Questions Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.topQuestions', 'Top Questions')}</h3>
+          {topQuestions.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">{t('analytics.noData', 'No data available')}</p>
           ) : (
-            <div className="space-y-4">
-              {stats.recentBots.map((bot) => (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-2 text-sm font-medium text-gray-500">{t('analytics.question', 'Question')}</th>
+                    <th className="text-right py-3 px-2 text-sm font-medium text-gray-500">{t('analytics.count', 'Count')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topQuestions.map((item, index) => (
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-2 text-sm text-gray-700 truncate max-w-xs" title={item.question}>
+                        {item.question}
+                      </td>
+                      <td className="py-3 px-2 text-sm text-gray-900 font-medium text-right">
+                        {item.count}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('analytics.recentActivity', 'Recent Activity')}</h3>
+          {recentActivity.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">{t('analytics.noData', 'No data available')}</p>
+          ) : (
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
                 <div
-                  key={bot.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
-                  onClick={() => navigate(`/bot/${bot.id}/messages`)}
+                  key={activity.id}
+                  className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl">🤖</div>
-                    <div>
-                      <h4 className="font-bold text-gray-800">{bot.name}</h4>
-                      <p className="text-sm text-gray-600">{bot.description}</p>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded mt-1 inline-block">
-                        {bot.platform}
+                  <div className={`w-2 h-2 rounded-full mt-2 ${
+                    activity.messageType === 'user_message' ? 'bg-blue-500' :
+                    activity.messageType === 'response' ? 'bg-green-500' :
+                    activity.messageType === 'greeting' ? 'bg-amber-500' :
+                    'bg-red-500'
+                  }`}></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-gray-900">{activity.botName}</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(activity.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-400">
-                      {new Date(bot.created_at).toLocaleDateString()}
-                    </p>
+                    <p className="text-sm text-gray-600 truncate">{activity.content}</p>
+                    <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded ${
+                      activity.messageType === 'user_message' ? 'bg-blue-100 text-blue-700' :
+                      activity.messageType === 'response' ? 'bg-green-100 text-green-700' :
+                      activity.messageType === 'greeting' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {activity.messageType}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 grid md:grid-cols-2 gap-6">
-          <button
-            onClick={() => navigate('/create-bot')}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition text-left"
-          >
-            <div className="text-4xl mb-2">➕</div>
-            <h4 className="text-xl font-bold mb-1">{t('analytics.createNewBot')}</h4>
-            <p className="text-sm opacity-90">{t('analytics.createNewBotDesc')}</p>
-          </button>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button
+          onClick={() => navigate('/create-bot')}
+          className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition"
+        >
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <p className="font-semibold">{t('analytics.createBot', 'Create New Bot')}</p>
+            <p className="text-sm opacity-80">{t('analytics.createBotDesc', 'Build a new chatbot')}</p>
+          </div>
+        </button>
 
-          <button
-            onClick={() => navigate('/my-bots')}
-            className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition text-left"
-          >
-            <div className="text-4xl mb-2">📋</div>
-            <h4 className="text-xl font-bold mb-1">{t('analytics.manageBots')}</h4>
-            <p className="text-sm opacity-90">{t('analytics.manageBotsDesc')}</p>
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/my-bots')}
+          className="flex items-center gap-4 p-4 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-xl hover:from-cyan-600 hover:to-cyan-700 transition"
+        >
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <p className="font-semibold">{t('analytics.manageBots', 'Manage Bots')}</p>
+            <p className="text-sm opacity-80">{t('analytics.manageBotsDesc', 'View all your bots')}</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => handleExportCSV('daily')}
+          className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition"
+        >
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <p className="font-semibold">{t('analytics.downloadReport', 'Download Report')}</p>
+            <p className="text-sm opacity-80">{t('analytics.downloadReportDesc', 'Export daily stats')}</p>
+          </div>
+        </button>
       </div>
     </div>
   );
 }
 
 export default Analytics;
-

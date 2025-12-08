@@ -67,7 +67,9 @@ export default function ApiTokens() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setNewToken(response.data.token);
+      // Backend returns { success: true, data: { token: '...' } }
+      const tokenValue = response.data.data?.token || response.data.token;
+      setNewToken(tokenValue);
       setFormData({ tokenName: '', botId: '', expiresInDays: '' });
       fetchData();
     } catch (error) {
@@ -241,19 +243,24 @@ export default function ApiTokens() {
 
                     <div className="mt-3">
                       <span className="text-sm text-gray-600">Permissions: </span>
-                      {token.permissions.read && (
+                      {token.permissions?.read && (
                         <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2">
                           Read
                         </span>
                       )}
-                      {token.permissions.write && (
+                      {token.permissions?.write && (
                         <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs mr-2">
                           Write
                         </span>
                       )}
-                      {token.permissions.delete && (
+                      {token.permissions?.delete && (
                         <span className="inline-block bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
                           Delete
+                        </span>
+                      )}
+                      {!token.permissions && (
+                        <span className="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                          Full Access
                         </span>
                       )}
                     </div>

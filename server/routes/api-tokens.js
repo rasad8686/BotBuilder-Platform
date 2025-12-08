@@ -24,20 +24,22 @@ router.get('/', checkPermission('member'), async (req, res) => {
 
     const result = await db.query(
       `SELECT
-        id,
-        user_id,
-        bot_id,
-        token_name,
-        token_preview,
-        permissions,
-        last_used_at,
-        expires_at,
-        is_active,
-        created_at,
-        updated_at
-      FROM api_tokens
-      WHERE organization_id = $1
-      ORDER BY created_at DESC`,
+        t.id,
+        t.user_id,
+        t.bot_id,
+        t.token_name,
+        t.token_preview,
+        t.permissions,
+        t.last_used_at,
+        t.expires_at,
+        t.is_active,
+        t.created_at,
+        t.updated_at,
+        b.name as bot_name
+      FROM api_tokens t
+      LEFT JOIN bots b ON t.bot_id = b.id
+      WHERE t.organization_id = $1
+      ORDER BY t.created_at DESC`,
       [organization_id]
     );
 
@@ -180,6 +182,56 @@ router.delete('/:id', checkPermission('admin'), async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete API token',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * PATCH /api/api-tokens/:id/toggle
+ * Toggle an API token active/inactive status
+ * Permission: admin
+ */
+router.patch('/:id/toggle', checkPermission('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const organization_id = req.organization.id;
+
+    // Verify token belongs to organization
+    const tokenCheck = await db.query(
+      'SELECT id, is_active FROM api_tokens WHERE id = $1 AND organization_id = $2',
+      [id, organization_id]
+    );
+
+    if (tokenCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'API token not found'
+      });
+    }
+
+    const currentStatus = tokenCheck.rows[0].is_active;
+
+    // Toggle token status
+    const result = await db.query(
+      `UPDATE api_tokens
+       SET is_active = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, is_active, updated_at`,
+      [!currentStatus, id]
+    );
+
+    res.json({
+      success: true,
+      message: `API token ${result.rows[0].is_active ? 'activated' : 'deactivated'} successfully`,
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    log.error('[API_TOKENS] Error toggling token:', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle API token',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
