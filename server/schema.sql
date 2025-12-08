@@ -63,10 +63,14 @@ CREATE TABLE IF NOT EXISTS bot_messages (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Add session_id to bot_messages for analytics tracking
+ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS session_id VARCHAR(255);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_bots_user_id ON bots(user_id);
 CREATE INDEX IF NOT EXISTS idx_bot_messages_bot_id ON bot_messages(bot_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_bot_messages_session_id ON bot_messages(session_id);
 
 -- Add updated_at column to users if missing
 ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;

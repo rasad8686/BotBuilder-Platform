@@ -42,6 +42,9 @@ function Demo() {
         // Store token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user?.currentOrganizationId) {
+          localStorage.setItem('currentOrganizationId', data.user.currentOrganizationId);
+        }
         localStorage.setItem('isDemo', 'true'); // Flag for demo mode
 
         setStatus('success');
