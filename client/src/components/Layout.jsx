@@ -5,6 +5,8 @@ import EmailVerificationBanner from './EmailVerificationBanner';
 import Footer from './Footer';
 import { NotificationCenter } from './notifications';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export default function Layout({ children }) {
   const [user, setUser] = useState(null);
 
@@ -12,12 +14,40 @@ export default function Layout({ children }) {
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+
+        // Check verification status from backend
+        checkVerificationStatus(parsedUser.email);
       } catch (e) {
         // Silent fail
       }
     }
   }, []);
+
+  const checkVerificationStatus = async (email) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+
+      // If already verified, update localStorage and state
+      if (data.alreadyVerified) {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          userData.isVerified = true;
+          localStorage.setItem('user', JSON.stringify(userData));
+          setUser(userData);
+        }
+      }
+    } catch (e) {
+      // Silent fail - don't block UI
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">

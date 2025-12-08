@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -8,9 +8,17 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [isVerified, setIsVerified] = useState(user?.isVerified || false);
+
+  // Update isVerified when user prop changes
+  useEffect(() => {
+    if (user?.isVerified) {
+      setIsVerified(true);
+    }
+  }, [user?.isVerified]);
 
   // Don't show if user is verified or banner is dismissed
-  if (!user || user.isVerified || dismissed) {
+  if (!user || isVerified || dismissed) {
     return null;
   }
 
@@ -25,6 +33,22 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
 
       const data = await res.json();
       if (data.success) {
+        // If already verified, hide banner and update localStorage
+        if (data.alreadyVerified) {
+          setIsVerified(true);
+          // Update localStorage
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+              userData.isVerified = true;
+              localStorage.setItem('user', JSON.stringify(userData));
+            } catch (e) {
+              // Silent fail
+            }
+          }
+          return;
+        }
         setResendSuccess(true);
         // Auto-hide success message after 5 seconds
         setTimeout(() => setResendSuccess(false), 5000);
