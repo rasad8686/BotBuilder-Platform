@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axiosInstance from '../api/axios';
 import {
   LineChart,
   Line,
@@ -19,8 +19,6 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Chart color palette
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
@@ -64,8 +62,6 @@ function Analytics() {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch comprehensive data
       const params = new URLSearchParams({ days: dateRange });
@@ -74,10 +70,10 @@ function Analytics() {
       }
 
       const [comprehensiveRes, topQuestionsRes, recentRes, metricsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/analytics/comprehensive?${params}`, { headers }),
-        axios.get(`${API_BASE_URL}/api/analytics/top-questions?limit=10`, { headers }),
-        axios.get(`${API_BASE_URL}/api/analytics/recent-activity`, { headers }),
-        axios.get(`${API_BASE_URL}/api/analytics/response-metrics`, { headers })
+        axiosInstance.get(`/api/analytics/comprehensive?${params}`),
+        axiosInstance.get(`/api/analytics/top-questions?limit=10`),
+        axiosInstance.get(`/api/analytics/recent-activity`),
+        axiosInstance.get(`/api/analytics/response-metrics`)
       ]);
 
       if (comprehensiveRes.data.success) {
@@ -116,13 +112,9 @@ function Analytics() {
   // Export handlers
   const handleExportCSV = async (type = 'messages') => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_BASE_URL}/api/analytics/export?type=${type}&days=${dateRange}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob'
-        }
+      const response = await axiosInstance.get(
+        `/api/analytics/export?type=${type}&days=${dateRange}`,
+        { responseType: 'blob' }
       );
 
       const url = window.URL.createObjectURL(new Blob([response.data]));

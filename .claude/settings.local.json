@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Remove-Item -Recurse -Force \"C:\\Users\\User\\Desktop\\BotBuilder\\BotBuilder\")",
-      "Bash(rm:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
