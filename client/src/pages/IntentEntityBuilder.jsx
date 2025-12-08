@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -11,6 +12,10 @@ export default function IntentEntityBuilder() {
   const [activeTab, setActiveTab] = useState('intents');
   const [botName, setBotName] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // File input refs
+  const intentFileRef = useRef(null);
+  const entityFileRef = useRef(null);
 
   // Bot selector state (when no botId)
   const [bots, setBots] = useState([]);
@@ -44,6 +49,21 @@ export default function IntentEntityBuilder() {
   const [testMessage, setTestMessage] = useState('');
   const [nluResult, setNluResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Import/Export state
+  const [importLoading, setImportLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showImportMenu, setShowImportMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // Conflicts state
+  const [conflictsData, setConflictsData] = useState(null);
+  const [conflictsLoading, setConflictsLoading] = useState(false);
+  const [conflictThreshold, setConflictThreshold] = useState(0.7);
 
   const token = localStorage.getItem('token');
 
@@ -415,6 +435,196 @@ export default function IntentEntityBuilder() {
     }
   };
 
+  // Import/Export functions
+  const handleImportIntents = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bot_id', botId);
+
+      const res = await fetch(`${API_URL}/api/nlu/import/intents`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        alert(`Import successful: ${result.imported} new, ${result.updated} updated`);
+        fetchIntents();
+      } else {
+        const error = await res.json();
+        alert(`Import failed: ${error.error}`);
+      }
+    } catch (err) {
+      alert('Import failed');
+    } finally {
+      setImportLoading(false);
+      setShowImportMenu(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleImportEntities = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bot_id', botId);
+
+      const res = await fetch(`${API_URL}/api/nlu/import/entities`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        alert(`Import successful: ${result.imported} new, ${result.updated} updated`);
+        fetchEntities();
+      } else {
+        const error = await res.json();
+        alert(`Import failed: ${error.error}`);
+      }
+    } catch (err) {
+      alert('Import failed');
+    } finally {
+      setImportLoading(false);
+      setShowImportMenu(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleExport = async (type, format) => {
+    setExportLoading(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/nlu/export/${type}?bot_id=${botId}&format=${format}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${type}_${botId}.${format}`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      alert('Export failed');
+    } finally {
+      setExportLoading(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  // Analytics functions
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const [summaryRes, intentsRes, dailyRes, confidenceRes, lowConfRes, gapsRes] = await Promise.all([
+        fetch(`${API_URL}/api/nlu/analytics/summary?bot_id=${botId}&days=30`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/nlu/analytics/intents?bot_id=${botId}&days=30`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/nlu/analytics/daily?bot_id=${botId}&days=30`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/nlu/analytics/confidence?bot_id=${botId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/nlu/analytics/low-confidence?bot_id=${botId}&limit=10`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_URL}/api/nlu/analytics/training-gaps?bot_id=${botId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      const summary = summaryRes.ok ? await summaryRes.json() : {};
+      const intentsData = intentsRes.ok ? await intentsRes.json() : { intents: [] };
+      const daily = dailyRes.ok ? await dailyRes.json() : { daily: [] };
+      const confidence = confidenceRes.ok ? await confidenceRes.json() : { ranges: [] };
+      const lowConf = lowConfRes.ok ? await lowConfRes.json() : { messages: [] };
+      const gaps = gapsRes.ok ? await gapsRes.json() : { gaps: [] };
+
+      setAnalyticsData({
+        summary,
+        topIntents: intentsData.intents.slice(0, 5),
+        daily: daily.daily,
+        confidence: confidence.ranges,
+        lowConfidence: lowConf.messages,
+        trainingGaps: gaps.gaps.filter(g => g.priority !== 'low').slice(0, 10)
+      });
+    } catch (err) {
+      // Silent fail
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Conflicts functions
+  const fetchConflicts = async () => {
+    setConflictsLoading(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/nlu/conflicts?bot_id=${botId}&threshold=${conflictThreshold}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setConflictsData(data);
+      }
+    } catch (err) {
+      // Silent fail
+    } finally {
+      setConflictsLoading(false);
+    }
+  };
+
+  const resolveConflict = async (action, params) => {
+    try {
+      const res = await fetch(`${API_URL}/api/nlu/resolve-conflict`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ action, ...params })
+      });
+
+      if (res.ok) {
+        fetchConflicts();
+        fetchIntents();
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  };
+
+  // Load analytics/conflicts when tab changes
+  useEffect(() => {
+    if (activeTab === 'analytics' && botId && !analyticsData) {
+      fetchAnalytics();
+    } else if (activeTab === 'conflicts' && botId && !conflictsData) {
+      fetchConflicts();
+    }
+  }, [activeTab, botId]);
+
+  const CHART_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
   const entityTypes = [
     { value: 'text', label: 'Text' },
     { value: 'number', label: 'Number' },
@@ -478,10 +688,76 @@ export default function IntentEntityBuilder() {
 
   return (
     <div style={styles.container}>
+      {/* Hidden file inputs */}
+      <input
+        ref={intentFileRef}
+        type="file"
+        accept=".csv,.json"
+        style={{ display: 'none' }}
+        onChange={handleImportIntents}
+      />
+      <input
+        ref={entityFileRef}
+        type="file"
+        accept=".csv,.json"
+        style={{ display: 'none' }}
+        onChange={handleImportEntities}
+      />
+
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
-        <span style={styles.botName}>{botName}</span>
+        <div style={styles.headerActions}>
+          {/* Import Dropdown */}
+          <div style={styles.dropdown}>
+            <button
+              style={styles.headerButton}
+              onClick={() => { setShowImportMenu(!showImportMenu); setShowExportMenu(false); }}
+              disabled={importLoading}
+            >
+              📥 {importLoading ? 'Importing...' : 'Import'}
+            </button>
+            {showImportMenu && (
+              <div style={styles.dropdownMenu}>
+                <button style={styles.dropdownItem} onClick={() => intentFileRef.current?.click()}>
+                  🎯 Import Intents (CSV/JSON)
+                </button>
+                <button style={styles.dropdownItem} onClick={() => entityFileRef.current?.click()}>
+                  📦 Import Entities (CSV/JSON)
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Export Dropdown */}
+          <div style={styles.dropdown}>
+            <button
+              style={styles.headerButton}
+              onClick={() => { setShowExportMenu(!showExportMenu); setShowImportMenu(false); }}
+              disabled={exportLoading}
+            >
+              📤 {exportLoading ? 'Exporting...' : 'Export'}
+            </button>
+            {showExportMenu && (
+              <div style={styles.dropdownMenu}>
+                <button style={styles.dropdownItem} onClick={() => handleExport('intents', 'csv')}>
+                  🎯 Export Intents (CSV)
+                </button>
+                <button style={styles.dropdownItem} onClick={() => handleExport('intents', 'json')}>
+                  🎯 Export Intents (JSON)
+                </button>
+                <button style={styles.dropdownItem} onClick={() => handleExport('entities', 'csv')}>
+                  📦 Export Entities (CSV)
+                </button>
+                <button style={styles.dropdownItem} onClick={() => handleExport('entities', 'json')}>
+                  📦 Export Entities (JSON)
+                </button>
+              </div>
+            )}
+          </div>
+
+          <span style={styles.botName}>{botName}</span>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -504,11 +780,29 @@ export default function IntentEntityBuilder() {
         >
           📦 {t('intentEntity.entities')} ({entities.length})
         </button>
+        <button
+          style={{
+            ...styles.tab,
+            ...(activeTab === 'analytics' ? styles.activeTab : {})
+          }}
+          onClick={() => setActiveTab('analytics')}
+        >
+          📊 Analytics
+        </button>
+        <button
+          style={{
+            ...styles.tab,
+            ...(activeTab === 'conflicts' ? styles.activeTab : {})
+          }}
+          onClick={() => setActiveTab('conflicts')}
+        >
+          ⚠️ Conflicts {conflictsData?.summary?.totalConflicts > 0 && `(${conflictsData.summary.totalConflicts})`}
+        </button>
       </div>
 
       {/* Main Content */}
       <div style={styles.mainContent}>
-        {activeTab === 'intents' ? (
+        {activeTab === 'intents' && (
           <>
             {/* Intents List */}
             <div style={styles.leftPanel}>
@@ -516,25 +810,41 @@ export default function IntentEntityBuilder() {
                 + {t('intentEntity.createIntent')}
               </button>
               <div style={styles.list}>
-                {intents.map(intent => (
-                  <div
-                    key={intent.id}
-                    style={{
-                      ...styles.card,
-                      ...(selectedIntent?.id === intent.id ? styles.selectedCard : {})
-                    }}
-                    onClick={() => selectIntent(intent)}
-                  >
-                    <div style={styles.cardHeader}>
-                      <span style={styles.cardName}>{intent.display_name || intent.name}</span>
-                      {intent.is_active && <span style={styles.activeBadge}>Active</span>}
+                {intents.map(intent => {
+                  const exCount = parseInt(intent.example_count) || 0;
+                  const exampleQuality = exCount === 0 ? 'critical' : exCount < 3 ? 'warning' : exCount < 5 ? 'medium' : 'good';
+                  return (
+                    <div
+                      key={intent.id}
+                      style={{
+                        ...styles.card,
+                        ...(selectedIntent?.id === intent.id ? styles.selectedCard : {})
+                      }}
+                      onClick={() => selectIntent(intent)}
+                    >
+                      <div style={styles.cardHeader}>
+                        <span style={styles.cardName}>{intent.display_name || intent.name}</span>
+                        <div style={styles.cardBadges}>
+                          {intent.is_active && <span style={styles.activeBadge}>Active</span>}
+                        </div>
+                      </div>
+                      <div style={styles.cardMeta}>
+                        <span style={styles.cardCode}>{intent.name}</span>
+                        <span style={{
+                          ...styles.exampleBadge,
+                          backgroundColor: exampleQuality === 'critical' ? 'rgba(239,68,68,0.2)' :
+                            exampleQuality === 'warning' ? 'rgba(245,158,11,0.2)' :
+                            exampleQuality === 'medium' ? 'rgba(59,130,246,0.2)' : 'rgba(16,185,129,0.2)',
+                          color: exampleQuality === 'critical' ? '#ef4444' :
+                            exampleQuality === 'warning' ? '#f59e0b' :
+                            exampleQuality === 'medium' ? '#3b82f6' : '#10b981'
+                        }}>
+                          {exCount} examples
+                        </span>
+                      </div>
                     </div>
-                    <div style={styles.cardMeta}>
-                      <span style={styles.cardCode}>{intent.name}</span>
-                      <span style={styles.cardCount}>{intent.example_count || 0} examples</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {intents.length === 0 && (
                   <div style={styles.emptyState}>{t('intentEntity.noIntents')}</div>
                 )}
@@ -636,7 +946,9 @@ export default function IntentEntityBuilder() {
               )}
             </div>
           </>
-        ) : (
+        )}
+
+        {activeTab === 'entities' && (
           <>
             {/* Entities List */}
             <div style={styles.leftPanel}>
@@ -774,6 +1086,261 @@ export default function IntentEntityBuilder() {
               )}
             </div>
           </>
+        )}
+
+        {activeTab === 'analytics' && (
+          /* Analytics Tab */
+          <div style={styles.analyticsContainer}>
+            {analyticsLoading ? (
+              <div style={styles.loading}>Loading analytics...</div>
+            ) : analyticsData ? (
+              <>
+                {/* Summary Cards */}
+                <div style={styles.summaryCards}>
+                  <div style={styles.summaryCard}>
+                    <div style={styles.summaryValue}>{analyticsData.summary.totalQueries || 0}</div>
+                    <div style={styles.summaryLabel}>Total Queries</div>
+                  </div>
+                  <div style={styles.summaryCard}>
+                    <div style={styles.summaryValue}>{intents.length}</div>
+                    <div style={styles.summaryLabel}>Total Intents</div>
+                  </div>
+                  <div style={styles.summaryCard}>
+                    <div style={styles.summaryValue}>{entities.length}</div>
+                    <div style={styles.summaryLabel}>Total Entities</div>
+                  </div>
+                  <div style={styles.summaryCard}>
+                    <div style={styles.summaryValue}>{((analyticsData.summary.avgConfidence || 0) * 100).toFixed(0)}%</div>
+                    <div style={styles.summaryLabel}>Avg Confidence</div>
+                  </div>
+                  <div style={styles.summaryCard}>
+                    <div style={styles.summaryValue}>{analyticsData.summary.matchRate || 0}%</div>
+                    <div style={styles.summaryLabel}>Match Rate</div>
+                  </div>
+                </div>
+
+                {/* Charts Row */}
+                <div style={styles.chartsRow}>
+                  {/* Daily Usage Chart */}
+                  <div style={styles.chartContainer}>
+                    <h4 style={styles.chartTitle}>📈 Daily Usage (Last 30 Days)</h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={analyticsData.daily?.slice().reverse() || []}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2d2d3a" />
+                        <XAxis dataKey="date" stroke="#6b7280" tick={{ fontSize: 10 }} />
+                        <YAxis stroke="#6b7280" tick={{ fontSize: 10 }} />
+                        <Tooltip contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #2d2d3a' }} />
+                        <Line type="monotone" dataKey="totalQueries" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Confidence Distribution */}
+                  <div style={styles.chartContainer}>
+                    <h4 style={styles.chartTitle}>📊 Confidence Distribution</h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={analyticsData.confidence || []}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2d2d3a" />
+                        <XAxis dataKey="label" stroke="#6b7280" tick={{ fontSize: 9 }} />
+                        <YAxis stroke="#6b7280" tick={{ fontSize: 10 }} />
+                        <Tooltip contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #2d2d3a' }} />
+                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Top Intents Pie Chart */}
+                  <div style={styles.chartContainer}>
+                    <h4 style={styles.chartTitle}>🎯 Top 5 Intents</h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={analyticsData.topIntents || []}
+                          dataKey="hitCount"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={70}
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                          labelLine={false}
+                        >
+                          {(analyticsData.topIntents || []).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #2d2d3a' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Tables Row */}
+                <div style={styles.tablesRow}>
+                  {/* Low Confidence Messages */}
+                  <div style={styles.tableContainer}>
+                    <h4 style={styles.chartTitle}>⚠️ Low Confidence Messages</h4>
+                    <div style={styles.table}>
+                      {(analyticsData.lowConfidence || []).length === 0 ? (
+                        <div style={styles.emptyState}>No low confidence messages</div>
+                      ) : (
+                        analyticsData.lowConfidence.map((msg, i) => (
+                          <div key={i} style={styles.tableRow}>
+                            <div style={styles.tableMessage}>{msg.message}</div>
+                            <div style={styles.tableIntent}>{msg.detectedIntent || 'Unknown'}</div>
+                            <div style={{
+                              ...styles.tableConfidence,
+                              color: msg.confidence < 0.3 ? '#ef4444' : '#f59e0b'
+                            }}>
+                              {(msg.confidence * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Training Gaps */}
+                  <div style={styles.tableContainer}>
+                    <h4 style={styles.chartTitle}>📚 Training Gaps</h4>
+                    <div style={styles.table}>
+                      {(analyticsData.trainingGaps || []).length === 0 ? (
+                        <div style={styles.emptyState}>All intents have sufficient examples</div>
+                      ) : (
+                        analyticsData.trainingGaps.map((gap, i) => (
+                          <div key={i} style={styles.tableRow}>
+                            <div style={styles.tableMessage}>{gap.name}</div>
+                            <div style={styles.tableIntent}>{gap.exampleCount} examples</div>
+                            <div style={{
+                              ...styles.priorityBadge,
+                              backgroundColor: gap.priority === 'critical' ? 'rgba(239,68,68,0.2)' :
+                                gap.priority === 'high' ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)',
+                              color: gap.priority === 'critical' ? '#ef4444' :
+                                gap.priority === 'high' ? '#f59e0b' : '#3b82f6'
+                            }}>
+                              {gap.priority}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <button style={styles.refreshButton} onClick={fetchAnalytics}>
+                  🔄 Refresh Analytics
+                </button>
+              </>
+            ) : (
+              <div style={styles.emptyState}>No analytics data available</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'conflicts' && (
+          /* Conflicts Tab */
+          <div style={styles.conflictsContainer}>
+            {/* Threshold Slider */}
+            <div style={styles.conflictControls}>
+              <label style={styles.label}>
+                Similarity Threshold: {(conflictThreshold * 100).toFixed(0)}%
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="0.95"
+                step="0.05"
+                style={styles.slider}
+                value={conflictThreshold}
+                onChange={e => setConflictThreshold(parseFloat(e.target.value))}
+              />
+              <button
+                style={styles.scanButton}
+                onClick={fetchConflicts}
+                disabled={conflictsLoading}
+              >
+                {conflictsLoading ? '🔄 Scanning...' : '🔍 Scan for Conflicts'}
+              </button>
+            </div>
+
+            {conflictsLoading ? (
+              <div style={styles.loading}>Scanning for conflicts...</div>
+            ) : conflictsData ? (
+              <>
+                {/* Summary */}
+                <div style={styles.conflictSummary}>
+                  <span>Found <strong>{conflictsData.summary?.totalConflicts || 0}</strong> conflicts</span>
+                  {conflictsData.summary?.critical > 0 && (
+                    <span style={styles.criticalBadge}>🔴 {conflictsData.summary.critical} Critical</span>
+                  )}
+                  {conflictsData.summary?.high > 0 && (
+                    <span style={styles.highBadge}>🟠 {conflictsData.summary.high} High</span>
+                  )}
+                </div>
+
+                {/* Conflict List */}
+                <div style={styles.conflictList}>
+                  {(conflictsData.conflicts || []).length === 0 ? (
+                    <div style={styles.emptyState}>✅ No conflicts found! Your intents are well-defined.</div>
+                  ) : (
+                    conflictsData.conflicts.map((conflict, i) => (
+                      <div key={i} style={styles.conflictCard}>
+                        <div style={styles.conflictHeader}>
+                          <span style={{
+                            ...styles.similarityBadge,
+                            backgroundColor: conflict.similarity >= 0.9 ? 'rgba(239,68,68,0.2)' :
+                              conflict.similarity >= 0.8 ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)',
+                            color: conflict.similarity >= 0.9 ? '#ef4444' :
+                              conflict.similarity >= 0.8 ? '#f59e0b' : '#3b82f6'
+                          }}>
+                            {(conflict.similarity * 100).toFixed(0)}% similar
+                          </span>
+                        </div>
+                        <div style={styles.conflictIntents}>
+                          <div style={styles.conflictIntent}>
+                            <strong>{conflict.intent1.name}</strong>
+                            <div style={styles.conflictExample}>"{conflict.intent1.example}"</div>
+                          </div>
+                          <div style={styles.conflictVs}>vs</div>
+                          <div style={styles.conflictIntent}>
+                            <strong>{conflict.intent2.name}</strong>
+                            <div style={styles.conflictExample}>"{conflict.intent2.example}"</div>
+                          </div>
+                        </div>
+                        <div style={styles.conflictActions}>
+                          <button
+                            style={styles.conflictActionButton}
+                            onClick={() => resolveConflict('delete', { example_id: conflict.intent1.example_id })}
+                            title="Delete first example"
+                          >
+                            🗑️ Delete 1st
+                          </button>
+                          <button
+                            style={styles.conflictActionButton}
+                            onClick={() => resolveConflict('delete', { example_id: conflict.intent2.example_id })}
+                            title="Delete second example"
+                          >
+                            🗑️ Delete 2nd
+                          </button>
+                          <button
+                            style={styles.conflictActionButton}
+                            onClick={() => resolveConflict('merge', {
+                              source_intent_id: conflict.intent2.id,
+                              target_intent_id: conflict.intent1.id
+                            })}
+                            title="Merge intents"
+                          >
+                            🔀 Merge
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={styles.emptyState}>Click "Scan for Conflicts" to analyze your intents</div>
+            )}
+          </div>
         )}
       </div>
 
@@ -937,7 +1504,19 @@ const styles = {
   cardMeta: {
     display: 'flex',
     gap: '8px',
+    alignItems: 'center',
+    flexWrap: 'wrap'
+  },
+  cardBadges: {
+    display: 'flex',
+    gap: '6px',
     alignItems: 'center'
+  },
+  exampleBadge: {
+    padding: '2px 8px',
+    borderRadius: '4px',
+    fontSize: '11px',
+    fontWeight: '500'
   },
   cardCode: {
     color: '#6b7280',
@@ -1231,5 +1810,276 @@ const styles = {
     color: '#6b7280',
     fontSize: '12px',
     marginTop: '2px'
+  },
+  // Header Actions
+  headerActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  dropdown: {
+    position: 'relative'
+  },
+  headerButton: {
+    padding: '8px 16px',
+    backgroundColor: '#1a1a24',
+    border: '1px solid #2d2d3a',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: '4px',
+    backgroundColor: '#1a1a24',
+    border: '1px solid #2d2d3a',
+    borderRadius: '8px',
+    padding: '8px 0',
+    minWidth: '200px',
+    zIndex: 100,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+  },
+  dropdownItem: {
+    width: '100%',
+    padding: '10px 16px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#e5e7eb',
+    cursor: 'pointer',
+    fontSize: '14px',
+    textAlign: 'left',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  // Analytics styles
+  analyticsContainer: {
+    flex: 1,
+    padding: '24px',
+    backgroundColor: '#12121a',
+    borderRadius: '12px',
+    border: '1px solid #2d2d3a'
+  },
+  summaryCards: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, 1fr)',
+    gap: '16px',
+    marginBottom: '24px'
+  },
+  summaryCard: {
+    backgroundColor: '#1a1a24',
+    borderRadius: '12px',
+    padding: '20px',
+    textAlign: 'center',
+    border: '1px solid #2d2d3a'
+  },
+  summaryValue: {
+    fontSize: '32px',
+    fontWeight: '700',
+    color: '#8b5cf6',
+    marginBottom: '4px'
+  },
+  summaryLabel: {
+    fontSize: '13px',
+    color: '#9ca3af'
+  },
+  chartsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '16px',
+    marginBottom: '24px'
+  },
+  chartContainer: {
+    backgroundColor: '#1a1a24',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #2d2d3a'
+  },
+  chartTitle: {
+    color: '#fff',
+    fontSize: '14px',
+    marginTop: 0,
+    marginBottom: '12px'
+  },
+  tablesRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '16px',
+    marginBottom: '24px'
+  },
+  tableContainer: {
+    backgroundColor: '#1a1a24',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #2d2d3a'
+  },
+  table: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    maxHeight: '250px',
+    overflowY: 'auto'
+  },
+  tableRow: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px 12px',
+    backgroundColor: '#12121a',
+    borderRadius: '6px',
+    gap: '12px'
+  },
+  tableMessage: {
+    flex: 1,
+    color: '#e5e7eb',
+    fontSize: '13px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+  tableIntent: {
+    color: '#9ca3af',
+    fontSize: '12px',
+    minWidth: '100px'
+  },
+  tableConfidence: {
+    fontSize: '12px',
+    fontWeight: '600',
+    minWidth: '50px',
+    textAlign: 'right'
+  },
+  priorityBadge: {
+    padding: '4px 8px',
+    borderRadius: '4px',
+    fontSize: '11px',
+    fontWeight: '600',
+    textTransform: 'uppercase'
+  },
+  refreshButton: {
+    padding: '12px 24px',
+    backgroundColor: '#2d2d3a',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '14px'
+  },
+  // Conflicts styles
+  conflictsContainer: {
+    flex: 1,
+    padding: '24px',
+    backgroundColor: '#12121a',
+    borderRadius: '12px',
+    border: '1px solid #2d2d3a'
+  },
+  conflictControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '24px',
+    padding: '16px',
+    backgroundColor: '#1a1a24',
+    borderRadius: '8px',
+    border: '1px solid #2d2d3a'
+  },
+  scanButton: {
+    padding: '10px 20px',
+    backgroundColor: '#8b5cf6',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    marginLeft: 'auto'
+  },
+  conflictSummary: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '20px',
+    color: '#e5e7eb',
+    fontSize: '14px'
+  },
+  criticalBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    color: '#ef4444',
+    padding: '4px 12px',
+    borderRadius: '6px',
+    fontSize: '13px'
+  },
+  highBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    color: '#f59e0b',
+    padding: '4px 12px',
+    borderRadius: '6px',
+    fontSize: '13px'
+  },
+  conflictList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    maxHeight: '500px',
+    overflowY: 'auto'
+  },
+  conflictCard: {
+    backgroundColor: '#1a1a24',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #2d2d3a'
+  },
+  conflictHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px'
+  },
+  similarityBadge: {
+    padding: '4px 12px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  conflictIntents: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '12px'
+  },
+  conflictIntent: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#12121a',
+    borderRadius: '8px'
+  },
+  conflictVs: {
+    color: '#6b7280',
+    fontSize: '14px',
+    fontWeight: '600'
+  },
+  conflictExample: {
+    color: '#9ca3af',
+    fontSize: '12px',
+    marginTop: '6px',
+    fontStyle: 'italic'
+  },
+  conflictActions: {
+    display: 'flex',
+    gap: '8px',
+    justifyContent: 'flex-end'
+  },
+  conflictActionButton: {
+    padding: '8px 12px',
+    backgroundColor: '#2d2d3a',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#e5e7eb',
+    cursor: 'pointer',
+    fontSize: '12px'
   }
 };

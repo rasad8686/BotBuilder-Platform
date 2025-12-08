@@ -43,7 +43,8 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJ0ZXN0MkBsb2NhbC5kZXYiLCJ1c2VybmFtZSI6IlRlc3RVc2VyMiIsImN1cnJlbnRfb3JnYW5pemF0aW9uX2lkIjozLCJpYXQiOjE3NjUxMzk1NzgsImV4cCI6MTc2NTIyNTk3OH0.KG1oPPfmMUajllvQKPD7kGq7VmX-g60O538q6l0dGKE\")",
       "Bash(dir:*)",
       "Bash(mkdir:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

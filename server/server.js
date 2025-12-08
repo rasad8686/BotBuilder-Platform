@@ -13,9 +13,15 @@ const { detectCustomDomain } = require('./middleware/whitelabel');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const securityHeaders = require('./middleware/securityHeaders');
 const { initializeWebSocket } = require('./websocket');
+const { validateEnvOrExit, getSecureEnv } = require('./utils/envValidator');
 
 // Load .env from server directory (same directory as this file)
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+// ========================================
+// 🔐 VALIDATE ENVIRONMENT VARIABLES
+// ========================================
+validateEnvOrExit();
 
 // Verify email configuration loaded
 log.info('Email configuration check', {
@@ -35,36 +41,44 @@ const { io, executionSocket } = initializeWebSocket(server);
 // ========================================
 /**
  * Automatically creates admin account on server startup
- * - LOCAL: admin@local.dev / admin123
- * - PRODUCTION: dunugojaev@gmail.com + admin@local.dev (for testing)
+ * Uses environment variables - NO hardcoded credentials
+ *
+ * Required env vars:
+ * - ADMIN_EMAIL: Admin email address
+ * - ADMIN_PASSWORD: Admin password (min 12 chars)
  */
 async function ensureAdminExists() {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Admin configurations to create
-    const adminConfigs = isProduction ? [
-      {
-        email: process.env.ADMIN_EMAIL || 'dunugojaev@gmail.com',
-        password: process.env.ADMIN_PASSWORD || 'Admin@BotBuilder2025!SecurePass',
-        name: 'Dunu Admin',
-        orgSlug: 'dunu-admin-org',
-        orgName: 'Dunu Admin Organization'
-      },
-      {
-        email: 'admin@local.dev',
-        password: 'admin123',
-        name: 'Test Admin',
-        orgSlug: 'test-admin-org',
-        orgName: 'Test Admin Organization'
+    // Get admin credentials from environment
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    // Skip admin creation if no credentials provided
+    if (!adminEmail || !adminPassword) {
+      if (isProduction) {
+        log.warn('Admin credentials not configured - ADMIN_EMAIL and ADMIN_PASSWORD required');
+      } else {
+        log.info('Admin auto-creation skipped - set ADMIN_EMAIL and ADMIN_PASSWORD to enable');
       }
-    ] : [
+      return;
+    }
+
+    // Validate password strength in production
+    if (isProduction && adminPassword.length < 12) {
+      log.error('ADMIN_PASSWORD must be at least 12 characters in production');
+      return;
+    }
+
+    // Admin configuration from environment
+    const adminConfigs = [
       {
-        email: 'admin@local.dev',
-        password: 'admin123',
-        name: 'Local Admin',
-        orgSlug: 'local-admin-org',
-        orgName: 'Local Admin Organization'
+        email: adminEmail,
+        password: adminPassword,
+        name: process.env.ADMIN_NAME || 'Admin',
+        orgSlug: process.env.ADMIN_ORG_SLUG || 'admin-org',
+        orgName: process.env.ADMIN_ORG_NAME || 'Admin Organization'
       }
     ];
 
@@ -335,7 +349,7 @@ app.post('/api/auth/register', async (req, res) => {
         username: user.name,
         current_organization_id: organizationId
       },
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      getSecureEnv('JWT_SECRET'),
       { expiresIn: '24h' }
     );
 
@@ -460,7 +474,7 @@ app.post('/api/auth/login', async (req, res) => {
         username: user.name, // Map 'name' from DB to 'username' in JWT
         current_organization_id: organizationId
       },
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      getSecureEnv('JWT_SECRET'),
       { expiresIn: '24h' }
     );
 
@@ -537,7 +551,7 @@ app.post('/api/auth/demo', async (req, res) => {
         current_organization_id: organizationId,
         is_demo: true // Flag to identify demo users
       },
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+      getSecureEnv('JWT_SECRET'),
       { expiresIn: '24h' }
     );
 
