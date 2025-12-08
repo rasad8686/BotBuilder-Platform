@@ -43,6 +43,7 @@ export default function MyBots() {
 
     fetchBots();
     fetchSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, itemsPerPage, usePagination, orgLoading]);
 
   // Fetch subscription/plan info

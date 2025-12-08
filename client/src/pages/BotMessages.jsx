@@ -25,10 +25,12 @@ function BotMessages() {
 
   useEffect(() => {
     fetchBot();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId, currentPage, itemsPerPage]);
 
   const fetchBot = async () => {

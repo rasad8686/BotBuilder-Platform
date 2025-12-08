@@ -31,12 +31,14 @@ const KnowledgeBase = () => {
 
   useEffect(() => {
     fetchKnowledgeBases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (selectedKB) {
       fetchDocuments(selectedKB.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKB]);
 
   const fetchKnowledgeBases = async () => {

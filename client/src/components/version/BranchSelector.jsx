@@ -20,6 +20,7 @@ export default function BranchSelector({ entityType, entityId, currentBranch, on
   useEffect(() => {
     fetchBranches();
     fetchVersions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, entityId]);
 
   const fetchBranches = async () => {

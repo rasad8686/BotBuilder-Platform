@@ -31,6 +31,7 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
 
   useEffect(() => {
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, searchQuery]);
 
   const fetchTemplates = async () => {

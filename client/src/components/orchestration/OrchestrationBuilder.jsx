@@ -36,6 +36,7 @@ function OrchestrationBuilderInner() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orchestrationId, botId]);
 
   const fetchData = async () => {
@@ -246,6 +247,7 @@ function OrchestrationBuilderInner() {
       const transitionId = edge.id.replace('edge-', '');
       handleDeleteTransition(transitionId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onNodeClick = useCallback((event, node) => {

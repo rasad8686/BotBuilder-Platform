@@ -20,6 +20,7 @@ export default function WidgetSettings() {
 
   useEffect(() => {
     fetchBotAndConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchBotAndConfig = async () => {

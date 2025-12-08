@@ -14,6 +14,7 @@ const AgentKnowledgePanel = ({ agentId, onUpdate }) => {
     if (agentId) {
       fetchAgentKnowledgeBases();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const fetchAgentKnowledgeBases = async () => {

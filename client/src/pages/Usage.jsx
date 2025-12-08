@@ -16,6 +16,7 @@ export default function Usage() {
 
   useEffect(() => {
     fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const fetchAllData = async () => {

@@ -36,6 +36,7 @@ export default function Webhooks() {
 
     // Cleanup interval on unmount
     return () => clearInterval(refreshInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchWebhooks = async () => {

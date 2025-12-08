@@ -43,16 +43,19 @@ const ExecutionHistory = () => {
       }
     };
     fetchBots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   useEffect(() => {
     if (executionId) {
       fetchExecutionDetail(executionId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [executionId]);
 
   const fetchData = async () => {
@@ -194,6 +197,7 @@ const ExecutionHistory = () => {
     if (selectedWorkflow !== 'all' || statusFilter !== 'all' || dateRange.start || dateRange.end) {
       fetchExecutions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorkflow, statusFilter, dateRange]);
 
   const handleBotChange = (e) => {

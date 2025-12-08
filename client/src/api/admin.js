@@ -18,12 +18,8 @@ import axiosInstance from './axios';
  * @returns {Promise} Audit logs with pagination
  */
 export const getAuditLogs = async (params = {}) => {
-  try {
-    const response = await axiosInstance.get('/api/admin/audit-logs', { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axiosInstance.get('/api/admin/audit-logs', { params });
+  return response.data;
 };
 
 /**
@@ -31,12 +27,8 @@ export const getAuditLogs = async (params = {}) => {
  * @returns {Promise} Array of action strings
  */
 export const getAuditActions = async () => {
-  try {
-    const response = await axiosInstance.get('/api/admin/audit-logs/actions');
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axiosInstance.get('/api/admin/audit-logs/actions');
+  return response.data;
 };
 
 /**
@@ -44,12 +36,8 @@ export const getAuditActions = async () => {
  * @returns {Promise} Statistics object
  */
 export const getStats = async () => {
-  try {
-    const response = await axiosInstance.get('/api/admin/stats');
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axiosInstance.get('/api/admin/stats');
+  return response.data;
 };
 
 /**
@@ -57,12 +45,8 @@ export const getStats = async () => {
  * @returns {Promise} Health check object
  */
 export const getHealth = async () => {
-  try {
-    const response = await axiosInstance.get('/api/admin/health');
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axiosInstance.get('/api/admin/health');
+  return response.data;
 };
 
 /**
@@ -73,10 +57,6 @@ export const getHealth = async () => {
  * @returns {Promise} Timeline array
  */
 export const getActivityTimeline = async (params = {}) => {
-  try {
-    const response = await axiosInstance.get('/api/admin/activity-timeline', { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await axiosInstance.get('/api/admin/activity-timeline', { params });
+  return response.data;
 };

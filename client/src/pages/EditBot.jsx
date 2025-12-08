@@ -23,6 +23,7 @@ export default function EditBot() {
 
   useEffect(() => {
     fetchBot();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchBot = async () => {

@@ -25,6 +25,7 @@ const PluginDeveloper = () => {
 
   useEffect(() => {
     fetchMyPlugins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMyPlugins = async () => {

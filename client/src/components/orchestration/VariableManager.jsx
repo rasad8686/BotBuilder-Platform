@@ -31,6 +31,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
 
   useEffect(() => {
     fetchVariables();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orchestrationId]);
 
   const fetchVariables = async () => {

@@ -13,6 +13,7 @@ const KBAssignModal = ({ knowledgeBase, onClose, onSave }) => {
 
   useEffect(() => {
     fetchAgentsAndAssignments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [knowledgeBase.id]);
 
   const fetchAgentsAndAssignments = async () => {

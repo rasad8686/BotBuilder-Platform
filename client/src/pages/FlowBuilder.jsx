@@ -83,6 +83,7 @@ function FlowBuilder() {
     };
 
     fetchFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId, loadFlow]);
 
   // Set up onEdit callback for nodes
@@ -105,6 +106,7 @@ function FlowBuilder() {
     };
     addNode(nodeType, position);
     showNotification(`${nodeType} ${t('flowBuilder.nodeAdded')}`, 'success');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addNode]);
 
   // Save flow to backend

@@ -25,6 +25,7 @@ export default function ActivityLog() {
 
   useEffect(() => {
     fetchActivities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchActivities = async () => {

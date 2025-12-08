@@ -13,6 +13,7 @@ const AgentToolsPanel = ({ agentId, onAddTool }) => {
     if (agentId) {
       fetchAgentTools();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const fetchAgentTools = async () => {

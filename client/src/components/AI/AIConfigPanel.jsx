@@ -40,6 +40,7 @@ export default function AIConfigPanel() {
   useEffect(() => {
     loadProviders();
     loadConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const loadProviders = async () => {

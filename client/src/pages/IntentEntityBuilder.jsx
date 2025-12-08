@@ -77,6 +77,7 @@ export default function IntentEntityBuilder() {
       setLoading(false);
       fetchBots();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [botId]);
 
   const fetchBots = async () => {
@@ -621,6 +622,7 @@ export default function IntentEntityBuilder() {
     } else if (activeTab === 'conflicts' && botId && !conflictsData) {
       fetchConflicts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, botId]);
 
   const CHART_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];

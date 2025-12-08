@@ -32,6 +32,7 @@ export default function ChatView({ channel, conversation, onBack }) {
 
   useEffect(() => {
     fetchMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel.id, conversation.contact_id]);
 
   useEffect(() => {
