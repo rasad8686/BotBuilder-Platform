@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import CreateBot from './pages/CreateBot';
 import MyBots from './pages/MyBots';
@@ -76,6 +77,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp>} />

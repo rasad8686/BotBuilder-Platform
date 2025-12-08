@@ -14,6 +14,8 @@ const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const securityHeaders = require('./middleware/securityHeaders');
 const { initializeWebSocket } = require('./websocket');
 const { validateEnvOrExit, getSecureEnv } = require('./utils/envValidator');
+const crypto = require('crypto');
+const emailService = require('./services/emailService');
 
 // Load .env from server directory (same directory as this file)
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -378,11 +380,25 @@ app.post('/api/auth/register', async (req, res) => {
     // Log successful registration to audit trail
     await logRegister(req, user.id, user.email);
 
+    // Generate email verification token and send verification email
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await db.query(
+      `UPDATE users SET verification_token = $1, verification_token_expires_at = $2 WHERE id = $3`,
+      [verificationToken, verificationExpiresAt, user.id]
+    );
+
+    // Send verification email (non-blocking)
+    emailService.sendEmailVerificationEmail(user.email, verificationToken, user.name)
+      .then(() => log.info('Verification email sent', { userId: user.id, email: user.email }))
+      .catch((err) => log.error('Failed to send verification email', { error: err.message, userId: user.id }));
+
     log.info('Registration successful', { userId: user.id, email: user.email, orgId: organizationId });
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully!',
+      message: 'User registered successfully! Please check your email to verify your account.',
       token: token,
       user: {
         id: user.id,
@@ -663,6 +679,9 @@ app.use('/api/widget', require('./routes/widget'));
 
 // ✅ Password Reset routes
 app.use('/api/auth', require('./routes/passwordReset'));
+
+// ✅ Email Verification routes
+app.use('/api/auth', require('./routes/emailVerification'));
 
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

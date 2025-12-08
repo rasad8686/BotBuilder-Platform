@@ -271,6 +271,28 @@
     "ctaSubtitle": "BotBuilder ile akıllı chatbotlar oluşturan binlerce işletmeye katılın",
     "signIn": "Giriş Yap"
   },
+  "verifyEmail": {
+    "verifying": "E-postanız doğrulanıyor...",
+    "noToken": "Doğrulama tokeni bulunamadı.",
+    "invalidToken": "Geçersiz veya süresi dolmuş token.",
+    "networkError": "Ağ hatası. Lütfen tekrar deneyin.",
+    "errorTitle": "Doğrulama Başarısız",
+    "successTitle": "E-posta Doğrulandı!",
+    "successMessage": "E-postanız başarıyla doğrulandı. Artık tüm özelliklere erişebilirsiniz.",
+    "alreadyVerifiedTitle": "Zaten Doğrulanmış",
+    "alreadyVerifiedMessage": "E-postanız zaten doğrulanmış.",
+    "goToDashboard": "Panele Git",
+    "resendTitle": "Yeni doğrulama bağlantısı mı gerekiyor?",
+    "resendButton": "Doğrulama E-postasını Yeniden Gönder",
+    "resendSuccess": "Bu e-posta ile bir hesap varsa, yeni bir doğrulama bağlantısı alacaksınız.",
+    "emailPlaceholder": "E-postanızı girin",
+    "backToLogin": "Girişe Dön"
+  },
+  "emailVerification": {
+    "bannerMessage": "Tüm özelliklere erişmek için lütfen e-postanızı doğrulayın.",
+    "resendLink": "Doğrulama e-postasını yeniden gönder",
+    "resendSuccess": "Doğrulama e-postası gönderildi!"
+  },
   "common": {
     "save": "Kaydet",
     "cancel": "İptal",
