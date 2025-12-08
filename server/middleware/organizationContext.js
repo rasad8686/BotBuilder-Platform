@@ -25,9 +25,10 @@ async function organizationContext(req, res, next) {
                          req.headers['x-organization-id'] ||
                          req.query.organization_id;
 
-    // If no organization specified, get user's first organization
-    if (!organizationId) {
-      const defaultOrgQuery = `
+    // Helper function to get user's default organization (member or owner)
+    const getUserDefaultOrg = async (uid) => {
+      // First try organization_members
+      const memberQuery = `
         SELECT om.org_id, om.role, o.name, o.slug, o.owner_id
         FROM organization_members om
         JOIN organizations o ON o.id = om.org_id
@@ -35,10 +36,31 @@ async function organizationContext(req, res, next) {
         ORDER BY om.joined_at ASC
         LIMIT 1
       `;
+      const memberResult = await db.query(memberQuery, [uid]);
+      if (memberResult.rows.length > 0) {
+        return memberResult.rows[0];
+      }
 
-      const result = await db.query(defaultOrgQuery, [userId]);
+      // Fallback: check if user owns an organization
+      const ownerQuery = `
+        SELECT id as org_id, 'admin' as role, name, slug, owner_id
+        FROM organizations
+        WHERE owner_id = $1
+        LIMIT 1
+      `;
+      const ownerResult = await db.query(ownerQuery, [uid]);
+      if (ownerResult.rows.length > 0) {
+        return ownerResult.rows[0];
+      }
 
-      if (result.rows.length === 0) {
+      return null;
+    };
+
+    // If no organization specified, get user's first organization
+    if (!organizationId) {
+      const defaultOrg = await getUserDefaultOrg(userId);
+
+      if (!defaultOrg) {
         return res.status(403).json({
           success: false,
           message: 'No organization found. Please contact support.',
@@ -46,8 +68,8 @@ async function organizationContext(req, res, next) {
         });
       }
 
-      organizationId = result.rows[0].org_id;
-      req.organization = result.rows[0];
+      organizationId = defaultOrg.org_id;
+      req.organization = defaultOrg;
     } else {
       // Verify user is member of specified organization
       const memberQuery = `
@@ -60,26 +82,30 @@ async function organizationContext(req, res, next) {
       const result = await db.query(memberQuery, [userId, organizationId]);
 
       if (result.rows.length === 0) {
-        // Fallback to user's default organization instead of returning 403
-        const defaultOrgQuery = `
-          SELECT om.org_id, om.role, o.name, o.slug, o.owner_id
-          FROM organization_members om
-          JOIN organizations o ON o.id = om.org_id
-          WHERE om.user_id = $1 AND om.status = 'active'
-          ORDER BY om.joined_at ASC
-          LIMIT 1
+        // Check if user is owner of this organization
+        const ownerQuery = `
+          SELECT id as org_id, 'admin' as role, name, slug, owner_id
+          FROM organizations
+          WHERE id = $1 AND owner_id = $2
         `;
-        const defaultResult = await db.query(defaultOrgQuery, [userId]);
+        const ownerResult = await db.query(ownerQuery, [organizationId, userId]);
 
-        if (defaultResult.rows.length === 0) {
-          return res.status(403).json({
-            success: false,
-            message: 'You do not have access to this organization',
-            code: 'NO_ORGANIZATION_ACCESS'
-          });
+        if (ownerResult.rows.length > 0) {
+          req.organization = ownerResult.rows[0];
+        } else {
+          // Fallback to user's default organization
+          const defaultOrg = await getUserDefaultOrg(userId);
+
+          if (!defaultOrg) {
+            return res.status(403).json({
+              success: false,
+              message: 'You do not have access to this organization',
+              code: 'NO_ORGANIZATION_ACCESS'
+            });
+          }
+
+          req.organization = defaultOrg;
         }
-
-        req.organization = defaultResult.rows[0];
       } else {
         req.organization = result.rows[0];
       }
