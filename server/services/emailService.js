@@ -148,7 +148,13 @@ If you didn't request this password reset, you can safely ignore this email.
    * Send email verification email
    */
   async sendEmailVerificationEmail(email, token, userName) {
+    console.log('📧 Sending verification email to:', email);
     const verifyUrl = `${this.frontendUrl}/verify-email?token=${token}`;
+
+    // Log verification link in dev mode
+    if (!this.isConfigured()) {
+      console.log('📧 [DEV MODE] Verification link:', verifyUrl);
+    }
 
     const subject = 'Verify Your Email - BotBuilder';
 
@@ -218,7 +224,9 @@ If you didn't create an account with BotBuilder, you can safely ignore this emai
 © ${new Date().getFullYear()} BotBuilder
     `.trim();
 
-    return this.sendEmail({ to: email, subject, html, text });
+    const result = await this.sendEmail({ to: email, subject, html, text });
+    console.log('✅ Verification email sent successfully');
+    return result;
   }
 }
 
