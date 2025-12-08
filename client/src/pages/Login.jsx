@@ -54,7 +54,7 @@ function Login() {
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
             <input
               type="password"
@@ -63,6 +63,12 @@ function Login() {
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div className="mb-6 text-right">
+            <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+              {t('auth.forgotPassword')}
+            </a>
           </div>
 
           <button

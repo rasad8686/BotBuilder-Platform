@@ -661,6 +661,9 @@ app.use('/api/nlu', require('./routes/nlu'));
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 
+// ✅ Password Reset routes
+app.use('/api/auth', require('./routes/passwordReset'));
+
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
