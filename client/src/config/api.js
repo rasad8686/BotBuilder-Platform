@@ -1,5 +1,6 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Use relative URL in production (nginx proxy) or env variable
+export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const API_ENDPOINTS = {
   // Auth

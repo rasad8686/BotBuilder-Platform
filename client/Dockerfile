@@ -12,8 +12,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Set API URL for Docker environment
-ARG VITE_API_URL=http://localhost:5000
+# Set API URL for Docker environment (empty = use relative URLs via nginx proxy)
+ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_API_BASE_URL=$VITE_API_URL
 

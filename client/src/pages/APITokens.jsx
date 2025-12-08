@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import axiosInstance from '../api/axios';
 
 export default function ApiTokens() {
   const { t } = useTranslation();
@@ -33,16 +31,15 @@ export default function ApiTokens() {
       }
 
       const [tokensRes, botsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/api-tokens`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/bots`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        axiosInstance.get('/api/api-tokens'),
+        axiosInstance.get('/api/bots')
       ]);
 
-      setTokens(tokensRes.data);
-      setBots(botsRes.data);
+      // API returns array directly or { tokens: [...] } or { data: [...] }
+      const tokensData = Array.isArray(tokensRes.data) ? tokensRes.data : (tokensRes.data.tokens || tokensRes.data.data || []);
+      const botsData = Array.isArray(botsRes.data) ? botsRes.data : (botsRes.data.bots || botsRes.data.data || []);
+      setTokens(tokensData);
+      setBots(botsData);
     } catch (error) {
       // Silent fail
       if (error.response?.status === 401) {
@@ -56,16 +53,11 @@ export default function ApiTokens() {
   const handleCreateToken = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_BASE_URL}/api/api-tokens`,
-        {
-          tokenName: formData.tokenName,
-          botId: formData.botId || null,
-          expiresInDays: formData.expiresInDays ? parseInt(formData.expiresInDays) : null
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await axiosInstance.post('/api/api-tokens', {
+        tokenName: formData.tokenName,
+        botId: formData.botId || null,
+        expiresInDays: formData.expiresInDays ? parseInt(formData.expiresInDays) : null
+      });
 
       // Backend returns { success: true, data: { token: '...' } }
       const tokenValue = response.data.data?.token || response.data.token;
@@ -84,10 +76,7 @@ export default function ApiTokens() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/api/api-tokens/${tokenId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axiosInstance.delete(`/api/api-tokens/${tokenId}`);
 
       fetchData();
     } catch (error) {
@@ -98,12 +87,7 @@ export default function ApiTokens() {
 
   const handleToggleToken = async (tokenId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `${API_BASE_URL}/api/api-tokens/${tokenId}/toggle`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axiosInstance.patch(`/api/api-tokens/${tokenId}/toggle`);
 
       fetchData();
     } catch (error) {
@@ -155,7 +139,7 @@ export default function ApiTokens() {
             <p className="text-sm text-gray-600 mb-2">Example Usage:</p>
             <code className="text-sm bg-gray-100 p-3 rounded block overflow-x-auto">
               curl -H "Authorization: Bearer bbot_your_token_here" \<br/>
-              {`     ${API_BASE_URL}/bots`}
+              {`     https://your-domain.com/api/bots`}
             </code>
           </div>
           <div className="grid md:grid-cols-2 gap-4 text-sm">

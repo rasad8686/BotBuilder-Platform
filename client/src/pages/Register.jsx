@@ -27,6 +27,9 @@ export default function Register() {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        if (response.data.user?.currentOrganizationId) {
+          localStorage.setItem('currentOrganizationId', response.data.user.currentOrganizationId);
+        }
         navigate('/dashboard');
       } else {
         setError('Registration failed - no token received');

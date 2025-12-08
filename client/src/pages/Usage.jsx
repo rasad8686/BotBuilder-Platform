@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import axiosInstance from '../api/axios';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function Usage() {
   const { t } = useTranslation();
@@ -28,24 +26,14 @@ export default function Usage() {
       }
 
       // Fetch dashboard data (existing usage stats)
-      const dashboardResponse = await axios.get(`${API_BASE_URL}/api/analytics/dashboard`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const dashboardResponse = await axiosInstance.get('/api/analytics/dashboard');
 
       // Fetch analytics data (new endpoints)
       const [overviewRes, messagesOverTimeRes, byBotRes, recentActivityRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/analytics/overview`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/analytics/messages-over-time?days=${timeRange}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/analytics/by-bot`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/analytics/recent-activity`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        axiosInstance.get('/api/analytics/overview'),
+        axiosInstance.get(`/api/analytics/messages-over-time?days=${timeRange}`),
+        axiosInstance.get('/api/analytics/by-bot'),
+        axiosInstance.get('/api/analytics/recent-activity')
       ]);
 
       setDashboardData(dashboardResponse.data);
