@@ -60,14 +60,29 @@ async function organizationContext(req, res, next) {
       const result = await db.query(memberQuery, [userId, organizationId]);
 
       if (result.rows.length === 0) {
-        return res.status(403).json({
-          success: false,
-          message: 'You do not have access to this organization',
-          code: 'NO_ORGANIZATION_ACCESS'
-        });
-      }
+        // Fallback to user's default organization instead of returning 403
+        const defaultOrgQuery = `
+          SELECT om.org_id, om.role, o.name, o.slug, o.owner_id
+          FROM organization_members om
+          JOIN organizations o ON o.id = om.org_id
+          WHERE om.user_id = $1 AND om.status = 'active'
+          ORDER BY om.joined_at ASC
+          LIMIT 1
+        `;
+        const defaultResult = await db.query(defaultOrgQuery, [userId]);
 
-      req.organization = result.rows[0];
+        if (defaultResult.rows.length === 0) {
+          return res.status(403).json({
+            success: false,
+            message: 'You do not have access to this organization',
+            code: 'NO_ORGANIZATION_ACCESS'
+          });
+        }
+
+        req.organization = defaultResult.rows[0];
+      } else {
+        req.organization = result.rows[0];
+      }
     }
 
     // Attach organization context to request
