@@ -467,8 +467,8 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
-    // Get user's default organization (first one they joined)
-    const orgResult = await db.query(
+    // Get user's default organization (first one they joined or own)
+    let orgResult = await db.query(
       `SELECT om.org_id
        FROM organization_members om
        WHERE om.user_id = $1 AND om.status = 'active'
@@ -480,6 +480,41 @@ app.post('/api/auth/login', async (req, res) => {
     let organizationId = null;
     if (orgResult.rows.length > 0) {
       organizationId = orgResult.rows[0].org_id;
+    } else {
+      // Check if user owns an organization
+      const ownedOrgResult = await db.query(
+        'SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1',
+        [user.id]
+      );
+
+      if (ownedOrgResult.rows.length > 0) {
+        organizationId = ownedOrgResult.rows[0].id;
+        // Add user as member of their own organization
+        await db.query(
+          `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
+           VALUES ($1, $2, 'admin', 'active', NOW())
+           ON CONFLICT (org_id, user_id) DO NOTHING`,
+          [organizationId, user.id]
+        );
+      } else {
+        // Auto-create personal organization for user
+        const slug = `${user.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${user.id}`;
+        const newOrgResult = await db.query(
+          `INSERT INTO organizations (name, slug, owner_id, plan_tier, created_at)
+           VALUES ($1, $2, $3, 'free', NOW())
+           RETURNING id`,
+          [`${user.name}'s Organization`, slug, user.id]
+        );
+        organizationId = newOrgResult.rows[0].id;
+
+        // Add user as admin member
+        await db.query(
+          `INSERT INTO organization_members (org_id, user_id, role, status, joined_at)
+           VALUES ($1, $2, 'admin', 'active', NOW())`,
+          [organizationId, user.id]
+        );
+        log.info('Auto-created organization for user', { userId: user.id, orgId: organizationId });
+      }
     }
 
     // Generate JWT token with REAL database user ID and organization ID
