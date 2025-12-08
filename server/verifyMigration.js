@@ -4,9 +4,11 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const log = require('./utils/logger');
 
 async function verifyMigration() {
+  // NOTE: rejectUnauthorized: false is acceptable for local/dev migration scripts only
+  // This script is NOT used in production - it's a one-time verification utility
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false }
   });
 
   try {

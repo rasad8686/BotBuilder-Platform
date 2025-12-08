@@ -1,5 +1,6 @@
 const db = require('../db');
 const WorkflowExecution = require('../models/WorkflowExecution');
+const log = require('../utils/logger');
 
 // In-memory session variable storage with TTL
 const sessionVariables = new Map();
@@ -225,7 +226,7 @@ class OrchestrationManager {
         message: 'Orchestration executed successfully'
       }, 0, durationMs);
     } catch (err) {
-      console.error('Failed to complete execution:', err);
+      log.error('Failed to complete execution', { error: err.message });
     }
 
     return {
