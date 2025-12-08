@@ -3,6 +3,8 @@ import Landing from './pages/Landing';
 import Demo from './pages/Demo';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import CreateBot from './pages/CreateBot';
 import MyBots from './pages/MyBots';
@@ -72,6 +74,8 @@ function App() {
           {/* Auth Routes - No Sidebar, No Organization Context */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp>} />
