@@ -19,11 +19,19 @@ const instagramProvider = new InstagramProvider();
 channelManager.registerHandler('whatsapp', whatsappProvider);
 channelManager.registerHandler('instagram', instagramProvider);
 
-// Webhook verification tokens (should be in env)
-const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'botbuilder_whatsapp_webhook';
-const INSTAGRAM_VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN || 'botbuilder_instagram_webhook';
-const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET || '';
-const INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET || '';
+// Webhook verification tokens from environment (no insecure defaults)
+const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+const INSTAGRAM_VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN;
+const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET;
+const INSTAGRAM_APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
+
+// Log warning if tokens are not configured
+if (!WHATSAPP_VERIFY_TOKEN) {
+  log.warn('WHATSAPP_VERIFY_TOKEN not configured - WhatsApp webhooks will fail verification');
+}
+if (!INSTAGRAM_VERIFY_TOKEN) {
+  log.warn('INSTAGRAM_VERIFY_TOKEN not configured - Instagram webhooks will fail verification');
+}
 
 // =============================================
 // WHATSAPP WEBHOOKS

@@ -12,7 +12,17 @@ class EncryptionHelper {
    * @returns {Buffer} Encryption key
    */
   static getEncryptionKey() {
-    const key = process.env.AI_ENCRYPTION_SECRET || process.env.JWT_SECRET || 'default-encryption-key-change-in-production';
+    const key = process.env.AI_ENCRYPTION_SECRET || process.env.JWT_SECRET;
+
+    if (!key) {
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        throw new Error('AI_ENCRYPTION_SECRET or JWT_SECRET must be set in production');
+      }
+      log.warn('Using insecure default encryption key - DO NOT USE IN PRODUCTION');
+      // Only for development - a clearly insecure key that will fail validation
+      return crypto.createHash('sha256').update('DEVELOPMENT-ONLY-INSECURE-KEY').digest();
+    }
 
     // Create a 32-byte key from the secret
     return crypto.createHash('sha256').update(key).digest();
