@@ -214,20 +214,20 @@ export default function MyBots() {
   // Loading skeleton - show while org context is loading OR bots are loading
   if (orgLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-10 bg-gray-300 rounded w-1/3 mb-4"></div>
-            <div className="h-6 bg-gray-300 rounded w-1/2 mb-8"></div>
+            <div className="h-10 bg-gray-300 dark:bg-slate-700 rounded w-1/3 mb-4"></div>
+            <div className="h-6 bg-gray-300 dark:bg-slate-700 rounded w-1/2 mb-8"></div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white rounded-xl shadow p-6">
-                  <div className="h-6 bg-gray-300 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded mb-4"></div>
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
+                  <div className="h-6 bg-gray-300 dark:bg-slate-700 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded mb-4"></div>
                   <div className="flex gap-2">
-                    <div className="h-10 bg-gray-300 rounded flex-1"></div>
-                    <div className="h-10 bg-gray-300 rounded flex-1"></div>
+                    <div className="h-10 bg-gray-300 dark:bg-slate-700 rounded flex-1"></div>
+                    <div className="h-10 bg-gray-300 dark:bg-slate-700 rounded flex-1"></div>
                   </div>
                 </div>
               ))}
@@ -239,15 +239,15 @@ export default function MyBots() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               {t('myBots.title')} 🤖
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               {t('myBots.subtitle')}
             </p>
           </div>
@@ -270,7 +270,7 @@ export default function MyBots() {
                     {isAtLimit ? t('myBots.limitReached') : t('myBots.createNew')}
                   </button>
                   {subscription && (
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
                       {limits.currentBots} / {limits.maxBots === -1 ? '∞' : limits.maxBots} bots
                     </span>
                   )}
@@ -296,11 +296,11 @@ export default function MyBots() {
 
         {/* Search and Filter - Hidden when using pagination */}
         {bots.length > 0 && !usePagination && (
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 mb-6 transition-colors duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('myBots.searchBots')}
                 </label>
                 <input
@@ -308,19 +308,19 @@ export default function MyBots() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('myBots.searchPlaceholder')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                 />
               </div>
 
               {/* Platform Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('myBots.filterByPlatform')}
                 </label>
                 <select
                   value={filterPlatform}
                   onChange={(e) => setFilterPlatform(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                 >
                   <option value="all">{t('myBots.allPlatforms')}</option>
                   <option value="telegram">Telegram</option>
@@ -333,7 +333,7 @@ export default function MyBots() {
             </div>
 
             {/* Results count */}
-            <div className="mt-4 text-sm text-gray-600">
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
               {t('myBots.showingResults', { showing: filteredBots.length, total: bots.length })}
             </div>
           </div>
@@ -341,18 +341,18 @@ export default function MyBots() {
 
         {/* Empty State */}
         {bots.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
             <div className="text-6xl mb-4">🤖</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {t('myBots.noBots')}
             </h2>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
               {t('myBots.noBotsDesc')}
             </p>
             <PermissionGuard
               require="member"
               fallback={
-                <p className="text-gray-500 italic">
+                <p className="text-gray-500 dark:text-gray-400 italic">
                   {t('myBots.contactAdmin')}
                 </p>
               }
@@ -366,12 +366,12 @@ export default function MyBots() {
             </PermissionGuard>
           </div>
         ) : filteredBots.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
             <div className="text-6xl mb-4">🔍</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {t('myBots.noBotsFound')}
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               {t('myBots.adjustSearch')}
             </p>
             <button

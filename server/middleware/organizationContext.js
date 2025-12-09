@@ -125,11 +125,22 @@ async function organizationContext(req, res, next) {
 
     next();
   } catch (error) {
-    log.error('Organization context error', { error: error.message });
-    return res.status(500).json({
+    log.error('Organization context error', { error: error.message, stack: error.stack, userId: req.user?.id });
+
+    // Handle specific database errors gracefully
+    if (error.code === 'ECONNREFUSED' || error.code === '57P01') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database temporarily unavailable. Please try again.',
+        code: 'DATABASE_UNAVAILABLE'
+      });
+    }
+
+    // For other errors, return 403 instead of 500 to avoid breaking the client
+    return res.status(403).json({
       success: false,
-      message: 'Error loading organization context',
-      error: error.message
+      message: 'Unable to load organization context. Please try logging in again.',
+      code: 'ORGANIZATION_CONTEXT_ERROR'
     });
   }
 }

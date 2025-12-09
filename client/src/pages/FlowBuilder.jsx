@@ -188,36 +188,36 @@ function FlowBuilder() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">{t('flowBuilder.loading')}</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">{t('flowBuilder.loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/my-bots')}
-            className="text-gray-600 hover:text-gray-800 transition"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition"
           >
             ← {t('flowBuilder.backToBots')}
           </button>
-          <div className="border-l border-gray-300 pl-4">
-            <h1 className="text-2xl font-bold text-gray-800">{t('flowBuilder.botTitle')} #{botId}</h1>
-            <p className="text-sm text-gray-600">{t('flowBuilder.title')}</p>
+          <div className="border-l border-gray-300 dark:border-slate-600 pl-4">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{t('flowBuilder.botTitle')} #{botId}</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{t('flowBuilder.title')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {isModified && (
             <span className="text-sm text-orange-600 font-medium">● {t('flowBuilder.unsavedChanges')}</span>
           )}
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
             {nodes.length} {t('flowBuilder.nodes')} | {edges.length} {t('flowBuilder.connections')}
           </span>
         </div>
@@ -289,11 +289,11 @@ function FlowBuilder() {
           {/* Empty State */}
           {nodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center bg-white p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300">
+              <div className="text-center bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300 dark:border-slate-600">
                 <div className="text-6xl mb-4">🤖</div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('flowBuilder.emptyState.title')}</h2>
-                <p className="text-gray-600 mb-4">{t('flowBuilder.emptyState.description')}</p>
-                <div className="text-sm text-gray-500 space-y-1">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{t('flowBuilder.emptyState.title')}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t('flowBuilder.emptyState.description')}</p>
+                <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
                   <p>💡 {t('flowBuilder.emptyState.tip1')}</p>
                   <p>💡 {t('flowBuilder.emptyState.tip2')}</p>
                   <p>💡 {t('flowBuilder.emptyState.tip3')}</p>

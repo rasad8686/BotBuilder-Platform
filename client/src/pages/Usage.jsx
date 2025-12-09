@@ -86,22 +86,22 @@ export default function Usage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('usage.title')}</h1>
-          <p className="text-gray-600">{t('usage.subtitle')}</p>
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{t('usage.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{t('usage.subtitle')}</p>
         </div>
 
         {dashboardData && (
@@ -131,7 +131,7 @@ export default function Usage() {
             {/* Stats Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {/* Bots */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl">🤖</div>
                   <span className={`text-2xl font-bold ${
@@ -140,13 +140,13 @@ export default function Usage() {
                     {dashboardData.bots.total}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">{t('analytics.totalBots')}</h3>
+                <h3 className="text-gray-600 dark:text-gray-300 font-semibold mb-2">{t('analytics.totalBots')}</h3>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 dark:text-gray-400">
                     Limit: {dashboardData.bots.limit === -1 ? '∞' : dashboardData.bots.limit}
                   </span>
                   <span className={`font-semibold ${
-                    dashboardData.bots.percentage > 80 ? 'text-orange-600' : 'text-gray-600'
+                    dashboardData.bots.percentage > 80 ? 'text-orange-600' : 'text-gray-600 dark:text-gray-400'
                   }`}>
                     {dashboardData.bots.limit === -1 ? '0' : Math.round(dashboardData.bots.percentage)}%
                   </span>
@@ -173,7 +173,7 @@ export default function Usage() {
               </div>
 
               {/* Messages */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl">📨</div>
                   <span className={`text-2xl font-bold ${
@@ -182,13 +182,13 @@ export default function Usage() {
                     {dashboardData.messages.total.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">{t('usage.messages')}</h3>
+                <h3 className="text-gray-600 dark:text-gray-300 font-semibold mb-2">{t('usage.messages')}</h3>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 dark:text-gray-400">
                     Limit: {dashboardData.messages.limit === -1 ? '∞' : dashboardData.messages.limit.toLocaleString()}
                   </span>
                   <span className={`font-semibold ${
-                    dashboardData.messages.percentage > 80 ? 'text-orange-600' : 'text-gray-600'
+                    dashboardData.messages.percentage > 80 ? 'text-orange-600' : 'text-gray-600 dark:text-gray-400'
                   }`}>
                     {dashboardData.messages.limit === -1 ? '0' : Math.round(dashboardData.messages.percentage)}%
                   </span>
@@ -215,42 +215,42 @@ export default function Usage() {
               </div>
 
               {/* Messages Sent */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl">📤</div>
                   <span className="text-2xl font-bold text-blue-600">
                     {dashboardData.messages.sent.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">Sent</h3>
-                <p className="text-sm text-gray-500">Messages sent this month</p>
+                <h3 className="text-gray-600 dark:text-gray-300 font-semibold mb-2">Sent</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Messages sent this month</p>
               </div>
 
               {/* Messages Received */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl">📥</div>
                   <span className="text-2xl font-bold text-indigo-600">
                     {dashboardData.messages.received.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-gray-600 font-semibold mb-2">Received</h3>
-                <p className="text-sm text-gray-500">Messages received this month</p>
+                <h3 className="text-gray-600 dark:text-gray-300 font-semibold mb-2">Received</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Messages received this month</p>
               </div>
             </div>
 
             {/* Warning Messages */}
             {(dashboardData.messages.percentage > 80 && dashboardData.messages.limit !== -1) && (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-8">
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-6 mb-8">
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">⚠️</div>
                   <div>
-                    <h3 className="text-xl font-bold text-orange-800 mb-2">
+                    <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
                       {dashboardData.messages.percentage >= 100
                         ? 'Message Limit Reached'
                         : 'Approaching Message Limit'}
                     </h3>
-                    <p className="text-orange-700 mb-4">
+                    <p className="text-orange-700 dark:text-orange-300 mb-4">
                       You've used {dashboardData.messages.total.toLocaleString()} out of {dashboardData.messages.limit.toLocaleString()} messages this month
                       ({Math.round(dashboardData.messages.percentage)}%).
                       {dashboardData.messages.percentage >= 100
@@ -269,12 +269,12 @@ export default function Usage() {
             )}
 
             {!dashboardData.bots.canCreateMore && dashboardData.bots.limit !== -1 && (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-8">
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-6 mb-8">
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">⚠️</div>
                   <div>
-                    <h3 className="text-xl font-bold text-orange-800 mb-2">Bot Limit Reached</h3>
-                    <p className="text-orange-700 mb-4">
+                    <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">Bot Limit Reached</h3>
+                    <p className="text-orange-700 dark:text-orange-300 mb-4">
                       You've reached your bot limit of {dashboardData.bots.limit} bot{dashboardData.bots.limit !== 1 ? 's' : ''}.
                       Upgrade to create more bots.
                     </p>
@@ -292,39 +292,39 @@ export default function Usage() {
             {/* Analytics Overview */}
             {analyticsData && (
               <>
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('analytics.overview')}</h2>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 mb-8 transition-colors duration-300">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">{t('analytics.overview')}</h2>
                   <div className="grid md:grid-cols-4 gap-6">
                     <div className="text-center">
                       <div className="text-4xl font-bold text-purple-600">{analyticsData.overview.totalMessages}</div>
-                      <p className="text-gray-600 mt-2">{t('analytics.totalMessages')}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.totalMessages')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-blue-600">{analyticsData.overview.totalBots}</div>
-                      <p className="text-gray-600 mt-2">{t('analytics.totalBots')}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.totalBots')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-green-600">{analyticsData.overview.apiCalls}</div>
-                      <p className="text-gray-600 mt-2">{t('usage.apiCalls')}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mt-2">{t('usage.apiCalls')}</p>
                     </div>
                     <div className="text-center">
                       <div className="text-4xl font-bold text-orange-600">{analyticsData.overview.activeUsers}</div>
-                      <p className="text-gray-600 mt-2">{t('analytics.users')}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.users')}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Messages Over Time Chart */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 mb-8 transition-colors duration-300">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">{t('usage.messagesChart')}</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('usage.messagesChart')}</h2>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setTimeRange(7)}
                         className={`px-4 py-2 rounded-lg font-semibold ${
                           timeRange === 7
                             ? 'bg-purple-600 text-white'
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
                         }`}
                       >
                         7 Days
@@ -334,7 +334,7 @@ export default function Usage() {
                         className={`px-4 py-2 rounded-lg font-semibold ${
                           timeRange === 30
                             ? 'bg-purple-600 text-white'
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-600'
                         }`}
                       >
                         30 Days
@@ -359,8 +359,8 @@ export default function Usage() {
                 </div>
 
                 {/* Messages By Bot Chart */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('usage.botsActivity')}</h2>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 mb-8 transition-colors duration-300">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">{t('usage.botsActivity')}</h2>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={analyticsData.byBot}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -374,31 +374,31 @@ export default function Usage() {
                 </div>
 
                 {/* Recent Activity Table */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('common.history')}</h2>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 mb-8 transition-colors duration-300">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">{t('common.history')}</h2>
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
                       <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Bot</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Content</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Timestamp</th>
+                        <tr className="border-b border-gray-200 dark:border-slate-700">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Bot</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Type</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Content</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Timestamp</th>
                         </tr>
                       </thead>
                       <tbody>
                         {analyticsData.recentActivity.map((activity) => (
-                          <tr key={activity.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-3 px-4 text-gray-800">{activity.botName}</td>
+                          <tr key={activity.id} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700">
+                            <td className="py-3 px-4 text-gray-800 dark:text-white">{activity.botName}</td>
                             <td className="py-3 px-4">
-                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                              <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-sm">
                                 {activity.messageType}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-gray-600 max-w-md truncate">
+                            <td className="py-3 px-4 text-gray-600 dark:text-gray-400 max-w-md truncate">
                               {activity.content}
                             </td>
-                            <td className="py-3 px-4 text-gray-500 text-sm">
+                            <td className="py-3 px-4 text-gray-500 dark:text-gray-400 text-sm">
                               {new Date(activity.timestamp).toLocaleString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
@@ -410,7 +410,7 @@ export default function Usage() {
                         ))}
                         {analyticsData.recentActivity.length === 0 && (
                           <tr>
-                            <td colSpan="4" className="text-center py-8 text-gray-500">
+                            <td colSpan="4" className="text-center py-8 text-gray-500 dark:text-gray-400">
                               No recent activity found
                             </td>
                           </tr>
@@ -423,34 +423,34 @@ export default function Usage() {
             )}
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('admin.quickActions')}</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 transition-colors duration-300">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">{t('admin.quickActions')}</h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <button
                   onClick={() => navigate('/my-bots')}
-                  className="p-6 border-2 border-purple-200 rounded-xl hover:border-purple-600 hover:bg-purple-50 transition-all"
+                  className="p-6 border-2 border-purple-200 dark:border-purple-800 rounded-xl hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
                 >
                   <div className="text-4xl mb-3">🤖</div>
-                  <h3 className="font-bold text-gray-800 mb-2">{t('analytics.manageBots')}</h3>
-                  <p className="text-sm text-gray-600">{t('analytics.manageBotsDesc')}</p>
+                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('analytics.manageBots')}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.manageBotsDesc')}</p>
                 </button>
 
                 <button
                   onClick={() => navigate('/api-tokens')}
-                  className="p-6 border-2 border-blue-200 rounded-xl hover:border-blue-600 hover:bg-blue-50 transition-all"
+                  className="p-6 border-2 border-blue-200 dark:border-blue-800 rounded-xl hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                 >
                   <div className="text-4xl mb-3">🔑</div>
-                  <h3 className="font-bold text-gray-800 mb-2">{t('apiTokens.title')}</h3>
-                  <p className="text-sm text-gray-600">{t('apiTokens.subtitle')}</p>
+                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('apiTokens.title')}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{t('apiTokens.subtitle')}</p>
                 </button>
 
                 <button
                   onClick={() => navigate('/webhooks')}
-                  className="p-6 border-2 border-green-200 rounded-xl hover:border-green-600 hover:bg-green-50 transition-all"
+                  className="p-6 border-2 border-green-200 dark:border-green-800 rounded-xl hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
                 >
                   <div className="text-4xl mb-3">🔗</div>
-                  <h3 className="font-bold text-gray-800 mb-2">{t('webhooks.title')}</h3>
-                  <p className="text-sm text-gray-600">{t('webhooks.subtitle')}</p>
+                  <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('webhooks.title')}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{t('webhooks.subtitle')}</p>
                 </button>
               </div>
             </div>

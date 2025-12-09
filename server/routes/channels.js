@@ -489,6 +489,216 @@ router.get('/:id/stats', async (req, res) => {
 });
 
 /**
+ * POST /api/channels/test
+ * Test channel credentials before saving
+ */
+router.post('/test', async (req, res) => {
+  try {
+    const { type, credentials } = req.body;
+
+    if (!type || !credentials) {
+      return res.status(400).json({ error: 'Type and credentials are required' });
+    }
+
+    let isValid = false;
+    let message = 'Connection test failed';
+    let details = {};
+
+    switch (type) {
+      case 'instagram': {
+        // Test Instagram credentials by calling Graph API
+        const { page_id, access_token, instagram_account_id } = credentials;
+
+        if (!page_id || !access_token) {
+          return res.status(400).json({
+            success: false,
+            error: 'Page ID and Access Token are required'
+          });
+        }
+
+        try {
+          // Verify page access token
+          const pageResponse = await fetch(
+            `https://graph.facebook.com/v18.0/${page_id}?fields=id,name,instagram_business_account&access_token=${access_token}`
+          );
+          const pageData = await pageResponse.json();
+
+          if (pageData.error) {
+            return res.json({
+              success: false,
+              error: pageData.error.message || 'Invalid Page Access Token',
+              code: pageData.error.code
+            });
+          }
+
+          // Verify Instagram account if provided
+          if (instagram_account_id) {
+            const igResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${instagram_account_id}?fields=id,username&access_token=${access_token}`
+            );
+            const igData = await igResponse.json();
+
+            if (igData.error) {
+              return res.json({
+                success: false,
+                error: igData.error.message || 'Invalid Instagram Account ID',
+                code: igData.error.code
+              });
+            }
+
+            details.instagramUsername = igData.username;
+          }
+
+          isValid = true;
+          message = 'Instagram connection successful';
+          details.pageName = pageData.name;
+          details.pageId = pageData.id;
+          if (pageData.instagram_business_account) {
+            details.linkedInstagramId = pageData.instagram_business_account.id;
+          }
+        } catch (fetchError) {
+          return res.json({
+            success: false,
+            error: 'Failed to connect to Instagram API: ' + fetchError.message
+          });
+        }
+        break;
+      }
+
+      case 'whatsapp': {
+        // Test WhatsApp credentials
+        const { phone_number_id, access_token: waToken } = credentials;
+
+        if (!phone_number_id || !waToken) {
+          return res.status(400).json({
+            success: false,
+            error: 'Phone Number ID and Access Token are required'
+          });
+        }
+
+        try {
+          const response = await fetch(
+            `https://graph.facebook.com/v18.0/${phone_number_id}?access_token=${waToken}`
+          );
+          const data = await response.json();
+
+          if (data.error) {
+            return res.json({
+              success: false,
+              error: data.error.message || 'Invalid credentials',
+              code: data.error.code
+            });
+          }
+
+          isValid = true;
+          message = 'WhatsApp connection successful';
+          details.phoneNumber = data.display_phone_number;
+          details.verifiedName = data.verified_name;
+        } catch (fetchError) {
+          return res.json({
+            success: false,
+            error: 'Failed to connect to WhatsApp API: ' + fetchError.message
+          });
+        }
+        break;
+      }
+
+      case 'telegram': {
+        // Test Telegram bot token
+        const { bot_token } = credentials;
+
+        if (!bot_token) {
+          return res.status(400).json({
+            success: false,
+            error: 'Bot Token is required'
+          });
+        }
+
+        try {
+          const response = await fetch(
+            `https://api.telegram.org/bot${bot_token}/getMe`
+          );
+          const data = await response.json();
+
+          if (!data.ok) {
+            return res.json({
+              success: false,
+              error: data.description || 'Invalid bot token'
+            });
+          }
+
+          isValid = true;
+          message = 'Telegram connection successful';
+          details.botUsername = data.result.username;
+          details.botName = data.result.first_name;
+        } catch (fetchError) {
+          return res.json({
+            success: false,
+            error: 'Failed to connect to Telegram API: ' + fetchError.message
+          });
+        }
+        break;
+      }
+
+      case 'messenger': {
+        // Test Messenger (Facebook Page) credentials
+        const { page_id: msgPageId, access_token: msgToken } = credentials;
+
+        if (!msgPageId || !msgToken) {
+          return res.status(400).json({
+            success: false,
+            error: 'Page ID and Access Token are required'
+          });
+        }
+
+        try {
+          const response = await fetch(
+            `https://graph.facebook.com/v18.0/${msgPageId}?fields=id,name&access_token=${msgToken}`
+          );
+          const data = await response.json();
+
+          if (data.error) {
+            return res.json({
+              success: false,
+              error: data.error.message || 'Invalid credentials',
+              code: data.error.code
+            });
+          }
+
+          isValid = true;
+          message = 'Messenger connection successful';
+          details.pageName = data.name;
+        } catch (fetchError) {
+          return res.json({
+            success: false,
+            error: 'Failed to connect to Facebook API: ' + fetchError.message
+          });
+        }
+        break;
+      }
+
+      default:
+        return res.status(400).json({
+          success: false,
+          error: `Unsupported channel type: ${type}`
+        });
+    }
+
+    res.json({
+      success: isValid,
+      message,
+      details
+    });
+  } catch (error) {
+    log.error('Error testing channel credentials', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to test credentials: ' + error.message
+    });
+  }
+});
+
+/**
  * PUT /api/channels/:id/credentials
  * Update channel credentials
  */

@@ -182,8 +182,21 @@ router.post('/resend-verification', async (req, res) => {
     });
 
   } catch (error) {
-    log.error('Resend verification error', { error: error.message });
-    res.status(500).json({ error: 'Failed to resend verification email' });
+    log.error('Resend verification error', { error: error.message, stack: error.stack });
+
+    // Handle database errors gracefully
+    if (error.code === 'ECONNREFUSED' || error.code === '57P01') {
+      return res.status(503).json({
+        success: false,
+        error: 'Service temporarily unavailable. Please try again.'
+      });
+    }
+
+    // Return success to prevent email enumeration
+    res.json({
+      success: true,
+      message: 'If an account exists with this email, you will receive a verification link.'
+    });
   }
 });
 

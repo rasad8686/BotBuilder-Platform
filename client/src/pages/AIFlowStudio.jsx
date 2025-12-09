@@ -75,40 +75,22 @@ export default function AIFlowStudio() {
   ];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f3f4f6'
-    }}>
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
-      <div style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e5e7eb',
-        padding: '16px 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-8 py-4 flex justify-between items-center transition-colors duration-300">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/dashboard')}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '20px',
-              color: '#6b7280',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className="bg-transparent border-none cursor-pointer text-xl text-gray-500 dark:text-gray-400 flex items-center hover:text-gray-700 dark:hover:text-gray-200"
           >
             ←
           </button>
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '28px' }}>🤖</span>
+            <h1 className="m-0 text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2.5">
+              <span className="text-3xl">🤖</span>
               {t('aiFlow.title')}
             </h1>
-            <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>
+            <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">
               {t('aiFlow.subtitle')}
             </p>
           </div>
@@ -117,19 +99,7 @@ export default function AIFlowStudio() {
         {generatedFlow && showPreview && (
           <button
             onClick={handleUseFlow}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className="px-6 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer font-medium text-sm flex items-center gap-2 hover:bg-blue-600 transition-colors"
           >
             <span>🚀</span> {t('aiFlow.openInWorkflow')}
           </button>
@@ -137,46 +107,23 @@ export default function AIFlowStudio() {
       </div>
 
       {/* Main Content */}
-      <div style={{
-        display: 'flex',
-        height: 'calc(100vh - 81px)'
-      }}>
+      <div className="flex" style={{ height: 'calc(100vh - 81px)' }}>
         {/* Left Panel - Generator/Templates */}
-        <div style={{
-          width: showPreview ? '400px' : '100%',
-          maxWidth: showPreview ? '400px' : '800px',
-          margin: showPreview ? '0' : '0 auto',
-          backgroundColor: 'white',
-          borderRight: showPreview ? '1px solid #e5e7eb' : 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'all 0.3s ease'
-        }}>
+        <div
+          className={`bg-white dark:bg-slate-800 flex flex-col transition-all duration-300 ${showPreview ? 'w-[400px] max-w-[400px] border-r border-gray-200 dark:border-slate-700' : 'w-full max-w-[800px] mx-auto'}`}
+        >
           {/* Tabs */}
           {!showPreview && (
-            <div style={{
-              display: 'flex',
-              borderBottom: '1px solid #e5e7eb',
-              padding: '0 24px'
-            }}>
+            <div className="flex border-b border-gray-200 dark:border-slate-700 px-6">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    padding: '16px 24px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                    cursor: 'pointer',
-                    fontSize: '15px',
-                    fontWeight: activeTab === tab.id ? '600' : '400',
-                    color: activeTab === tab.id ? '#1f2937' : '#6b7280',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`px-6 py-4 bg-transparent border-none cursor-pointer text-[15px] flex items-center gap-2 transition-all border-b-2 ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 font-semibold text-gray-900 dark:text-white'
+                      : 'border-transparent font-normal text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
                 >
                   <span>{tab.icon}</span>
                   {tab.label}
@@ -186,55 +133,25 @@ export default function AIFlowStudio() {
           )}
 
           {/* Content */}
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '24px'
-          }}>
+          <div className="flex-1 overflow-auto p-6">
             {showPreview ? (
               <div>
-                <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>
+                <h3 className="m-0 mb-4 text-base font-semibold text-gray-900 dark:text-white">
                   {t('aiFlow.generateAnother')}
                 </h3>
-                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
                   {t('aiFlow.notHappy')}
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-3">
                   <button
                     onClick={handleBack}
-                    style={{
-                      padding: '12px 20px',
-                      backgroundColor: '#8b5cf6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
+                    className="px-5 py-3 bg-purple-500 text-white border-none rounded-lg cursor-pointer font-medium text-sm flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors"
                   >
                     <span>✨</span> {t('aiFlow.generateNewWithAI')}
                   </button>
                   <button
                     onClick={() => { setActiveTab('templates'); handleBack(); }}
-                    style={{
-                      padding: '12px 20px',
-                      backgroundColor: '#f3f4f6',
-                      color: '#374151',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
+                    className="px-5 py-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-none rounded-lg cursor-pointer font-medium text-sm flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                   >
                     <span>📋</span> {t('aiFlow.browseTemplates')}
                   </button>
@@ -242,27 +159,22 @@ export default function AIFlowStudio() {
 
                 {/* Quick Stats */}
                 {generatedFlow && (
-                  <div style={{
-                    marginTop: '24px',
-                    padding: '16px',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '12px'
-                  }}>
-                    <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: '600' }}>
+                  <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-xl">
+                    <h4 className="m-0 mb-3 text-sm font-semibold text-gray-900 dark:text-white">
                       {t('aiFlow.currentFlow')}
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#3b82f6' }}>
+                        <div className="text-2xl font-bold text-blue-500">
                           {generatedFlow.nodes?.length || 0}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{t('aiFlow.nodes')}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t('aiFlow.nodes')}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
+                        <div className="text-2xl font-bold text-emerald-500">
                           {generatedFlow.edges?.length || 0}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{t('aiFlow.connections')}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t('aiFlow.connections')}</div>
                       </div>
                     </div>
                   </div>
@@ -287,12 +199,7 @@ export default function AIFlowStudio() {
 
         {/* Right Panel - Preview */}
         {showPreview && generatedFlow && (
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '24px',
-            backgroundColor: '#f9fafb'
-          }}>
+          <div className="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-slate-900">
             <GeneratedFlowPreview
               flow={generatedFlow}
               onUseFlow={handleUseFlow}
@@ -303,134 +210,62 @@ export default function AIFlowStudio() {
 
         {/* Empty State when no preview */}
         {!showPreview && (
-          <div style={{
-            display: 'none'
-          }} />
+          <div className="hidden" />
         )}
       </div>
 
       {/* Bot Selector Modal */}
       {showBotSelector && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '500px',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-[500px] max-h-[80vh] overflow-auto">
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="m-0 text-xl font-semibold text-gray-900 dark:text-white">
                 {t('common.selectBot')}
               </h2>
               <button
                 onClick={() => setShowBotSelector(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#6b7280'
-                }}
+                className="bg-transparent border-none text-2xl cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 &times;
               </button>
             </div>
-            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-5">
               {t('aiFlow.chooseBotToImport')}
             </p>
 
             {loadingBots ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                 {t('common.loading')}
               </div>
             ) : bots.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px',
-                backgroundColor: '#f9fafb',
-                borderRadius: '12px'
-              }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-                <p style={{ color: '#6b7280', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
+              <div className="text-center py-10 bg-gray-50 dark:bg-slate-700 rounded-xl">
+                <div className="text-5xl mb-4">🤖</div>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">{t('agentStudio.noBotsFound')}</p>
                 <button
                   onClick={() => navigate('/create-bot')}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}
+                  className="px-5 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer hover:bg-blue-600 transition-colors"
                 >
                   {t('agentStudio.createFirstBot')}
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 {bots.map(bot => (
                   <button
                     key={bot.id}
                     onClick={() => handleSelectBot(bot.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '16px',
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.borderColor = '#3b82f6';
-                      e.currentTarget.style.backgroundColor = '#f0f9ff';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.borderColor = '#e5e7eb';
-                      e.currentTarget.style.backgroundColor = 'white';
-                    }}
+                    className="flex items-center gap-3 p-4 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer text-left transition-all hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-slate-600"
                   >
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      backgroundColor: '#eff6ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '24px'
-                    }}>
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-slate-600 flex items-center justify-center text-2xl">
                       🤖
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '600', fontSize: '15px' }}>{bot.name}</div>
-                      <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                    <div className="flex-1">
+                      <div className="font-semibold text-[15px] text-gray-900 dark:text-white">{bot.name}</div>
+                      <div className="text-[13px] text-gray-500 dark:text-gray-400">
                         {bot.platform || 'telegram'} • {bot.description || 'No description'}
                       </div>
                     </div>
-                    <span style={{ color: '#3b82f6', fontSize: '20px' }}>→</span>
+                    <span className="text-blue-500 text-xl">→</span>
                   </button>
                 ))}
               </div>
@@ -441,27 +276,16 @@ export default function AIFlowStudio() {
 
       {/* Tips Footer */}
       {!showPreview && (
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: 'white',
-          borderTop: '1px solid #e5e7eb',
-          padding: '12px 32px',
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '32px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6b7280' }}>
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 py-3 px-8 flex justify-center gap-8">
+          <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
             <span>💡</span>
             <span>Be specific in your descriptions for better results</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6b7280' }}>
+          <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
             <span>📝</span>
             <span>You can edit the generated flow before using it</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6b7280' }}>
+          <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
             <span>🔄</span>
             <span>Not satisfied? Generate again with different settings</span>
           </div>

@@ -165,23 +165,23 @@ export default function Webhooks() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('webhooks.title')}</h1>
-            <p className="text-gray-600">{t('webhooks.subtitle')}</p>
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{t('webhooks.title')}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{t('webhooks.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -201,20 +201,20 @@ export default function Webhooks() {
 
           return (
             <div className="grid grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-2">Total</p>
-                <p className="text-3xl font-bold text-gray-800">{totalAttempts}</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalAttempts}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-2">Success</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Success</p>
                 <p className="text-3xl font-bold text-green-600">{successful}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-2">Failed</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Failed</p>
                 <p className="text-3xl font-bold text-red-600">{failed}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <p className="text-sm text-gray-600 mb-2">Success Rate</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Success Rate</p>
                 <p className="text-3xl font-bold text-blue-600">{successRate}%</p>
               </div>
             </div>
@@ -223,12 +223,12 @@ export default function Webhooks() {
 
         {/* Webhooks List */}
         {webhooks.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
             <div className="text-gray-400 mb-4">
               <FiSend className="w-16 h-16 mx-auto" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('webhooks.noWebhooks')}</h3>
-            <p className="text-gray-500 mb-6">{t('webhooks.noWebhooksDesc')}</p>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">{t('webhooks.noWebhooks')}</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">{t('webhooks.noWebhooksDesc')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors"
@@ -240,27 +240,27 @@ export default function Webhooks() {
         ) : (
           <div className="grid gap-6">
             {webhooks.map((webhook) => (
-              <div key={webhook.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div key={webhook.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-300">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-800">{webhook.name}</h3>
+                      <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{webhook.name}</h3>
                       {webhook.is_active ? (
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm font-medium">
                           {t('webhooks.active')}
                         </span>
                       ) : (
-                        <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <span className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 px-3 py-1 rounded-full text-sm font-medium">
                           {t('webhooks.inactive')}
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 text-sm mb-3 font-mono bg-gray-50 p-2 rounded">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 font-mono bg-gray-50 dark:bg-slate-700 p-2 rounded">
                       {webhook.url}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {webhook.events.map(event => (
-                        <span key={event} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs">
+                        <span key={event} className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-xs">
                           {event}
                         </span>
                       ))}
@@ -293,22 +293,22 @@ export default function Webhooks() {
 
                 {/* Stats */}
                 {webhook.stats && (
-                  <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-100 dark:border-slate-700">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-800">{webhook.stats.total_attempts}</p>
-                      <p className="text-xs text-gray-500">Total</p>
+                      <p className="text-2xl font-bold text-gray-800 dark:text-white">{webhook.stats.total_attempts}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-green-600">{webhook.stats.successful}</p>
-                      <p className="text-xs text-gray-500">Success</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Success</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-red-600">{webhook.stats.failed}</p>
-                      <p className="text-xs text-gray-500">Failed</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Failed</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-blue-600">{webhook.stats.success_rate}%</p>
-                      <p className="text-xs text-gray-500">Success Rate</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
                     </div>
                   </div>
                 )}
@@ -320,53 +320,53 @@ export default function Webhooks() {
         {/* Create Webhook Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-800">{t('webhooks.addNew')}</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{t('webhooks.addNew')}</h2>
               </div>
 
               <form onSubmit={handleCreateWebhook} className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Webhook Name
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                       placeholder="My Webhook"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Webhook URL
                     </label>
                     <input
                       type="url"
                       value={formData.url}
                       onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                       placeholder="https://example.com/webhook"
                       required
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Must be HTTPS in production. Use webhook.site for testing.
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                       Select Events to Subscribe ({availableEvents.length} events available)
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto border border-gray-200 dark:border-slate-600 rounded-lg p-4 dark:bg-slate-700/50">
                       {availableEvents.map(event => (
                         <label
                           key={event.name}
-                          className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                          className="flex items-start space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-slate-600 rounded-lg cursor-pointer"
                         >
                           <input
                             type="checkbox"
@@ -375,8 +375,8 @@ export default function Webhooks() {
                             className="mt-1"
                           />
                           <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-800">{event.name}</p>
-                            <p className="text-xs text-gray-500">{event.description}</p>
+                            <p className="font-medium text-sm text-gray-800 dark:text-white">{event.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{event.description}</p>
                           </div>
                         </label>
                       ))}
@@ -397,7 +397,7 @@ export default function Webhooks() {
                       setShowCreateModal(false);
                       setFormData({ name: '', url: '', events: [] });
                     }}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
+                    className="flex-1 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-800 dark:text-gray-200 py-3 rounded-lg font-medium transition-colors"
                   >
                     {t('webhooks.cancel')}
                   </button>
@@ -410,11 +410,11 @@ export default function Webhooks() {
         {/* Logs Modal */}
         {showLogsModal && selectedWebhook && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{selectedWebhook.name} - Logs</h2>
-                  <p className="text-sm text-gray-500 mt-1">{selectedWebhook.url}</p>
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{selectedWebhook.name} - Logs</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{selectedWebhook.url}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -430,7 +430,7 @@ export default function Webhooks() {
 
               <div className="p-6">
                 {webhookLogs.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No logs yet</p>
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">No logs yet</p>
                 ) : (
                   <div className="space-y-3">
                     {webhookLogs.map(log => (

@@ -52,6 +52,7 @@ import Layout from './components/Layout';
 import { OrganizationProvider } from './contexts/OrganizationContext';
 import { BrandProvider } from './contexts/BrandContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from './components/notifications';
 import AdminRouteGuard from './utils/AdminRouteGuard';
 
@@ -62,9 +63,10 @@ function AuthenticatedApp({ children }) {
 
 function App() {
   return (
-    <BrandProvider>
-      <NotificationProvider>
-      <Router>
+    <ThemeProvider>
+      <BrandProvider>
+        <NotificationProvider>
+        <Router>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />
@@ -132,10 +134,11 @@ function App() {
         <Route path="/admin/whitelabel" element={<AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp>} />
         <Route path="/admin/stats" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp>} />
       </Routes>
-      <ToastContainer />
-      </Router>
-      </NotificationProvider>
-    </BrandProvider>
+        <ToastContainer />
+        </Router>
+        </NotificationProvider>
+      </BrandProvider>
+    </ThemeProvider>
   );
 }
 

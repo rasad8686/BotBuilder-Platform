@@ -43,10 +43,11 @@ const channelConfig = {
     color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400',
     steps: ['Basic Info', 'API Credentials', 'Webhook Setup', 'Test Connection'],
     fields: [
+      { key: 'app_id', label: 'App ID', type: 'text', required: true, help: 'Meta App ID from developers.facebook.com' },
       { key: 'instagram_account_id', label: 'Instagram Account ID', type: 'text', required: true, help: 'Instagram Business Account ID' },
       { key: 'page_id', label: 'Facebook Page ID', type: 'text', required: true, help: 'Connected Facebook Page ID' },
       { key: 'access_token', label: 'Page Access Token', type: 'password', required: true, help: 'Long-lived page access token' },
-      { key: 'app_secret', label: 'App Secret', type: 'password', required: false, help: 'For webhook signature verification' }
+      { key: 'app_secret', label: 'App Secret', type: 'password', required: true, help: 'For webhook signature verification' }
     ],
     webhookPath: '/webhooks/instagram',
     verifyToken: 'botbuilder_instagram_webhook',
@@ -127,10 +128,6 @@ export default function ChannelSetup({ type, onComplete, onClose }) {
     setTestResult(null);
 
     try {
-      // Simulate API test
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // In real implementation, call the API to test credentials
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/channels/test`, {
         method: 'POST',
@@ -144,15 +141,25 @@ export default function ChannelSetup({ type, onComplete, onClose }) {
         })
       });
 
-      if (response.ok) {
-        setTestResult({ success: true, message: 'Connection successful!' });
+      const data = await response.json();
+
+      if (data.success) {
+        setTestResult({
+          success: true,
+          message: data.message || 'Connection successful!',
+          details: data.details
+        });
       } else {
-        // For demo, show success anyway
-        setTestResult({ success: true, message: 'Connection successful!' });
+        setTestResult({
+          success: false,
+          message: data.error || 'Connection failed. Please check your credentials.'
+        });
       }
     } catch (err) {
-      // For demo, show success anyway
-      setTestResult({ success: true, message: 'Connection successful!' });
+      setTestResult({
+        success: false,
+        message: 'Network error. Please check your connection and try again.'
+      });
     } finally {
       setTesting(false);
     }
@@ -446,6 +453,41 @@ export default function ChannelSetup({ type, onComplete, onClose }) {
                       <span className="text-gray-400">Username</span>
                       <span className="text-white">@{formData.username}</span>
                     </div>
+                  )}
+                  {/* API Response Details */}
+                  {testResult.details && (
+                    <>
+                      {testResult.details.pageName && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Page Name</span>
+                          <span className="text-white">{testResult.details.pageName}</span>
+                        </div>
+                      )}
+                      {testResult.details.instagramUsername && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Instagram</span>
+                          <span className="text-white">@{testResult.details.instagramUsername}</span>
+                        </div>
+                      )}
+                      {testResult.details.botUsername && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Bot</span>
+                          <span className="text-white">@{testResult.details.botUsername}</span>
+                        </div>
+                      )}
+                      {testResult.details.phoneNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">WhatsApp</span>
+                          <span className="text-white">{testResult.details.phoneNumber}</span>
+                        </div>
+                      )}
+                      {testResult.details.verifiedName && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Verified</span>
+                          <span className="text-white">{testResult.details.verifiedName}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

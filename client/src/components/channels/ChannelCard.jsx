@@ -13,7 +13,9 @@ import {
   XCircle,
   Trash2,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Power,
+  Loader2
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -44,6 +46,7 @@ const statusConfig = {
 export default function ChannelCard({ channel, onViewMessages, onRefresh }) {
   const [showMenu, setShowMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const Icon = channelIcons[channel.type] || MessageSquare;
   const colorClass = channelColors[channel.type] || 'bg-gray-500';
@@ -72,6 +75,31 @@ export default function ChannelCard({ channel, onViewMessages, onRefresh }) {
     } finally {
       setDeleting(false);
       setShowMenu(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    try {
+      setToggling(true);
+      const token = localStorage.getItem('token');
+      const newStatus = channel.status === 'active' ? 'inactive' : 'active';
+
+      const response = await fetch(`${API_URL}/api/channels/${channel.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) throw new Error('Failed to update channel status');
+
+      onRefresh();
+    } catch (err) {
+      alert('Failed to update channel status');
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -152,10 +180,32 @@ export default function ChannelCard({ channel, onViewMessages, onRefresh }) {
 
       {/* Body */}
       <div className="p-4">
-        {/* Status Badge */}
-        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 ${status.bg} rounded-full mb-4`}>
-          <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
-          <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
+        {/* Status Badge and Toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 ${status.bg} rounded-full`}>
+            <StatusIcon className={`w-3.5 h-3.5 ${status.color}`} />
+            <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
+          </div>
+
+          {/* Enable/Disable Toggle */}
+          <button
+            onClick={handleToggleStatus}
+            disabled={toggling}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              channel.status === 'active' ? 'bg-green-500' : 'bg-gray-600'
+            } ${toggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-80'}`}
+            title={channel.status === 'active' ? 'Disable channel' : 'Enable channel'}
+          >
+            {toggling ? (
+              <Loader2 className="w-4 h-4 text-white animate-spin absolute left-1/2 -translate-x-1/2" />
+            ) : (
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  channel.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            )}
+          </button>
         </div>
 
         {/* Channel Info */}
