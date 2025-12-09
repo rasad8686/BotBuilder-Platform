@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { useBrand } from '../contexts/BrandContext';
+import { useTheme } from '../contexts/ThemeContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 import FeedbackModal from './FeedbackModal';
+import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
@@ -18,6 +20,7 @@ export default function Sidebar() {
   const { currentLanguage, changeLanguage, languages } = useLanguage();
   const { userRole } = useOrganization();
   const { brand } = useBrand();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -103,14 +106,14 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-white shadow-xl z-40
-          flex flex-col transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 shadow-xl z-40
+          flex flex-col transition-all duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
       >
         {/* Logo/Brand */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {brand?.logo_url ? (
@@ -124,67 +127,17 @@ export default function Sidebar() {
               )}
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-gray-800">
+                  <h1 className="text-xl font-bold text-gray-800 dark:text-white">
                     {brand?.brand_name || t('sidebar.brand')}
                   </h1>
-                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 px-2 py-0.5 rounded-full shadow-sm animate-pulse">
                     BETA
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">{t('sidebar.platform')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('sidebar.platform')}</p>
               </div>
             </div>
 
-            {/* Language Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                {currentLang?.isText ? (
-                  <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">
-                    {currentLang.flag}
-                  </span>
-                ) : (
-                  <span className="text-xl">{currentLang?.flag}</span>
-                )}
-              </button>
-
-              {/* Language Dropdown */}
-              {isLanguageDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsLanguageDropdownOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20">
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => {
-                          changeLanguage(lang.code);
-                          setIsLanguageDropdownOpen(false);
-                        }}
-                        className={`
-                          w-full px-4 py-2 text-left flex items-center gap-3
-                          hover:bg-purple-50 transition-colors
-                          ${currentLanguage === lang.code ? 'bg-purple-100 text-purple-700' : 'text-gray-700'}
-                        `}
-                      >
-                        {lang.isText ? (
-                          <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded min-w-[2rem] text-center">
-                            {lang.flag}
-                          </span>
-                        ) : (
-                          <span className="text-xl">{lang.flag}</span>
-                        )}
-                        <span className="font-medium">{lang.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         </div>
 
@@ -205,7 +158,7 @@ export default function Sidebar() {
                     ${
                       isActive(link.path)
                         ? 'bg-purple-600 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400'
                     }
                   `}
                 >
@@ -218,11 +171,11 @@ export default function Sidebar() {
             {/* Multi-Agent AI Section */}
             <li className="pt-4 pb-2">
               <div className="flex items-center gap-2 px-4">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                   {t('sidebar.aiAgents')}
                 </span>
-                <div className="flex-1 h-px bg-gray-200"></div>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
               </div>
             </li>
             {agentLinks.map((link) => (
@@ -236,7 +189,7 @@ export default function Sidebar() {
                     ${
                       isActive(link.path)
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400'
                     }
                   `}
                 >
@@ -311,11 +264,11 @@ export default function Sidebar() {
               <>
                 <li className="pt-4 pb-2">
                   <div className="flex items-center gap-2 px-4">
-                    <div className="flex-1 h-px bg-gray-200"></div>
-                    <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                       {t('sidebar.admin')}
                     </span>
-                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
                   </div>
                 </li>
                 {adminLinks.map((link) => (
@@ -329,7 +282,7 @@ export default function Sidebar() {
                         ${
                           isActive(link.path)
                             ? 'bg-purple-600 text-white shadow-md'
-                            : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400'
                         }
                       `}
                     >
@@ -344,9 +297,9 @@ export default function Sidebar() {
         </nav>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-slate-700">
           {user && (
-            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <div className="mb-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
@@ -354,17 +307,17 @@ export default function Sidebar() {
                 <div className="flex-1 min-w-0">
                   {user.name && (
                     <div className="flex items-center gap-2">
-                      <div className="text-sm font-semibold text-gray-800 truncate">
+                      <div className="text-sm font-semibold text-gray-800 dark:text-white truncate">
                         {user.name}
                       </div>
                       {isAdmin && (
-                        <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-100 dark:bg-purple-900 dark:text-purple-300 px-1.5 py-0.5 rounded">
                           ADMIN
                         </span>
                       )}
                     </div>
                   )}
-                  <div className="text-xs text-gray-600 truncate">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
                     {user.email}
                   </div>
                 </div>
@@ -380,6 +333,14 @@ export default function Sidebar() {
             <span>💬</span>
             <span>{t('sidebar.sendFeedback')}</span>
           </button>
+
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between px-3 py-2.5 mb-3 bg-gray-100 dark:bg-slate-800 rounded-lg">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+            </span>
+            <ThemeToggle />
+          </div>
 
           <button
             onClick={handleLogout}

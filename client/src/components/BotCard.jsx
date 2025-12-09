@@ -35,11 +35,11 @@ export default function BotCard({ bot, onDelete }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-100">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-gray-100 dark:border-slate-700">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 truncate">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">
             {bot.name}
           </h3>
 
@@ -71,12 +71,12 @@ export default function BotCard({ bot, onDelete }) {
       </div>
 
       {/* Description */}
-      <p className="text-gray-600 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
+      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
         {bot.description || t('bots.noDescription')}
       </p>
 
       {/* Metadata */}
-      <div className="text-xs text-gray-500 mb-4 space-y-1">
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-4 space-y-1">
         <div className="flex items-center gap-2">
           <span>📅 {t('bots.created')}</span>
           <span>{formatDate(bot.created_at)}</span>

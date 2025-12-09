@@ -73,35 +73,19 @@ export default function TeamSettings() {
   ];
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="p-6 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px'
-      }}>
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>{t('team.settings')}</h1>
-          <p style={{ color: '#6b7280', marginTop: '4px' }}>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('team.settings')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
             {t('team.settingsSubtitle')}
           </p>
         </div>
         {activeTab === 'members' && (
           <button
             onClick={() => setShowInviteModal(true)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className="px-5 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer font-medium flex items-center gap-2 hover:bg-blue-600 transition-colors"
           >
             <span>+</span> {t('team.inviteMember')}
           </button>
@@ -110,84 +94,45 @@ export default function TeamSettings() {
 
       {/* Stats Cards */}
       {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px'
-        }}>
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#f0f9ff',
-            borderRadius: '12px',
-            border: '1px solid #bae6fd'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0369a1' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">
               {stats.members?.total_members || 0}
             </div>
-            <div style={{ color: '#0c4a6e', fontSize: '14px' }}>{t('team.totalMembers')}</div>
+            <div className="text-blue-900 dark:text-blue-300 text-sm">{t('team.totalMembers')}</div>
           </div>
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#f0fdf4',
-            borderRadius: '12px',
-            border: '1px solid #bbf7d0'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#15803d' }}>
+          <div className="p-5 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+            <div className="text-3xl font-bold text-green-700 dark:text-green-400">
               {stats.members?.active_members || 0}
             </div>
-            <div style={{ color: '#14532d', fontSize: '14px' }}>{t('team.activeMembers')}</div>
+            <div className="text-green-900 dark:text-green-300 text-sm">{t('team.activeMembers')}</div>
           </div>
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#fefce8',
-            borderRadius: '12px',
-            border: '1px solid #fef08a'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#a16207' }}>
+          <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+            <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
               {stats.invitations?.pending_invitations || 0}
             </div>
-            <div style={{ color: '#713f12', fontSize: '14px' }}>{t('team.pendingInvites')}</div>
+            <div className="text-yellow-900 dark:text-yellow-300 text-sm">{t('team.pendingInvites')}</div>
           </div>
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#faf5ff',
-            borderRadius: '12px',
-            border: '1px solid #e9d5ff'
-          }}>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#7e22ce' }}>
+          <div className="p-5 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+            <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
               {stats.roles?.length || 0}
             </div>
-            <div style={{ color: '#581c87', fontSize: '14px' }}>{t('team.roles')}</div>
+            <div className="text-purple-900 dark:text-purple-300 text-sm">{t('team.roles')}</div>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '24px',
-        borderBottom: '1px solid #e5e7eb',
-        paddingBottom: '12px'
-      }}>
+      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-slate-700 pb-3">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: activeTab === tab.id ? '#3b82f6' : 'transparent',
-              color: activeTab === tab.id ? 'white' : '#6b7280',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
+            className={`px-5 py-2.5 border-none rounded-lg cursor-pointer font-medium flex items-center gap-2 transition-all ${
+              activeTab === tab.id
+                ? 'bg-blue-500 text-white'
+                : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+            }`}
           >
             <span>{tab.icon}</span> {tab.label}
           </button>
@@ -196,17 +141,11 @@ export default function TeamSettings() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
           {t('common.loading')}
         </div>
       ) : error ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px',
-          color: '#dc2626',
-          backgroundColor: '#fef2f2',
-          borderRadius: '12px'
-        }}>
+        <div className="text-center py-16 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl">
           {error}
         </div>
       ) : (

@@ -374,73 +374,53 @@ const WorkflowBuilder = () => {
   // If no botId, show bot selector
   if (!botId) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f5f7fa', padding: '32px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '32px' }}>🔄</span>
+      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 p-8 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+              <span className="text-4xl">🔄</span>
               {t('workflows.title')}
             </h1>
-            <p style={{ color: '#6c757d', margin: 0 }}>
+            <p className="text-gray-500 dark:text-gray-400">
               {t('workflows.subtitle')}
             </p>
           </div>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a2e', marginTop: 0, marginBottom: '16px' }}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg transition-colors duration-300">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mt-0 mb-4">
               {t('common.selectBot')}
             </h2>
-            <p style={{ color: '#6c757d', marginBottom: '24px' }}>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               {t('common.selectBotDesc')}
             </p>
             {loadingBots ? (
-              <div style={{ textAlign: 'center', padding: '32px', color: '#6c757d' }}>
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 {t('common.loading')}
               </div>
             ) : bots.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-                <p style={{ color: '#6c757d', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
+              <div className="text-center py-8">
+                <div className="text-5xl mb-4">🤖</div>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">{t('agentStudio.noBotsFound')}</p>
                 <button
                   type="button"
                   onClick={() => navigate('/create-bot')}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#667eea',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
+                  className="px-5 py-2.5 bg-indigo-500 text-white border-none rounded-lg cursor-pointer font-medium hover:bg-indigo-600 transition-colors"
                 >
                   {t('agentStudio.createFirstBot')}
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bots.map(bot => (
                   <button
                     key={bot.id}
                     type="button"
                     onClick={() => navigate(`/bots/${bot.id}/workflows`)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '16px',
-                      backgroundColor: '#f8f9fa',
-                      border: '1px solid #e9ecef',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
-                      width: '100%'
-                    }}
+                    className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer text-left transition-all w-full hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-600"
                   >
-                    <span style={{ fontSize: '24px' }}>🤖</span>
+                    <span className="text-2xl">🤖</span>
                     <div>
-                      <div style={{ color: '#1a1a2e', fontWeight: '600', fontSize: '14px' }}>{bot.name}</div>
-                      <div style={{ color: '#6c757d', fontSize: '12px', marginTop: '2px' }}>{bot.description || 'Bot'}</div>
+                      <div className="text-gray-900 dark:text-white font-semibold text-sm">{bot.name}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{bot.description || 'Bot'}</div>
                     </div>
                   </button>
                 ))}
@@ -570,6 +550,10 @@ const WorkflowBuilder = () => {
           background: #f5f7fa;
         }
 
+        .dark .workflow-builder {
+          background: #0f172a;
+        }
+
         .workflow-builder.loading {
           align-items: center;
           justify-content: center;
@@ -584,6 +568,11 @@ const WorkflowBuilder = () => {
           animation: spin 0.8s linear infinite;
         }
 
+        .dark .spinner {
+          border-color: #334155;
+          border-top-color: #667eea;
+        }
+
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
@@ -595,6 +584,11 @@ const WorkflowBuilder = () => {
           padding: 12px 20px;
           background: white;
           border-bottom: 1px solid #e9ecef;
+        }
+
+        .dark .builder-header {
+          background: #1e293b;
+          border-bottom-color: #334155;
         }
 
         .back-link {
@@ -611,6 +605,10 @@ const WorkflowBuilder = () => {
         .bot-name {
           color: #6c757d;
           font-size: 14px;
+        }
+
+        .dark .bot-name {
+          color: #94a3b8;
         }
 
         .builder-content {
@@ -651,6 +649,10 @@ const WorkflowBuilder = () => {
           border-radius: 16px;
           overflow: hidden;
           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark .execution-monitor-modal {
+          background: #1e293b;
         }
       `}</style>
     </ReactFlowProvider>

@@ -186,12 +186,12 @@ export default function Billing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-8 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('billing.title')}</h1>
-          <p className="text-gray-600">{t('billing.subtitle')}</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{t('billing.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{t('billing.subtitle')}</p>
         </div>
 
         {/* Usage Bar */}
@@ -201,13 +201,13 @@ export default function Billing() {
 
         {/* Current Subscription Info */}
         {subscription && !fetchingSubscription && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-blue-900">
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
                   Current Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
                 </h3>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
                   Status: <span className="font-medium">{subscription.status}</span>
                   {subscription.currentPeriodEnd && (
                     <> • {subscription.cancelAtPeriodEnd ? 'Ends' : 'Renews'}: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
@@ -234,7 +234,7 @@ export default function Billing() {
                 )}
               </div>
               {subscription.stripeSubscriptionId && (
-                <div className="text-xs text-blue-600 ml-4">
+                <div className="text-xs text-blue-600 dark:text-blue-400 ml-4">
                   <div>Subscription ID: {subscription.stripeSubscriptionId}</div>
                 </div>
               )}
@@ -251,26 +251,26 @@ export default function Billing() {
             return (
               <div
                 key={plan.name}
-                className={`bg-white rounded-lg shadow-md border-2 p-6 relative ${
-                  isCurrent ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'
+                className={`bg-white dark:bg-slate-800 rounded-lg shadow-md border-2 p-6 relative transition-colors duration-300 ${
+                  isCurrent ? 'border-green-500 ring-2 ring-green-200 dark:ring-green-900' : 'border-gray-200 dark:border-slate-700'
                 }`}
               >
                 {/* Current Plan Badge */}
                 {isCurrent && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-300">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700">
                       ✓ Current Plan
                     </span>
                   </div>
                 )}
 
                 {/* Plan Name */}
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h2>
 
                 {/* Price */}
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
-                  {plan.price > 0 && <span className="text-gray-600">/month</span>}
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">${plan.price}</span>
+                  {plan.price > 0 && <span className="text-gray-600 dark:text-gray-400">/month</span>}
                 </div>
 
                 {/* Features */}
@@ -280,7 +280,7 @@ export default function Billing() {
                       <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="text-gray-700">{feature}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>

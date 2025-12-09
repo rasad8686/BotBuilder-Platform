@@ -9,13 +9,6 @@ const TYPE_ICONS = {
   info: 'ℹ'
 };
 
-const TYPE_COLORS = {
-  success: '#10b981',
-  error: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6'
-};
-
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -33,82 +26,45 @@ function formatTimeAgo(dateString) {
 }
 
 function NotificationItem({ notification, onRead, onDelete }) {
-  const color = TYPE_COLORS[notification.type] || TYPE_COLORS.info;
+  const typeClasses = {
+    success: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+    error: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+    warning: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+    info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+  };
 
   return (
     <div
       onClick={() => !notification.read && onRead(notification.id)}
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-        padding: '12px 16px',
-        backgroundColor: notification.read ? '#ffffff' : '#f0f9ff',
-        borderBottom: '1px solid #e5e7eb',
-        cursor: 'pointer',
-        transition: 'background 0.2s'
-      }}
-      onMouseOver={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#f9fafb' : '#e0f2fe'}
-      onMouseOut={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#ffffff' : '#f0f9ff'}
+      className={`flex items-start gap-3 px-4 py-3 border-b border-gray-200 dark:border-slate-700 cursor-pointer transition-colors ${
+        notification.read
+          ? 'bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700'
+          : 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+      }`}
     >
       {/* Icon */}
-      <div
-        style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          backgroundColor: `${color}15`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: color,
-          fontSize: '14px',
-          fontWeight: 'bold',
-          flexShrink: 0
-        }}
-      >
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${typeClasses[notification.type] || typeClasses.info}`}>
         {TYPE_ICONS[notification.type]}
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="flex-1 min-w-0">
         {notification.title && (
-          <div style={{
-            fontSize: '14px',
-            fontWeight: notification.read ? '500' : '600',
-            color: '#1f2937',
-            marginBottom: '2px'
-          }}>
+          <div className={`text-sm text-gray-900 dark:text-gray-100 mb-0.5 ${notification.read ? 'font-medium' : 'font-semibold'}`}>
             {notification.title}
           </div>
         )}
-        <div style={{
-          fontSize: '13px',
-          color: '#6b7280',
-          lineHeight: '1.4',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }}>
+        <div className="text-sm text-gray-600 dark:text-gray-400 leading-snug truncate">
           {notification.message}
         </div>
-        <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {formatTimeAgo(notification.createdAt)}
         </div>
       </div>
 
       {/* Unread indicator */}
       {!notification.read && (
-        <div
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: '#3b82f6',
-            flexShrink: 0,
-            marginTop: '4px'
-          }}
-        />
+        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
       )}
 
       {/* Delete button */}
@@ -117,18 +73,7 @@ function NotificationItem({ notification, onRead, onDelete }) {
           e.stopPropagation();
           onDelete(notification.id);
         }}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#9ca3af',
-          cursor: 'pointer',
-          padding: '4px',
-          fontSize: '14px',
-          opacity: 0.6,
-          transition: 'opacity 0.2s'
-        }}
-        onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-        onMouseOut={(e) => e.currentTarget.style.opacity = '0.6'}
+        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 text-sm opacity-60 hover:opacity-100 transition-opacity"
       >
         ✕
       </button>
@@ -155,47 +100,17 @@ export default function NotificationCenter() {
   }, []);
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div ref={dropdownRef} className="relative">
       {/* Bell Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          position: 'relative',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '8px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'background 0.2s'
-        }}
-        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'}
-        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        className="relative p-2 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
       >
-        <span style={{ fontSize: '20px' }}>🔔</span>
+        <span className="text-xl">🔔</span>
 
         {/* Badge */}
         {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '2px',
-              right: '2px',
-              minWidth: '18px',
-              height: '18px',
-              padding: '0 5px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              fontSize: '11px',
-              fontWeight: '600',
-              borderRadius: '9px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
+          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -203,66 +118,24 @@ export default function NotificationCenter() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: '8px',
-            width: '380px',
-            maxHeight: '480px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #e5e7eb',
-            overflow: 'hidden',
-            zIndex: 1000,
-            animation: 'fadeIn 0.2s ease'
-          }}
-        >
-          <style>
-            {`
-              @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-10px); }
-                to { opacity: 1; transform: translateY(0); }
-              }
-            `}
-          </style>
-
+        <div className="absolute top-full right-0 mt-2 w-96 max-h-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden z-[1000] animate-fadeIn">
           {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px',
-              borderBottom: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
-            }}
-          >
+          <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 {t('notifications.title', 'Notifications')}
               </h3>
               {unreadCount > 0 && (
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {t('notifications.unreadCount', '{{count}} unread', { count: unreadCount })}
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex gap-2">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#3b82f6',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    borderRadius: '4px'
-                  }}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 px-2 py-1 rounded transition-colors"
                 >
                   {t('notifications.markAllRead', 'Mark all read')}
                 </button>
@@ -270,15 +143,7 @@ export default function NotificationCenter() {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ef4444',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    borderRadius: '4px'
-                  }}
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded transition-colors"
                 >
                   {t('notifications.clearAll', 'Clear all')}
                 </button>
@@ -287,17 +152,11 @@ export default function NotificationCenter() {
           </div>
 
           {/* Notification List */}
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
-              <div
-                style={{
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  color: '#9ca3af'
-                }}
-              >
-                <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.5 }}>🔔</div>
-                <div style={{ fontSize: '14px' }}>
+              <div className="py-10 px-5 text-center text-gray-400 dark:text-gray-500">
+                <div className="text-5xl mb-3 opacity-50">🔔</div>
+                <div className="text-sm">
                   {t('notifications.noNotifications', 'No notifications yet')}
                 </div>
               </div>

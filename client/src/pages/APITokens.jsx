@@ -103,23 +103,23 @@ export default function ApiTokens() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">{t('apiTokens.title')}</h1>
-            <p className="text-gray-600">{t('apiTokens.subtitle')}</p>
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{t('apiTokens.title')}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{t('apiTokens.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -130,22 +130,22 @@ export default function ApiTokens() {
         </div>
 
         {/* API Documentation Card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-blue-800 mb-3">📚 API Documentation</h2>
-          <p className="text-blue-700 mb-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 mb-8">
+          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-3">📚 API Documentation</h2>
+          <p className="text-blue-700 dark:text-blue-300 mb-4">
             Use API tokens to access BotBuilder API programmatically. Include the token in the Authorization header of your requests.
           </p>
-          <div className="bg-white rounded-lg p-4 mb-4">
-            <p className="text-sm text-gray-600 mb-2">Example Usage:</p>
-            <code className="text-sm bg-gray-100 p-3 rounded block overflow-x-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Example Usage:</p>
+            <code className="text-sm bg-gray-100 dark:bg-slate-700 dark:text-gray-300 p-3 rounded block overflow-x-auto">
               curl -H "Authorization: Bearer bbot_your_token_here" \<br/>
               {`     https://your-domain.com/api/bots`}
             </code>
           </div>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="font-semibold text-blue-800 mb-2">Available Endpoints:</p>
-              <ul className="space-y-1 text-blue-700">
+              <p className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Available Endpoints:</p>
+              <ul className="space-y-1 text-blue-700 dark:text-blue-300">
                 <li>• GET /bots - List all bots</li>
                 <li>• POST /bots - Create new bot</li>
                 <li>• GET /bots/:id - Get bot details</li>
@@ -154,8 +154,8 @@ export default function ApiTokens() {
               </ul>
             </div>
             <div>
-              <p className="font-semibold text-blue-800 mb-2">Token Security:</p>
-              <ul className="space-y-1 text-blue-700">
+              <p className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Token Security:</p>
+              <ul className="space-y-1 text-blue-700 dark:text-blue-300">
                 <li>• Tokens are shown only once</li>
                 <li>• Store tokens securely</li>
                 <li>• Never commit tokens to git</li>
@@ -168,10 +168,10 @@ export default function ApiTokens() {
 
         {/* Tokens List */}
         {tokens.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-12 text-center transition-colors duration-300">
             <div className="text-6xl mb-4">🔑</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('apiTokens.noTokens')}</h2>
-            <p className="text-gray-600 mb-6">{t('apiTokens.noTokensDesc')}</p>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{t('apiTokens.noTokens')}</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{t('apiTokens.noTokensDesc')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -182,32 +182,32 @@ export default function ApiTokens() {
         ) : (
           <div className="space-y-4">
             {tokens.map((token) => (
-              <div key={token.id} className="bg-white rounded-2xl shadow-lg p-6">
+              <div key={token.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800">{token.token_name}</h3>
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-white">{token.token_name}</h3>
                       <span className={`px-3 py-1 rounded-full text-sm ${
-                        token.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        token.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                       }`}>
                         {token.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2 mb-3">
-                      <code className="bg-gray-100 px-3 py-1 rounded text-sm">
+                      <code className="bg-gray-100 dark:bg-slate-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                         {token.token_preview}
                       </code>
                       <button
                         onClick={() => copyToClipboard(token.token_preview)}
-                        className="text-purple-600 hover:text-purple-700 text-sm"
+                        className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm"
                         title="Copy token preview"
                       >
                         📋 Copy
                       </button>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div className="grid md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <div>
                         <span className="font-semibold">Bot:</span> {token.bot_name || 'All bots'}
                       </div>
@@ -277,18 +277,18 @@ export default function ApiTokens() {
         {/* Create Token Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Create API Token</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Create API Token</h2>
 
               {newToken ? (
                 <div>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <p className="text-green-800 font-semibold mb-2">✅ Token Created!</p>
-                    <p className="text-sm text-green-700 mb-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                    <p className="text-green-800 dark:text-green-200 font-semibold mb-2">✅ Token Created!</p>
+                    <p className="text-sm text-green-700 dark:text-green-300 mb-4">
                       Copy this token now. You won't be able to see it again!
                     </p>
-                    <div className="bg-white p-3 rounded border border-green-300">
-                      <code className="text-sm break-all">{newToken}</code>
+                    <div className="bg-white dark:bg-slate-700 p-3 rounded border border-green-300 dark:border-green-700">
+                      <code className="text-sm break-all dark:text-gray-300">{newToken}</code>
                     </div>
                     <button
                       onClick={() => copyToClipboard(newToken)}
@@ -303,7 +303,7 @@ export default function ApiTokens() {
                       setNewToken(null);
                       setShowCreateModal(false);
                     }}
-                    className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                    className="w-full px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600"
                   >
                     Close
                   </button>
@@ -311,23 +311,23 @@ export default function ApiTokens() {
               ) : (
                 <form onSubmit={handleCreateToken}>
                   <div className="mb-4">
-                    <label className="block text-gray-700 font-semibold mb-2">Token Name *</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Token Name *</label>
                     <input
                       type="text"
                       value={formData.tokenName}
                       onChange={(e) => setFormData({ ...formData, tokenName: e.target.value })}
                       required
                       placeholder="e.g., Production API Key"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                     />
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-gray-700 font-semibold mb-2">Bot (Optional)</label>
+                    <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Bot (Optional)</label>
                     <select
                       value={formData.botId}
                       onChange={(e) => setFormData({ ...formData, botId: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                     >
                       <option value="">All Bots</option>
                       {bots.map((bot) => (
@@ -336,13 +336,13 @@ export default function ApiTokens() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Leave empty to allow access to all bots
                     </p>
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-gray-700 font-semibold mb-2">
+                    <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                       Expires In (Days, Optional)
                     </label>
                     <input
@@ -350,9 +350,9 @@ export default function ApiTokens() {
                       value={formData.expiresInDays}
                       onChange={(e) => setFormData({ ...formData, expiresInDays: e.target.value })}
                       placeholder="e.g., 90"
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                     />
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Leave empty for no expiration
                     </p>
                   </div>
@@ -367,7 +367,7 @@ export default function ApiTokens() {
                     <button
                       type="button"
                       onClick={() => setShowCreateModal(false)}
-                      className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                      className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600"
                     >
                       Cancel
                     </button>
