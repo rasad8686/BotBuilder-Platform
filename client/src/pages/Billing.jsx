@@ -186,12 +186,12 @@ export default function Billing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-8 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{t('billing.title')}</h1>
-          <p className="text-gray-600 dark:text-gray-400">{t('billing.subtitle')}</p>
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">{t('billing.title')}</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{t('billing.subtitle')}</p>
         </div>
 
         {/* Usage Bar */}

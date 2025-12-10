@@ -175,13 +175,13 @@ export default function Webhooks() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-8 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-4 sm:p-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{t('webhooks.title')}</h1>
-            <p className="text-gray-600 dark:text-gray-400">{t('webhooks.subtitle')}</p>
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 dark:text-white mb-2">{t('webhooks.title')}</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{t('webhooks.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -200,22 +200,22 @@ export default function Webhooks() {
           const successRate = totalAttempts > 0 ? Math.round((successful / totalAttempts) * 100) : 0;
 
           return (
-            <div className="grid grid-cols-4 gap-6 mb-8">
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalAttempts}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8">
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 transition-colors duration-300">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">Total</p>
+                <p className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-white">{totalAttempts}</p>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Success</p>
-                <p className="text-3xl font-bold text-green-600">{successful}</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 transition-colors duration-300">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">Success</p>
+                <p className="text-xl sm:text-3xl font-bold text-green-600">{successful}</p>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Failed</p>
-                <p className="text-3xl font-bold text-red-600">{failed}</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 transition-colors duration-300">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">Failed</p>
+                <p className="text-xl sm:text-3xl font-bold text-red-600">{failed}</p>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 transition-colors duration-300">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Success Rate</p>
-                <p className="text-3xl font-bold text-blue-600">{successRate}%</p>
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-4 sm:p-6 transition-colors duration-300">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">Success Rate</p>
+                <p className="text-xl sm:text-3xl font-bold text-blue-600">{successRate}%</p>
               </div>
             </div>
           );
@@ -293,21 +293,21 @@ export default function Webhooks() {
 
                 {/* Stats */}
                 {webhook.stats && (
-                  <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 pt-4 border-t border-gray-100 dark:border-slate-700">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-800 dark:text-white">{webhook.stats.total_attempts}</p>
+                      <p className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white">{webhook.stats.total_attempts}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">{webhook.stats.successful}</p>
+                      <p className="text-lg sm:text-2xl font-bold text-green-600">{webhook.stats.successful}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Success</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-red-600">{webhook.stats.failed}</p>
+                      <p className="text-lg sm:text-2xl font-bold text-red-600">{webhook.stats.failed}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Failed</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{webhook.stats.success_rate}%</p>
+                      <p className="text-lg sm:text-2xl font-bold text-blue-600">{webhook.stats.success_rate}%</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
                     </div>
                   </div>
