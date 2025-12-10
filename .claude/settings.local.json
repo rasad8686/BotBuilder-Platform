@@ -19,7 +19,11 @@
       "Bash(dir:*)",
       "Bash(npm install:*)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(test:*)",
+      "Bash(powershell -Command \"New-Item -Path ''C:\\Users\\User\\Desktop\\BotBuilder\\server\\__tests__\\flows.test.js'' -ItemType File -Force\")",
+      "Bash(powershell:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
