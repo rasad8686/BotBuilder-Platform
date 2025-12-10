@@ -53,6 +53,12 @@ class RAGService {
     log.info(`[RAG] Performing barcode search for: ${barcode} (isShort: ${isShort}, length: ${barcode.length})`);
     log.info(`[RAG] Knowledge base IDs: ${JSON.stringify(kbIds)}`);
 
+    // NO GLOBAL SEARCH: If no KB IDs provided, return empty results
+    if (!kbIds || kbIds.length === 0) {
+      log.info(`[RAG] No KB IDs provided - returning empty (no global search allowed)`);
+      return [];
+    }
+
     // Build search patterns based on input length
     let searchPatterns = [];
     const barcodeLength = barcode.length;
@@ -186,10 +192,8 @@ class RAGService {
         for (const barcode of barcodes) {
           let exactResults = await this.exactBarcodeSearch(kbIds, barcode, isShort, maxChunks);
 
-          // If no results in linked KBs, try global search
-          if ((!exactResults || exactResults.length === 0) && kbIds.length > 0) {
-            exactResults = await this.exactBarcodeSearch([], barcode, isShort, maxChunks);
-          }
+          // NO GLOBAL FALLBACK: Only search in bot's own linked KBs
+          // Previously this was searching ALL KBs which caused data leakage between bots
 
           if (exactResults && exactResults.length > 0) {
             log.info(`[RAG] EXACT MATCH: Found ${exactResults.length} chunks for barcode ${barcode}`);
@@ -317,15 +321,12 @@ class RAGService {
         return kbResult.rows;
       }
 
-      log.info(`[RAG] No linked KB, trying global fallback...`);
+      log.info(`[RAG] No linked KB for bot ${botId} - returning empty (no global fallback)`);
 
-      // Fallback: Get ALL knowledge bases (since org_id doesn't exist on kb table)
-      const globalKbResult = await db.query(
-        `SELECT * FROM knowledge_bases ORDER BY created_at DESC LIMIT 3`
-      );
-
-      log.debug(`[RAG] Global fallback result:`, globalKbResult.rows.map(r => ({ id: r.id, name: r.name })));
-      return globalKbResult.rows;
+      // NO FALLBACK: Each bot should only use its OWN linked knowledge base
+      // Previously this was falling back to ANY knowledge base which caused
+      // bots to respond with data from other bots' knowledge bases
+      return [];
 
     } catch (error) {
       log.error('[RAG] Error getting bot knowledge bases:', error.message);

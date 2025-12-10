@@ -233,6 +233,41 @@ router.post('/:botId/message', async (req, res) => {
             log.warn('RAG error (continuing without context)', { error: ragError.message });
           }
 
+          // Add language instruction to system prompt
+          console.log('\n========== LANGUAGE DEBUG ==========');
+          console.log('Bot ID:', bot.id);
+          console.log('Bot Language:', bot.language);
+          console.log('Is not English:', bot.language !== 'en');
+          console.log('=====================================\n');
+
+          if (bot.language && bot.language !== 'en') {
+            const languageNames = {
+              'tr': 'Turkish', 'az': 'Azerbaijani', 'ru': 'Russian', 'ka': 'Georgian',
+              'de': 'German', 'fr': 'French', 'es': 'Spanish', 'ar': 'Arabic',
+              'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean', 'pt': 'Portuguese',
+              'it': 'Italian', 'nl': 'Dutch', 'pl': 'Polish', 'uk': 'Ukrainian',
+              'hi': 'Hindi', 'bn': 'Bengali', 'id': 'Indonesian', 'vi': 'Vietnamese',
+              'th': 'Thai', 'el': 'Greek', 'cs': 'Czech', 'ro': 'Romanian',
+              'hu': 'Hungarian', 'sv': 'Swedish', 'fi': 'Finnish', 'da': 'Danish',
+              'no': 'Norwegian', 'he': 'Hebrew', 'fa': 'Persian', 'ms': 'Malay',
+              'tl': 'Filipino', 'sw': 'Swahili', 'ur': 'Urdu', 'ta': 'Tamil',
+              'te': 'Telugu', 'mr': 'Marathi', 'gu': 'Gujarati', 'kn': 'Kannada',
+              'ml': 'Malayalam', 'pa': 'Punjabi', 'bg': 'Bulgarian', 'hr': 'Croatian',
+              'sk': 'Slovak', 'sl': 'Slovenian', 'sr': 'Serbian', 'lt': 'Lithuanian',
+              'lv': 'Latvian', 'et': 'Estonian', 'ca': 'Catalan', 'eu': 'Basque',
+              'gl': 'Galician', 'cy': 'Welsh', 'ga': 'Irish', 'is': 'Icelandic',
+              'kk': 'Kazakh', 'uz': 'Uzbek', 'ky': 'Kyrgyz', 'mn': 'Mongolian',
+              'ne': 'Nepali', 'si': 'Sinhala', 'km': 'Khmer', 'lo': 'Lao',
+              'my': 'Burmese', 'am': 'Amharic', 'auto': 'the same language as the user'
+            };
+            const langName = languageNames[bot.language] || bot.language;
+            systemPrompt = `[LANGUAGE REQUIREMENT: ${langName.toUpperCase()}]\n\n${systemPrompt}\n\n---\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Do NOT use any other language. Every single word of your response must be in ${langName}.`;
+            console.log('\n========== SYSTEM PROMPT ==========');
+            console.log('Language Name:', langName);
+            console.log('System Prompt Preview:', systemPrompt.substring(0, 300));
+            console.log('====================================\n');
+          }
+
           // Get conversation history for context
           const historyResult = await pool.query(`
             SELECT role, content FROM widget_messages
@@ -261,6 +296,12 @@ router.post('/:botId/message', async (req, res) => {
           messages.push({
             role: 'user',
             content: message
+          });
+
+          // Log final system prompt for debugging
+          log.info('[WIDGET-LANG] Final system prompt', {
+            promptPreview: systemPrompt.substring(0, 500),
+            containsLanguageInstruction: systemPrompt.includes('IMPORTANT: You MUST respond in')
           });
 
           // Send to AI
