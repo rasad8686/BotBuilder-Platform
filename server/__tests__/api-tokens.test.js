@@ -303,3 +303,627 @@ describe('API Tokens API', () => {
     });
   });
 });
+
+// ========================================
+// TOKEN PERMISSIONS TESTS
+// ========================================
+describe('API Token Permissions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const permApp = express();
+  permApp.use(express.json());
+
+  const mockAuth = (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    req.organization = { id: 1, name: 'Test Org' };
+    next();
+  };
+
+  permApp.post('/api/api-tokens', mockAuth, async (req, res) => {
+    try {
+      const { name, permissions } = req.body;
+
+      if (!name || name.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Token name is required' });
+      }
+
+      // Validate permissions
+      const validPermissions = ['read', 'write', 'delete', 'admin'];
+      if (permissions) {
+        if (!Array.isArray(permissions)) {
+          return res.status(400).json({ success: false, message: 'Permissions must be an array' });
+        }
+        const invalidPerms = permissions.filter(p => !validPermissions.includes(p));
+        if (invalidPerms.length > 0) {
+          return res.status(400).json({ success: false, message: `Invalid permissions: ${invalidPerms.join(', ')}` });
+        }
+      }
+
+      const result = await db.query(
+        'INSERT INTO api_tokens (name, permissions, organization_id) VALUES ($1, $2, $3) RETURNING *',
+        [name, JSON.stringify(permissions || ['read']), req.organization.id]
+      );
+
+      res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  permApp.get('/api/api-tokens/:id/permissions', mockAuth, async (req, res) => {
+    try {
+      const result = await db.query(
+        'SELECT permissions FROM api_tokens WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Token not found' });
+      }
+
+      res.json({ success: true, data: result.rows[0].permissions });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  permApp.put('/api/api-tokens/:id/permissions', mockAuth, async (req, res) => {
+    try {
+      const { permissions } = req.body;
+
+      if (!permissions || !Array.isArray(permissions)) {
+        return res.status(400).json({ success: false, message: 'Permissions array is required' });
+      }
+
+      const validPermissions = ['read', 'write', 'delete', 'admin'];
+      const invalidPerms = permissions.filter(p => !validPermissions.includes(p));
+      if (invalidPerms.length > 0) {
+        return res.status(400).json({ success: false, message: `Invalid permissions: ${invalidPerms.join(', ')}` });
+      }
+
+      const existingToken = await db.query(
+        'SELECT * FROM api_tokens WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (existingToken.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Token not found' });
+      }
+
+      const result = await db.query(
+        'UPDATE api_tokens SET permissions = $1 WHERE id = $2 RETURNING *',
+        [JSON.stringify(permissions), req.params.id]
+      );
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  describe('POST /api/api-tokens with permissions', () => {
+    it('should create token with valid permissions', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', permissions: ['read', 'write'] }] });
+
+      const res = await request(permApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', permissions: ['read', 'write'] });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should create token with default read permission', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', permissions: ['read'] }] });
+
+      const res = await request(permApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should return 400 for invalid permissions', async () => {
+      const res = await request(permApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', permissions: ['invalid'] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid permissions');
+    });
+
+    it('should return 400 if permissions is not an array', async () => {
+      const res = await request(permApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', permissions: 'read' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('must be an array');
+    });
+  });
+
+  describe('GET /api/api-tokens/:id/permissions', () => {
+    it('should return token permissions', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ permissions: ['read', 'write'] }] });
+
+      const res = await request(permApp).get('/api/api-tokens/1/permissions');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(permApp).get('/api/api-tokens/999/permissions');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PUT /api/api-tokens/:id/permissions', () => {
+    it('should update token permissions', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ permissions: ['admin'] }] });
+
+      const res = await request(permApp)
+        .put('/api/api-tokens/1/permissions')
+        .send({ permissions: ['admin'] });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 400 for invalid permissions', async () => {
+      const res = await request(permApp)
+        .put('/api/api-tokens/1/permissions')
+        .send({ permissions: ['superadmin'] });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(permApp)
+        .put('/api/api-tokens/999/permissions')
+        .send({ permissions: ['read'] });
+
+      expect(res.status).toBe(404);
+    });
+  });
+});
+
+// ========================================
+// TOKEN EXPIRY TESTS
+// ========================================
+describe('API Token Expiry', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const expiryApp = express();
+  expiryApp.use(express.json());
+
+  const mockAuth = (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    req.organization = { id: 1, name: 'Test Org' };
+    next();
+  };
+
+  expiryApp.post('/api/api-tokens', mockAuth, async (req, res) => {
+    try {
+      const { name, expires_in_days } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ success: false, message: 'Token name is required' });
+      }
+
+      // Validate expiry
+      if (expires_in_days !== undefined) {
+        if (typeof expires_in_days !== 'number' || expires_in_days < 1 || expires_in_days > 365) {
+          return res.status(400).json({ success: false, message: 'Expiry must be between 1 and 365 days' });
+        }
+      }
+
+      const expiresAt = expires_in_days
+        ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000)
+        : null;
+
+      const result = await db.query(
+        'INSERT INTO api_tokens (name, expires_at, organization_id) VALUES ($1, $2, $3) RETURNING *',
+        [name, expiresAt, req.organization.id]
+      );
+
+      res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  expiryApp.get('/api/api-tokens/expired', mockAuth, async (req, res) => {
+    try {
+      const result = await db.query(
+        'SELECT * FROM api_tokens WHERE organization_id = $1 AND expires_at < NOW()',
+        [req.organization.id]
+      );
+
+      res.json({ success: true, data: result.rows });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  expiryApp.post('/api/api-tokens/:id/extend', mockAuth, async (req, res) => {
+    try {
+      const { days } = req.body;
+
+      if (!days || typeof days !== 'number' || days < 1 || days > 365) {
+        return res.status(400).json({ success: false, message: 'Days must be between 1 and 365' });
+      }
+
+      const existingToken = await db.query(
+        'SELECT * FROM api_tokens WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (existingToken.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Token not found' });
+      }
+
+      const newExpiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+      const result = await db.query(
+        'UPDATE api_tokens SET expires_at = $1 WHERE id = $2 RETURNING *',
+        [newExpiry, req.params.id]
+      );
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  describe('POST /api/api-tokens with expiry', () => {
+    it('should create token with expiry date', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: new Date() }] });
+
+      const res = await request(expiryApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', expires_in_days: 30 });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should create token without expiry (never expires)', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: null }] });
+
+      const res = await request(expiryApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should return 400 for invalid expiry days', async () => {
+      const res = await request(expiryApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', expires_in_days: 500 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('365 days');
+    });
+
+    it('should return 400 for negative expiry days', async () => {
+      const res = await request(expiryApp)
+        .post('/api/api-tokens')
+        .send({ name: 'Test Token', expires_in_days: -1 });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('GET /api/api-tokens/expired', () => {
+    it('should return expired tokens', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Expired Token' }] });
+
+      const res = await request(expiryApp).get('/api/api-tokens/expired');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return empty array if no expired tokens', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(expiryApp).get('/api/api-tokens/expired');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(0);
+    });
+  });
+
+  describe('POST /api/api-tokens/:id/extend', () => {
+    it('should extend token expiry', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ id: 1, expires_at: new Date() }] });
+
+      const res = await request(expiryApp)
+        .post('/api/api-tokens/1/extend')
+        .send({ days: 30 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 400 for invalid days', async () => {
+      const res = await request(expiryApp)
+        .post('/api/api-tokens/1/extend')
+        .send({ days: 400 });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(expiryApp)
+        .post('/api/api-tokens/999/extend')
+        .send({ days: 30 });
+
+      expect(res.status).toBe(404);
+    });
+  });
+});
+
+// ========================================
+// RATE LIMITING TESTS
+// ========================================
+describe('API Token Rate Limiting', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const rateApp = express();
+  rateApp.use(express.json());
+
+  const mockAuth = (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    req.organization = { id: 1, name: 'Test Org' };
+    next();
+  };
+
+  rateApp.get('/api/api-tokens/:id/usage', mockAuth, async (req, res) => {
+    try {
+      const tokenResult = await db.query(
+        'SELECT * FROM api_tokens WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (tokenResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Token not found' });
+      }
+
+      const usageResult = await db.query(
+        `SELECT COUNT(*) as count, DATE(created_at) as date
+         FROM api_token_usage WHERE token_id = $1
+         AND created_at > NOW() - INTERVAL '24 hours'
+         GROUP BY DATE(created_at)`,
+        [req.params.id]
+      );
+
+      res.json({
+        success: true,
+        data: {
+          requests_today: parseInt(usageResult.rows[0]?.count || 0),
+          rate_limit: tokenResult.rows[0].rate_limit || 1000
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  rateApp.put('/api/api-tokens/:id/rate-limit', mockAuth, async (req, res) => {
+    try {
+      const { rate_limit } = req.body;
+
+      if (!rate_limit || typeof rate_limit !== 'number') {
+        return res.status(400).json({ success: false, message: 'Rate limit must be a number' });
+      }
+
+      if (rate_limit < 10 || rate_limit > 100000) {
+        return res.status(400).json({ success: false, message: 'Rate limit must be between 10 and 100000' });
+      }
+
+      const existingToken = await db.query(
+        'SELECT * FROM api_tokens WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (existingToken.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Token not found' });
+      }
+
+      const result = await db.query(
+        'UPDATE api_tokens SET rate_limit = $1 WHERE id = $2 RETURNING *',
+        [rate_limit, req.params.id]
+      );
+
+      res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  rateApp.post('/api/validate-token', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: 'No token provided' });
+      }
+
+      const token = authHeader.split(' ')[1];
+
+      const result = await db.query(
+        'SELECT * FROM api_tokens WHERE token_hash = $1',
+        [token]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ success: false, message: 'Invalid token' });
+      }
+
+      const tokenData = result.rows[0];
+
+      // Check if expired
+      if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
+        return res.status(401).json({ success: false, message: 'Token expired' });
+      }
+
+      // Check rate limit
+      const usageResult = await db.query(
+        `SELECT COUNT(*) as count FROM api_token_usage
+         WHERE token_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`,
+        [tokenData.id]
+      );
+
+      const hourlyUsage = parseInt(usageResult.rows[0].count);
+      if (hourlyUsage >= tokenData.rate_limit) {
+        return res.status(429).json({ success: false, message: 'Rate limit exceeded' });
+      }
+
+      // Log usage
+      await db.query(
+        'INSERT INTO api_token_usage (token_id) VALUES ($1)',
+        [tokenData.id]
+      );
+
+      res.json({ success: true, message: 'Token valid' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  describe('GET /api/api-tokens/:id/usage', () => {
+    it('should return token usage stats', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 1000 }] })
+        .mockResolvedValueOnce({ rows: [{ count: '50', date: '2024-01-01' }] });
+
+      const res = await request(rateApp).get('/api/api-tokens/1/usage');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.requests_today).toBe(50);
+      expect(res.body.data.rate_limit).toBe(1000);
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(rateApp).get('/api/api-tokens/999/usage');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PUT /api/api-tokens/:id/rate-limit', () => {
+    it('should update rate limit', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ rate_limit: 5000 }] });
+
+      const res = await request(rateApp)
+        .put('/api/api-tokens/1/rate-limit')
+        .send({ rate_limit: 5000 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 400 for invalid rate limit', async () => {
+      const res = await request(rateApp)
+        .put('/api/api-tokens/1/rate-limit')
+        .send({ rate_limit: 5 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('between 10 and 100000');
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(rateApp)
+        .put('/api/api-tokens/999/rate-limit')
+        .send({ rate_limit: 1000 });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/validate-token', () => {
+    it('should validate token successfully', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 1000 }] })
+        .mockResolvedValueOnce({ rows: [{ count: '10' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const res = await request(rateApp)
+        .post('/api/validate-token')
+        .set('Authorization', 'Bearer valid-token');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 401 if no token provided', async () => {
+      const res = await request(rateApp)
+        .post('/api/validate-token');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 401 for invalid token', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(rateApp)
+        .post('/api/validate-token')
+        .set('Authorization', 'Bearer invalid-token');
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toContain('Invalid token');
+    });
+
+    it('should return 401 for expired token', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, expires_at: new Date('2020-01-01') }]
+      });
+
+      const res = await request(rateApp)
+        .post('/api/validate-token')
+        .set('Authorization', 'Bearer expired-token');
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toContain('expired');
+    });
+
+    it('should return 429 when rate limit exceeded', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 100 }] })
+        .mockResolvedValueOnce({ rows: [{ count: '100' }] });
+
+      const res = await request(rateApp)
+        .post('/api/validate-token')
+        .set('Authorization', 'Bearer rate-limited-token');
+
+      expect(res.status).toBe(429);
+      expect(res.body.message).toContain('Rate limit exceeded');
+    });
+  });
+});

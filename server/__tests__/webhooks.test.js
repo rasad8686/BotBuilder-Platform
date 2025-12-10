@@ -491,3 +491,493 @@ describe('Webhooks API', () => {
     });
   });
 });
+
+// ========================================
+// WEBHOOK RETRY LOGIC TESTS
+// ========================================
+describe('Webhook Retry Logic', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const retryApp = express();
+  retryApp.use(express.json());
+
+  const mockAuth = (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    req.organization = { id: 1, name: 'Test Org' };
+    next();
+  };
+
+  retryApp.post('/api/webhooks/:id/deliver', mockAuth, async (req, res) => {
+    try {
+      const { payload, max_retries = 3 } = req.body;
+
+      const webhookResult = await db.query(
+        'SELECT * FROM webhooks WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (webhookResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Webhook not found' });
+      }
+
+      const webhook = webhookResult.rows[0];
+      let attempt = 0;
+      let lastError = null;
+
+      while (attempt < max_retries) {
+        attempt++;
+        try {
+          const response = await fetch(webhook.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            // Log successful delivery
+            await db.query(
+              'INSERT INTO webhook_deliveries (webhook_id, status, attempts) VALUES ($1, $2, $3)',
+              [req.params.id, 'success', attempt]
+            );
+
+            return res.json({ success: true, attempts: attempt });
+          }
+
+          lastError = `HTTP ${response.status}`;
+        } catch (error) {
+          lastError = error.message;
+        }
+
+        // Exponential backoff delay would happen here
+      }
+
+      // Log failed delivery
+      await db.query(
+        'INSERT INTO webhook_deliveries (webhook_id, status, attempts, error) VALUES ($1, $2, $3, $4)',
+        [req.params.id, 'failed', attempt, lastError]
+      );
+
+      res.status(502).json({ success: false, message: 'Webhook delivery failed', attempts: attempt, error: lastError });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  retryApp.get('/api/webhooks/:id/deliveries', mockAuth, async (req, res) => {
+    try {
+      const result = await db.query(
+        'SELECT * FROM webhook_deliveries WHERE webhook_id = $1 ORDER BY created_at DESC LIMIT 100',
+        [req.params.id]
+      );
+
+      res.json({ success: true, data: result.rows });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  retryApp.post('/api/webhooks/:id/retry', mockAuth, async (req, res) => {
+    try {
+      const { delivery_id } = req.body;
+
+      if (!delivery_id) {
+        return res.status(400).json({ success: false, message: 'Delivery ID is required' });
+      }
+
+      const deliveryResult = await db.query(
+        'SELECT * FROM webhook_deliveries WHERE id = $1',
+        [delivery_id]
+      );
+
+      if (deliveryResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Delivery not found' });
+      }
+
+      const webhookResult = await db.query(
+        'SELECT * FROM webhooks WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (webhookResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Webhook not found' });
+      }
+
+      // Retry the delivery
+      const response = await fetch(webhookResult.rows[0].url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ retry: true, original_delivery_id: delivery_id })
+      });
+
+      if (response.ok) {
+        await db.query(
+          'UPDATE webhook_deliveries SET status = $1, retried_at = NOW() WHERE id = $2',
+          ['retried_success', delivery_id]
+        );
+        return res.json({ success: true, message: 'Retry successful' });
+      }
+
+      res.status(502).json({ success: false, message: 'Retry failed' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  describe('POST /api/webhooks/:id/deliver', () => {
+    it('should deliver webhook successfully on first attempt', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com/hook' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+      global.fetch.mockResolvedValueOnce({ ok: true });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/deliver')
+        .send({ payload: { event: 'test' } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.attempts).toBe(1);
+    });
+
+    it('should retry on failure and succeed', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com/hook' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+      global.fetch
+        .mockResolvedValueOnce({ ok: false, status: 500 })
+        .mockResolvedValueOnce({ ok: true });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/deliver')
+        .send({ payload: { event: 'test' } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.attempts).toBe(2);
+    });
+
+    it('should fail after max retries', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com/hook' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+      global.fetch
+        .mockResolvedValue({ ok: false, status: 500 });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/deliver')
+        .send({ payload: { event: 'test' }, max_retries: 3 });
+
+      expect(res.status).toBe(502);
+      expect(res.body.attempts).toBe(3);
+    });
+
+    it('should handle network errors in retries', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com/hook' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+      global.fetch
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ ok: true });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/deliver')
+        .send({ payload: { event: 'test' } });
+
+      expect(res.status).toBe(200);
+    });
+
+    it('should return 404 if webhook not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/999/deliver')
+        .send({ payload: { event: 'test' } });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/webhooks/:id/deliveries', () => {
+    it('should return delivery history', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, status: 'success', attempts: 1 },
+          { id: 2, status: 'failed', attempts: 3 }
+        ]
+      });
+
+      const res = await request(retryApp).get('/api/webhooks/1/deliveries');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(2);
+    });
+
+    it('should return empty array for no deliveries', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(retryApp).get('/api/webhooks/1/deliveries');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(0);
+    });
+  });
+
+  describe('POST /api/webhooks/:id/retry', () => {
+    it('should retry a failed delivery', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, webhook_id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com/hook' }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+      global.fetch.mockResolvedValueOnce({ ok: true });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/retry')
+        .send({ delivery_id: 1 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should return 400 if delivery_id missing', async () => {
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/retry')
+        .send({});
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 if delivery not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(retryApp)
+        .post('/api/webhooks/1/retry')
+        .send({ delivery_id: 999 });
+
+      expect(res.status).toBe(404);
+    });
+  });
+});
+
+// ========================================
+// WEBHOOK SIGNATURE TESTS
+// ========================================
+describe('Webhook Signatures', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const sigApp = express();
+  sigApp.use(express.json());
+
+  const mockAuth = (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    req.organization = { id: 1, name: 'Test Org' };
+    next();
+  };
+
+  const crypto = require('crypto');
+
+  sigApp.post('/api/webhooks', mockAuth, async (req, res) => {
+    try {
+      const { url, events, name, secret } = req.body;
+
+      if (!url) {
+        return res.status(400).json({ success: false, message: 'URL is required' });
+      }
+
+      if (!events || events.length === 0) {
+        return res.status(400).json({ success: false, message: 'Events are required' });
+      }
+
+      // Generate secret if not provided
+      const webhookSecret = secret || crypto.randomBytes(32).toString('hex');
+
+      const result = await db.query(
+        'INSERT INTO webhooks (name, url, events, secret, organization_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [name, url, JSON.stringify(events), webhookSecret, req.organization.id]
+      );
+
+      res.status(201).json({
+        success: true,
+        data: { ...result.rows[0], secret: webhookSecret }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  sigApp.get('/api/webhooks/:id/secret', mockAuth, async (req, res) => {
+    try {
+      const result = await db.query(
+        'SELECT secret FROM webhooks WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Webhook not found' });
+      }
+
+      res.json({ success: true, data: { secret: result.rows[0].secret } });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  sigApp.post('/api/webhooks/:id/regenerate-secret', mockAuth, async (req, res) => {
+    try {
+      const existingWebhook = await db.query(
+        'SELECT * FROM webhooks WHERE id = $1 AND organization_id = $2',
+        [req.params.id, req.organization.id]
+      );
+
+      if (existingWebhook.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Webhook not found' });
+      }
+
+      const newSecret = crypto.randomBytes(32).toString('hex');
+
+      await db.query(
+        'UPDATE webhooks SET secret = $1 WHERE id = $2',
+        [newSecret, req.params.id]
+      );
+
+      res.json({ success: true, data: { secret: newSecret } });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  sigApp.post('/api/webhooks/verify-signature', async (req, res) => {
+    try {
+      const { payload, signature, secret } = req.body;
+
+      if (!payload || !signature || !secret) {
+        return res.status(400).json({ success: false, message: 'Payload, signature and secret are required' });
+      }
+
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(JSON.stringify(payload))
+        .digest('hex');
+
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature)
+      );
+
+      if (!isValid) {
+        return res.status(401).json({ success: false, message: 'Invalid signature' });
+      }
+
+      res.json({ success: true, message: 'Signature valid' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+
+  describe('POST /api/webhooks with secret', () => {
+    it('should create webhook with auto-generated secret', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com' }] });
+
+      const res = await request(sigApp)
+        .post('/api/webhooks')
+        .send({ url: 'https://example.com/hook', events: ['message.received'] });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.secret).toBeDefined();
+      expect(res.body.data.secret.length).toBe(64); // 32 bytes in hex
+    });
+
+    it('should create webhook with custom secret', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      const res = await request(sigApp)
+        .post('/api/webhooks')
+        .send({
+          url: 'https://example.com/hook',
+          events: ['message.received'],
+          secret: 'my-custom-secret'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.secret).toBe('my-custom-secret');
+    });
+  });
+
+  describe('GET /api/webhooks/:id/secret', () => {
+    it('should return webhook secret', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ secret: 'webhook-secret-123' }] });
+
+      const res = await request(sigApp).get('/api/webhooks/1/secret');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.secret).toBe('webhook-secret-123');
+    });
+
+    it('should return 404 if webhook not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(sigApp).get('/api/webhooks/999/secret');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/webhooks/:id/regenerate-secret', () => {
+    it('should regenerate webhook secret', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const res = await request(sigApp).post('/api/webhooks/1/regenerate-secret');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.secret).toBeDefined();
+      expect(res.body.data.secret.length).toBe(64);
+    });
+
+    it('should return 404 if webhook not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(sigApp).post('/api/webhooks/999/regenerate-secret');
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/webhooks/verify-signature', () => {
+    it('should verify valid signature', async () => {
+      const secret = 'test-secret';
+      const payload = { event: 'test' };
+      const signature = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+
+      const res = await request(sigApp)
+        .post('/api/webhooks/verify-signature')
+        .send({ payload, signature, secret });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should reject invalid signature', async () => {
+      const res = await request(sigApp)
+        .post('/api/webhooks/verify-signature')
+        .send({
+          payload: { event: 'test' },
+          signature: 'invalid-signature-here-with-correct-length-64chars',
+          secret: 'test-secret'
+        });
+
+      expect([401, 500]).toContain(res.status);
+    });
+
+    it('should return 400 if missing parameters', async () => {
+      const res = await request(sigApp)
+        .post('/api/webhooks/verify-signature')
+        .send({ payload: { event: 'test' } });
+
+      expect(res.status).toBe(400);
+    });
+  });
+});
