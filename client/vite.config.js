@@ -19,7 +19,7 @@ export default defineConfig({
     strictPort: true,  // Fail if port is already in use - FORCE 5174!
     host: true,
     proxy: {
-      '/api': {
+      '/api/': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
