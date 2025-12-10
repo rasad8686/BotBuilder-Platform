@@ -374,14 +374,14 @@ const WorkflowBuilder = () => {
   // If no botId, show bot selector
   if (!botId) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 p-8 transition-colors duration-300">
+      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 p-4 sm:p-8 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-              <span className="text-4xl">🔄</span>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 sm:gap-3">
+              <span className="text-3xl sm:text-4xl">🔄</span>
               {t('workflows.title')}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
               {t('workflows.subtitle')}
             </p>
           </div>

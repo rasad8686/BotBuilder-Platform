@@ -73,19 +73,19 @@ export default function TeamSettings() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{t('team.settings')}</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">{t('team.settings')}</h1>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
             {t('team.settingsSubtitle')}
           </p>
         </div>
         {activeTab === 'members' && (
           <button
             onClick={() => setShowInviteModal(true)}
-            className="px-5 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer font-medium flex items-center gap-2 hover:bg-blue-600 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer font-medium flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
           >
             <span>+</span> {t('team.inviteMember')}
           </button>
