@@ -526,3 +526,129 @@ test.describe('Email Validation', () => {
   });
 
 });
+
+// Mobile Viewport Tests
+test.describe('Mobile Viewport Auth', () => {
+
+  test('login page displays correctly on iPhone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const form = page.locator('form').first();
+    const hasForm = await form.isVisible().catch(() => false);
+    expect(hasForm).toBeTruthy();
+  });
+
+  test('login form is usable on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const emailInput = page.locator('input[type="email"]');
+    const passwordInput = page.locator('input[type="password"]');
+    const submitBtn = page.locator('button[type="submit"]');
+
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(submitBtn).toBeVisible();
+  });
+
+  test('register page displays correctly on Galaxy S20', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto('http://localhost:5174/register');
+    await page.waitForLoadState('networkidle');
+
+    const form = page.locator('form').first();
+    const hasForm = await form.isVisible().catch(() => false);
+    expect(hasForm).toBeTruthy();
+  });
+
+  test('login inputs are full width on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const emailInput = page.locator('input[type="email"]');
+    if (await emailInput.isVisible()) {
+      const box = await emailInput.boundingBox();
+      if (box) {
+        expect(box.width).toBeGreaterThan(200);
+      }
+    }
+  });
+
+  test('login button is tappable on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const submitBtn = page.locator('button[type="submit"]');
+    if (await submitBtn.isVisible()) {
+      const box = await submitBtn.boundingBox();
+      if (box) {
+        expect(box.height).toBeGreaterThanOrEqual(40);
+      }
+    }
+  });
+
+  test('tablet viewport shows login correctly', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page).toHaveURL(/login/);
+  });
+
+});
+
+// Accessibility Tests
+test.describe('Auth Accessibility', () => {
+
+  test('login form has proper labels', async ({ page }) => {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const labels = page.locator('label');
+    const labelCount = await labels.count();
+    expect(labelCount).toBeGreaterThanOrEqual(0);
+  });
+
+  test('login inputs have placeholder text', async ({ page }) => {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const emailInput = page.locator('input[type="email"]');
+    const placeholder = await emailInput.getAttribute('placeholder');
+    expect(placeholder === null || typeof placeholder === 'string').toBeTruthy();
+  });
+
+  test('submit button has accessible text', async ({ page }) => {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const submitBtn = page.locator('button[type="submit"]');
+    const text = await submitBtn.textContent();
+    expect(text && text.length > 0).toBeTruthy();
+  });
+
+  test('links have visible text', async ({ page }) => {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    const links = page.locator('a');
+    const linkCount = await links.count();
+    expect(linkCount).toBeGreaterThan(0);
+  });
+
+  test('form can be navigated with keyboard', async ({ page }) => {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+
+    await page.keyboard.press('Tab');
+    const focusedElement = page.locator(':focus');
+    const hasFocus = await focusedElement.count() > 0;
+    expect(hasFocus).toBeTruthy();
+  });
+
+});

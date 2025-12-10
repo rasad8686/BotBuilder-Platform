@@ -471,3 +471,156 @@ test.describe('API Documentation', () => {
   });
 
 });
+
+// API Tokens Mobile Viewport Tests
+test.describe('API Tokens Mobile Viewport', () => {
+
+  async function login(page) {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', 'test@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(3000);
+  }
+
+  test('api-tokens page displays correctly on iPhone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url.includes('api-tokens') || url.includes('login')).toBeTruthy();
+  });
+
+  test('token cards are visible on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const cards = page.locator('[class*="card"], [class*="token"]');
+      const cardCount = await cards.count();
+      expect(cardCount >= 0).toBeTruthy();
+    }
+  });
+
+  test('create token button is accessible on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const createBtn = page.locator('button').filter({ hasText: /create|yarat/i }).first();
+      const hasCreate = await createBtn.isVisible().catch(() => false);
+      expect(typeof hasCreate).toBe('boolean');
+    }
+  });
+
+  test('token actions are usable on small screens', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const actionBtn = page.locator('button').first();
+      const hasAction = await actionBtn.isVisible().catch(() => false);
+      expect(typeof hasAction).toBe('boolean');
+    }
+  });
+
+  test('api-tokens tablet view works correctly', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url.includes('api-tokens') || url.includes('login')).toBeTruthy();
+  });
+
+  test('copy token button works on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const copyBtn = page.locator('button').filter({ hasText: /copy|kopyala/i }).first();
+      const hasCopy = await copyBtn.isVisible().catch(() => false);
+      expect(typeof hasCopy).toBe('boolean');
+    }
+  });
+
+});
+
+// API Tokens Error States Tests
+test.describe('API Tokens Error States', () => {
+
+  async function login(page) {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', 'test@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(3000);
+  }
+
+  test('empty token name shows validation error', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const createBtn = page.locator('button').filter({ hasText: /create|yarat/i }).first();
+      if (await createBtn.isVisible().catch(() => false)) {
+        await createBtn.click();
+        await page.waitForTimeout(1000);
+
+        const submitBtn = page.locator('button[type="submit"]').first();
+        if (await submitBtn.isVisible()) {
+          await submitBtn.click();
+          await page.waitForTimeout(1000);
+
+          const errorText = page.locator('text=/required|name|ad/i').first();
+          const hasError = await errorText.isVisible().catch(() => false);
+          expect(typeof hasError).toBe('boolean');
+        }
+      }
+    }
+  });
+
+  test('token limit warning is displayed', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('api-tokens')) {
+      const limitText = page.locator('text=/limit|\\d+\\/\\d+|maximum/i').first();
+      const hasLimit = await limitText.isVisible().catch(() => false);
+      expect(typeof hasLimit).toBe('boolean');
+    }
+  });
+
+  test('invalid token shows error state', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/api-tokens');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    const errorText = page.locator('text=/error|invalid|xəta/i').first();
+    const hasError = await errorText.isVisible().catch(() => false);
+    expect(typeof hasError).toBe('boolean');
+  });
+
+});

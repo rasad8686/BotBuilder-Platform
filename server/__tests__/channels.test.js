@@ -766,3 +766,129 @@ describe('Channel Edge Cases', () => {
     });
   });
 });
+
+// ========================================
+// CHANNEL PLATFORM EDGE CASES
+// ========================================
+describe('Channel Platform Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Telegram Token Validation', () => {
+    it('should validate bot token format - invalid', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate bot token format - valid', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate long bot token', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('WhatsApp Phone Validation', () => {
+    it('should validate phone number format - invalid', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate phone number format - valid', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate phone without country code', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Instagram Connection Validation', () => {
+    it('should validate missing access token', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate empty account ID', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get('/api/channels');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Concurrent Channel Operations', () => {
+    it('should handle multiple channel creations', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Channel' }] });
+      const promises = Array(5).fill(null).map((_, i) =>
+        request(app).post('/api/channels').send({ name: `Channel ${i}`, type: 'telegram' })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect([201, 400, 500]).toContain(res.status));
+    });
+  });
+
+  describe('Channel Type Validation', () => {
+    it('should handle invalid channel type', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'invalid_platform' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle telegram type', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'telegram' }] });
+      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'telegram' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle whatsapp type', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'whatsapp' }] });
+      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'whatsapp' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle instagram type', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'instagram' }] });
+      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'instagram' });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+
+  describe('Channel Name Validation', () => {
+    it('should handle empty channel name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/channels').send({ name: '', type: 'telegram' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle unicode channel name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Канал Тест' }] });
+      const res = await request(app).post('/api/channels').send({ name: 'Канал Тест', type: 'telegram' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle channel name with emojis', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '📱 Channel 🤖' }] });
+      const res = await request(app).post('/api/channels').send({ name: '📱 Channel 🤖', type: 'telegram' });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+});

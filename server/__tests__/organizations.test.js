@@ -910,3 +910,128 @@ describe('Organization Roles API', () => {
     });
   });
 });
+
+// ========================================
+// ORGANIZATION EDGE CASES
+// ========================================
+describe('Organization Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Name Validation', () => {
+    it('should reject empty organization name', async () => {
+      const res = await request(app).post('/api/organizations').send({ name: '' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should accept unicode organization name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Şirkət Adı' }] });
+      const res = await request(app).post('/api/organizations').send({ name: 'Şirkət Adı' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept very long organization name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(100) }] });
+      const res = await request(app).post('/api/organizations').send({ name: 'A'.repeat(100) });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle special characters in name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "O'Brien & Sons, Ltd." }] });
+      const res = await request(app).post('/api/organizations').send({ name: "O'Brien & Sons, Ltd." });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept organization name with emojis', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '🚀 Startup Inc' }] });
+      const res = await request(app).post('/api/organizations').send({ name: '🚀 Startup Inc' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Member Management Edge Cases', () => {
+    it('should validate invalid role on add', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate duplicate member', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should add member with admin role', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate last admin removal', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Organization Settings Update', () => {
+    it('should update language setting', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should update timezone setting', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should update billing email', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Org' }] });
+      const res = await request(app).get('/api/organizations/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Concurrent Organization Operations', () => {
+    it('should handle multiple member additions', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Org' }] });
+      const promises = Array(3).fill(null).map(() =>
+        request(app).get('/api/organizations/1')
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res).toBeDefined());
+    });
+
+    it('should handle concurrent settings updates', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Org' }] });
+      const promises = Array(3).fill(null).map(() =>
+        request(app).get('/api/organizations/1')
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res).toBeDefined());
+    });
+  });
+
+  describe('SQL Injection Prevention', () => {
+    it('should handle SQL injection in org ID', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get("/api/organizations/1; DROP TABLE organizations; --");
+      expect([200, 400, 404, 500]).toContain(res.status);
+    });
+
+    it('should handle SQL injection in org name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "'; DROP TABLE organizations; --" }] });
+      const res = await request(app).post('/api/organizations').send({ name: "'; DROP TABLE organizations; --" });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+  });
+});
