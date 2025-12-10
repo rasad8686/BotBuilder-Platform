@@ -9,9 +9,82 @@ export default function CreateBot() {
   const [formData, setFormData] = useState({
     name: '',
     platform: 'telegram',
+    language: 'en',
     description: '',
     webhook_url: ''
   });
+
+  // 50+ supported languages with flags
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿' },
+    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+    { code: 'ka', name: 'ქართული', flag: '🇬🇪' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+    { code: 'zh', name: '中文', flag: '🇨🇳' },
+    { code: 'ja', name: '日本語', flag: '🇯🇵' },
+    { code: 'ko', name: '한국어', flag: '🇰🇷' },
+    { code: 'pt', name: 'Português', flag: '🇵🇹' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+    { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+    { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+    { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+    { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
+    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
+    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
+    { code: 'th', name: 'ไทย', flag: '🇹🇭' },
+    { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
+    { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+    { code: 'ro', name: 'Română', flag: '🇷🇴' },
+    { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
+    { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
+    { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
+    { code: 'da', name: 'Dansk', flag: '🇩🇰' },
+    { code: 'no', name: 'Norsk', flag: '🇳🇴' },
+    { code: 'he', name: 'עברית', flag: '🇮🇱' },
+    { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
+    { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
+    { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
+    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+    { code: 'ur', name: 'اردو', flag: '🇵🇰' },
+    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
+    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
+    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
+    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
+    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
+    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
+    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+    { code: 'bg', name: 'Български', flag: '🇧🇬' },
+    { code: 'hr', name: 'Hrvatski', flag: '🇭🇷' },
+    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
+    { code: 'sl', name: 'Slovenščina', flag: '🇸🇮' },
+    { code: 'sr', name: 'Српски', flag: '🇷🇸' },
+    { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
+    { code: 'lv', name: 'Latviešu', flag: '🇱🇻' },
+    { code: 'et', name: 'Eesti', flag: '🇪🇪' },
+    { code: 'ca', name: 'Català', flag: '🇪🇸' },
+    { code: 'eu', name: 'Euskara', flag: '🇪🇸' },
+    { code: 'gl', name: 'Galego', flag: '🇪🇸' },
+    { code: 'cy', name: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+    { code: 'ga', name: 'Gaeilge', flag: '🇮🇪' },
+    { code: 'is', name: 'Íslenska', flag: '🇮🇸' },
+    { code: 'kk', name: 'Қазақша', flag: '🇰🇿' },
+    { code: 'uz', name: 'Oʻzbek', flag: '🇺🇿' },
+    { code: 'ky', name: 'Кыргызча', flag: '🇰🇬' },
+    { code: 'mn', name: 'Монгол', flag: '🇲🇳' },
+    { code: 'ne', name: 'नेपाली', flag: '🇳🇵' },
+    { code: 'si', name: 'සිංහල', flag: '🇱🇰' },
+    { code: 'km', name: 'ខ្មែរ', flag: '🇰🇭' },
+    { code: 'lo', name: 'ລາວ', flag: '🇱🇦' },
+    { code: 'my', name: 'မြန်မာ', flag: '🇲🇲' },
+    { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
+    { code: 'auto', name: 'Auto-detect', flag: '🌐' }
+  ];
   const [apiToken, setApiToken] = useState('');
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [error, setError] = useState('');
@@ -184,6 +257,27 @@ export default function CreateBot() {
               {fieldErrors.platform && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.platform}</p>
               )}
+            </div>
+
+            {/* Language */}
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Bot Language
+              </label>
+              <select
+                value={formData.language}
+                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-gray-500 text-sm mt-1">
+                Select the language for bot responses. Use "Auto-detect" to automatically detect user's language.
+              </p>
             </div>
 
             {/* Description */}

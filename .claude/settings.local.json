@@ -23,7 +23,12 @@
       "Bash(test:*)",
       "Bash(powershell -Command \"New-Item -Path ''C:\\Users\\User\\Desktop\\BotBuilder\\server\\__tests__\\flows.test.js'' -ItemType File -Force\")",
       "Bash(powershell:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(findstr:*)",
+      "Bash(node migrations/run-language-migration.js:*)",
+      "Bash(node -e:*)",
+      "Bash(netstat:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

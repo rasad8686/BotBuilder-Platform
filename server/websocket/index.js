@@ -71,12 +71,13 @@ function initializeWebSocket(server) {
         // Emit typing indicator
         socket.emit('widget:typing');
 
-        // Check if bot exists
-        const botCheck = await pool.query('SELECT id, name FROM bots WHERE id = $1', [botId]);
+        // Check if bot exists and get language
+        const botCheck = await pool.query('SELECT id, name, language FROM bots WHERE id = $1', [botId]);
         if (botCheck.rows.length === 0) {
           socket.emit('widget:message', { message: 'Bu bot mövcud deyil. Zəhmət olmasa düzgün bot ID istifadə edin.' });
           return;
         }
+        const bot = botCheck.rows[0];
 
         // Store user message
         await pool.query(`
@@ -125,6 +126,32 @@ function initializeWebSocket(server) {
               }
             } catch (ragError) {
               log.error('RAG error:', ragError.message);
+            }
+
+            // Add language instruction if not English
+            if (bot.language && bot.language !== 'en') {
+              const languageNames = {
+                'tr': 'Turkish', 'az': 'Azerbaijani', 'ru': 'Russian', 'ka': 'Georgian',
+                'de': 'German', 'fr': 'French', 'es': 'Spanish', 'ar': 'Arabic',
+                'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean', 'pt': 'Portuguese',
+                'it': 'Italian', 'nl': 'Dutch', 'pl': 'Polish', 'uk': 'Ukrainian',
+                'hi': 'Hindi', 'bn': 'Bengali', 'id': 'Indonesian', 'vi': 'Vietnamese',
+                'th': 'Thai', 'el': 'Greek', 'cs': 'Czech', 'ro': 'Romanian',
+                'hu': 'Hungarian', 'sv': 'Swedish', 'fi': 'Finnish', 'da': 'Danish',
+                'no': 'Norwegian', 'he': 'Hebrew', 'fa': 'Persian', 'ms': 'Malay',
+                'tl': 'Filipino', 'sw': 'Swahili', 'ur': 'Urdu', 'ta': 'Tamil',
+                'te': 'Telugu', 'mr': 'Marathi', 'gu': 'Gujarati', 'kn': 'Kannada',
+                'ml': 'Malayalam', 'pa': 'Punjabi', 'bg': 'Bulgarian', 'hr': 'Croatian',
+                'sk': 'Slovak', 'sl': 'Slovenian', 'sr': 'Serbian', 'lt': 'Lithuanian',
+                'lv': 'Latvian', 'et': 'Estonian', 'ca': 'Catalan', 'eu': 'Basque',
+                'gl': 'Galician', 'cy': 'Welsh', 'ga': 'Irish', 'is': 'Icelandic',
+                'kk': 'Kazakh', 'uz': 'Uzbek', 'ky': 'Kyrgyz', 'mn': 'Mongolian',
+                'ne': 'Nepali', 'si': 'Sinhala', 'km': 'Khmer', 'lo': 'Lao',
+                'my': 'Burmese', 'am': 'Amharic', 'auto': 'the same language as the user'
+              };
+              const langName = languageNames[bot.language] || bot.language;
+              systemPrompt = `[LANGUAGE REQUIREMENT: ${langName.toUpperCase()}]\n\n${systemPrompt}\n\n---\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Do NOT use any other language. Every single word of your response must be in ${langName}.`;
+              console.log('[WS] Language instruction added:', langName);
             }
 
             // Get conversation history

@@ -23,7 +23,7 @@ router.use(requireOrganization);
  */
 router.post('/', checkPermission('member'), async (req, res) => {
   try {
-    const { name, platform, description, webhook_url } = req.body;
+    const { name, platform, language, description, webhook_url } = req.body;
     const user_id = req.user.id;
     const organization_id = req.organization.id;
 
@@ -131,9 +131,9 @@ router.post('/', checkPermission('member'), async (req, res) => {
 
     // Insert bot into database with organization_id
     const query = `
-      INSERT INTO bots (user_id, organization_id, name, description, platform, api_token, webhook_url, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+      INSERT INTO bots (user_id, organization_id, name, description, platform, language, api_token, webhook_url, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, user_id, organization_id, name, description, platform, language, api_token, webhook_url, is_active, created_at, updated_at
     `;
 
     const values = [
@@ -142,6 +142,7 @@ router.post('/', checkPermission('member'), async (req, res) => {
       name.trim(),
       description ? description.trim() : null,
       platform.toLowerCase().trim(),
+      language ? language.toLowerCase().trim() : 'en',
       api_token,
       webhook_url ? webhook_url.trim() : null,
       true // is_active defaults to true
@@ -233,7 +234,7 @@ router.get('/', checkPermission('viewer'), async (req, res) => {
 
       // Get paginated bots for this organization
       const query = `
-        SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        SELECT id, user_id, organization_id, name, description, platform, language, api_token, webhook_url, is_active, created_at, updated_at
         FROM bots
         WHERE organization_id = $1
         ORDER BY created_at DESC
@@ -261,7 +262,7 @@ router.get('/', checkPermission('viewer'), async (req, res) => {
     } else {
       // No pagination - return all bots for this organization
       const query = `
-        SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+        SELECT id, user_id, organization_id, name, description, platform, language, api_token, webhook_url, is_active, created_at, updated_at
         FROM bots
         WHERE organization_id = $1
         ORDER BY created_at DESC
@@ -310,7 +311,7 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
     }
 
     const query = `
-      SELECT id, user_id, organization_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+      SELECT id, user_id, organization_id, name, description, platform, language, api_token, webhook_url, is_active, created_at, updated_at
       FROM bots
       WHERE id = $1 AND organization_id = $2
     `;
@@ -355,7 +356,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
   try {
     const { id } = req.params;
     const organization_id = req.organization.id;
-    const { name, description, platform, webhook_url, is_active } = req.body;
+    const { name, description, platform, language, webhook_url, is_active } = req.body;
 
     // Validate ID is a number
     if (isNaN(id)) {
@@ -366,7 +367,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     }
 
     // First, check if bot exists and belongs to organization, and get old values for audit
-    const checkQuery = 'SELECT id, name, description, platform, webhook_url, is_active FROM bots WHERE id = $1 AND organization_id = $2';
+    const checkQuery = 'SELECT id, name, description, platform, language, webhook_url, is_active FROM bots WHERE id = $1 AND organization_id = $2';
     const checkResult = await db.query(checkQuery, [id, organization_id]);
 
     if (checkResult.rows.length === 0) {
@@ -379,7 +380,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     const oldBot = checkResult.rows[0];
 
     // Validate at least one field is being updated
-    if (!name && !description && !platform && !webhook_url && is_active === undefined) {
+    if (!name && !description && !platform && !language && !webhook_url && is_active === undefined) {
       return res.status(400).json({
         success: false,
         message: 'At least one field must be provided for update'
@@ -422,6 +423,12 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
       paramCount++;
     }
 
+    if (language !== undefined) {
+      updates.push(`language = $${paramCount}`);
+      values.push(language.toLowerCase().trim());
+      paramCount++;
+    }
+
     if (webhook_url !== undefined) {
       updates.push(`webhook_url = $${paramCount}`);
       values.push(webhook_url ? webhook_url.trim() : null);
@@ -451,7 +458,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
       UPDATE bots
       SET ${updates.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, user_id, name, description, platform, api_token, webhook_url, is_active, created_at, updated_at
+      RETURNING id, user_id, name, description, platform, language, api_token, webhook_url, is_active, created_at, updated_at
     `;
 
     const result = await db.query(updateQuery, values);
@@ -462,6 +469,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
       name: oldBot.name,
       description: oldBot.description,
       platform: oldBot.platform,
+      language: oldBot.language,
       webhook_url: oldBot.webhook_url,
       is_active: oldBot.is_active
     };
@@ -469,6 +477,7 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
       name: updatedBot.name,
       description: updatedBot.description,
       platform: updatedBot.platform,
+      language: updatedBot.language,
       webhook_url: updatedBot.webhook_url,
       is_active: updatedBot.is_active
     };
