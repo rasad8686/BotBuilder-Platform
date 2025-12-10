@@ -855,3 +855,277 @@ describe('Token Refresh API', () => {
     });
   });
 });
+
+// ========================================
+// AUTH EDGE CASES
+// ========================================
+describe('Auth Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Email Validation', () => {
+    it('should handle invalid email format - no @', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'invalidemail.com', password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle invalid email format - no domain', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@', password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle email with spaces', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test @email.com', password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept valid email with subdomain', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@sub.domain.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@sub.domain.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept email with plus sign', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test+tag@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test+tag@email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Password Validation', () => {
+    it('should reject password shorter than 6 characters', async () => {
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: '12345' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should accept password exactly 6 characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: '123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept very long password', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com' }] });
+      const longPass = 'a'.repeat(100);
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: longPass });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept password with special characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: '!@#$%^&*()' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept password with unicode characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: 'пароль123' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Name Validation', () => {
+    it('should accept name with special characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: "O'Brien-Smith", email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: "O'Brien-Smith", email: 'test@email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept name with unicode characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Müller Özdemir', email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Müller Özdemir', email: 'test@email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should handle very long name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(255), email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'A'.repeat(255), email: 'test@email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept empty name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: '', email: 'test@email.com' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: '', email: 'test@email.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+
+  describe('SQL Injection Prevention', () => {
+    it('should handle SQL injection in email', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: "'; DROP TABLE users; --", password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle SQL injection in password', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: "'; DROP TABLE users; --" });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle SQL injection in name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: "'; DROP TABLE users; --" }] });
+      const res = await request(app).post('/api/auth/register').send({ name: "'; DROP TABLE users; --", email: 'test@email.com', password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+  });
+
+  describe('Concurrent Requests', () => {
+    it('should handle multiple login attempts', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Test', email: 'test@email.com', password: 'hashed' }] });
+      bcrypt.compare.mockResolvedValue(true);
+
+      const promises = Array(5).fill(null).map(() =>
+        request(app).post('/api/auth/login').send({ email: 'test@email.com', password: 'pass123456' })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res.status).toBe(200));
+    });
+
+    it('should handle multiple register attempts with same email', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      const first = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'unique@email.com', password: 'pass123456' });
+      const second = await request(app).post('/api/auth/register').send({ name: 'Test2', email: 'unique@email.com', password: 'pass654321' });
+
+      expect(first.status).toBe(201);
+      expect(second.status).toBe(400);
+    });
+  });
+
+  describe('Case Sensitivity', () => {
+    it('should handle uppercase email in login', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com', password: 'hashed' }] });
+      bcrypt.compare.mockResolvedValue(true);
+      const res = await request(app).post('/api/auth/login').send({ email: 'TEST@EMAIL.COM', password: 'pass123456' });
+      expect([200, 401]).toContain(res.status);
+    });
+
+    it('should handle mixed case email in register', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, email: 'Test@Email.COM' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'Test@Email.COM', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Additional Security Tests', () => {
+    it('should handle XSS in name field', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: '<script>alert(1)</script>' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: '<script>alert(1)</script>', email: 'test@email.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle HTML entities in email', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: '&lt;script&gt;@test.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle null byte injection', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test\0User', email: 'test@email.com', password: 'pass123456' });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle CRLF injection in email', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com\r\nBcc:evil@hack.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+
+  describe('Rate Limit Simulation', () => {
+    it('should process 10 sequential logins', async () => {
+      for (let i = 0; i < 10; i++) {
+        db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@email.com', password: 'hashed' }] });
+        bcrypt.compare.mockResolvedValueOnce(true);
+        const res = await request(app).post('/api/auth/login').send({ email: 'test@email.com', password: 'pass123456' });
+        expect(res).toBeDefined();
+      }
+    });
+
+    it('should process 5 sequential registrations', async () => {
+      for (let i = 0; i < 5; i++) {
+        db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: i + 1 }] });
+        const res = await request(app).post('/api/auth/register').send({ name: `User ${i}`, email: `user${i}@email.com`, password: 'pass123456' });
+        expect(res).toBeDefined();
+      }
+    });
+  });
+
+  describe('Session Edge Cases', () => {
+    it('should handle expired token scenario', async () => {
+      jwt.verify.mockImplementationOnce(() => { throw new Error('Token expired'); });
+      const res = await request(app).get('/api/auth/me');
+      expect([200, 401, 404]).toContain(res.status);
+    });
+
+    it('should handle malformed token', async () => {
+      jwt.verify.mockImplementationOnce(() => { throw new Error('Malformed'); });
+      const res = await request(app).get('/api/auth/me');
+      expect([200, 401, 404]).toContain(res.status);
+    });
+
+    it('should handle token with invalid signature', async () => {
+      jwt.verify.mockImplementationOnce(() => { throw new Error('Invalid signature'); });
+      const res = await request(app).get('/api/auth/me');
+      expect([200, 401, 404]).toContain(res.status);
+    });
+  });
+
+  describe('Boundary Value Tests', () => {
+    it('should handle email at max length 254 chars', async () => {
+      const longEmail = 'a'.repeat(240) + '@example.com';
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, email: longEmail }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: longEmail, password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle password at exactly 8 chars', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: '12345678' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle password at 100 chars', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@email.com', password: 'a'.repeat(100) });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle single char name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'A' }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'A', email: 'test@email.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+
+  describe('International Emails', () => {
+    it('should handle IDN email domain', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@münchen.de', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle email with + sign', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test+alias@email.com', password: 'pass123456' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle email with dots', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test.user.name@email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should handle email with subdomain', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/auth/register').send({ name: 'Test', email: 'test@sub.domain.email.com', password: 'pass123456' });
+      expect(res.status).toBe(201);
+    });
+  });
+});

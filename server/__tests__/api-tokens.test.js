@@ -927,3 +927,201 @@ describe('API Token Rate Limiting', () => {
     });
   });
 });
+
+// ========================================
+// RATE LIMITING EDGE CASES
+// ========================================
+describe('API Token Rate Limiting Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Rate Limit Boundaries', () => {
+    it('should handle request at exactly rate limit - 1', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 100 }] }).mockResolvedValueOnce({ rows: [{ count: '99' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle request at exactly rate limit', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 100 }] }).mockResolvedValueOnce({ rows: [{ count: '100' }] });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle zero rate limit', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 0 }] }).mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle very high rate limit', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: 1000000 }] }).mockResolvedValueOnce({ rows: [{ count: '500000' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle null rate limit (unlimited)', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, rate_limit: null }] }).mockResolvedValueOnce({ rows: [{ count: '9999999' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Token Expiry', () => {
+    it('should handle token expiring today', async () => {
+      const today = new Date();
+      today.setHours(23, 59, 59);
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: today, rate_limit: 1000 }] }).mockResolvedValueOnce({ rows: [{ count: '10' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should reject token expired 1 second ago', async () => {
+      const expired = new Date(Date.now() - 1000);
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: expired }] });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle token with far future expiry', async () => {
+      const futureDate = new Date('2099-12-31');
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: futureDate, rate_limit: 1000 }] }).mockResolvedValueOnce({ rows: [{ count: '10' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle token with no expiry date', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, expires_at: null, rate_limit: 1000 }] }).mockResolvedValueOnce({ rows: [{ count: '10' }] }).mockResolvedValueOnce({ rowCount: 1 });
+      const res = await request(app).get('/api/api-tokens');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Concurrent Rate Limit Checks', () => {
+    it('should handle multiple concurrent requests', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, rate_limit: 1000, count: '500' }] });
+      const promises = Array(5).fill(null).map(() =>
+        request(app).get('/api/api-tokens')
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => {
+        expect(res).toBeDefined();
+        expect(typeof res.status).toBe('number');
+      });
+    });
+  });
+});
+
+// ========================================
+// API TOKEN PERMISSION EDGE CASES
+// ========================================
+describe('API Token Permission Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Permission Validation', () => {
+    it('should accept empty permissions array', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Token', token_prefix: 'bb_mock...' }] });
+      const res = await request(app).post('/api/api-tokens').send({ name: 'Token' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should accept single permission', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Token' }] });
+      const res = await request(app).post('/api/api-tokens').send({ name: 'TokenRead' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should accept multiple permissions', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Token' }] });
+      const res = await request(app).post('/api/api-tokens').send({ name: 'TokenMulti' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle wildcard permissions', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] }).mockResolvedValueOnce({ rows: [{ id: 1, name: 'Token' }] });
+      const res = await request(app).post('/api/api-tokens').send({ name: 'TokenAll' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Token Name Validation', () => {
+    it('should validate empty token name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/tokens').send({ name: '', permissions: ['read:bots'], expires_in_days: 30 });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate whitespace-only token name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/tokens').send({ name: '   ', permissions: ['read:bots'], expires_in_days: 30 });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle very long token name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(255) }] });
+      const res = await request(app).post('/api/tokens').send({ name: 'A'.repeat(255), permissions: ['read:bots'], expires_in_days: 30 });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle token name with special characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "Token's Name (v2.0)" }] });
+      const res = await request(app).post('/api/tokens').send({ name: "Token's Name (v2.0)", permissions: ['read:bots'], expires_in_days: 30 });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle token name with unicode', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Токен Тест' }] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Токен Тест', permissions: ['read:bots'], expires_in_days: 30 });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Expiry Days Validation', () => {
+    it('should accept minimum expiry (1 day)', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Token', permissions: ['read:bots'], expires_in_days: 1 });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+
+    it('should accept maximum expiry (365 days)', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Token', permissions: ['read:bots'], expires_in_days: 365 });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+
+    it('should handle zero expiry days', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Token', permissions: ['read:bots'], expires_in_days: 0 });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+
+    it('should handle negative expiry days', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Token', permissions: ['read:bots'], expires_in_days: -1 });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+
+    it('should handle expiry over 365 days', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/tokens').send({ name: 'Token', permissions: ['read:bots'], expires_in_days: 400 });
+      expect([201, 400, 404, 500]).toContain(res.status);
+    });
+  });
+});

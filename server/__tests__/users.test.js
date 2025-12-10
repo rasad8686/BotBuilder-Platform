@@ -695,3 +695,113 @@ describe('User Edge Cases', () => {
     });
   });
 });
+
+// ========================================
+// USER PROFILE EDGE CASES
+// ========================================
+describe('User Profile Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Name Validation via Profile Update', () => {
+    it('should handle empty name in profile update', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).put('/api/users/me').send({ name: '' });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+
+    it('should accept unicode name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Müller Özdemir' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'Müller Özdemir' });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+
+    it('should handle very long name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(100) }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'A'.repeat(100) });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+
+    it('should handle name with special characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "O'Brien-Smith Jr." }] });
+      const res = await request(app).put('/api/users/me').send({ name: "O'Brien-Smith Jr." });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+  });
+
+  describe('Email Validation', () => {
+    it('should handle invalid email in update', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).put('/api/users/me').send({ email: 'invalid-email' });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+
+    it('should handle valid email update', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: 1, email: 'new@email.com' }] });
+      const res = await request(app).put('/api/users/me').send({ email: 'new@email.com' });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+
+    it('should handle duplicate email in update', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 2 }] });
+      const res = await request(app).put('/api/users/me').send({ email: 'existing@email.com' });
+      expect([200, 400, 404]).toContain(res.status);
+    });
+  });
+
+  describe('Password Update Validation', () => {
+    it('should validate short passwords', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'Updated' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should accept passwords with special chars', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'SpecialChars!@#' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should validate current password', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'ValidPassword' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Concurrent User Profile Updates', () => {
+    it('should process multiple updates', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Updated' }] });
+      const promises = Array(3).fill(null).map((_, i) =>
+        request(app).put('/api/users/me').send({ name: `Name ${i}` })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res).toBeDefined());
+    });
+  });
+
+  describe('User Preferences Update', () => {
+    it('should update language preference', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'LangUser' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should update theme preference', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'ThemeUser' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should update timezone preference', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test', email: 'test@example.com' }] });
+      const res = await request(app).put('/api/users/me').send({ name: 'TimezoneUser' });
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+});

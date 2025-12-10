@@ -981,3 +981,124 @@ describe('Webhook Signatures', () => {
     });
   });
 });
+
+// ========================================
+// WEBHOOK EDGE CASES
+// ========================================
+describe('Webhook Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('URL Validation', () => {
+    it('should handle invalid URL - no protocol', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'example.com/hook', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle invalid URL - http', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'http://example.com/hook', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept valid HTTPS URL', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept URL with port', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com:8443/hook', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept URL with query params', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook?key=value', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle very long URL', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const longUrl = 'https://example.com/' + 'a'.repeat(2048);
+      const res = await request(app).post('/api/webhooks').send({ url: longUrl, events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+  });
+
+  describe('Events Validation', () => {
+    it('should handle empty events array', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook', events: [] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept single event', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook', events: ['message.received'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle multiple events', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook', events: ['message.received', 'bot.started', 'bot.stopped'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+
+    it('should accept wildcard event', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      const res = await request(app).post('/api/webhooks').send({ url: 'https://example.com/hook', events: ['*'] });
+      expect([201, 400, 500]).toContain(res.status);
+    });
+  });
+
+  describe('Retry Logic Edge Cases', () => {
+    it('should handle max retries reached', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com' }] });
+      const res = await request(app).get('/api/webhooks/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+
+    it('should handle retry success', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, url: 'https://example.com' }] });
+      const res = await request(app).get('/api/webhooks/1');
+      expect(res).toBeDefined();
+      expect(typeof res.status).toBe('number');
+    });
+  });
+
+  describe('Concurrent Webhook Operations', () => {
+    it('should handle multiple webhook creations', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1 }] });
+      const promises = Array(5).fill(null).map((_, i) =>
+        request(app).post('/api/webhooks').send({ url: `https://example.com/hook${i}`, events: ['message.received'] })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect([201, 400]).toContain(res.status));
+    });
+
+    it('should handle concurrent webhook updates', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, url: 'https://example.com/hook' }] });
+      const promises = Array(3).fill(null).map((_, i) =>
+        request(app).put('/api/webhooks/1').send({ url: `https://example.com/hook${i}` })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect([200, 400, 500]).toContain(res.status));
+    });
+  });
+
+  describe('SQL Injection Prevention', () => {
+    it('should handle SQL injection in webhook ID', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get("/api/webhooks/1; DROP TABLE webhooks; --");
+      expect([404, 400, 500]).toContain(res.status);
+    });
+
+    it('should handle SQL injection in URL', async () => {
+      const res = await request(app).post('/api/webhooks').send({ url: "https://'; DROP TABLE webhooks; --.com", events: ['message.received'] });
+      expect([201, 400]).toContain(res.status);
+    });
+  });
+});

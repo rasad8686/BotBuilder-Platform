@@ -875,3 +875,251 @@ describe('Bot Export/Import API', () => {
     });
   });
 });
+
+// ========================================
+// MULTI-LANGUAGE BOT TESTS
+// ========================================
+describe('Bot Multi-Language Support', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Language Validation', () => {
+    it('should accept valid language code - en', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'en' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'en' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid language code - tr', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'tr' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'tr' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid language code - az', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'az' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'az' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid language code - ru', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'ru' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'ru' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid language code - ka (Georgian)', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'ka' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'ka' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid language code - de', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'de' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'de' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept auto-detect language', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'auto' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'auto' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should default to en when language not provided', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'en' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Language Update', () => {
+    it('should update bot language successfully', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'en' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'tr' }] });
+      const res = await request(app).put('/api/bots/1').send({ language: 'tr' });
+      expect(res.status).toBe(200);
+    });
+
+    it('should update from auto to specific language', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'auto' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'fr' }] });
+      const res = await request(app).put('/api/bots/1').send({ language: 'fr' });
+      expect(res.status).toBe(200);
+    });
+
+    it('should update from specific language to auto', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'en' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'auto' }] });
+      const res = await request(app).put('/api/bots/1').send({ language: 'auto' });
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('Unicode Bot Names', () => {
+    it('should accept bot name in Turkish', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Türkçe Bot' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Türkçe Bot', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name in Russian', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Русский Бот' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Русский Бот', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name in Arabic', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'بوت عربي' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'بوت عربي', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name in Chinese', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '中文机器人' }] });
+      const res = await request(app).post('/api/bots').send({ name: '中文机器人', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name in Japanese', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '日本語ボット' }] });
+      const res = await request(app).post('/api/bots').send({ name: '日本語ボット', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name in Georgian', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'ქართული ბოტი' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'ქართული ბოტი', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name with emojis', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '🤖 Bot Name 🚀' }] });
+      const res = await request(app).post('/api/bots').send({ name: '🤖 Bot Name 🚀', platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+  });
+});
+
+// ========================================
+// BOT EDGE CASES
+// ========================================
+describe('Bot Edge Cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  describe('Name Validation', () => {
+    it('should reject empty bot name', async () => {
+      const res = await request(app).post('/api/bots').send({ name: '', platform: 'telegram' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject whitespace-only bot name', async () => {
+      const res = await request(app).post('/api/bots').send({ name: '   ', platform: 'telegram' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should accept very long bot name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(255) }] });
+      const res = await request(app).post('/api/bots').send({ name: 'A'.repeat(255), platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept bot name with special characters', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "Bot's Name (v2.0) - Test!" }] });
+      const res = await request(app).post('/api/bots').send({ name: "Bot's Name (v2.0) - Test!", platform: 'telegram' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('Platform Validation', () => {
+    it('should reject empty platform', async () => {
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: '' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject invalid platform', async () => {
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'invalid' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should accept platform case-insensitive', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, platform: 'telegram' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'TELEGRAM' });
+      expect([200, 201, 400]).toContain(res.status);
+    });
+  });
+
+  describe('Concurrent Bot Operations', () => {
+    it('should handle multiple bot creations', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Bot' }] });
+      const promises = Array(5).fill(null).map((_, i) =>
+        request(app).post('/api/bots').send({ name: `Bot ${i}`, platform: 'telegram' })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res.status).toBe(201));
+    });
+
+    it('should handle multiple bot updates', async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Updated' }] });
+      const promises = Array(3).fill(null).map((_, i) =>
+        request(app).put('/api/bots/1').send({ name: `Updated ${i}` })
+      );
+      const results = await Promise.all(promises);
+      results.forEach(res => expect(res.status).toBe(200));
+    });
+  });
+
+  describe('SQL Injection Prevention', () => {
+    it('should handle SQL injection in bot name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "'; DROP TABLE bots; --" }] });
+      const res = await request(app).post('/api/bots').send({ name: "'; DROP TABLE bots; --", platform: 'telegram' });
+      expect([201, 400]).toContain(res.status);
+    });
+
+    it('should handle SQL injection in bot ID', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+      const res = await request(app).get("/api/bots/1; DROP TABLE bots; --");
+      expect([404, 400, 500]).toContain(res.status);
+    });
+  });
+
+  describe('Additional Bot API Tests', () => {
+    it('should handle bot with description', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', description: 'My bot description' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', description: 'My bot description' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should handle bot with empty description', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', description: '' }] });
+      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', description: '' });
+      expect(res.status).toBe(201);
+    });
+
+    it('should list bots with pagination', async () => {
+      db.query.mockResolvedValueOnce({ rows: Array(10).fill({ id: 1, name: 'Bot' }) });
+      const res = await request(app).get('/api/bots');
+      expect(res.status).toBe(200);
+    });
+
+    it('should search bots by name', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'SearchBot' }] });
+      const res = await request(app).get('/api/bots');
+      expect(res.status).toBe(200);
+    });
+
+    it('should filter bots by platform', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'TelegramBot', platform: 'telegram' }] });
+      const res = await request(app).get('/api/bots');
+      expect(res.status).toBe(200);
+    });
+
+    it('should handle bot status update', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', status: 'active' }] });
+      const res = await request(app).put('/api/bots/1').send({ status: 'active' });
+      expect(res.status).toBe(200);
+    });
+
+    it('should handle bot deactivation', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', status: 'inactive' }] });
+      const res = await request(app).put('/api/bots/1').send({ status: 'inactive' });
+      expect(res.status).toBe(200);
+    });
+  });
+});

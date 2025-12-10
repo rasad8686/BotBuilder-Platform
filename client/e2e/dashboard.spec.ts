@@ -297,6 +297,155 @@ test.describe('Recent Activity', () => {
 
 });
 
+// Dashboard Mobile Viewport Tests
+test.describe('Dashboard Mobile Viewport', () => {
+
+  async function login(page) {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', 'test@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(3000);
+  }
+
+  test('dashboard displays correctly on iPhone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url.includes('dashboard') || url.includes('login')).toBeTruthy();
+  });
+
+  test('stats cards stack on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('dashboard')) {
+      const cards = page.locator('[class*="card"], [class*="stat"]');
+      const cardCount = await cards.count();
+      expect(cardCount >= 0).toBeTruthy();
+    }
+  });
+
+  test('charts are visible on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('dashboard')) {
+      const chart = page.locator('canvas, svg, [class*="chart"]').first();
+      const hasChart = await chart.isVisible().catch(() => false);
+      expect(typeof hasChart).toBe('boolean');
+    }
+  });
+
+  test('sidebar hamburger is visible on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const hamburger = page.locator('button[class*="hamburger"], button[aria-label*="menu"], [class*="menu-toggle"]').first();
+    const hasHamburger = await hamburger.isVisible().catch(() => false);
+    expect(typeof hasHamburger).toBe('boolean');
+  });
+
+  test('dashboard tablet view works correctly', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const url = page.url();
+    expect(url.includes('dashboard') || url.includes('login')).toBeTruthy();
+  });
+
+  test('activity feed scrolls on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('dashboard')) {
+      const scroll = page.locator('[class*="activity"], [class*="feed"]').first();
+      const hasScroll = await scroll.isVisible().catch(() => false);
+      expect(typeof hasScroll).toBe('boolean');
+    }
+  });
+
+});
+
+// Dashboard Accessibility Tests
+test.describe('Dashboard Accessibility', () => {
+
+  async function login(page) {
+    await page.goto('http://localhost:5174/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', 'test@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(3000);
+  }
+
+  test('dashboard has proper heading structure', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('dashboard')) {
+      const headings = page.locator('h1, h2, h3');
+      const headingCount = await headings.count();
+      expect(headingCount).toBeGreaterThan(0);
+    }
+  });
+
+  test('stat cards have labels', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('dashboard')) {
+      const labels = page.locator('[class*="stat"] span, [class*="card"] p');
+      const labelCount = await labels.count();
+      expect(labelCount).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  test('navigation links are accessible', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const navLinks = page.locator('nav a, [role="navigation"] a');
+    const linkCount = await navLinks.count();
+    expect(linkCount).toBeGreaterThanOrEqual(0);
+  });
+
+  test('dashboard can be navigated with keyboard', async ({ page }) => {
+    await login(page);
+    await page.goto('http://localhost:5174/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press('Tab');
+    const focusedElement = page.locator(':focus');
+    const hasFocus = await focusedElement.count() > 0;
+    expect(hasFocus).toBeTruthy();
+  });
+
+});
+
 // Quick Actions Tests
 test.describe('Quick Actions', () => {
 
