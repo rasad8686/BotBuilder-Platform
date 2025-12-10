@@ -55,6 +55,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from './components/notifications';
 import AdminRouteGuard from './utils/AdminRouteGuard';
+import PrivateRoute from './components/PrivateRoute';
 
 // Wrapper component for authenticated routes
 function AuthenticatedApp({ children }) {
@@ -82,57 +83,57 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
-        <Route path="/dashboard" element={<AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp>} />
-        <Route path="/create-bot" element={<AuthenticatedApp><Layout><CreateBot /></Layout></AuthenticatedApp>} />
-        <Route path="/mybots" element={<AuthenticatedApp><Layout><MyBots /></Layout></AuthenticatedApp>} />
-        <Route path="/my-bots" element={<AuthenticatedApp><Layout><MyBots /></Layout></AuthenticatedApp>} />
-        <Route path="/bot/:botId/messages" element={<AuthenticatedApp><Layout><BotMessages /></Layout></AuthenticatedApp>} />
-        <Route path="/bot/:botId/edit" element={<AuthenticatedApp><Layout><EditBot /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/flow" element={<AuthenticatedApp><FlowBuilder /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/ai-config" element={<AuthenticatedApp><Layout><AIConfiguration /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/agents" element={<AuthenticatedApp><Layout><AgentStudio /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/workflows" element={<AuthenticatedApp><WorkflowBuilder /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/workflows/:workflowId" element={<AuthenticatedApp><WorkflowBuilder /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/executions" element={<AuthenticatedApp><ExecutionHistory /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/executions/:executionId" element={<AuthenticatedApp><ExecutionHistory /></AuthenticatedApp>} />
-        <Route path="/bots/:botId/tools" element={<AuthenticatedApp><Layout><ToolStudio /></Layout></AuthenticatedApp>} />
-        <Route path="/analytics" element={<AuthenticatedApp><Layout><Analytics /></Layout></AuthenticatedApp>} />
+        <Route path="/dashboard" element={<PrivateRoute><AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/create-bot" element={<PrivateRoute><AuthenticatedApp><Layout><CreateBot /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/mybots" element={<PrivateRoute><AuthenticatedApp><Layout><MyBots /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/my-bots" element={<PrivateRoute><AuthenticatedApp><Layout><MyBots /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bot/:botId/messages" element={<PrivateRoute><AuthenticatedApp><Layout><BotMessages /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bot/:botId/edit" element={<PrivateRoute><AuthenticatedApp><Layout><EditBot /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/flow" element={<PrivateRoute><AuthenticatedApp><FlowBuilder /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/ai-config" element={<PrivateRoute><AuthenticatedApp><Layout><AIConfiguration /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/agents" element={<PrivateRoute><AuthenticatedApp><Layout><AgentStudio /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/workflows" element={<PrivateRoute><AuthenticatedApp><WorkflowBuilder /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/workflows/:workflowId" element={<PrivateRoute><AuthenticatedApp><WorkflowBuilder /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/executions" element={<PrivateRoute><AuthenticatedApp><ExecutionHistory /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/executions/:executionId" element={<PrivateRoute><AuthenticatedApp><ExecutionHistory /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/tools" element={<PrivateRoute><AuthenticatedApp><Layout><ToolStudio /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/analytics" element={<PrivateRoute><AuthenticatedApp><Layout><Analytics /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Multi-Agent AI Routes (without bot context) */}
-        <Route path="/agent-studio" element={<AuthenticatedApp><Layout><AgentStudio /></Layout></AuthenticatedApp>} />
-        <Route path="/workflows" element={<AuthenticatedApp><Layout><WorkflowBuilder /></Layout></AuthenticatedApp>} />
-        <Route path="/workflow-builder" element={<AuthenticatedApp><Layout><WorkflowBuilder /></Layout></AuthenticatedApp>} />
-        <Route path="/executions" element={<AuthenticatedApp><Layout><ExecutionHistory /></Layout></AuthenticatedApp>} />
-        <Route path="/knowledge" element={<AuthenticatedApp><Layout><KnowledgeBase /></Layout></AuthenticatedApp>} />
-        <Route path="/channels" element={<AuthenticatedApp><Layout><Channels /></Layout></AuthenticatedApp>} />
-        <Route path="/marketplace" element={<AuthenticatedApp><Layout><Marketplace /></Layout></AuthenticatedApp>} />
-        <Route path="/ai-flow" element={<AuthenticatedApp><AIFlowStudio /></AuthenticatedApp>} />
-        <Route path="/orchestrations" element={<AuthenticatedApp><Layout><Orchestrations /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/orchestrations" element={<AuthenticatedApp><Layout><Orchestrations /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/orchestrations/:orchestrationId" element={<AuthenticatedApp><OrchestrationBuilder /></AuthenticatedApp>} />
-        <Route path="/intents" element={<AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/intents" element={<AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp>} />
-        <Route path="/bots/:botId/widget" element={<AuthenticatedApp><WidgetSettings /></AuthenticatedApp>} />
+        <Route path="/agent-studio" element={<PrivateRoute><AuthenticatedApp><Layout><AgentStudio /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/workflows" element={<PrivateRoute><AuthenticatedApp><Layout><WorkflowBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/workflow-builder" element={<PrivateRoute><AuthenticatedApp><Layout><WorkflowBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/executions" element={<PrivateRoute><AuthenticatedApp><Layout><ExecutionHistory /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/knowledge" element={<PrivateRoute><AuthenticatedApp><Layout><KnowledgeBase /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels" element={<PrivateRoute><AuthenticatedApp><Layout><Channels /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/marketplace" element={<PrivateRoute><AuthenticatedApp><Layout><Marketplace /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/ai-flow" element={<PrivateRoute><AuthenticatedApp><AIFlowStudio /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/orchestrations" element={<PrivateRoute><AuthenticatedApp><Layout><Orchestrations /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/orchestrations" element={<PrivateRoute><AuthenticatedApp><Layout><Orchestrations /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/orchestrations/:orchestrationId" element={<PrivateRoute><AuthenticatedApp><OrchestrationBuilder /></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/intents" element={<PrivateRoute><AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/intents" element={<PrivateRoute><AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots/:botId/widget" element={<PrivateRoute><AuthenticatedApp><WidgetSettings /></AuthenticatedApp></PrivateRoute>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
-        <Route path="/billing" element={<AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp>} />
-        <Route path="/api-tokens" element={<AuthenticatedApp><Layout><ApiTokens /></Layout></AuthenticatedApp>} />
-        <Route path="/webhooks" element={<AuthenticatedApp><Layout><Webhooks /></Layout></AuthenticatedApp>} />
-        <Route path="/usage" element={<AuthenticatedApp><Layout><Usage /></Layout></AuthenticatedApp>} />
-        <Route path="/settings" element={<AuthenticatedApp><Layout><Settings /></Layout></AuthenticatedApp>} />
+        <Route path="/billing" element={<PrivateRoute><AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/api-tokens" element={<PrivateRoute><AuthenticatedApp><Layout><ApiTokens /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/webhooks" element={<PrivateRoute><AuthenticatedApp><Layout><Webhooks /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/usage" element={<PrivateRoute><AuthenticatedApp><Layout><Usage /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><AuthenticatedApp><Layout><Settings /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Organization Routes */}
-        <Route path="/organizations/settings" element={<AuthenticatedApp><Layout><OrganizationSettings /></Layout></AuthenticatedApp>} />
+        <Route path="/organizations/settings" element={<PrivateRoute><AuthenticatedApp><Layout><OrganizationSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Team Routes */}
-        <Route path="/team" element={<AuthenticatedApp><Layout><TeamSettings /></Layout></AuthenticatedApp>} />
+        <Route path="/team" element={<PrivateRoute><AuthenticatedApp><Layout><TeamSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Admin Routes - Protected by AdminRouteGuard */}
-        <Route path="/admin/dashboard" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminDashboard /></Layout></AdminRouteGuard></AuthenticatedApp>} />
-        <Route path="/admin/audit-logs" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminAuditLogs /></Layout></AdminRouteGuard></AuthenticatedApp>} />
-        <Route path="/admin/health" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp>} />
-        <Route path="/admin/whitelabel" element={<AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp>} />
-        <Route path="/admin/stats" element={<AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp>} />
+        <Route path="/admin/dashboard" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminDashboard /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/audit-logs" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminAuditLogs /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/health" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/whitelabel" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/stats" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
       </Routes>
         <ToastContainer />
         </Router>
