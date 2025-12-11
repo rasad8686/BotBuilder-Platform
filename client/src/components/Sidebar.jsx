@@ -64,6 +64,8 @@ export default function Sidebar() {
     { path: '/knowledge', icon: '🧠', label: t('sidebar.knowledgeBase') },
     { path: '/channels', icon: '📱', label: t('sidebar.channels') },
     { path: '/integrations', icon: '🔌', label: t('sidebar.integrations', 'Integrations') },
+    { path: '/voice-bots', icon: '📞', label: t('sidebar.voiceBots', 'Voice AI') },
+    { path: '/call-history', icon: '📋', label: t('sidebar.callHistory', 'Call History') },
     { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
   ];
 
