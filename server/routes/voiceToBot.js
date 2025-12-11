@@ -177,14 +177,20 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
     // Clean transcription
     const cleanedText = voiceProcessor.cleanTranscription(transcribeResult.text);
 
+    // AI-powered correction for speech recognition errors
+    const correctionResult = await voiceProcessor.correctTranscription(cleanedText, language || transcribeResult.language);
+    const finalText = correctionResult.text;
+
     res.json({
       success: true,
-      transcription: cleanedText,
+      transcription: finalText,
+      originalTranscription: correctionResult.corrected ? cleanedText : undefined,
+      wasCorrected: correctionResult.corrected,
       language: transcribeResult.language,
       confidence: transcribeResult.confidence,
       duration: transcribeResult.duration,
       words: transcribeResult.words,
-      keyPhrases: voiceProcessor.extractKeyPhrases(cleanedText)
+      keyPhrases: voiceProcessor.extractKeyPhrases(finalText)
     });
   } catch (error) {
     log.error('Error transcribing audio', { error: error.message });

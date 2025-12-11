@@ -285,6 +285,94 @@ class VoiceProcessor {
   }
 
   /**
+   * AI-powered transcription correction
+   * Fixes speech recognition errors using GPT-4o
+   */
+  async correctTranscription(text, language = 'en') {
+    try {
+      if (!this.openaiApiKey || !text || text.trim().length < 5) {
+        return { success: true, text, corrected: false };
+      }
+
+      const fetch = require('node-fetch');
+
+      const languageNames = {
+        en: 'English',
+        az: 'Azerbaijani',
+        tr: 'Turkish',
+        ru: 'Russian',
+        de: 'German',
+        fr: 'French',
+        es: 'Spanish',
+        ar: 'Arabic',
+        zh: 'Chinese',
+        ja: 'Japanese',
+        ko: 'Korean',
+        pt: 'Portuguese'
+      };
+
+      const langName = languageNames[language] || 'English';
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.openaiApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a transcription corrector for ${langName} speech-to-text output. The user is describing a chatbot they want to create.
+
+Your task:
+1. Fix speech recognition errors (similar sounding words mistaken for each other)
+2. Fix grammar and spelling mistakes
+3. Keep the original meaning and intent
+4. The context is: user describing what kind of bot they want
+
+Common errors to fix:
+- "otu" → "botu" (bot)
+- "at" → "chat"
+- Missing or incorrect words based on context
+
+IMPORTANT: Return ONLY the corrected text, nothing else. Do not add explanations or quotes.`
+            },
+            {
+              role: 'user',
+              content: text
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        log.warn('Transcription correction failed, using original', { status: response.status });
+        return { success: true, text, corrected: false };
+      }
+
+      const result = await response.json();
+      const correctedText = result.choices?.[0]?.message?.content?.trim();
+
+      if (correctedText && correctedText.length > 0) {
+        log.info('Transcription corrected', {
+          original: text.substring(0, 50),
+          corrected: correctedText.substring(0, 50)
+        });
+        return { success: true, text: correctedText, corrected: true, original: text };
+      }
+
+      return { success: true, text, corrected: false };
+    } catch (error) {
+      log.error('Transcription correction error', { error: error.message });
+      return { success: true, text, corrected: false };
+    }
+  }
+
+  /**
    * Get supported formats
    */
   getSupportedFormats() {
