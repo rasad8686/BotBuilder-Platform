@@ -35,7 +35,9 @@
     "adminDashboard": "Admin Dashboard",
     "auditLogs": "Audit Logs",
     "systemHealth": "System Health",
-    "whiteLabelSettings": "White-label Settings"
+    "whiteLabelSettings": "White-label Settings",
+    "autonomousAgents": "Autonomous Agents",
+    "integrations": "Integrations"
   },
   "dashboard": {
     "title": "My Bots",
@@ -1012,14 +1014,26 @@
     "messages": "Messages"
   },
   "autonomous": {
-    "autonomousAgents": "Autonomous Agents",
+    "title": "Autonomous Agents",
+    "subtitle": "AI agents that can think, plan, and execute complex tasks autonomously",
     "createAgent": "Create Agent",
-    "noAgentsYet": "No Agents Yet",
-    "createYourFirstAgent": "Create your first autonomous agent to start automating complex tasks",
-    "agentName": "Agent Name",
-    "agentDescription": "Agent Description",
-    "capabilities": "Capabilities",
-    "assignTask": "Assign Task",
-    "viewTasks": "View Tasks"
+    "editAgent": "Edit Agent",
+    "noAgents": "No Agents Yet",
+    "noAgentsDesc": "Create your first autonomous agent to start automating complex tasks",
+    "createFirstAgent": "Create Your First Agent",
+    "name": "Name",
+    "namePlaceholder": "Enter agent name",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe what this agent does",
+    "noDescription": "No description",
+    "model": "Model",
+    "temperature": "Temperature",
+    "systemPrompt": "System Prompt",
+    "systemPromptPlaceholder": "Define agent behavior and capabilities...",
+    "tasks": "Tasks",
+    "success": "Success",
+    "failed": "Failed",
+    "viewTasks": "Tasks",
+    "deleteConfirm": "Are you sure you want to delete {{name}}?"
   }
 }
