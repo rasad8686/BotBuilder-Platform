@@ -37,7 +37,7 @@ class IntentExtractor {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: options.model || 'gpt-4',
+          model: options.model || 'gpt-4o',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: `Extract bot structure from this description:\n\n"${text}"` }
