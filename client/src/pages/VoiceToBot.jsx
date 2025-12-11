@@ -29,6 +29,7 @@ const VoiceToBot = () => {
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
   const streamRef = useRef(null);
+  const sessionRef = useRef(null); // For immediate session access
 
   // Fetch templates on mount
   useEffect(() => {
@@ -53,7 +54,7 @@ const VoiceToBot = () => {
     }
   };
 
-  // Start session
+  // Start session - returns session for immediate use
   const startSession = async () => {
     try {
       setError('');
@@ -70,10 +71,14 @@ const VoiceToBot = () => {
       const data = await response.json();
       if (data.success) {
         setSession(data.session);
+        sessionRef.current = data.session; // Store in ref for immediate access
         setStep('idle');
+        return data.session; // Return session for immediate use
       }
+      return null;
     } catch (err) {
       setError(t('voiceToBot.errors.sessionFailed'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -165,9 +170,15 @@ const VoiceToBot = () => {
       setStep('transcribing');
       setLoading(true);
 
+      // Use sessionRef for immediate access
+      const currentSession = sessionRef.current || session;
+      if (!currentSession) {
+        throw new Error('No session available');
+      }
+
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('sessionId', session.session_id);
+      formData.append('sessionId', currentSession.session_id);
       formData.append('language', language);
 
       const token = localStorage.getItem('token');
@@ -207,7 +218,7 @@ const VoiceToBot = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ sessionId: session.session_id, text })
+        body: JSON.stringify({ sessionId: (sessionRef.current || session)?.session_id, text })
       });
       const data = await response.json();
 
@@ -245,7 +256,7 @@ const VoiceToBot = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          sessionId: session?.session_id,
+          sessionId: (sessionRef.current || session)?.session_id,
           customizations,
           extractedData // Send extracted data directly for template mode
         })
@@ -271,6 +282,7 @@ const VoiceToBot = () => {
   const reset = () => {
     setStep('idle');
     setSession(null);
+    sessionRef.current = null;
     setTranscription('');
     setKeyPhrases([]);
     setExtractedData(null);
@@ -290,7 +302,7 @@ const VoiceToBot = () => {
 
     try {
       // Start session if not exists
-      if (!session) {
+      if (!session && !sessionRef.current) {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/voice-to-bot/start`, {
           method: 'POST',
@@ -303,6 +315,7 @@ const VoiceToBot = () => {
         const data = await response.json();
         if (data.success) {
           setSession(data.session);
+          sessionRef.current = data.session;
         }
       }
 

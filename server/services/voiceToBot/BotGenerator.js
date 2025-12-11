@@ -32,8 +32,7 @@ class BotGenerator {
         // 1. Create the bot
         const botResult = await client.query(
           `INSERT INTO bots (
-            organization_id, user_id, name, description, status,
-            settings, metadata
+            organization_id, user_id, name, description, platform, language, is_active
           ) VALUES ($1, $2, $3, $4, $5, $6, $7)
           RETURNING *`,
           [
@@ -41,13 +40,9 @@ class BotGenerator {
             userId,
             extractedData.name,
             extractedData.description || '',
-            'draft',
-            JSON.stringify(this.generateBotSettings(extractedData)),
-            JSON.stringify({
-              createdFrom: 'voice',
-              category: extractedData.category,
-              language: extractedData.language || options.language || 'en'
-            })
+            'voice-to-bot',
+            extractedData.language || options.language || 'en',
+            true
           ]
         );
 
