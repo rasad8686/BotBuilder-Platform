@@ -386,81 +386,99 @@ router.post('/extract', async (req, res) => {
 
 /**
  * POST /api/voice-to-bot/generate
- * Generate bot from extracted data
+ * Generate bot from extracted data (supports both session and direct mode)
  */
 router.post('/generate', async (req, res) => {
   try {
     const userId = req.user.id;
     const orgId = req.user.organization_id;
-    const { sessionId, customizations } = req.body;
+    const { sessionId, customizations, extractedData: directData } = req.body;
 
-    // Get session
-    const sessionCheck = await db.query(
-      'SELECT * FROM voice_bot_creations WHERE session_id = $1 AND user_id = $2',
-      [sessionId, userId]
-    );
+    let extractedData;
+    let session = null;
 
-    if (sessionCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
+    // Try to get session if sessionId provided
+    if (sessionId) {
+      const sessionCheck = await db.query(
+        'SELECT * FROM voice_bot_creations WHERE session_id = $1 AND user_id = $2',
+        [sessionId, userId]
+      );
+      if (sessionCheck.rows.length > 0) {
+        session = sessionCheck.rows[0];
+      }
     }
 
-    const session = sessionCheck.rows[0];
+    // Use session data or direct data (template mode)
+    if (session && session.extracted_intents) {
+      // Session mode - use data from database
+      await db.query(
+        "UPDATE voice_bot_creations SET status = 'generating' WHERE session_id = $1",
+        [sessionId]
+      );
 
-    if (!session.extracted_intents) {
-      return res.status(400).json({ error: 'No extracted data available. Please extract first.' });
+      extractedData = {
+        name: customizations?.name || session.extracted_name,
+        description: customizations?.description || session.extracted_description,
+        category: session.ai_analysis?.category || 'custom',
+        language: session.language,
+        intents: typeof session.extracted_intents === 'string'
+          ? JSON.parse(session.extracted_intents)
+          : session.extracted_intents,
+        entities: typeof session.extracted_entities === 'string'
+          ? JSON.parse(session.extracted_entities)
+          : session.extracted_entities,
+        flows: typeof session.extracted_flows === 'string'
+          ? JSON.parse(session.extracted_flows)
+          : session.extracted_flows,
+        suggestedFeatures: session.ai_analysis?.suggestedFeatures || []
+      };
+    } else if (directData) {
+      // Direct mode (template) - use data from request
+      extractedData = {
+        name: customizations?.name || directData.name,
+        description: customizations?.description || directData.description,
+        category: directData.category || 'custom',
+        language: directData.language || 'en',
+        intents: directData.intents || [],
+        entities: directData.entities || [],
+        flows: directData.flows || [],
+        suggestedFeatures: directData.suggestedFeatures || []
+      };
+    } else {
+      return res.status(400).json({ error: 'No extracted data available' });
     }
-
-    // Update status
-    await db.query(
-      "UPDATE voice_bot_creations SET status = 'generating' WHERE session_id = $1",
-      [sessionId]
-    );
-
-    // Prepare extracted data
-    const extractedData = {
-      name: customizations?.name || session.extracted_name,
-      description: customizations?.description || session.extracted_description,
-      category: session.ai_analysis?.category || 'custom',
-      language: session.language,
-      intents: typeof session.extracted_intents === 'string'
-        ? JSON.parse(session.extracted_intents)
-        : session.extracted_intents,
-      entities: typeof session.extracted_entities === 'string'
-        ? JSON.parse(session.extracted_entities)
-        : session.extracted_entities,
-      flows: typeof session.extracted_flows === 'string'
-        ? JSON.parse(session.extracted_flows)
-        : session.extracted_flows,
-      suggestedFeatures: session.ai_analysis?.suggestedFeatures || []
-    };
 
     // Generate bot
     const generateResult = await botGenerator.generateBot(extractedData, userId, orgId);
 
     if (!generateResult.success) {
-      await db.query(
-        "UPDATE voice_bot_creations SET status = 'error', error_message = $1 WHERE session_id = $2",
-        [generateResult.error, sessionId]
-      );
+      if (session) {
+        await db.query(
+          "UPDATE voice_bot_creations SET status = 'error', error_message = $1 WHERE session_id = $2",
+          [generateResult.error, sessionId]
+        );
+      }
       return res.status(500).json({ error: generateResult.error });
     }
 
-    // Update session with generated bot
-    await db.query(
-      `UPDATE voice_bot_creations SET
-        status = 'completed',
-        generated_bot_id = $1,
-        generation_config = $2,
-        processing_time_ms = processing_time_ms + $3,
-        completed_at = NOW()
-      WHERE session_id = $4`,
-      [
-        generateResult.bot.id,
-        JSON.stringify(customizations || {}),
-        generateResult.processingTimeMs,
-        sessionId
-      ]
-    );
+    // Update session if exists
+    if (session) {
+      await db.query(
+        `UPDATE voice_bot_creations SET
+          status = 'completed',
+          generated_bot_id = $1,
+          generation_config = $2,
+          processing_time_ms = processing_time_ms + $3,
+          completed_at = NOW()
+        WHERE session_id = $4`,
+        [
+          generateResult.bot.id,
+          JSON.stringify(customizations || {}),
+          generateResult.processingTimeMs,
+          sessionId
+        ]
+      );
+    }
 
     res.json({
       success: true,

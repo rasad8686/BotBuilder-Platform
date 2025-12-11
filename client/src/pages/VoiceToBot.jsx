@@ -183,9 +183,12 @@ const VoiceToBot = () => {
         setKeyPhrases(data.keyPhrases || []);
         setStep('extracting');
         await extractIntents(data.transcription);
+      } else {
+        throw new Error(data.error || 'Transcription failed');
       }
     } catch (err) {
-      setError(t('voiceToBot.errors.transcriptionFailed'));
+      console.error('Transcription error:', err);
+      setError(err.message || t('voiceToBot.errors.transcriptionFailed'));
       setStep('idle');
     } finally {
       setLoading(false);
@@ -216,9 +219,12 @@ const VoiceToBot = () => {
           description: data.extracted.description
         });
         setStep('preview');
+      } else {
+        throw new Error(data.error || 'Extraction failed');
       }
     } catch (err) {
-      setError(t('voiceToBot.errors.extractionFailed'));
+      console.error('Extraction error:', err);
+      setError(err.message || t('voiceToBot.errors.extractionFailed'));
       setStep('idle');
     } finally {
       setLoading(false);
@@ -238,16 +244,23 @@ const VoiceToBot = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ sessionId: session.session_id, customizations })
+        body: JSON.stringify({
+          sessionId: session?.session_id,
+          customizations,
+          extractedData // Send extracted data directly for template mode
+        })
       });
       const data = await response.json();
 
       if (data.success) {
         setGeneratedBot(data.bot);
         setStep('completed');
+      } else {
+        throw new Error(data.error || 'Generation failed');
       }
     } catch (err) {
-      setError(t('voiceToBot.errors.generationFailed'));
+      console.error('Generation error:', err);
+      setError(err.message || t('voiceToBot.errors.generationFailed'));
       setStep('preview');
     } finally {
       setLoading(false);
