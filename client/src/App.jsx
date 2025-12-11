@@ -29,6 +29,8 @@ import WidgetSettings from './pages/WidgetSettings';
 import AutonomousAgents from './pages/AutonomousAgents';
 import AgentTasks from './pages/AgentTasks';
 import Integrations from './pages/Integrations';
+import VoiceBots from './pages/VoiceBots';
+import CallHistory from './pages/CallHistory';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -124,6 +126,10 @@ function App() {
         <Route path="/autonomous-agents/:id/tasks" element={<PrivateRoute><AuthenticatedApp><Layout><AgentTasks /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/autonomous/:id/tasks" element={<PrivateRoute><AuthenticatedApp><Layout><AgentTasks /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/integrations" element={<PrivateRoute><AuthenticatedApp><Layout><Integrations /></Layout></AuthenticatedApp></PrivateRoute>} />
+
+        {/* Voice AI Routes */}
+        <Route path="/voice-bots" element={<PrivateRoute><AuthenticatedApp><Layout><VoiceBots /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/call-history" element={<PrivateRoute><AuthenticatedApp><Layout><CallHistory /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
         <Route path="/billing" element={<PrivateRoute><AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp></PrivateRoute>} />

@@ -715,6 +715,9 @@ app.use('/api/autonomous', require('./routes/autonomous'));
 // ✅ Integrations routes
 app.use('/api/integrations', require('./routes/integrations'));
 
+// ✅ Voice AI routes (Call Bots, Twilio, STT/TTS)
+app.use('/api/voice', require('./routes/voice'));
+
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 
