@@ -20,8 +20,9 @@ class VoiceProcessor {
     try {
       const startTime = Date.now();
 
+      // Demo mode: return mock transcription if no API key
       if (!this.openaiApiKey) {
-        return { success: false, error: 'OpenAI API key not configured' };
+        return this.getMockTranscription(options.language, startTime);
       }
 
       const FormData = require('form-data');
@@ -295,6 +296,35 @@ class VoiceProcessor {
    */
   getSupportedLanguages() {
     return [...this.supportedLanguages];
+  }
+
+  /**
+   * Get mock transcription for demo mode
+   */
+  getMockTranscription(language, startTime) {
+    const mockTexts = {
+      en: "I want to create a customer support bot that can answer frequently asked questions about our products, handle returns and refunds, and track order status. It should be friendly and helpful.",
+      ru: "Я хочу создать бота для поддержки клиентов, который сможет отвечать на часто задаваемые вопросы о наших продуктах, обрабатывать возвраты и отслеживать статус заказов.",
+      tr: "Ürünlerimiz hakkında sıkça sorulan soruları yanıtlayabilen, iade ve geri ödemeleri işleyebilen ve sipariş durumunu takip edebilen bir müşteri destek botu oluşturmak istiyorum.",
+      az: "Məhsullarımız haqqında tez-tez verilən suallara cavab verə bilən, geri qaytarma və geri ödəmələri idarə edə bilən və sifariş statusunu izləyə bilən müştəri dəstəyi botu yaratmaq istəyirəm."
+    };
+
+    const text = mockTexts[language] || mockTexts.en;
+    const processingTime = Date.now() - startTime;
+
+    log.info('Using mock transcription (demo mode)', { language });
+
+    return {
+      success: true,
+      text,
+      language: language || 'en',
+      duration: 8.5,
+      words: [],
+      segments: [],
+      confidence: 0.95,
+      processingTimeMs: processingTime,
+      isDemo: true
+    };
   }
 }
 
