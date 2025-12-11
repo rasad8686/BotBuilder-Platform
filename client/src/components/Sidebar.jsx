@@ -67,6 +67,7 @@ export default function Sidebar() {
     { path: '/voice-bots', icon: '📞', label: t('sidebar.voiceBots', 'Voice AI') },
     { path: '/call-history', icon: '📋', label: t('sidebar.callHistory', 'Call History') },
     { path: '/work-clone', icon: '👤', label: t('sidebar.workClone', 'Work Clone') },
+    { path: '/voice-to-bot', icon: '🎙️', label: t('sidebar.voiceToBot', 'Voice to Bot') },
     { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
   ];
 
