@@ -266,6 +266,56 @@ const VoiceToBot = () => {
     setError('');
     setRecordingTime(0);
     setCustomizations({ name: '', description: '' });
+    setSelectedTemplate(null);
+  };
+
+  // Use template
+  const useTemplate = async (template) => {
+    setSelectedTemplate(template);
+    setLoading(true);
+    setError('');
+
+    try {
+      // Start session if not exists
+      if (!session) {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/voice-to-bot/start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ language })
+        });
+        const data = await response.json();
+        if (data.success) {
+          setSession(data.session);
+        }
+      }
+
+      // Use template data directly
+      const templateData = {
+        name: template.name,
+        description: template.description,
+        category: template.category,
+        intents: template.intents || [],
+        entities: template.entities || [],
+        flows: template.flows || [],
+        suggestedFeatures: template.suggested_features || []
+      };
+
+      setExtractedData(templateData);
+      setTranscription(t('voiceToBot.templateUsed', `Using template: ${template.name}`));
+      setCustomizations({
+        name: template.name,
+        description: template.description
+      });
+      setStep('preview');
+    } catch (err) {
+      setError(t('voiceToBot.errors.templateFailed', 'Failed to load template'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Format time
@@ -549,7 +599,7 @@ const VoiceToBot = () => {
               <div
                 key={template.id}
                 style={styles.templateCard}
-                onClick={() => setSelectedTemplate(template)}
+                onClick={() => useTemplate(template)}
               >
                 <span style={styles.templateIcon}>
                   {template.category === 'support' ? '🎧' :
