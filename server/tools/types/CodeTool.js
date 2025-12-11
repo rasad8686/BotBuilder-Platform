@@ -39,6 +39,8 @@ class CodeTool {
       input: variables,
       context: this.sanitizeContext(context),
       result: undefined,
+      __error__: undefined,
+      __promise__: undefined,
       // Safe built-ins
       JSON,
       Math,
@@ -67,11 +69,11 @@ class CodeTool {
       require: undefined // Disabled for safety
     };
 
-    // Wrap code to capture return value
+    // Wrap code to capture return value and errors
     const wrappedCode = `
-      (async function() {
+      __promise__ = (async function() {
         ${code}
-      })().then(r => { result = r; }).catch(e => { throw e; });
+      })();
     `;
 
     try {
@@ -90,14 +92,23 @@ class CodeTool {
         breakOnSigint: true
       });
 
-      // Wait for async code if result is a promise
-      if (sandbox.result instanceof Promise) {
-        sandbox.result = await Promise.race([
-          sandbox.result,
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Async execution timeout')), this.config.timeout)
-          )
-        ]);
+      // Wait for async code to complete
+      if (sandbox.__promise__) {
+        try {
+          sandbox.result = await Promise.race([
+            sandbox.__promise__,
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Async execution timeout')), this.config.timeout)
+            )
+          ]);
+        } catch (asyncError) {
+          return {
+            success: false,
+            error: asyncError.message || String(asyncError),
+            console: consoleOutput,
+            stack: this.sanitizeStack(asyncError.stack)
+          };
+        }
       }
 
       return {
@@ -153,7 +164,7 @@ class CodeTool {
    */
   extractOutputVariables(sandbox) {
     const output = {};
-    const ignoreKeys = ['console', 'input', 'context', 'result', 'JSON', 'Math', 'Date',
+    const ignoreKeys = ['console', 'input', 'context', 'result', '__error__', '__promise__', 'JSON', 'Math', 'Date',
       'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp', 'Map', 'Set', 'Promise',
       'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent',
       'encodeURI', 'decodeURI', 'setTimeout', 'setInterval', 'fetch', 'require'];

@@ -391,5 +391,222 @@ describe('AI Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
     });
+
+    it('should filter by date range', async () => {
+      mockReq.query = {
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        limit: 100
+      };
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{
+          total_requests: '0',
+          total_prompt_tokens: '0',
+          total_completion_tokens: '0',
+          total_tokens: '0',
+          total_cost: '0',
+          avg_response_time: '0',
+          successful_requests: '0',
+          failed_requests: '0'
+        }] });
+
+      await getAIUsage(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe('getOrganizationAIBilling', () => {
+    const { getOrganizationAIBilling } = require('../../controllers/aiController');
+
+    it('should return organization billing', async () => {
+      mockReq.params = { orgId: '1' };
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ provider: 'openai', total_requests: '100', total_tokens: '50000', total_cost: '1.50' }] })
+        .mockResolvedValueOnce({ rows: [{ total_requests: '500', total_tokens: '200000', total_cost: '5.00' }] })
+        .mockResolvedValueOnce({ rows: [{ date: '2024-01-01', requests: 10, tokens: 1000, cost: 0.10 }] });
+
+      await getOrganizationAIBilling(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: true,
+        currentMonth: expect.any(Object),
+        allTime: expect.any(Object),
+        daily: expect.any(Array)
+      }));
+    });
+
+    it('should reject access to other organizations', async () => {
+      mockReq.params = { orgId: '999' };
+
+      await getOrganizationAIBilling(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should handle errors', async () => {
+      mockReq.params = { orgId: '1' };
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      await getOrganizationAIBilling(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('configureAI validation', () => {
+    const { AIProviderFactory, EncryptionHelper } = require('../../services/ai');
+
+    it('should reject invalid config', async () => {
+      mockReq.body = { provider: 'openai', model: 'gpt-4' };
+
+      AIProviderFactory.validateConfig.mockReturnValueOnce({
+        valid: false,
+        errors: ['Invalid temperature']
+      });
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test Bot' }] });
+
+      await configureAI(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should reject invalid API key format', async () => {
+      mockReq.body = { provider: 'openai', model: 'gpt-4', api_key: 'invalid' };
+
+      EncryptionHelper.validateApiKeyFormat.mockReturnValueOnce({
+        valid: false,
+        error: 'Invalid API key format'
+      });
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test Bot' }] });
+
+      await configureAI(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should handle errors during configuration', async () => {
+      mockReq.body = { provider: 'openai', model: 'gpt-4' };
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      await configureAI(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('sendChat with language support', () => {
+    it('should add language instruction for non-English bots', async () => {
+      mockReq.body = { message: 'Hello', sessionId: 'session-123' };
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, language: 'az' }] })
+        .mockResolvedValueOnce({ rows: [{
+          provider: 'openai',
+          model: 'gpt-4',
+          api_key_encrypted: 'encrypted_key',
+          system_prompt: 'You are helpful',
+          context_window: 10,
+          is_enabled: true,
+          temperature: 0.7,
+          max_tokens: 1000
+        }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await sendChat(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should return 400 if AI not configured', async () => {
+      mockReq.body = { message: 'Hello', sessionId: 'session-123' };
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, language: 'en' }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await sendChat(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+  });
+
+  describe('testAIConnection with platform key', () => {
+    it('should use platform key when no custom key', async () => {
+      process.env.OPENAI_API_KEY = 'sk-platform-key';
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{
+          provider: 'openai',
+          model: 'gpt-4',
+          api_key_encrypted: null
+        }] });
+
+      await testAIConnection(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should return 400 if no API key available', async () => {
+      const originalKey = process.env.OPENAI_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
+        .mockResolvedValueOnce({ rows: [{
+          provider: 'openai',
+          model: 'gpt-4',
+          api_key_encrypted: null
+        }] });
+
+      await testAIConnection(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+
+      process.env.OPENAI_API_KEY = originalKey;
+    });
+
+    it('should handle test errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('Connection error'));
+
+      await testAIConnection(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getProviders error handling', () => {
+    it('should handle errors gracefully', () => {
+      const { AIProviderFactory } = require('../../services/ai');
+      AIProviderFactory.getSupportedProviders.mockImplementationOnce(() => {
+        throw new Error('Provider error');
+      });
+
+      getProviders(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getModels error handling', () => {
+    it('should handle errors gracefully', () => {
+      mockReq.params = { provider: 'openai' };
+      const { AIProviderFactory } = require('../../services/ai');
+      AIProviderFactory.getModelsForProvider.mockImplementationOnce(() => {
+        throw new Error('Models error');
+      });
+
+      getModels(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+    });
   });
 });

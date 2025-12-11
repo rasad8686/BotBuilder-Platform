@@ -7,7 +7,9 @@
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
     "migrate": "node runMigrations.js",
-    "test": "jest server/__tests__ --verbose"
+    "test": "jest server/__tests__ --verbose",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "telegram",

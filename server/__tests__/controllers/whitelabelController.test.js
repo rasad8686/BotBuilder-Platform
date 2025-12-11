@@ -121,6 +121,77 @@ describe('Whitelabel Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
+    it('should update all color fields', async () => {
+      mockReq.body = {
+        secondary_color: '#00ff00',
+        accent_color: '#0000ff',
+        background_color: '#ffffff',
+        text_color: '#000000',
+        email_header_color: '#cccccc'
+      };
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should update custom domain and reset verification', async () => {
+      mockReq.body = {
+        custom_domain: 'newdomain.com'
+      };
+
+      db.query.mockResolvedValueOnce({ rows: [{ custom_domain: 'newdomain.com', custom_domain_verified: false }] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should update company and email fields', async () => {
+      mockReq.body = {
+        support_email: 'test@example.com',
+        company_name: 'Test Company',
+        company_website: 'https://test.com',
+        email_from_name: 'Test Sender',
+        email_from_address: 'sender@example.com',
+        email_footer_text: 'Footer text'
+      };
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should update policy URLs', async () => {
+      mockReq.body = {
+        privacy_policy_url: 'https://example.com/privacy',
+        terms_of_service_url: 'https://example.com/terms'
+      };
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should update show_powered_by and custom_css', async () => {
+      mockReq.body = {
+        show_powered_by: false,
+        custom_css: '.header { color: red; }'
+      };
+
+      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
     it('should reject invalid color format', async () => {
       mockReq.body = {
         primary_color: 'invalid'
@@ -134,7 +205,7 @@ describe('Whitelabel Controller', () => {
       }));
     });
 
-    it('should reject invalid email format', async () => {
+    it('should reject invalid support email format', async () => {
       mockReq.body = {
         support_email: 'invalid-email'
       };
@@ -142,6 +213,42 @@ describe('Whitelabel Controller', () => {
       await updateSettings(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should reject invalid email_from_address format', async () => {
+      mockReq.body = {
+        email_from_address: 'not-an-email'
+      };
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: expect.stringContaining('Invalid email from address')
+      }));
+    });
+
+    it('should reject empty update (no fields)', async () => {
+      mockReq.body = {};
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'No fields to update'
+      }));
+    });
+
+    it('should return 404 if settings not found', async () => {
+      mockReq.body = { brand_name: 'Test' };
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      await updateSettings(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Whitelabel settings not found'
+      }));
     });
 
     it('should handle errors', async () => {
@@ -213,12 +320,35 @@ describe('Whitelabel Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
+    it('should delete old favicon when uploading new one', async () => {
+      mockReq.file = {
+        filename: 'new-favicon.ico'
+      };
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ favicon_url: 'http://localhost/uploads/old-favicon.ico' }] })
+        .mockResolvedValueOnce({ rows: [{ favicon_url: 'http://localhost/uploads/new-favicon.ico' }] });
+
+      await uploadFavicon(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
     it('should reject if no file uploaded', async () => {
       mockReq.file = null;
 
       await uploadFavicon(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should handle errors', async () => {
+      mockReq.file = { filename: 'favicon.ico' };
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      await uploadFavicon(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
     });
   });
 

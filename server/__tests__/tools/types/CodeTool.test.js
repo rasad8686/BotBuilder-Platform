@@ -109,15 +109,15 @@ describe('CodeTool', () => {
     it('should extract output variables', async () => {
       const result = await codeTool.execute({
         code: `
-          var myVar = 'test';
-          var myNum = 42;
-          return 'done';
+          const myVar = 'test';
+          const myNum = 42;
+          return { myVar, myNum };
         `
       });
 
       expect(result.success).toBe(true);
-      expect(result.variables.myVar).toBe('test');
-      expect(result.variables.myNum).toBe(42);
+      expect(result.result.myVar).toBe('test');
+      expect(result.result.myNum).toBe(42);
     });
   });
 

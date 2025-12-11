@@ -3,6 +3,9 @@
  * Tests for server/services/OrchestrationManager.js
  */
 
+// Use fake timers to prevent setInterval from running
+jest.useFakeTimers();
+
 jest.mock('../../db', () => ({
   query: jest.fn()
 }));
@@ -206,6 +209,241 @@ describe('OrchestrationManager', () => {
       manager.clearSessionVariables('test-session-3');
       const value = manager.getVariableValue('test-session-3', 'key');
       expect(value).toBeUndefined();
+    });
+
+    it('should return empty object for non-existent session', () => {
+      const vars = manager.getAllSessionVariables('non-existent-session');
+      expect(vars).toEqual({});
+    });
+  });
+
+  describe('evaluateCondition', () => {
+    it('should evaluate equals condition', () => {
+      const context = { variables: { status: 'active' } };
+      expect(manager.evaluateCondition({ variable: 'status', operator: 'equals', value: 'active' }, context)).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'status', operator: 'equals', value: 'inactive' }, context)).toBe(false);
+    });
+
+    it('should evaluate not_equals condition', () => {
+      const context = { variables: { status: 'active' } };
+      expect(manager.evaluateCondition({ variable: 'status', operator: 'not_equals', value: 'inactive' }, context)).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'status', operator: 'not_equals', value: 'active' }, context)).toBe(false);
+    });
+
+    it('should evaluate contains condition', () => {
+      const context = { variables: { message: 'Hello World' } };
+      expect(manager.evaluateCondition({ variable: 'message', operator: 'contains', value: 'World' }, context)).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'message', operator: 'contains', value: 'Goodbye' }, context)).toBe(false);
+    });
+
+    it('should evaluate greater_than condition', () => {
+      const context = { variables: { count: 10 } };
+      expect(manager.evaluateCondition({ variable: 'count', operator: 'greater_than', value: 5 }, context)).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'count', operator: 'greater_than', value: 15 }, context)).toBe(false);
+    });
+
+    it('should evaluate less_than condition', () => {
+      const context = { variables: { count: 10 } };
+      expect(manager.evaluateCondition({ variable: 'count', operator: 'less_than', value: 15 }, context)).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'count', operator: 'less_than', value: 5 }, context)).toBe(false);
+    });
+
+    it('should evaluate is_empty condition', () => {
+      expect(manager.evaluateCondition({ variable: 'empty', operator: 'is_empty', value: null }, { variables: { empty: '' } })).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'full', operator: 'is_empty', value: null }, { variables: { full: 'data' } })).toBe(false);
+    });
+
+    it('should evaluate is_not_empty condition', () => {
+      expect(manager.evaluateCondition({ variable: 'full', operator: 'is_not_empty', value: null }, { variables: { full: 'data' } })).toBe(true);
+      expect(manager.evaluateCondition({ variable: 'empty', operator: 'is_not_empty', value: null }, { variables: { empty: '' } })).toBeFalsy();
+    });
+
+    it('should return false for unknown operator', () => {
+      const context = { variables: { status: 'active' } };
+      expect(manager.evaluateCondition({ variable: 'status', operator: 'unknown', value: 'active' }, context)).toBe(false);
+    });
+  });
+
+  describe('evaluateTransition', () => {
+    it('should evaluate on_complete trigger', async () => {
+      const transition = { trigger_type: 'on_complete', trigger_value: '{}' };
+      expect(await manager.evaluateTransition(transition, { flowCompleted: true })).toBe(true);
+      expect(await manager.evaluateTransition(transition, { flowCompleted: false })).toBe(false);
+    });
+
+    it('should evaluate on_condition trigger', async () => {
+      const transition = {
+        trigger_type: 'on_condition',
+        trigger_value: JSON.stringify({ variable: 'status', operator: 'equals', value: 'done' })
+      };
+      expect(await manager.evaluateTransition(transition, { variables: { status: 'done' } })).toBe(true);
+      expect(await manager.evaluateTransition(transition, { variables: { status: 'pending' } })).toBe(false);
+    });
+
+    it('should evaluate on_intent trigger', async () => {
+      const transition = {
+        trigger_type: 'on_intent',
+        trigger_value: JSON.stringify({ intent: 'greeting' })
+      };
+      expect(await manager.evaluateTransition(transition, { detectedIntent: 'greeting' })).toBe(true);
+      expect(await manager.evaluateTransition(transition, { detectedIntent: 'goodbye' })).toBe(false);
+    });
+
+    it('should evaluate on_keyword trigger', async () => {
+      const transition = {
+        trigger_type: 'on_keyword',
+        trigger_value: JSON.stringify({ keywords: ['help', 'support'] })
+      };
+      expect(await manager.evaluateTransition(transition, { input: 'I need help' })).toBe(true);
+      expect(await manager.evaluateTransition(transition, { input: 'I need SUPPORT' })).toBe(true);
+      expect(await manager.evaluateTransition(transition, { input: 'Hello there' })).toBe(false);
+    });
+
+    it('should return false for unknown trigger type', async () => {
+      const transition = { trigger_type: 'unknown', trigger_value: '{}' };
+      expect(await manager.evaluateTransition(transition, {})).toBe(false);
+    });
+
+    it('should handle already parsed trigger_value', async () => {
+      const transition = {
+        trigger_type: 'on_intent',
+        trigger_value: { intent: 'greeting' }
+      };
+      expect(await manager.evaluateTransition(transition, { detectedIntent: 'greeting' })).toBe(true);
+    });
+  });
+
+  describe('determineNextFlow', () => {
+    it('should find matching transition', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          to_flow_id: 2,
+          trigger_type: 'on_complete',
+          trigger_value: '{}'
+        }]
+      });
+
+      const result = await manager.determineNextFlow(1, 1, {
+        sessionId: 'test-session',
+        flowCompleted: true
+      });
+
+      expect(result.shouldTransition).toBe(true);
+      expect(result.nextFlowId).toBe(2);
+    });
+
+    it('should return no transition when no match', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          to_flow_id: 2,
+          trigger_type: 'on_complete',
+          trigger_value: '{}'
+        }]
+      });
+
+      const result = await manager.determineNextFlow(1, 1, {
+        sessionId: 'test-session',
+        flowCompleted: false
+      });
+
+      expect(result.shouldTransition).toBe(false);
+      expect(result.nextFlowId).toBeNull();
+    });
+
+    it('should check transitions in priority order', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, to_flow_id: 3, trigger_type: 'on_intent', trigger_value: '{"intent":"help"}', priority: 10 },
+          { id: 2, to_flow_id: 2, trigger_type: 'on_complete', trigger_value: '{}', priority: 5 }
+        ]
+      });
+
+      const result = await manager.determineNextFlow(1, 1, {
+        sessionId: 'test-session',
+        flowCompleted: true,
+        detectedIntent: 'greeting'
+      });
+
+      expect(result.nextFlowId).toBe(2);
+    });
+  });
+
+  describe('executeOrchestration', () => {
+    const WorkflowExecution = require('../../models/WorkflowExecution');
+
+    beforeEach(() => {
+      WorkflowExecution.create.mockResolvedValue({ id: 100 });
+      WorkflowExecution.complete = jest.fn().mockResolvedValue({});
+    });
+
+    it('should throw error if orchestration not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      await expect(manager.executeOrchestration(999, 'session-1', {}))
+        .rejects.toThrow('Orchestration not found');
+    });
+
+    it('should execute orchestration successfully', async () => {
+      db.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, name: 'Test', bot_id: 1, entry_flow_id: 1, is_active: true }]
+        })
+        .mockResolvedValueOnce({ rows: [] }); // getVariables
+
+      const result = await manager.executeOrchestration(1, 'session-exec-1', { message: 'hello' });
+
+      expect(result.success).toBe(true);
+      expect(result.orchestration.name).toBe('Test');
+      expect(result.currentFlowId).toBe(1);
+    });
+
+    it('should auto-activate inactive orchestration', async () => {
+      db.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, name: 'Test', bot_id: 1, entry_flow_id: 1, is_active: false }]
+        })
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, name: 'Test', is_active: true }]
+        })
+        .mockResolvedValueOnce({ rows: [] }); // getVariables
+
+      const result = await manager.executeOrchestration(1, 'session-exec-2', {});
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should load default variable values', async () => {
+      db.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, name: 'Test', bot_id: 1, entry_flow_id: 1, is_active: true }]
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            { name: 'var1', default_value: 'default1' },
+            { name: 'var2', default_value: null }
+          ]
+        });
+
+      await manager.executeOrchestration(1, 'session-exec-3', {});
+
+      const value = manager.getVariableValue('session-exec-3', 'var1');
+      expect(value).toBe('default1');
+    });
+
+    it('should continue from current flow if set', async () => {
+      // First set current flow in session
+      manager.setVariableValue('session-exec-4', '_current_flow_id', 5);
+
+      db.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, name: 'Test', bot_id: 1, entry_flow_id: 1, is_active: true }]
+        });
+
+      const result = await manager.executeOrchestration(1, 'session-exec-4', {});
+
+      expect(result.currentFlowId).toBe(5);
     });
   });
 });

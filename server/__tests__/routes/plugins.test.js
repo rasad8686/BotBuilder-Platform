@@ -545,5 +545,436 @@ describe('Plugins Routes', () => {
 
       expect(response.status).toBe(200);
     });
+
+    it('should handle errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app).get('/api/plugins/developer/payouts');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /api/plugins/developer/my', () => {
+    it('should return developer plugins', async () => {
+      Plugin.getByDeveloper.mockResolvedValueOnce([
+        { id: 1, name: 'My Plugin' }
+      ]);
+
+      const response = await request(app).get('/api/plugins/developer/my');
+
+      expect(response.status).toBe(200);
+      expect(Plugin.getByDeveloper).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle errors', async () => {
+      Plugin.getByDeveloper.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/developer/my');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /api/plugins/developer/my-plugins', () => {
+    it('should return developer plugins (alias)', async () => {
+      Plugin.getByDeveloper.mockResolvedValueOnce([
+        { id: 1, name: 'My Plugin' }
+      ]);
+
+      const response = await request(app).get('/api/plugins/developer/my-plugins');
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle errors', async () => {
+      Plugin.getByDeveloper.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/developer/my-plugins');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('POST /api/plugins/purchase/complete', () => {
+    it('should complete purchase with sessionId', async () => {
+      PluginBilling.handleCheckoutComplete.mockResolvedValueOnce({
+        success: true,
+        pluginId: 1
+      });
+
+      const response = await request(app)
+        .post('/api/plugins/purchase/complete')
+        .send({ sessionId: 'cs_test_123' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject missing sessionId', async () => {
+      const response = await request(app)
+        .post('/api/plugins/purchase/complete')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Session ID');
+    });
+
+    it('should handle errors', async () => {
+      PluginBilling.handleCheckoutComplete.mockRejectedValueOnce(new Error('Invalid session'));
+
+      const response = await request(app)
+        .post('/api/plugins/purchase/complete')
+        .send({ sessionId: 'invalid' });
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /api/plugins/:id/purchased', () => {
+    it('should check if plugin is purchased', async () => {
+      PluginBilling.hasPurchased.mockResolvedValueOnce(true);
+
+      const response = await request(app).get('/api/plugins/1/purchased');
+
+      expect(response.status).toBe(200);
+      expect(response.body.purchased).toBe(true);
+    });
+
+    it('should return false if not purchased', async () => {
+      PluginBilling.hasPurchased.mockResolvedValueOnce(false);
+
+      const response = await request(app).get('/api/plugins/1/purchased');
+
+      expect(response.status).toBe(200);
+      expect(response.body.purchased).toBe(false);
+    });
+
+    it('should handle errors', async () => {
+      PluginBilling.hasPurchased.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/1/purchased');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /api/plugins/developer/revenue', () => {
+    it('should return revenue breakdown', async () => {
+      PluginBilling.calculateRevenue.mockResolvedValueOnce({
+        total: 1000,
+        breakdown: []
+      });
+
+      const response = await request(app).get('/api/plugins/developer/revenue');
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should pass date filters', async () => {
+      PluginBilling.calculateRevenue.mockResolvedValueOnce({ total: 500 });
+
+      await request(app)
+        .get('/api/plugins/developer/revenue?startDate=2024-01-01&endDate=2024-12-31');
+
+      expect(PluginBilling.calculateRevenue).toHaveBeenCalledWith(1, '2024-01-01', '2024-12-31');
+    });
+
+    it('should handle errors', async () => {
+      PluginBilling.calculateRevenue.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/developer/revenue');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('PUT /api/plugins/developer/payout-info', () => {
+    it('should update payout info', async () => {
+      RevenueShare.setPayoutInfo.mockResolvedValueOnce({
+        method: 'paypal',
+        email: 'dev@example.com'
+      });
+
+      const response = await request(app)
+        .put('/api/plugins/developer/payout-info')
+        .send({ method: 'paypal', email: 'dev@example.com' });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle errors', async () => {
+      RevenueShare.setPayoutInfo.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .put('/api/plugins/developer/payout-info')
+        .send({ method: 'paypal' });
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('POST /api/plugins/:id/purchase with paymentMethodId', () => {
+    it('should process direct payment', async () => {
+      Plugin.findById.mockResolvedValueOnce({
+        id: 1,
+        is_free: false,
+        price: 9.99
+      });
+      PluginBilling.hasPurchased.mockResolvedValueOnce(false);
+      PluginBilling.createPluginPurchase.mockResolvedValueOnce({ id: 1 });
+      PluginBilling.processPayment.mockResolvedValueOnce({
+        success: true,
+        purchaseId: 1
+      });
+
+      const response = await request(app)
+        .post('/api/plugins/1/purchase')
+        .send({ paymentMethodId: 'pm_test_123' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject without payment info', async () => {
+      Plugin.findById.mockResolvedValueOnce({
+        id: 1,
+        is_free: false,
+        price: 9.99
+      });
+      PluginBilling.hasPurchased.mockResolvedValueOnce(false);
+
+      const response = await request(app)
+        .post('/api/plugins/1/purchase')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Payment method or checkout URLs');
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle GET /api/plugins error', async () => {
+      Plugin.findAll.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/categories error', async () => {
+      Plugin.getCategories.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/categories');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/featured error', async () => {
+      Plugin.getFeatured.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/featured');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/search error', async () => {
+      Plugin.search.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/search?q=test');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/:id error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/1');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/:id/reviews error', async () => {
+      db.query.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/1/reviews');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/user/installed error', async () => {
+      PluginInstallation.getByTenant.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/user/installed');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/plugins error', async () => {
+      Plugin.findBySlug.mockResolvedValueOnce(null);
+      Plugin.create.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/plugins')
+        .send({ name: 'Test', slug: 'test' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle PUT /api/plugins/:id error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .put('/api/plugins/1')
+        .send({ name: 'Updated' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle DELETE /api/plugins/:id error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).delete('/api/plugins/1');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle DELETE /api/plugins/:id 404', async () => {
+      Plugin.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).delete('/api/plugins/999');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle DELETE /api/plugins/:id 403', async () => {
+      Plugin.findById.mockResolvedValueOnce({ id: 1, developer_id: 999 });
+
+      const response = await request(app).delete('/api/plugins/1');
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should handle POST /api/plugins/:id/install error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/plugins/1/install')
+        .send({});
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/plugins/:id/install 404', async () => {
+      Plugin.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/api/plugins/999/install')
+        .send({});
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle POST /api/plugins/:id/uninstall error', async () => {
+      PluginInstallation.getInstallation.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).post('/api/plugins/1/uninstall');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle PUT /api/plugins/:id/settings error', async () => {
+      PluginInstallation.getInstallation.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .put('/api/plugins/1/settings')
+        .send({ settings: {} });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle PUT /api/plugins/:id/settings 404', async () => {
+      PluginInstallation.getInstallation.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .put('/api/plugins/999/settings')
+        .send({ settings: {} });
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle POST /api/plugins/:id/reviews 404', async () => {
+      Plugin.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/api/plugins/999/reviews')
+        .send({ rating: 5 });
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle POST /api/plugins/:id/reviews error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/plugins/1/reviews')
+        .send({ rating: 5 });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle DELETE /api/plugins/:id/reviews error', async () => {
+      db.query.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).delete('/api/plugins/1/reviews');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/plugins/:id/purchase 404', async () => {
+      Plugin.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/api/plugins/999/purchase')
+        .send({});
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle POST /api/plugins/:id/purchase error', async () => {
+      Plugin.findById.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/plugins/1/purchase')
+        .send({});
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/developer/earnings error', async () => {
+      PluginBilling.getEarnings.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/developer/earnings');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/plugins/developer/payout-info error', async () => {
+      RevenueShare.getPayoutInfo.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/plugins/developer/payout-info');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/plugins/developer/payout error', async () => {
+      RevenueShare.createPayout.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/plugins/developer/payout')
+        .send({ amount: 50 });
+
+      expect(response.status).toBe(500);
+    });
   });
 });
