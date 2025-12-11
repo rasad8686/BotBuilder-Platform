@@ -34,6 +34,7 @@ import CallHistory from './pages/CallHistory';
 import WorkClone from './pages/WorkClone';
 import CloneTraining from './pages/CloneTraining';
 import CloneSettings from './pages/CloneSettings';
+import VoiceToBot from './pages/VoiceToBot';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -138,6 +139,9 @@ function App() {
         <Route path="/work-clone" element={<PrivateRoute><AuthenticatedApp><Layout><WorkClone /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/clone-training/:id" element={<PrivateRoute><AuthenticatedApp><Layout><CloneTraining /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/clone-settings/:id" element={<PrivateRoute><AuthenticatedApp><Layout><CloneSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
+
+        {/* Voice-to-Bot Route */}
+        <Route path="/voice-to-bot" element={<PrivateRoute><AuthenticatedApp><Layout><VoiceToBot /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
         <Route path="/billing" element={<PrivateRoute><AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp></PrivateRoute>} />

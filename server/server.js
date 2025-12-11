@@ -721,6 +721,9 @@ app.use('/api/voice', require('./routes/voice'));
 // ✅ Work Clone routes (AI Writing Clone)
 app.use('/api/clones', require('./routes/clone'));
 
+// ✅ Voice-to-Bot routes (Voice-based Bot Creation)
+app.use('/api/voice-to-bot', require('./routes/voiceToBot'));
+
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 
