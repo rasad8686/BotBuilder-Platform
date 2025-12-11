@@ -8,12 +8,15 @@ const router = express.Router();
 const multer = require('multer');
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
+const { organizationContext, requireOrganization } = require('../middleware/organizationContext');
 const log = require('../utils/logger');
 const { VoiceProcessor, IntentExtractor, BotGenerator } = require('../services/voiceToBot');
 const { v4: uuidv4 } = require('uuid');
 
-// All routes require authentication
+// All routes require authentication and organization context
 router.use(authMiddleware);
+router.use(organizationContext);
+router.use(requireOrganization);
 
 // Configure multer for audio uploads
 const storage = multer.memoryStorage();
@@ -49,7 +52,7 @@ const botGenerator = new BotGenerator();
 router.post('/start', async (req, res) => {
   try {
     const userId = req.user.id;
-    const orgId = req.user.organization_id;
+    const orgId = req.organization.id;
     const { language = 'en' } = req.body;
 
     const sessionId = uuidv4();
@@ -350,7 +353,7 @@ router.post('/extract', async (req, res) => {
 router.post('/generate', async (req, res) => {
   try {
     const userId = req.user.id;
-    const orgId = req.user.organization_id;
+    const orgId = req.organization.id;
     const { sessionId, customizations, extractedData: directData } = req.body;
 
     let extractedData;
