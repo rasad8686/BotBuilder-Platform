@@ -285,8 +285,87 @@ class VoiceProcessor {
   }
 
   /**
+   * Get language-specific correction prompt
+   */
+  getLanguagePrompt(language) {
+    const prompts = {
+      en: `You are a transcription corrector for English speech-to-text output. The user is describing a chatbot they want to create.
+
+Your task:
+1. Fix speech recognition errors (similar sounding words mistaken for each other)
+2. Fix grammar and spelling mistakes
+3. Keep the original meaning and intent
+4. The context is: user describing what kind of bot they want
+
+Common English errors to fix:
+- "otu" / "bought" → "bot"
+- "at" / "chat" → "chat" or "chatbot"
+- "bought builder" → "bot builder"
+- "I want to create a bought" → "I want to create a bot"
+- Names: "John", "Mary", "Michael", etc.
+
+IMPORTANT: Return ONLY the corrected English text, nothing else.`,
+
+      ru: `Вы корректор транскрипции для русского речевого ввода. Пользователь описывает чат-бота, которого хочет создать.
+
+Ваша задача:
+1. Исправить ошибки распознавания речи (похожие по звучанию слова)
+2. Исправить грамматические и орфографические ошибки
+3. Сохранить оригинальный смысл
+4. Контекст: пользователь описывает бота
+
+Частые ошибки в русском:
+- "бот" / "бод" / "вот" → "бот"
+- "чат" / "чад" → "чат"
+- "создать бота" / "создать вода" → "создать бота"
+- Русские имена: Иван, Мария, Александр, Дмитрий
+- Кириллица: исправлять латиницу на кириллицу где нужно
+
+ВАЖНО: Верните ТОЛЬКО исправленный русский текст, без пояснений.`,
+
+      tr: `Türkçe konuşma-metin çıktısı için transkripsiyon düzelticisiniz. Kullanıcı oluşturmak istediği bir chatbot'u anlatıyor.
+
+Göreviniz:
+1. Konuşma tanıma hatalarını düzeltin (benzer sesli kelimeler)
+2. Dilbilgisi ve yazım hatalarını düzeltin
+3. Orijinal anlamı koruyun
+4. Bağlam: kullanıcı bir bot tanımlıyor
+
+Yaygın Türkçe hatalar:
+- "bot" / "bot" / "bod" → "bot"
+- "sohbet" / "şohet" → "sohbet"
+- "oluşturmak" / "oluşdırmak" → "oluşturmak"
+- Türk isimleri: Ahmet, Mehmet, Ayşe, Fatma, Ali
+- Türkçe karakterler: ç, ş, ğ, ü, ö, ı düzeltmeleri
+
+ÖNEMLİ: SADECE düzeltilmiş Türkçe metni döndürün, açıklama eklemeyin.`,
+
+      az: `Azərbaycan dilində nitq-mətn çıxışı üçün transkripsiya düzəldicisisiniz. İstifadəçi yaratmaq istədiyi chatbot-u təsvir edir.
+
+Tapşırığınız:
+1. Nitq tanıma səhvlərini düzəldin (oxşar səslənən sözlər)
+2. Qrammatika və orfoqrafiya səhvlərini düzəldin
+3. Orijinal mənası qorunsun
+4. Kontekst: istifadəçi bot təsvir edir
+
+Ümumi Azərbaycan dili səhvləri:
+- "bot" / "botu" / "otu" → "bot"
+- "söhbət" / "sohbet" → "söhbət"
+- "yaratmaq" / "yaradmaq" → "yaratmaq"
+- "müştəri" / "müşteri" → "müştəri"
+- Azərbaycan adları: Əli, Vəli, Aynur, Günay, Elşən, Nigar
+- Azərbaycan hərfləri: ə, ü, ö, ş, ç, ğ, ı düzəltmələri
+- Türkcə qarışıqlıq: "de" → "da/də", "ve" → "və"
+
+VACİB: YALNIZ düzəldilmiş Azərbaycan mətnini qaytarın, izahat əlavə etməyin.`
+    };
+
+    return prompts[language] || prompts.en;
+  }
+
+  /**
    * AI-powered transcription correction
-   * Fixes speech recognition errors using GPT-4o
+   * Fixes speech recognition errors using GPT-4o-mini with language-specific prompts
    */
   async correctTranscription(text, language = 'en') {
     try {
@@ -295,23 +374,9 @@ class VoiceProcessor {
       }
 
       const fetch = require('node-fetch');
+      const systemPrompt = this.getLanguagePrompt(language);
 
-      const languageNames = {
-        en: 'English',
-        az: 'Azerbaijani',
-        tr: 'Turkish',
-        ru: 'Russian',
-        de: 'German',
-        fr: 'French',
-        es: 'Spanish',
-        ar: 'Arabic',
-        zh: 'Chinese',
-        ja: 'Japanese',
-        ko: 'Korean',
-        pt: 'Portuguese'
-      };
-
-      const langName = languageNames[language] || 'English';
+      log.debug('Correcting transcription', { language, textLength: text.length });
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -322,27 +387,8 @@ class VoiceProcessor {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            {
-              role: 'system',
-              content: `You are a transcription corrector for ${langName} speech-to-text output. The user is describing a chatbot they want to create.
-
-Your task:
-1. Fix speech recognition errors (similar sounding words mistaken for each other)
-2. Fix grammar and spelling mistakes
-3. Keep the original meaning and intent
-4. The context is: user describing what kind of bot they want
-
-Common errors to fix:
-- "otu" → "botu" (bot)
-- "at" → "chat"
-- Missing or incorrect words based on context
-
-IMPORTANT: Return ONLY the corrected text, nothing else. Do not add explanations or quotes.`
-            },
-            {
-              role: 'user',
-              content: text
-            }
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: text }
           ],
           temperature: 0.1,
           max_tokens: 500
@@ -359,6 +405,7 @@ IMPORTANT: Return ONLY the corrected text, nothing else. Do not add explanations
 
       if (correctedText && correctedText.length > 0) {
         log.info('Transcription corrected', {
+          language,
           original: text.substring(0, 50),
           corrected: correctedText.substring(0, 50)
         });
