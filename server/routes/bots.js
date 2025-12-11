@@ -302,8 +302,12 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
     const { id } = req.params;
     const organization_id = req.organization.id;
 
-    // Validate ID is a number
-    if (isNaN(id)) {
+    log.debug('GET bot request', { id, organization_id, user_id: req.user?.id });
+
+    // Validate ID is a valid positive integer
+    const botId = parseInt(id, 10);
+    if (!id || isNaN(botId) || botId < 1) {
+      log.warn('Invalid bot ID', { id, parsed: botId });
       return res.status(400).json({
         success: false,
         message: 'Invalid bot ID'
@@ -316,10 +320,11 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
       WHERE id = $1 AND organization_id = $2
     `;
 
-    const result = await db.query(query, [id, organization_id]);
+    const result = await db.query(query, [botId, organization_id]);
 
     // Check if bot exists in this organization
     if (result.rows.length === 0) {
+      log.warn('Bot not found', { botId, organization_id, user_id: req.user?.id });
       return res.status(404).json({
         success: false,
         message: 'Bot not found or not accessible in this organization'
