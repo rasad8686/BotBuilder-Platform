@@ -26,6 +26,9 @@ import Orchestrations from './pages/Orchestrations';
 import OrchestrationBuilder from './components/orchestration/OrchestrationBuilder';
 import IntentEntityBuilder from './pages/IntentEntityBuilder';
 import WidgetSettings from './pages/WidgetSettings';
+import AutonomousAgents from './pages/AutonomousAgents';
+import AgentTasks from './pages/AgentTasks';
+import Integrations from './pages/Integrations';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -114,6 +117,13 @@ function App() {
         <Route path="/intents" element={<PrivateRoute><AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/bots/:botId/intents" element={<PrivateRoute><AuthenticatedApp><Layout><IntentEntityBuilder /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/bots/:botId/widget" element={<PrivateRoute><AuthenticatedApp><WidgetSettings /></AuthenticatedApp></PrivateRoute>} />
+
+        {/* Autonomous Agents Routes */}
+        <Route path="/autonomous-agents" element={<PrivateRoute><AuthenticatedApp><Layout><AutonomousAgents /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/autonomous" element={<PrivateRoute><AuthenticatedApp><Layout><AutonomousAgents /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/autonomous-agents/:id/tasks" element={<PrivateRoute><AuthenticatedApp><Layout><AgentTasks /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/autonomous/:id/tasks" element={<PrivateRoute><AuthenticatedApp><Layout><AgentTasks /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/integrations" element={<PrivateRoute><AuthenticatedApp><Layout><Integrations /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* New SaaS Routes - With Sidebar and Organization Context */}
         <Route path="/billing" element={<PrivateRoute><AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp></PrivateRoute>} />

@@ -1010,5 +1010,16 @@
     "workflows": "Workflows",
     "edit": "Edit",
     "messages": "Messages"
+  },
+  "autonomous": {
+    "autonomousAgents": "Autonomous Agents",
+    "createAgent": "Create Agent",
+    "noAgentsYet": "No Agents Yet",
+    "createYourFirstAgent": "Create your first autonomous agent to start automating complex tasks",
+    "agentName": "Agent Name",
+    "agentDescription": "Agent Description",
+    "capabilities": "Capabilities",
+    "assignTask": "Assign Task",
+    "viewTasks": "View Tasks"
   }
 }
