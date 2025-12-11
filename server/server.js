@@ -718,6 +718,9 @@ app.use('/api/integrations', require('./routes/integrations'));
 // ✅ Voice AI routes (Call Bots, Twilio, STT/TTS)
 app.use('/api/voice', require('./routes/voice'));
 
+// ✅ Work Clone routes (AI Writing Clone)
+app.use('/api/clones', require('./routes/clone'));
+
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 

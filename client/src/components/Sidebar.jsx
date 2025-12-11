@@ -66,6 +66,7 @@ export default function Sidebar() {
     { path: '/integrations', icon: '🔌', label: t('sidebar.integrations', 'Integrations') },
     { path: '/voice-bots', icon: '📞', label: t('sidebar.voiceBots', 'Voice AI') },
     { path: '/call-history', icon: '📋', label: t('sidebar.callHistory', 'Call History') },
+    { path: '/work-clone', icon: '👤', label: t('sidebar.workClone', 'Work Clone') },
     { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
   ];
 
