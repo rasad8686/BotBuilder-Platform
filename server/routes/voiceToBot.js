@@ -146,28 +146,11 @@ router.get('/sessions/:sessionId', async (req, res) => {
  */
 router.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    const userId = req.user.id;
     const { sessionId, language } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ error: 'No audio file provided' });
     }
-
-    // Verify session
-    const sessionCheck = await db.query(
-      'SELECT * FROM voice_bot_creations WHERE session_id = $1 AND user_id = $2',
-      [sessionId, userId]
-    );
-
-    if (sessionCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    // Update status
-    await db.query(
-      "UPDATE voice_bot_creations SET status = 'transcribing' WHERE session_id = $1",
-      [sessionId]
-    );
 
     // Process audio
     const preprocessResult = await voiceProcessor.preprocessAudio(req.file.buffer, {
@@ -180,40 +163,16 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
 
     // Transcribe
     const transcribeResult = await voiceProcessor.transcribe(preprocessResult.buffer, {
-      language: language || sessionCheck.rows[0].language,
+      language: language || 'en',
       format: preprocessResult.format
     });
 
     if (!transcribeResult.success) {
-      await db.query(
-        "UPDATE voice_bot_creations SET status = 'error', error_message = $1 WHERE session_id = $2",
-        [transcribeResult.error, sessionId]
-      );
       return res.status(500).json({ error: transcribeResult.error });
     }
 
     // Clean transcription
     const cleanedText = voiceProcessor.cleanTranscription(transcribeResult.text);
-
-    // Update session with transcription
-    await db.query(
-      `UPDATE voice_bot_creations SET
-        status = 'transcribed',
-        transcription = $1,
-        transcription_confidence = $2,
-        audio_duration = $3,
-        language = $4,
-        processing_time_ms = processing_time_ms + $5
-      WHERE session_id = $6`,
-      [
-        cleanedText,
-        transcribeResult.confidence,
-        Math.round(transcribeResult.duration || 0),
-        transcribeResult.language,
-        transcribeResult.processingTimeMs,
-        sessionId
-      ]
-    );
 
     res.json({
       success: true,
