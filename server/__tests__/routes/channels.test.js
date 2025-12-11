@@ -562,5 +562,522 @@ describe('Channels Routes', () => {
 
       expect(response.status).toBe(404);
     });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({
+        id: 1,
+        tenant_id: 999
+      });
+
+      const response = await request(app)
+        .put('/api/channels/1/credentials')
+        .send({ token: 'new_token' });
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should handle errors', async () => {
+      Channel.findById.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .put('/api/channels/1/credentials')
+        .send({ token: 'new_token' });
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle GET /api/channels/:id error', async () => {
+      Channel.findById.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app).get('/api/channels/1');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle PUT /api/channels/:id error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      Channel.update.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .put('/api/channels/1')
+        .send({ name: 'New Name' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle DELETE /api/channels/:id error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      Channel.delete.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app).delete('/api/channels/1');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/channels error', async () => {
+      channelManager.registerChannel.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/channels')
+        .send({ type: 'whatsapp', name: 'Test' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/channels/:id/send error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.sendMessage.mockRejectedValueOnce(new Error('Send failed'));
+
+      const response = await request(app)
+        .post('/api/channels/1/send')
+        .send({ to: '+1234567890', content: 'Test' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/messages error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getMessageHistory.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/messages');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/conversations error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      ChannelMessage.getConversations.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/conversations');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/conversation/:contact error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getConversation.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/conversation/123');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle POST /api/channels/:id/templates error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      db.query.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app)
+        .post('/api/channels/1/templates')
+        .send({ name: 'Test', content: 'Hello' });
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/templates error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      db.query.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/templates');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/contacts error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getContacts.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/contacts');
+
+      expect(response.status).toBe(500);
+    });
+
+    it('should handle GET /api/channels/:id/stats error', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getChannelStats.mockRejectedValueOnce(new Error('Error'));
+
+      const response = await request(app).get('/api/channels/1/stats');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('POST /api/channels/:id/send with options', () => {
+    it('should send message with media', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.sendMessage.mockResolvedValueOnce({
+        success: true,
+        messageId: 'msg123'
+      });
+
+      const response = await request(app)
+        .post('/api/channels/1/send')
+        .send({
+          to: '+1234567890',
+          type: 'image',
+          mediaUrl: 'https://example.com/image.jpg',
+          caption: 'Test image'
+        });
+
+      expect(response.status).toBe(200);
+      expect(channelManager.sendMessage).toHaveBeenCalledWith(1, expect.objectContaining({
+        type: 'image',
+        mediaUrl: 'https://example.com/image.jpg',
+        caption: 'Test image'
+      }));
+    });
+
+    it('should send message with template', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.sendMessage.mockResolvedValueOnce({
+        success: true,
+        messageId: 'msg123'
+      });
+
+      const response = await request(app)
+        .post('/api/channels/1/send')
+        .send({
+          to: '+1234567890',
+          templateName: 'welcome',
+          templateLanguage: 'en',
+          templateVariables: ['John']
+        });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should send message with replyToId', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.sendMessage.mockResolvedValueOnce({
+        success: true,
+        messageId: 'msg123'
+      });
+
+      const response = await request(app)
+        .post('/api/channels/1/send')
+        .send({
+          to: '+1234567890',
+          content: 'Reply message',
+          replyToId: 'original_msg_id'
+        });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app)
+        .post('/api/channels/1/send')
+        .send({ to: '+1234567890', content: 'Test' });
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/messages with filters', () => {
+    it('should filter messages by conversation_id', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getMessageHistory.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/messages?conversation_id=conv123');
+
+      expect(channelManager.getMessageHistory).toHaveBeenCalledWith(1, expect.objectContaining({
+        conversationId: 'conv123'
+      }));
+    });
+
+    it('should filter messages by direction', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getMessageHistory.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/messages?direction=inbound');
+
+      expect(channelManager.getMessageHistory).toHaveBeenCalledWith(1, expect.objectContaining({
+        direction: 'inbound'
+      }));
+    });
+
+    it('should filter messages by date range', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getMessageHistory.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/messages?start_date=2024-01-01&end_date=2024-12-31');
+
+      expect(channelManager.getMessageHistory).toHaveBeenCalledWith(1, expect.objectContaining({
+        startDate: '2024-01-01',
+        endDate: '2024-12-31'
+      }));
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/messages');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/conversations pagination', () => {
+    it('should pass limit and offset', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      ChannelMessage.getConversations.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/conversations?limit=20&offset=10');
+
+      expect(ChannelMessage.getConversations).toHaveBeenCalledWith(1, 20, 10);
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).get('/api/channels/999/conversations');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/conversations');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/conversation/:contact edge cases', () => {
+    it('should pass custom limit', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getConversation.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/conversation/123456?limit=100');
+
+      expect(channelManager.getConversation).toHaveBeenCalledWith(1, '123456', 100);
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).get('/api/channels/999/conversation/123');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/conversation/123');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('POST /api/channels/:id/templates edge cases', () => {
+    it('should create template with all fields', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      db.query.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          name: 'Welcome',
+          language: 'en',
+          category: 'marketing',
+          content: 'Hello {{name}}',
+          header_type: 'text',
+          header_content: 'Header',
+          footer: 'Footer text',
+          buttons: [{ type: 'quick_reply', text: 'Yes' }],
+          variables: ['name']
+        }]
+      });
+
+      const response = await request(app)
+        .post('/api/channels/1/templates')
+        .send({
+          name: 'Welcome',
+          language: 'en',
+          category: 'marketing',
+          content: 'Hello {{name}}',
+          header_type: 'text',
+          header_content: 'Header',
+          footer: 'Footer text',
+          buttons: [{ type: 'quick_reply', text: 'Yes' }],
+          variables: ['name']
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app)
+        .post('/api/channels/999/templates')
+        .send({ name: 'Test', content: 'Hello' });
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app)
+        .post('/api/channels/1/templates')
+        .send({ name: 'Test', content: 'Hello' });
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/templates edge cases', () => {
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).get('/api/channels/999/templates');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/templates');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/contacts with search', () => {
+    it('should pass search parameter', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getContacts.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/contacts?search=john&limit=10&offset=5');
+
+      expect(channelManager.getContacts).toHaveBeenCalledWith(1, expect.objectContaining({
+        search: 'john',
+        limit: 10,
+        offset: 5
+      }));
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).get('/api/channels/999/contacts');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/contacts');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('GET /api/channels/:id/stats with period', () => {
+    it('should pass period parameter', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 1 });
+      channelManager.getChannelStats.mockResolvedValueOnce({ messages: 100 });
+      ChannelMessage.getStats.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/channels/1/stats?period=7d');
+
+      expect(channelManager.getChannelStats).toHaveBeenCalledWith(1, '7d');
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const response = await request(app).get('/api/channels/999/stats');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 403 if different tenant', async () => {
+      Channel.findById.mockResolvedValueOnce({ id: 1, tenant_id: 999 });
+
+      const response = await request(app).get('/api/channels/1/stats');
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  describe('channel types', () => {
+    it('should create instagram channel', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({
+        id: 1,
+        name: 'Instagram Business',
+        type: 'instagram'
+      });
+
+      const response = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'instagram',
+          name: 'Instagram Business',
+          credentials: { page_id: '123', access_token: 'token' }
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should create telegram channel', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({
+        id: 1,
+        name: 'Telegram Bot',
+        type: 'telegram'
+      });
+
+      const response = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'telegram',
+          name: 'Telegram Bot',
+          credentials: { bot_token: 'token' }
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should create messenger channel', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({
+        id: 1,
+        name: 'Messenger',
+        type: 'messenger'
+      });
+
+      const response = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'messenger',
+          name: 'Messenger',
+          credentials: { page_id: '123', access_token: 'token' }
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should create sms channel', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({
+        id: 1,
+        name: 'SMS',
+        type: 'sms'
+      });
+
+      const response = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'sms',
+          name: 'SMS',
+          credentials: { account_sid: 'sid', auth_token: 'token' }
+        });
+
+      expect(response.status).toBe(201);
+    });
   });
 });

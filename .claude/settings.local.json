@@ -30,7 +30,11 @@
       "Bash(netstat:*)",
       "Bash(grep:*)",
       "Bash(npm run test:e2e:*)",
-      "Bash(npm run)"
+      "Bash(npm run)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npx jest:*)",
+      "Bash(timeout 300 npm test -- --coverage --coverageReporters=text-summary --forceExit --testTimeout=30000)",
+      "Bash(sort:*)"
     ],
     "deny": [],
     "ask": []

@@ -420,4 +420,211 @@ describe('Workflows Routes', () => {
       expect(response.status).toBe(500);
     });
   });
+
+  describe('POST /api/workflows/:id/execute with agents', () => {
+    it('should load agents from config', async () => {
+      AgentWorkflow.findById.mockResolvedValueOnce({
+        id: 1,
+        name: 'Test Workflow',
+        bot_id: 1,
+        agents_config: [
+          { agentId: 1 },
+          { agentId: 2 }
+        ]
+      });
+      AgentModel.findById
+        .mockResolvedValueOnce({
+          id: 1,
+          name: 'Agent 1',
+          role: 'processor',
+          system_prompt: 'Test',
+          model_provider: 'openai',
+          model_name: 'gpt-4'
+        })
+        .mockResolvedValueOnce({
+          id: 2,
+          name: 'Agent 2',
+          role: 'processor',
+          system_prompt: 'Test'
+        });
+      WorkflowExecution.create.mockResolvedValueOnce({
+        id: 1,
+        workflow_id: 1,
+        status: 'running'
+      });
+
+      const response = await request(app)
+        .post('/api/workflows/1/execute')
+        .send({ input: { message: 'Hello' } });
+
+      expect(response.status).toBe(200);
+      expect(AgentModel.findById).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle config with id instead of agentId', async () => {
+      AgentWorkflow.findById.mockResolvedValueOnce({
+        id: 1,
+        name: 'Test Workflow',
+        bot_id: 1,
+        agents_config: [{ id: 3 }]
+      });
+      AgentModel.findById.mockResolvedValueOnce({
+        id: 3,
+        name: 'Agent 3',
+        role: 'processor'
+      });
+      WorkflowExecution.create.mockResolvedValueOnce({
+        id: 2,
+        workflow_id: 1,
+        status: 'running'
+      });
+
+      const response = await request(app)
+        .post('/api/workflows/1/execute')
+        .send({ input: { message: 'Test' } });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should skip non-existent agents in config', async () => {
+      AgentWorkflow.findById.mockResolvedValueOnce({
+        id: 1,
+        name: 'Test Workflow',
+        bot_id: 1,
+        agents_config: [{ agentId: 999 }]
+      });
+      AgentModel.findById.mockResolvedValueOnce(null);
+      WorkflowExecution.create.mockResolvedValueOnce({
+        id: 3,
+        workflow_id: 1,
+        status: 'running'
+      });
+
+      const response = await request(app)
+        .post('/api/workflows/1/execute')
+        .send({ input: { message: 'Test' } });
+
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe('execution ready with errors', () => {
+    it('should handle execute function throwing error', async () => {
+      const mockExecuteWithUpdates = jest.fn().mockRejectedValue(new Error('Execution failed'));
+
+      global.pendingExecutions.set(10, {
+        executeWithUpdates: mockExecuteWithUpdates,
+        execution: { id: 10 },
+        workflow: { id: 1, name: 'Test' }
+      });
+
+      const response = await request(app)
+        .post('/api/workflows/1/executions/10/ready')
+        .send({});
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toContain('Failed to execute');
+    });
+  });
+
+  describe('workflow creation edge cases', () => {
+    it('should create workflow with all options', async () => {
+      AgentWorkflow.create.mockResolvedValueOnce({
+        id: 1,
+        bot_id: 1,
+        name: 'Full Workflow',
+        workflow_type: 'parallel',
+        agents_config: [{ agentId: 1 }],
+        flow_config: { parallel: true },
+        entry_agent_id: 1,
+        is_default: true
+      });
+
+      const response = await request(app)
+        .post('/api/workflows')
+        .send({
+          bot_id: 1,
+          name: 'Full Workflow',
+          workflow_type: 'parallel',
+          agents_config: [{ agentId: 1 }],
+          flow_config: { parallel: true },
+          entry_agent_id: 1,
+          is_default: true
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.workflow_type).toBe('parallel');
+    });
+  });
+
+  describe('workflow update edge cases', () => {
+    it('should update workflow with multiple fields', async () => {
+      AgentWorkflow.findById.mockResolvedValueOnce({ id: 1 });
+      AgentWorkflow.update.mockResolvedValueOnce({
+        id: 1,
+        name: 'Updated Name',
+        workflow_type: 'conditional',
+        is_active: false
+      });
+
+      const response = await request(app)
+        .put('/api/workflows/1')
+        .send({
+          name: 'Updated Name',
+          workflow_type: 'conditional',
+          is_active: false
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.workflow_type).toBe('conditional');
+    });
+  });
+
+  describe('execution with socket events', () => {
+    it('should emit socket events during execution', async () => {
+      const mockExecuteWithUpdates = jest.fn().mockResolvedValue({
+        status: 'completed',
+        output: 'Test output',
+        totalTokens: 200,
+        totalDuration: 2000
+      });
+
+      global.pendingExecutions.set(20, {
+        executeWithUpdates: mockExecuteWithUpdates,
+        execution: { id: 20 },
+        workflow: { id: 1, name: 'Socket Test' }
+      });
+
+      WorkflowExecution.complete.mockResolvedValueOnce(true);
+
+      const response = await request(app)
+        .post('/api/workflows/1/executions/20/ready')
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(mockExecuteWithUpdates).toHaveBeenCalled();
+    });
+  });
+
+  describe('workflow list with bot param', () => {
+    it('should return empty array for empty result', async () => {
+      AgentWorkflow.findByBotId.mockResolvedValueOnce([]);
+
+      const response = await request(app).get('/api/workflows?bot_id=999');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+  });
+
+  describe('execution history with limit', () => {
+    it('should use default limit', async () => {
+      AgentWorkflow.findById.mockResolvedValueOnce({ id: 1 });
+      WorkflowExecution.findByWorkflowId.mockResolvedValueOnce([]);
+
+      await request(app).get('/api/workflows/1/executions');
+
+      expect(WorkflowExecution.findByWorkflowId).toHaveBeenCalledWith('1', 50);
+    });
+  });
 });
