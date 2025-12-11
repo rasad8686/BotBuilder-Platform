@@ -18,12 +18,9 @@ class IntentExtractor {
     try {
       const startTime = Date.now();
 
-      if (!this.openaiApiKey) {
-        return { success: false, error: 'OpenAI API key not configured' };
-      }
-
-      if (!text || text.trim().length < 10) {
-        return { success: false, error: 'Text too short for extraction' };
+      // Demo mode: return mock extraction if no API key or text too short
+      if (!this.openaiApiKey || !text || text.trim().length < 10) {
+        return this.getMockExtraction(options.language, startTime);
       }
 
       const fetch = require('node-fetch');
@@ -360,6 +357,75 @@ Rules:
     });
 
     return flows;
+  }
+
+  /**
+   * Get mock extraction for demo mode
+   */
+  getMockExtraction(language, startTime) {
+    const processingTime = Date.now() - startTime;
+
+    log.info('Using mock extraction (demo mode)', { language });
+
+    return {
+      success: true,
+      name: 'Customer Support Bot',
+      description: 'A helpful customer support bot that answers FAQs, handles returns, and tracks orders.',
+      category: 'support',
+      intents: [
+        {
+          name: 'greeting',
+          displayName: 'Greeting',
+          description: 'User greets the bot',
+          examples: ['hello', 'hi', 'hey', 'good morning'],
+          responses: ['Hello! How can I help you today?', 'Hi there! What can I do for you?']
+        },
+        {
+          name: 'faq',
+          displayName: 'FAQ',
+          description: 'User asks frequently asked questions',
+          examples: ['what are your hours?', 'how do I contact support?', 'where are you located?'],
+          responses: ['Our support is available 24/7. How can I help?']
+        },
+        {
+          name: 'order_status',
+          displayName: 'Order Status',
+          description: 'User wants to track their order',
+          examples: ['where is my order?', 'track my package', 'order status'],
+          responses: ['Please provide your order number and I\'ll check the status for you.']
+        },
+        {
+          name: 'returns',
+          displayName: 'Returns & Refunds',
+          description: 'User wants to return or get refund',
+          examples: ['I want to return', 'how do I get a refund?', 'return policy'],
+          responses: ['I can help with returns. What item would you like to return?']
+        },
+        {
+          name: 'fallback',
+          displayName: 'Fallback',
+          description: 'Bot does not understand',
+          examples: [],
+          responses: ['I\'m not sure I understand. Could you please rephrase that?']
+        }
+      ],
+      entities: [
+        { name: 'order_id', type: 'text', description: 'Order number', examples: ['ORD-12345'] },
+        { name: 'product_name', type: 'text', description: 'Product name', examples: ['Blue T-Shirt'] }
+      ],
+      flows: [
+        {
+          name: 'main_flow',
+          trigger: 'conversation_start',
+          steps: ['Greet user', 'Ask how can help', 'Route to handler', 'Process request']
+        }
+      ],
+      suggestedFeatures: ['Live chat handoff', 'Order tracking integration', 'FAQ database'],
+      language: language || 'en',
+      processingTimeMs: processingTime,
+      tokensUsed: 0,
+      isDemo: true
+    };
   }
 }
 
