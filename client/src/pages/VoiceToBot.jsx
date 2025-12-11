@@ -354,7 +354,7 @@ const VoiceToBot = () => {
   // Go to bot
   const goToBot = () => {
     if (generatedBot) {
-      navigate(`/edit-bot/${generatedBot.id}`);
+      navigate(`/bot/${generatedBot.id}/edit`);
     }
   };
 
