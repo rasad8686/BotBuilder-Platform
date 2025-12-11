@@ -35,7 +35,9 @@
     "adminDashboard": "Панель администратора",
     "auditLogs": "Журнал аудита",
     "systemHealth": "Состояние системы",
-    "whiteLabelSettings": "Настройки White-label"
+    "whiteLabelSettings": "Настройки White-label",
+    "autonomousAgents": "Автономные агенты",
+    "integrations": "Интеграции"
   },
   "dashboard": {
     "title": "Мои боты",
@@ -949,14 +951,26 @@
     "messages": "Сообщения"
   },
   "autonomous": {
-    "autonomousAgents": "Автономные агенты",
+    "title": "Автономные агенты",
+    "subtitle": "AI агенты, способные думать, планировать и выполнять сложные задачи автономно",
     "createAgent": "Создать агента",
-    "noAgentsYet": "Агентов пока нет",
-    "createYourFirstAgent": "Создайте своего первого автономного агента для автоматизации сложных задач",
-    "agentName": "Имя агента",
-    "agentDescription": "Описание агента",
-    "capabilities": "Возможности",
-    "assignTask": "Назначить задачу",
-    "viewTasks": "Просмотр задач"
+    "editAgent": "Редактировать агента",
+    "noAgents": "Агентов пока нет",
+    "noAgentsDesc": "Создайте своего первого автономного агента для автоматизации сложных задач",
+    "createFirstAgent": "Создайте первого агента",
+    "name": "Название",
+    "namePlaceholder": "Введите имя агента",
+    "description": "Описание",
+    "descriptionPlaceholder": "Опишите, что делает этот агент",
+    "noDescription": "Нет описания",
+    "model": "Модель",
+    "temperature": "Температура",
+    "systemPrompt": "Системный промпт",
+    "systemPromptPlaceholder": "Определите поведение и возможности агента...",
+    "tasks": "Задачи",
+    "success": "Успех",
+    "failed": "Ошибка",
+    "viewTasks": "Задачи",
+    "deleteConfirm": "Вы уверены, что хотите удалить {{name}}?"
   }
 }

@@ -35,7 +35,9 @@
     "adminDashboard": "Admin Paneli",
     "auditLogs": "Audit Qeydləri",
     "systemHealth": "Sistem Sağlamlığı",
-    "whiteLabelSettings": "Ağ Etiket Parametrləri"
+    "whiteLabelSettings": "Ağ Etiket Parametrləri",
+    "autonomousAgents": "Avtonom Agentlər",
+    "integrations": "İnteqrasiyalar"
   },
   "dashboard": {
     "title": "Mənim Botlarım",
@@ -988,14 +990,26 @@
     "messages": "Mesajlar"
   },
   "autonomous": {
-    "autonomousAgents": "Avtonom Agentlər",
+    "title": "Avtonom Agentlər",
+    "subtitle": "Mürəkkəb tapşırıqları müstəqil şəkildə düşünə, planlaya və icra edə bilən AI agentləri",
     "createAgent": "Agent Yarat",
-    "noAgentsYet": "Hələ Agent Yoxdur",
-    "createYourFirstAgent": "Mürəkkəb tapşırıqları avtomatlaşdırmaq üçün ilk avtonom agentinizi yaradın",
-    "agentName": "Agent Adı",
-    "agentDescription": "Agent Təsviri",
-    "capabilities": "Bacarıqlar",
-    "assignTask": "Tapşırıq Təyin Et",
-    "viewTasks": "Tapşırıqlara Bax"
+    "editAgent": "Agenti Redaktə et",
+    "noAgents": "Hələ Agent Yoxdur",
+    "noAgentsDesc": "Mürəkkəb tapşırıqları avtomatlaşdırmaq üçün ilk avtonom agentinizi yaradın",
+    "createFirstAgent": "İlk Agentinizi Yaradın",
+    "name": "Ad",
+    "namePlaceholder": "Agent adını daxil edin",
+    "description": "Təsvir",
+    "descriptionPlaceholder": "Bu agentin nə etdiyini təsvir edin",
+    "noDescription": "Təsvir yoxdur",
+    "model": "Model",
+    "temperature": "Temperatur",
+    "systemPrompt": "Sistem Göstərişi",
+    "systemPromptPlaceholder": "Agent davranışını və bacarıqlarını müəyyənləşdirin...",
+    "tasks": "Tapşırıqlar",
+    "success": "Uğurlu",
+    "failed": "Uğursuz",
+    "viewTasks": "Tapşırıqlar",
+    "deleteConfirm": "{{name}} agentini silmək istədiyinizə əminsiniz?"
   }
 }

@@ -35,7 +35,9 @@
     "adminDashboard": "Yönetici Paneli",
     "auditLogs": "Denetim Kayıtları",
     "systemHealth": "Sistem Sağlığı",
-    "whiteLabelSettings": "Beyaz Etiket Ayarları"
+    "whiteLabelSettings": "Beyaz Etiket Ayarları",
+    "autonomousAgents": "Otonom Ajanlar",
+    "integrations": "Entegrasyonlar"
   },
   "dashboard": {
     "title": "Botlarım",
@@ -949,14 +951,26 @@
     "messages": "Mesajlar"
   },
   "autonomous": {
-    "autonomousAgents": "Otonom Ajanlar",
+    "title": "Otonom Ajanlar",
+    "subtitle": "Karmaşık görevleri özerk olarak düşünebilen, planlayabilen ve yürütebilen AI ajanları",
     "createAgent": "Ajan Oluştur",
-    "noAgentsYet": "Henüz Ajan Yok",
-    "createYourFirstAgent": "Karmaşık görevleri otomatikleştirmek için ilk otonom ajanınızı oluşturun",
-    "agentName": "Ajan Adı",
-    "agentDescription": "Ajan Açıklaması",
-    "capabilities": "Yetenekler",
-    "assignTask": "Görev Ata",
-    "viewTasks": "Görevleri Görüntüle"
+    "editAgent": "Ajanı Düzenle",
+    "noAgents": "Henüz Ajan Yok",
+    "noAgentsDesc": "Karmaşık görevleri otomatikleştirmek için ilk otonom ajanınızı oluşturun",
+    "createFirstAgent": "İlk Ajanınızı Oluşturun",
+    "name": "Ad",
+    "namePlaceholder": "Ajan adını girin",
+    "description": "Açıklama",
+    "descriptionPlaceholder": "Bu ajanın ne yaptığını açıklayın",
+    "noDescription": "Açıklama yok",
+    "model": "Model",
+    "temperature": "Sıcaklık",
+    "systemPrompt": "Sistem İstemi",
+    "systemPromptPlaceholder": "Ajan davranışını ve yeteneklerini tanımlayın...",
+    "tasks": "Görevler",
+    "success": "Başarılı",
+    "failed": "Başarısız",
+    "viewTasks": "Görevler",
+    "deleteConfirm": "{{name}} ajanını silmek istediğinizden emin misiniz?"
   }
 }
