@@ -1,13 +1,20 @@
 /**
- * Channels API Tests
- * Tests for /api/channels endpoints: Instagram, WhatsApp, Telegram integrations
+ * Channels API Tests - Real Route Coverage
+ * Tests for /api/channels endpoints: WhatsApp, Instagram, Telegram
+ * Uses actual route handlers for code coverage
  */
 
 const request = require('supertest');
+const express = require('express');
+
+// ========================================
+// MOCKS - Must be defined BEFORE imports
+// ========================================
 
 // Mock the database
 jest.mock('../db', () => ({
-  query: jest.fn()
+  query: jest.fn(),
+  pool: { query: jest.fn() }
 }));
 
 // Mock logger
@@ -15,685 +22,345 @@ jest.mock('../utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn()
+  debug: jest.fn(),
+  http: jest.fn()
 }));
 
-const express = require('express');
-const db = require('../db');
+// Mock Channel model
+jest.mock('../models/Channel', () => ({
+  findByTenant: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn()
+}));
 
-// Create a minimal express app for testing
-const app = express();
-app.use(express.json());
+// Mock ChannelMessage model
+jest.mock('../models/ChannelMessage', () => ({
+  countByChannel: jest.fn().mockResolvedValue({ total: 100, inbound: 60, outbound: 40 }),
+  findByChannel: jest.fn(),
+  create: jest.fn()
+}));
+
+// Mock channelManager
+jest.mock('../channels/core/ChannelManager', () => ({
+  registerChannel: jest.fn(),
+  sendMessage: jest.fn(),
+  getChannelStats: jest.fn().mockResolvedValue({ total: 100, today: 10 }),
+  updateChannel: jest.fn(),
+  deactivateChannel: jest.fn()
+}));
 
 // Mock authentication middleware
-const mockAuth = (req, res, next) => {
-  req.user = { id: 1, email: 'test@example.com' };
-  req.organization = { id: 1, name: 'Test Org' };
-  next();
-};
-
-// Mock channels routes
-app.get('/api/channels', mockAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM channels WHERE organization_id = $1 ORDER BY created_at DESC',
-      [req.organization.id]
-    );
-    res.json({ success: true, data: result.rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
+jest.mock('../middleware/auth', () => {
+  return jest.fn((req, res, next) => {
+    req.user = {
+      id: 1,
+      email: 'test@example.com',
+      username: 'testuser',
+      current_organization_id: 1,
+      organization_id: 1
+    };
+    next();
+  });
 });
 
-app.get('/api/channels/:id', mockAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM channels WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
+// ========================================
+// NOW import the actual routes
+// ========================================
+const db = require('../db');
+const Channel = require('../models/Channel');
+const ChannelMessage = require('../models/ChannelMessage');
+const channelManager = require('../channels/core/ChannelManager');
+const channelsRouter = require('../routes/channels');
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Channel not found' });
-    }
+// Create test app with REAL routes
+const app = express();
+app.use(express.json());
+app.use('/api/channels', channelsRouter);
 
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
+// ========================================
+// TEST SUITES
+// ========================================
 
-app.post('/api/channels', mockAuth, async (req, res) => {
-  try {
-    const { type, name, config } = req.body;
-
-    if (!type) {
-      return res.status(400).json({ success: false, message: 'Channel type is required' });
-    }
-
-    const validTypes = ['telegram', 'whatsapp', 'instagram', 'discord', 'slack', 'messenger'];
-    if (!validTypes.includes(type.toLowerCase())) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid channel type. Valid types: ${validTypes.join(', ')}`
-      });
-    }
-
-    if (!config) {
-      return res.status(400).json({ success: false, message: 'Channel config is required' });
-    }
-
-    const result = await db.query(
-      'INSERT INTO channels (type, name, config, organization_id, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [type, name || type, JSON.stringify(config), req.organization.id, req.user.id]
-    );
-
-    res.status(201).json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.put('/api/channels/:id', mockAuth, async (req, res) => {
-  try {
-    const { name, config, is_active } = req.body;
-
-    const existingChannel = await db.query(
-      'SELECT * FROM channels WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
-
-    if (existingChannel.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Channel not found' });
-    }
-
-    const result = await db.query(
-      'UPDATE channels SET name = COALESCE($1, name), config = COALESCE($2, config), is_active = COALESCE($3, is_active), updated_at = NOW() WHERE id = $4 RETURNING *',
-      [name, config ? JSON.stringify(config) : null, is_active, req.params.id]
-    );
-
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.delete('/api/channels/:id', mockAuth, async (req, res) => {
-  try {
-    const existingChannel = await db.query(
-      'SELECT * FROM channels WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
-
-    if (existingChannel.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Channel not found' });
-    }
-
-    await db.query('DELETE FROM channels WHERE id = $1', [req.params.id]);
-    res.json({ success: true, message: 'Channel deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-describe('Channels API', () => {
+describe('Channels API - Real Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   // ========================================
-  // LIST CHANNELS
+  // GET /api/channels - List all channels
   // ========================================
   describe('GET /api/channels', () => {
-    it('should return all channels for the organization', async () => {
+    it('should return all channels for tenant', async () => {
       const mockChannels = [
-        { id: 1, type: 'telegram', name: 'Telegram Bot' },
-        { id: 2, type: 'whatsapp', name: 'WhatsApp Bot' }
+        { id: 1, type: 'whatsapp', name: 'WhatsApp 1' },
+        { id: 2, type: 'instagram', name: 'Instagram 1' }
       ];
-      db.query.mockResolvedValueOnce({ rows: mockChannels });
+      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
 
       const res = await request(app).get('/api/channels');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(2);
+      expect(res.body).toHaveLength(2);
+      expect(res.body[0].messageCount).toBe(100);
     });
 
-    it('should return empty array if no channels exist', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
+    it('should filter by type', async () => {
+      const mockChannels = [{ id: 1, type: 'whatsapp', name: 'WhatsApp 1' }];
+      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
+
+      const res = await request(app).get('/api/channels?type=whatsapp');
+
+      expect(res.status).toBe(200);
+      expect(Channel.findByTenant).toHaveBeenCalledWith(1, 'whatsapp');
+    });
+
+    it('should return empty array if no channels', async () => {
+      Channel.findByTenant.mockResolvedValueOnce([]);
 
       const res = await request(app).get('/api/channels');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(0);
+      expect(res.body).toHaveLength(0);
     });
 
     it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
+      Channel.findByTenant.mockRejectedValueOnce(new Error('Database error'));
 
       const res = await request(app).get('/api/channels');
 
       expect(res.status).toBe(500);
-      expect(res.body.success).toBe(false);
+      expect(res.body.error).toBe('Failed to fetch channels');
     });
   });
 
   // ========================================
-  // GET SINGLE CHANNEL
-  // ========================================
-  describe('GET /api/channels/:id', () => {
-    it('should return a single channel by ID', async () => {
-      const mockChannel = { id: 1, type: 'telegram', name: 'Telegram Bot' };
-      db.query.mockResolvedValueOnce({ rows: [mockChannel] });
-
-      const res = await request(app).get('/api/channels/1');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.type).toBe('telegram');
-    });
-
-    it('should return 404 if channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(app).get('/api/channels/999');
-
-      expect(res.status).toBe(404);
-      expect(res.body.success).toBe(false);
-    });
-  });
-
-  // ========================================
-  // CREATE CHANNEL
+  // POST /api/channels - Create channel
   // ========================================
   describe('POST /api/channels', () => {
-    it('should create a new channel successfully', async () => {
-      const newChannel = { id: 1, type: 'telegram', name: 'Telegram Bot' };
-      db.query.mockResolvedValueOnce({ rows: [newChannel] });
+    it('should create channel successfully', async () => {
+      const newChannel = { id: 1, type: 'whatsapp', name: 'New WhatsApp' };
+      channelManager.registerChannel.mockResolvedValueOnce(newChannel);
 
       const res = await request(app)
         .post('/api/channels')
-        .send({
-          type: 'telegram',
-          name: 'Telegram Bot',
-          config: { bot_token: 'test-token' }
-        });
+        .send({ type: 'whatsapp', name: 'New WhatsApp', credentials: { token: 'abc' } });
 
       expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
+      expect(res.body.type).toBe('whatsapp');
     });
 
     it('should return 400 if type is missing', async () => {
       const res = await request(app)
         .post('/api/channels')
-        .send({ name: 'Test Channel', config: {} });
+        .send({ name: 'Test Channel' });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('type');
+      expect(res.body.error).toContain('required');
     });
 
-    it('should return 400 if config is missing', async () => {
+    it('should return 400 if name is missing', async () => {
       const res = await request(app)
         .post('/api/channels')
-        .send({ type: 'telegram' });
+        .send({ type: 'whatsapp' });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('config');
     });
 
     it('should return 400 for invalid channel type', async () => {
       const res = await request(app)
         .post('/api/channels')
-        .send({ type: 'invalid', config: {} });
+        .send({ type: 'invalid_type', name: 'Test' });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Invalid channel type');
+      expect(res.body.error).toContain('Invalid channel type');
+    });
+
+    it('should accept valid types (instagram)', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'instagram' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({ type: 'instagram', name: 'Instagram Channel' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid types (telegram)', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'telegram' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({ type: 'telegram', name: 'Telegram Channel' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid types (messenger)', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'messenger' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({ type: 'messenger', name: 'Messenger Channel' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid types (sms)', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'sms' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({ type: 'sms', name: 'SMS Channel' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should handle registration error', async () => {
+      channelManager.registerChannel.mockRejectedValueOnce(new Error('Registration failed'));
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({ type: 'whatsapp', name: 'Test' });
+
+      expect(res.status).toBe(500);
     });
   });
 
   // ========================================
-  // UPDATE CHANNEL
+  // GET /api/channels/:id - Get single channel
+  // ========================================
+  describe('GET /api/channels/:id', () => {
+    it('should return channel by ID', async () => {
+      const mockChannel = { id: 1, type: 'whatsapp', name: 'WhatsApp 1', tenant_id: 1 };
+      Channel.findById.mockResolvedValueOnce(mockChannel);
+
+      const res = await request(app).get('/api/channels/1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.type).toBe('whatsapp');
+      expect(res.body.stats).toBeDefined();
+    });
+
+    it('should return 404 if channel not found', async () => {
+      Channel.findById.mockResolvedValueOnce(null);
+
+      const res = await request(app).get('/api/channels/999');
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Channel not found');
+    });
+
+    it('should return 403 if channel belongs to different tenant', async () => {
+      const mockChannel = { id: 1, type: 'whatsapp', tenant_id: 999 }; // Different tenant
+      Channel.findById.mockResolvedValueOnce(mockChannel);
+
+      const res = await request(app).get('/api/channels/1');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Access denied');
+    });
+
+    it('should handle database error', async () => {
+      Channel.findById.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app).get('/api/channels/1');
+
+      expect(res.status).toBe(500);
+      expect(res.body.error).toBe('Failed to fetch channel');
+    });
+  });
+
+  // ========================================
+  // PUT /api/channels/:id - Update channel
   // ========================================
   describe('PUT /api/channels/:id', () => {
-    it('should update an existing channel', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Updated Name' }] });
+    it('should update channel successfully', async () => {
+      const existingChannel = { id: 1, type: 'whatsapp', tenant_id: 1 };
+      const updatedChannel = { id: 1, type: 'whatsapp', name: 'Updated Name' };
+
+      Channel.findById.mockResolvedValueOnce(existingChannel);
+      Channel.update.mockResolvedValueOnce(updatedChannel);
 
       const res = await request(app)
         .put('/api/channels/1')
         .send({ name: 'Updated Name' });
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
+      expect(res.body.name).toBe('Updated Name');
     });
 
     it('should return 404 if channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
+      Channel.findById.mockResolvedValueOnce(null);
 
       const res = await request(app)
         .put('/api/channels/999')
-        .send({ name: 'Updated Name' });
+        .send({ name: 'Updated' });
 
       expect(res.status).toBe(404);
+    });
+
+    it('should return 403 if channel belongs to different tenant', async () => {
+      const mockChannel = { id: 1, tenant_id: 999 };
+      Channel.findById.mockResolvedValueOnce(mockChannel);
+
+      const res = await request(app)
+        .put('/api/channels/1')
+        .send({ name: 'Updated' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('should handle database error', async () => {
+      Channel.findById.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app)
+        .put('/api/channels/1')
+        .send({ name: 'Updated' });
+
+      expect(res.status).toBe(500);
     });
   });
 
   // ========================================
-  // DELETE CHANNEL
+  // DELETE /api/channels/:id - Delete channel
   // ========================================
   describe('DELETE /api/channels/:id', () => {
-    it('should delete an existing channel', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rowCount: 1 });
+    it('should delete channel successfully', async () => {
+      const existingChannel = { id: 1, type: 'whatsapp', tenant_id: 1 };
+      Channel.findById.mockResolvedValueOnce(existingChannel);
+      Channel.delete.mockResolvedValueOnce(true);
 
       const res = await request(app).delete('/api/channels/1');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
+      expect(res.body.message).toBe('Channel deleted successfully');
     });
 
     it('should return 404 if channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
+      Channel.findById.mockResolvedValueOnce(null);
 
       const res = await request(app).delete('/api/channels/999');
 
       expect(res.status).toBe(404);
     });
-  });
-});
 
-// ========================================
-// TELEGRAM INTEGRATION TESTS
-// ========================================
-describe('Telegram Integration', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    it('should return 403 if channel belongs to different tenant', async () => {
+      const mockChannel = { id: 1, tenant_id: 999 };
+      Channel.findById.mockResolvedValueOnce(mockChannel);
 
-  const telegramApp = express();
-  telegramApp.use(express.json());
+      const res = await request(app).delete('/api/channels/1');
 
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1 };
-    req.organization = { id: 1 };
-    next();
-  };
-
-  telegramApp.post('/api/channels/telegram/connect', mockAuth, async (req, res) => {
-    try {
-      const { bot_token } = req.body;
-
-      if (!bot_token) {
-        return res.status(400).json({ success: false, message: 'Bot token is required' });
-      }
-
-      // Validate token format (simplified)
-      if (!bot_token.includes(':')) {
-        return res.status(400).json({ success: false, message: 'Invalid Telegram bot token format' });
-      }
-
-      // Verify bot with Telegram API (mocked)
-      const botInfo = await db.query('SELECT 1'); // Simulating API call
-
-      const result = await db.query(
-        'INSERT INTO channels (type, name, config, organization_id) VALUES ($1, $2, $3, $4) RETURNING *',
-        ['telegram', 'Telegram Bot', JSON.stringify({ bot_token }), req.organization.id]
-      );
-
-      res.status(201).json({ success: true, data: result.rows[0] });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  telegramApp.post('/api/channels/telegram/:id/set-webhook', mockAuth, async (req, res) => {
-    try {
-      const { webhook_url } = req.body;
-
-      if (!webhook_url) {
-        return res.status(400).json({ success: false, message: 'Webhook URL is required' });
-      }
-
-      // Validate URL
-      try {
-        new URL(webhook_url);
-      } catch {
-        return res.status(400).json({ success: false, message: 'Invalid webhook URL' });
-      }
-
-      const channel = await db.query(
-        'SELECT * FROM channels WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
-
-      if (channel.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Channel not found' });
-      }
-
-      // Set webhook (mocked)
-      await db.query(
-        'UPDATE channels SET config = jsonb_set(config, \'{webhook_url}\', $1) WHERE id = $2',
-        [JSON.stringify(webhook_url), req.params.id]
-      );
-
-      res.json({ success: true, message: 'Webhook set successfully' });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('POST /api/channels/telegram/connect', () => {
-    it('should connect Telegram bot successfully', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{}] }) // Bot verification
-        .mockResolvedValueOnce({ rows: [{ id: 1, type: 'telegram' }] });
-
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/connect')
-        .send({ bot_token: '123456789:ABC-DEF' });
-
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
+      expect(res.status).toBe(403);
     });
 
-    it('should return 400 if bot token is missing', async () => {
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/connect')
-        .send({});
+    it('should handle database error', async () => {
+      Channel.findById.mockRejectedValueOnce(new Error('Database error'));
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('token');
-    });
+      const res = await request(app).delete('/api/channels/1');
 
-    it('should return 400 for invalid token format', async () => {
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/connect')
-        .send({ bot_token: 'invalid-token' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Invalid');
-    });
-  });
-
-  describe('POST /api/channels/telegram/:id/set-webhook', () => {
-    it('should set webhook successfully', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rowCount: 1 });
-
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/1/set-webhook')
-        .send({ webhook_url: 'https://example.com/webhook' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 400 for invalid webhook URL', async () => {
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/1/set-webhook')
-        .send({ webhook_url: 'invalid-url' });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should return 404 if channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(telegramApp)
-        .post('/api/channels/telegram/999/set-webhook')
-        .send({ webhook_url: 'https://example.com/webhook' });
-
-      expect(res.status).toBe(404);
-    });
-  });
-});
-
-// ========================================
-// WHATSAPP INTEGRATION TESTS
-// ========================================
-describe('WhatsApp Integration', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const whatsappApp = express();
-  whatsappApp.use(express.json());
-
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1 };
-    req.organization = { id: 1 };
-    next();
-  };
-
-  whatsappApp.post('/api/channels/whatsapp/connect', mockAuth, async (req, res) => {
-    try {
-      const { phone_number_id, access_token, business_account_id } = req.body;
-
-      if (!phone_number_id || !access_token) {
-        return res.status(400).json({
-          success: false,
-          message: 'Phone number ID and access token are required'
-        });
-      }
-
-      const result = await db.query(
-        'INSERT INTO channels (type, name, config, organization_id) VALUES ($1, $2, $3, $4) RETURNING *',
-        ['whatsapp', 'WhatsApp Business', JSON.stringify({ phone_number_id, access_token, business_account_id }), req.organization.id]
-      );
-
-      res.status(201).json({ success: true, data: result.rows[0] });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  whatsappApp.post('/api/channels/whatsapp/:id/verify', mockAuth, async (req, res) => {
-    try {
-      const channel = await db.query(
-        'SELECT * FROM channels WHERE id = $1 AND organization_id = $2 AND type = $3',
-        [req.params.id, req.organization.id, 'whatsapp']
-      );
-
-      if (channel.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'WhatsApp channel not found' });
-      }
-
-      // Verify with WhatsApp Business API (mocked)
-      const verification = await db.query('SELECT 1');
-
-      await db.query(
-        'UPDATE channels SET config = jsonb_set(config, \'{verified}\', $1) WHERE id = $2',
-        ['true', req.params.id]
-      );
-
-      res.json({ success: true, message: 'WhatsApp channel verified' });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('POST /api/channels/whatsapp/connect', () => {
-    it('should connect WhatsApp business successfully', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'whatsapp' }] });
-
-      const res = await request(whatsappApp)
-        .post('/api/channels/whatsapp/connect')
-        .send({
-          phone_number_id: '123456789',
-          access_token: 'test-access-token',
-          business_account_id: 'business123'
-        });
-
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 400 if phone_number_id is missing', async () => {
-      const res = await request(whatsappApp)
-        .post('/api/channels/whatsapp/connect')
-        .send({ access_token: 'test-token' });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should return 400 if access_token is missing', async () => {
-      const res = await request(whatsappApp)
-        .post('/api/channels/whatsapp/connect')
-        .send({ phone_number_id: '123' });
-
-      expect(res.status).toBe(400);
-    });
-  });
-
-  describe('POST /api/channels/whatsapp/:id/verify', () => {
-    it('should verify WhatsApp channel', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1, type: 'whatsapp' }] })
-        .mockResolvedValueOnce({ rows: [{}] })
-        .mockResolvedValueOnce({ rowCount: 1 });
-
-      const res = await request(whatsappApp)
-        .post('/api/channels/whatsapp/1/verify');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 404 if WhatsApp channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(whatsappApp)
-        .post('/api/channels/whatsapp/999/verify');
-
-      expect(res.status).toBe(404);
-    });
-  });
-});
-
-// ========================================
-// INSTAGRAM INTEGRATION TESTS
-// ========================================
-describe('Instagram Integration', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const instagramApp = express();
-  instagramApp.use(express.json());
-
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1 };
-    req.organization = { id: 1 };
-    next();
-  };
-
-  instagramApp.post('/api/channels/instagram/connect', mockAuth, async (req, res) => {
-    try {
-      const { instagram_account_id, access_token, page_id } = req.body;
-
-      if (!instagram_account_id || !access_token) {
-        return res.status(400).json({
-          success: false,
-          message: 'Instagram account ID and access token are required'
-        });
-      }
-
-      if (!page_id) {
-        return res.status(400).json({
-          success: false,
-          message: 'Facebook Page ID is required for Instagram integration'
-        });
-      }
-
-      const result = await db.query(
-        'INSERT INTO channels (type, name, config, organization_id) VALUES ($1, $2, $3, $4) RETURNING *',
-        ['instagram', 'Instagram Business', JSON.stringify({ instagram_account_id, access_token, page_id }), req.organization.id]
-      );
-
-      res.status(201).json({ success: true, data: result.rows[0] });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  instagramApp.get('/api/channels/instagram/:id/insights', mockAuth, async (req, res) => {
-    try {
-      const channel = await db.query(
-        'SELECT * FROM channels WHERE id = $1 AND organization_id = $2 AND type = $3',
-        [req.params.id, req.organization.id, 'instagram']
-      );
-
-      if (channel.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Instagram channel not found' });
-      }
-
-      // Get insights (mocked)
-      const insights = {
-        followers: 1000,
-        engagement_rate: 3.5,
-        messages_received: 150
-      };
-
-      res.json({ success: true, data: insights });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('POST /api/channels/instagram/connect', () => {
-    it('should connect Instagram business successfully', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'instagram' }] });
-
-      const res = await request(instagramApp)
-        .post('/api/channels/instagram/connect')
-        .send({
-          instagram_account_id: 'ig123',
-          access_token: 'test-access-token',
-          page_id: 'page123'
-        });
-
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 400 if instagram_account_id is missing', async () => {
-      const res = await request(instagramApp)
-        .post('/api/channels/instagram/connect')
-        .send({ access_token: 'test-token', page_id: 'page123' });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should return 400 if page_id is missing', async () => {
-      const res = await request(instagramApp)
-        .post('/api/channels/instagram/connect')
-        .send({ instagram_account_id: 'ig123', access_token: 'test-token' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Facebook Page ID');
-    });
-  });
-
-  describe('GET /api/channels/instagram/:id/insights', () => {
-    it('should return Instagram insights', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'instagram' }] });
-
-      const res = await request(instagramApp).get('/api/channels/instagram/1/insights');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.followers).toBeDefined();
-    });
-
-    it('should return 404 if Instagram channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(instagramApp).get('/api/channels/instagram/999/insights');
-
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(500);
     });
   });
 });
@@ -701,194 +368,81 @@ describe('Instagram Integration', () => {
 // ========================================
 // EDGE CASES
 // ========================================
-describe('Channel Edge Cases', () => {
+describe('Channels Edge Cases', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  const edgeApp = express();
-  edgeApp.use(express.json());
+  describe('Channel Creation', () => {
+    it('should accept credentials object', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'whatsapp' });
 
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1 };
-    req.organization = { id: 1 };
-    next();
-  };
+      const res = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'whatsapp',
+          name: 'WhatsApp',
+          credentials: { token: 'test-token', phone: '+1234567890' }
+        });
 
-  edgeApp.post('/api/channels/:id/test', mockAuth, async (req, res) => {
-    try {
-      const channel = await db.query(
-        'SELECT * FROM channels WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
+      expect(res.status).toBe(201);
+    });
 
-      if (channel.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Channel not found' });
-      }
+    it('should accept settings object', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'whatsapp' });
 
-      // Test channel connection (mocked)
-      const isConnected = true;
+      const res = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'whatsapp',
+          name: 'WhatsApp',
+          settings: { autoReply: true, greetingMessage: 'Hello!' }
+        });
 
-      if (!isConnected) {
-        return res.status(400).json({ success: false, message: 'Channel connection failed' });
-      }
+      expect(res.status).toBe(201);
+    });
 
-      res.json({ success: true, message: 'Channel connection successful' });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
+    it('should accept phone_number', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'whatsapp' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'whatsapp',
+          name: 'WhatsApp',
+          phone_number: '+1234567890'
+        });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept username', async () => {
+      channelManager.registerChannel.mockResolvedValueOnce({ id: 1, type: 'telegram' });
+
+      const res = await request(app)
+        .post('/api/channels')
+        .send({
+          type: 'telegram',
+          name: 'Telegram',
+          username: '@testbot'
+        });
+
+      expect(res.status).toBe(201);
+    });
   });
 
-  describe('POST /api/channels/:id/test', () => {
-    it('should test channel connection', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'telegram' }] });
+  describe('Message Stats', () => {
+    it('should include message stats in channel list', async () => {
+      const mockChannels = [{ id: 1, type: 'whatsapp', name: 'WhatsApp' }];
+      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
+      ChannelMessage.countByChannel.mockResolvedValueOnce({ total: 50, inbound: 30, outbound: 20 });
 
-      const res = await request(edgeApp).post('/api/channels/1/test');
+      const res = await request(app).get('/api/channels');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 404 if channel not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(edgeApp).post('/api/channels/999/test');
-
-      expect(res.status).toBe(404);
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(edgeApp).post('/api/channels/1/test');
-
-      expect(res.status).toBe(500);
-    });
-  });
-});
-
-// ========================================
-// CHANNEL PLATFORM EDGE CASES
-// ========================================
-describe('Channel Platform Edge Cases', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
-
-  describe('Telegram Token Validation', () => {
-    it('should validate bot token format - invalid', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-
-    it('should validate bot token format - valid', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-
-    it('should validate long bot token', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-  });
-
-  describe('WhatsApp Phone Validation', () => {
-    it('should validate phone number format - invalid', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-
-    it('should validate phone number format - valid', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-
-    it('should validate phone without country code', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-  });
-
-  describe('Instagram Connection Validation', () => {
-    it('should validate missing access token', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-
-    it('should validate empty account ID', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get('/api/channels');
-      expect(res).toBeDefined();
-      expect(typeof res.status).toBe('number');
-    });
-  });
-
-  describe('Concurrent Channel Operations', () => {
-    it('should handle multiple channel creations', async () => {
-      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Channel' }] });
-      const promises = Array(5).fill(null).map((_, i) =>
-        request(app).post('/api/channels').send({ name: `Channel ${i}`, type: 'telegram' })
-      );
-      const results = await Promise.all(promises);
-      results.forEach(res => expect([201, 400, 500]).toContain(res.status));
-    });
-  });
-
-  describe('Channel Type Validation', () => {
-    it('should handle invalid channel type', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'invalid_platform' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle telegram type', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'telegram' }] });
-      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'telegram' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle whatsapp type', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'whatsapp' }] });
-      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'whatsapp' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle instagram type', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, type: 'instagram' }] });
-      const res = await request(app).post('/api/channels').send({ name: 'Test', type: 'instagram' });
-      expect([201, 400]).toContain(res.status);
-    });
-  });
-
-  describe('Channel Name Validation', () => {
-    it('should handle empty channel name', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).post('/api/channels').send({ name: '', type: 'telegram' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle unicode channel name', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Канал Тест' }] });
-      const res = await request(app).post('/api/channels').send({ name: 'Канал Тест', type: 'telegram' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle channel name with emojis', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '📱 Channel 🤖' }] });
-      const res = await request(app).post('/api/channels').send({ name: '📱 Channel 🤖', type: 'telegram' });
-      expect([201, 400]).toContain(res.status);
+      expect(res.body[0].messageCount).toBe(50);
+      expect(res.body[0].inboundCount).toBe(30);
+      expect(res.body[0].outboundCount).toBe(20);
     });
   });
 });

@@ -1,13 +1,20 @@
 /**
- * Bots API Tests
+ * Bots API Tests - Real Route Coverage
  * Tests for /api/bots endpoints: CRUD operations
+ * Uses actual route handlers for code coverage
  */
 
 const request = require('supertest');
+const express = require('express');
+
+// ========================================
+// MOCKS - Must be defined BEFORE imports
+// ========================================
 
 // Mock the database
 jest.mock('../db', () => ({
-  query: jest.fn()
+  query: jest.fn(),
+  pool: { query: jest.fn() }
 }));
 
 // Mock logger
@@ -15,153 +22,119 @@ jest.mock('../utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn()
+  debug: jest.fn(),
+  http: jest.fn()
 }));
 
 // Mock webhook service
 jest.mock('../services/webhookService', () => ({
-  triggerWebhook: jest.fn()
+  trigger: jest.fn().mockResolvedValue(true)
 }));
 
 // Mock audit middleware
 jest.mock('../middleware/audit', () => ({
-  logBotCreated: jest.fn((req, res, next) => next()),
-  logBotUpdated: jest.fn((req, res, next) => next()),
-  logBotDeleted: jest.fn((req, res, next) => next())
+  logBotCreated: jest.fn().mockResolvedValue(true),
+  logBotUpdated: jest.fn().mockResolvedValue(true),
+  logBotDeleted: jest.fn().mockResolvedValue(true)
 }));
 
-const express = require('express');
-const db = require('../db');
-
-// Create a minimal express app for testing
-const app = express();
-app.use(express.json());
-
 // Mock authentication middleware
-const mockAuth = (req, res, next) => {
-  req.user = { id: 1, email: 'test@example.com' };
-  req.organization = { id: 1, name: 'Test Org' };
-  next();
-};
-
-// Mock bots routes
-app.get('/api/bots', mockAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM bots WHERE organization_id = $1 ORDER BY created_at DESC',
-      [req.organization.id]
-    );
-    res.json({ success: true, data: result.rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
+jest.mock('../middleware/auth', () => {
+  return jest.fn((req, res, next) => {
+    req.user = {
+      id: 1,
+      email: 'test@example.com',
+      username: 'testuser',
+      current_organization_id: 1,
+      organization_id: 1
+    };
+    next();
+  });
 });
 
-app.get('/api/bots/:id', mockAuth, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Bot not found' });
-    }
-
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.post('/api/bots', mockAuth, async (req, res) => {
-  try {
-    const { name, platform, description } = req.body;
-
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ success: false, message: 'Bot name is required' });
-    }
-
-    if (!platform || platform.trim() === '') {
-      return res.status(400).json({ success: false, message: 'Platform is required' });
-    }
-
-    const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger'];
-    if (!validPlatforms.includes(platform.toLowerCase())) {
-      return res.status(400).json({
+// Mock organization context middleware
+jest.mock('../middleware/organizationContext', () => ({
+  organizationContext: jest.fn((req, res, next) => {
+    req.organization = {
+      id: 1,
+      org_id: 1,
+      name: 'Test Organization',
+      slug: 'test-org',
+      role: 'admin',
+      owner_id: 1,
+      is_owner: true
+    };
+    req.hasRole = function(requiredRole) {
+      const roleHierarchy = { viewer: 1, member: 2, admin: 3 };
+      const userRoleLevel = roleHierarchy[req.organization.role] || 0;
+      const requiredRoleLevel = roleHierarchy[requiredRole] || 999;
+      return userRoleLevel >= requiredRoleLevel;
+    };
+    next();
+  }),
+  requireOrganization: jest.fn((req, res, next) => {
+    if (!req.organization || !req.organization.id) {
+      return res.status(403).json({
         success: false,
-        message: `Invalid platform. Valid platforms: ${validPlatforms.join(', ')}`
+        message: 'Organization context required'
       });
     }
+    next();
+  })
+}));
 
-    const result = await db.query(
-      'INSERT INTO bots (name, platform, description, user_id, organization_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, platform, description, req.user.id, req.organization.id]
-    );
+// Mock checkPermission middleware
+jest.mock('../middleware/checkPermission', () => ({
+  checkPermission: jest.fn((requiredRole) => {
+    return (req, res, next) => {
+      if (!req.organization || !req.organization.role) {
+        return res.status(403).json({
+          success: false,
+          message: 'Organization context required'
+        });
+      }
+      const roleHierarchy = { viewer: 1, member: 2, admin: 3 };
+      const userRoleLevel = roleHierarchy[req.organization.role] || 0;
+      const requiredRoleLevel = roleHierarchy[requiredRole] || 999;
+      if (userRoleLevel < requiredRoleLevel) {
+        return res.status(403).json({
+          success: false,
+          message: `Insufficient permissions. Required role: ${requiredRole}`
+        });
+      }
+      next();
+    };
+  })
+}));
 
-    res.status(201).json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
+// ========================================
+// NOW import the actual routes
+// ========================================
+const db = require('../db');
+const botsRouter = require('../routes/bots');
 
-app.put('/api/bots/:id', mockAuth, async (req, res) => {
-  try {
-    const { name, description, is_active } = req.body;
+// Create test app with REAL routes
+const app = express();
+app.use(express.json());
+app.use('/api/bots', botsRouter);
 
-    // Check if bot exists
-    const existingBot = await db.query(
-      'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
+// ========================================
+// TEST SUITES
+// ========================================
 
-    if (existingBot.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Bot not found' });
-    }
-
-    const result = await db.query(
-      'UPDATE bots SET name = COALESCE($1, name), description = COALESCE($2, description), is_active = COALESCE($3, is_active), updated_at = NOW() WHERE id = $4 RETURNING *',
-      [name, description, is_active, req.params.id]
-    );
-
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.delete('/api/bots/:id', mockAuth, async (req, res) => {
-  try {
-    // Check if bot exists
-    const existingBot = await db.query(
-      'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-      [req.params.id, req.organization.id]
-    );
-
-    if (existingBot.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Bot not found' });
-    }
-
-    await db.query('DELETE FROM bots WHERE id = $1', [req.params.id]);
-    res.json({ success: true, message: 'Bot deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-describe('Bots API', () => {
+describe('Bots API - Real Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   // ========================================
-  // GET ALL BOTS
+  // GET /api/bots - List all bots
   // ========================================
   describe('GET /api/bots', () => {
-    it('should return all bots for the organization', async () => {
+    it('should return all bots for organization', async () => {
       const mockBots = [
-        { id: 1, name: 'Bot 1', platform: 'telegram' },
-        { id: 2, name: 'Bot 2', platform: 'whatsapp' }
+        { id: 1, name: 'Bot 1', platform: 'telegram', organization_id: 1 },
+        { id: 2, name: 'Bot 2', platform: 'whatsapp', organization_id: 1 }
       ];
       db.query.mockResolvedValueOnce({ rows: mockBots });
 
@@ -169,45 +142,73 @@ describe('Bots API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(2);
+      expect(res.body.bots).toHaveLength(2);
     });
 
-    it('should return empty array if no bots exist', async () => {
+    it('should return empty array when no bots exist', async () => {
       db.query.mockResolvedValueOnce({ rows: [] });
 
       const res = await request(app).get('/api/bots');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveLength(0);
+      expect(res.body.bots).toHaveLength(0);
     });
 
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
+    it('should return paginated bots when page/limit provided', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '10' }] }); // count query
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, name: 'Bot 1', platform: 'telegram' }]
+      }); // paginated query
+
+      const res = await request(app).get('/api/bots?page=1&limit=5');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.pagination.page).toBe(1);
+      expect(res.body.pagination.limit).toBe(5);
+      expect(res.body.pagination.total).toBe(10);
+    });
+
+    it('should enforce maximum limit of 100', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{ count: '200' }] });
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(app).get('/api/bots?page=1&limit=500');
+
+      expect(res.status).toBe(200);
+      expect(res.body.pagination.limit).toBe(100);
+    });
+
+    it('should handle database errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('Database connection failed'));
 
       const res = await request(app).get('/api/bots');
 
       expect(res.status).toBe(500);
       expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Failed to retrieve bots');
     });
   });
 
   // ========================================
-  // GET SINGLE BOT
+  // GET /api/bots/:id - Get single bot
   // ========================================
   describe('GET /api/bots/:id', () => {
-    it('should return a single bot by ID', async () => {
-      const mockBot = { id: 1, name: 'Test Bot', platform: 'telegram' };
+    it('should return a specific bot by ID', async () => {
+      const mockBot = { id: 1, name: 'Test Bot', platform: 'telegram', organization_id: 1 };
       db.query.mockResolvedValueOnce({ rows: [mockBot] });
 
       const res = await request(app).get('/api/bots/1');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('Test Bot');
+      expect(res.body.bot.id).toBe(1);
+      expect(res.body.bot.name).toBe('Test Bot');
     });
 
-    it('should return 404 if bot not found', async () => {
+    it('should return 404 when bot not found', async () => {
       db.query.mockResolvedValueOnce({ rows: [] });
 
       const res = await request(app).get('/api/bots/999');
@@ -216,14 +217,45 @@ describe('Bots API', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('not found');
     });
+
+    it('should return 400 for invalid bot ID', async () => {
+      const res = await request(app).get('/api/bots/invalid');
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid bot ID');
+    });
+
+    it('should handle database errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app).get('/api/bots/1');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   // ========================================
-  // CREATE BOT
+  // POST /api/bots - Create new bot
   // ========================================
   describe('POST /api/bots', () => {
     it('should create a new bot successfully', async () => {
-      const newBot = { id: 1, name: 'New Bot', platform: 'telegram', description: 'Test bot' };
+      const newBot = {
+        id: 1,
+        name: 'New Bot',
+        platform: 'telegram',
+        description: 'A test bot',
+        user_id: 1,
+        organization_id: 1,
+        created_at: new Date().toISOString()
+      };
+
+      // Mock plan query
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      // Mock count query
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      // Mock insert query
       db.query.mockResolvedValueOnce({ rows: [newBot] });
 
       const res = await request(app)
@@ -231,63 +263,172 @@ describe('Bots API', () => {
         .send({
           name: 'New Bot',
           platform: 'telegram',
-          description: 'Test bot'
+          description: 'A test bot'
         });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('New Bot');
+      expect(res.body.bot.name).toBe('New Bot');
     });
 
-    it('should return 400 if name is missing', async () => {
+    it('should return 400 when name is missing', async () => {
       const res = await request(app)
         .post('/api/bots')
-        .send({
-          platform: 'telegram'
-        });
+        .send({ platform: 'telegram' });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('name');
+      expect(res.body.message).toContain('name is required');
     });
 
-    it('should return 400 if platform is missing', async () => {
+    it('should return 400 when platform is missing', async () => {
       const res = await request(app)
         .post('/api/bots')
-        .send({
-          name: 'Test Bot'
-        });
+        .send({ name: 'Test Bot' });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Platform');
+      expect(res.body.message).toContain('Platform is required');
     });
 
-    it('should return 400 if platform is invalid', async () => {
+    it('should return 400 for invalid platform', async () => {
       const res = await request(app)
         .post('/api/bots')
-        .send({
-          name: 'Test Bot',
-          platform: 'invalid_platform'
-        });
+        .send({ name: 'Test Bot', platform: 'invalid_platform' });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Invalid platform');
     });
+
+    it('should return 403 when plan limit reached (free plan)', async () => {
+      // Mock plan query - free plan
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'free' }] });
+      // Mock count query - already at limit
+      db.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'New Bot', platform: 'telegram' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Plan limit reached');
+      expect(res.body.limitReached).toBe(true);
+      expect(res.body.upgradePlan).toBe('pro');
+    });
+
+    it('should return 403 when plan limit reached (pro plan)', async () => {
+      // Mock plan query - pro plan
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'pro' }] });
+      // Mock count query - already at limit (10 bots)
+      db.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'New Bot', platform: 'telegram' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Plan limit reached');
+      expect(res.body.upgradePlan).toBe('enterprise');
+    });
+
+    it('should handle duplicate bot name error', async () => {
+      // Mock plan query
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      // Mock count query
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      // Mock insert query - duplicate key error
+      const error = new Error('duplicate key');
+      error.code = '23505';
+      db.query.mockRejectedValueOnce(error);
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Duplicate Bot', platform: 'telegram' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('already have a bot with this name');
+    });
+
+    it('should handle database errors during creation', async () => {
+      // Mock plan query
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      // Mock count query
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      // Mock insert query - general error
+      db.query.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'New Bot', platform: 'telegram' });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should accept valid platforms (whatsapp)', async () => {
+      const newBot = { id: 1, name: 'WhatsApp Bot', platform: 'whatsapp', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'WhatsApp Bot', platform: 'whatsapp' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid platforms (discord)', async () => {
+      const newBot = { id: 1, name: 'Discord Bot', platform: 'discord', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Discord Bot', platform: 'discord' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid platforms (slack)', async () => {
+      const newBot = { id: 1, name: 'Slack Bot', platform: 'slack', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Slack Bot', platform: 'slack' });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should accept valid platforms (messenger)', async () => {
+      const newBot = { id: 1, name: 'Messenger Bot', platform: 'messenger', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Messenger Bot', platform: 'messenger' });
+
+      expect(res.status).toBe(201);
+    });
   });
 
   // ========================================
-  // UPDATE BOT
+  // PUT /api/bots/:id - Update bot
   // ========================================
   describe('PUT /api/bots/:id', () => {
-    it('should update an existing bot', async () => {
-      const existingBot = { id: 1, name: 'Old Name', platform: 'telegram' };
-      const updatedBot = { id: 1, name: 'New Name', platform: 'telegram' };
+    it('should update bot name successfully', async () => {
+      const existingBot = { id: 1, name: 'Old Name', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, name: 'New Name', updated_at: new Date().toISOString() };
 
-      db.query
-        .mockResolvedValueOnce({ rows: [existingBot] }) // Check exists
-        .mockResolvedValueOnce({ rows: [updatedBot] }); // Update
+      db.query.mockResolvedValueOnce({ rows: [existingBot] }); // check query
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] }); // update query
 
       const res = await request(app)
         .put('/api/bots/1')
@@ -295,10 +436,55 @@ describe('Bots API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('New Name');
+      expect(res.body.bot.name).toBe('New Name');
     });
 
-    it('should return 404 if bot not found', async () => {
+    it('should update bot description', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: 'Old desc', language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, description: 'New description' };
+
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ description: 'New description' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.bot.description).toBe('New description');
+    });
+
+    it('should update bot is_active status', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, is_active: false };
+
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ is_active: false });
+
+      expect(res.status).toBe(200);
+      expect(res.body.bot.is_active).toBe(false);
+    });
+
+    it('should update bot platform', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, platform: 'whatsapp' };
+
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ platform: 'whatsapp' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.bot.platform).toBe('whatsapp');
+    });
+
+    it('should return 404 when bot not found', async () => {
       db.query.mockResolvedValueOnce({ rows: [] });
 
       const res = await request(app)
@@ -308,25 +494,126 @@ describe('Bots API', () => {
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
     });
+
+    it('should return 400 for invalid bot ID', async () => {
+      const res = await request(app)
+        .put('/api/bots/invalid')
+        .send({ name: 'New Name' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid bot ID');
+    });
+
+    it('should return 400 when no fields provided', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('At least one field must be provided');
+    });
+
+    it('should return 400 for empty name', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ name: '   ' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('cannot be empty');
+    });
+
+    it('should return 400 for invalid platform on update', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ platform: 'invalid_platform' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid platform');
+    });
+
+    it('should return 400 when is_active is not boolean', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ is_active: 'not_boolean' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('is_active must be a boolean');
+    });
+
+    it('should handle database errors during update', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ name: 'New Name' });
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should update webhook_url', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, webhook_url: 'https://example.com/webhook' };
+
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ webhook_url: 'https://example.com/webhook' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.bot.webhook_url).toBe('https://example.com/webhook');
+    });
+
+    it('should update language', async () => {
+      const existingBot = { id: 1, name: 'Test Bot', platform: 'telegram', description: null, language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = { ...existingBot, language: 'az' };
+
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
+
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({ language: 'az' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.bot.language).toBe('az');
+    });
   });
 
   // ========================================
-  // DELETE BOT
+  // DELETE /api/bots/:id - Delete bot
   // ========================================
   describe('DELETE /api/bots/:id', () => {
-    it('should delete an existing bot', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // Check exists
-        .mockResolvedValueOnce({ rowCount: 1 }); // Delete
+    it('should delete bot successfully', async () => {
+      const existingBot = { name: 'Test Bot', platform: 'telegram', description: 'A test bot' };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] }); // check query
+      db.query.mockResolvedValueOnce({ rowCount: 1 }); // delete query
 
       const res = await request(app).delete('/api/bots/1');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('deleted');
+      expect(res.body.message).toContain('deleted successfully');
+      expect(res.body.deletedId).toBe(1);
     });
 
-    it('should return 404 if bot not found', async () => {
+    it('should return 404 when bot not found', async () => {
       db.query.mockResolvedValueOnce({ rows: [] });
 
       const res = await request(app).delete('/api/bots/999');
@@ -334,792 +621,141 @@ describe('Bots API', () => {
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
     });
+
+    it('should return 400 for invalid bot ID', async () => {
+      const res = await request(app).delete('/api/bots/invalid');
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid bot ID');
+    });
+
+    it('should handle database errors during deletion', async () => {
+      const existingBot = { name: 'Test Bot', platform: 'telegram', description: 'A test bot' };
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockRejectedValueOnce(new Error('Database error'));
+
+      const res = await request(app).delete('/api/bots/1');
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
   });
 
   // ========================================
-  // EDGE CASES
+  // Edge Cases and Additional Tests
   // ========================================
   describe('Edge Cases', () => {
-    it('should handle very long bot name', async () => {
-      const longName = 'A'.repeat(500);
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: longName, platform: 'telegram' }] });
+    it('should handle bot with all fields populated', async () => {
+      const fullBot = {
+        id: 1,
+        name: 'Full Bot',
+        platform: 'telegram',
+        description: 'Full description',
+        language: 'en',
+        webhook_url: 'https://example.com',
+        is_active: true,
+        api_token: 'token123',
+        user_id: 1,
+        organization_id: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.query.mockResolvedValueOnce({ rows: [fullBot] });
 
-      const res = await request(app)
-        .post('/api/bots')
-        .send({
-          name: longName,
-          platform: 'telegram'
-        });
+      const res = await request(app).get('/api/bots/1');
 
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle special characters in bot name', async () => {
-      const specialName = 'Bot <script>alert("xss")</script>';
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: specialName, platform: 'telegram' }] });
-
-      const res = await request(app)
-        .post('/api/bots')
-        .send({
-          name: specialName,
-          platform: 'telegram'
-        });
-
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle empty string as name', async () => {
-      const res = await request(app)
-        .post('/api/bots')
-        .send({
-          name: '',
-          platform: 'telegram'
-        });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should handle whitespace-only name', async () => {
-      const res = await request(app)
-        .post('/api/bots')
-        .send({
-          name: '   ',
-          platform: 'telegram'
-        });
-
-      expect(res.status).toBe(400);
-    });
-  });
-});
-
-// ========================================
-// BOT SETTINGS TESTS
-// ========================================
-describe('Bot Settings API', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const settingsApp = express();
-  settingsApp.use(express.json());
-
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1, email: 'test@example.com' };
-    req.organization = { id: 1, name: 'Test Org' };
-    next();
-  };
-
-  settingsApp.get('/api/bots/:id/settings', mockAuth, async (req, res) => {
-    try {
-      const result = await db.query(
-        'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Bot not found' });
-      }
-
-      const settingsResult = await db.query(
-        'SELECT * FROM bot_settings WHERE bot_id = $1',
-        [req.params.id]
-      );
-
-      res.json({
-        success: true,
-        data: settingsResult.rows[0] || {
-          welcome_message: 'Hello!',
-          language: 'en',
-          timezone: 'UTC',
-          auto_reply: true
-        }
+      expect(res.status).toBe(200);
+      expect(res.body.bot).toMatchObject({
+        id: 1,
+        name: 'Full Bot',
+        platform: 'telegram'
       });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  settingsApp.put('/api/bots/:id/settings', mockAuth, async (req, res) => {
-    try {
-      const { welcome_message, language, timezone, auto_reply } = req.body;
-
-      const botResult = await db.query(
-        'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
-
-      if (botResult.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Bot not found' });
-      }
-
-      // Validate language
-      const validLanguages = ['en', 'az', 'ru', 'tr'];
-      if (language && !validLanguages.includes(language)) {
-        return res.status(400).json({ success: false, message: 'Invalid language' });
-      }
-
-      const result = await db.query(
-        `INSERT INTO bot_settings (bot_id, welcome_message, language, timezone, auto_reply)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (bot_id) DO UPDATE SET
-         welcome_message = COALESCE($2, bot_settings.welcome_message),
-         language = COALESCE($3, bot_settings.language),
-         timezone = COALESCE($4, bot_settings.timezone),
-         auto_reply = COALESCE($5, bot_settings.auto_reply)
-         RETURNING *`,
-        [req.params.id, welcome_message, language, timezone, auto_reply]
-      );
-
-      res.json({ success: true, data: result.rows[0] });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('GET /api/bots/:id/settings', () => {
-    it('should return bot settings', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test Bot' }] })
-        .mockResolvedValueOnce({ rows: [{ welcome_message: 'Hi!', language: 'en' }] });
-
-      const res = await request(settingsApp).get('/api/bots/1/settings');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.welcome_message).toBe('Hi!');
     });
 
-    it('should return default settings if none exist', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test Bot' }] })
-        .mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(settingsApp).get('/api/bots/1/settings');
-
-      expect(res.status).toBe(200);
-      expect(res.body.data.welcome_message).toBe('Hello!');
-    });
-
-    it('should return 404 if bot not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(settingsApp).get('/api/bots/999/settings');
-
-      expect(res.status).toBe(404);
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(settingsApp).get('/api/bots/1/settings');
-
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe('PUT /api/bots/:id/settings', () => {
-    it('should update bot settings', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ welcome_message: 'New message', language: 'az' }] });
-
-      const res = await request(settingsApp)
-        .put('/api/bots/1/settings')
-        .send({ welcome_message: 'New message', language: 'az' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 404 if bot not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(settingsApp)
-        .put('/api/bots/999/settings')
-        .send({ language: 'en' });
-
-      expect(res.status).toBe(404);
-    });
-
-    it('should return 400 for invalid language', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
-
-      const res = await request(settingsApp)
-        .put('/api/bots/1/settings')
-        .send({ language: 'invalid' });
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Invalid language');
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(settingsApp)
-        .put('/api/bots/1/settings')
-        .send({ language: 'en' });
-
-      expect(res.status).toBe(500);
-    });
-  });
-});
-
-// ========================================
-// BOT ANALYTICS TESTS
-// ========================================
-describe('Bot Analytics API', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const analyticsApp = express();
-  analyticsApp.use(express.json());
-
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1, email: 'test@example.com' };
-    req.organization = { id: 1, name: 'Test Org' };
-    next();
-  };
-
-  analyticsApp.get('/api/bots/:id/analytics', mockAuth, async (req, res) => {
-    try {
-      const { period = '7d' } = req.query;
-
-      const botResult = await db.query(
-        'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
-
-      if (botResult.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Bot not found' });
-      }
-
-      let interval;
-      switch (period) {
-        case '24h': interval = '24 hours'; break;
-        case '7d': interval = '7 days'; break;
-        case '30d': interval = '30 days'; break;
-        default: interval = '7 days';
-      }
-
-      const messagesResult = await db.query(
-        `SELECT DATE(created_at) as date, COUNT(*) as count
-         FROM messages WHERE bot_id = $1 AND created_at > NOW() - INTERVAL '${interval}'
-         GROUP BY DATE(created_at) ORDER BY date ASC`,
-        [req.params.id]
-      );
-
-      const totalResult = await db.query(
-        'SELECT COUNT(*) as total FROM messages WHERE bot_id = $1',
-        [req.params.id]
-      );
-
-      const uniqueUsersResult = await db.query(
-        'SELECT COUNT(DISTINCT user_id) as total FROM messages WHERE bot_id = $1',
-        [req.params.id]
-      );
-
-      res.json({
-        success: true,
-        data: {
-          messages: messagesResult.rows,
-          totalMessages: parseInt(totalResult.rows[0].total),
-          uniqueUsers: parseInt(uniqueUsersResult.rows[0].total)
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('GET /api/bots/:id/analytics', () => {
-    it('should return bot analytics', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [{ date: '2024-01-01', count: '10' }] })
-        .mockResolvedValueOnce({ rows: [{ total: '100' }] })
-        .mockResolvedValueOnce({ rows: [{ total: '25' }] });
-
-      const res = await request(analyticsApp).get('/api/bots/1/analytics');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.totalMessages).toBe(100);
-      expect(res.body.data.uniqueUsers).toBe(25);
-    });
-
-    it('should filter by period', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [{ total: '0' }] })
-        .mockResolvedValueOnce({ rows: [{ total: '0' }] });
-
-      const res = await request(analyticsApp).get('/api/bots/1/analytics?period=24h');
-
-      expect(res.status).toBe(200);
-    });
-
-    it('should return 404 if bot not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-
-      const res = await request(analyticsApp).get('/api/bots/999/analytics');
-
-      expect(res.status).toBe(404);
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(analyticsApp).get('/api/bots/1/analytics');
-
-      expect(res.status).toBe(500);
-    });
-  });
-});
-
-// ========================================
-// BOT EXPORT/IMPORT TESTS
-// ========================================
-describe('Bot Export/Import API', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const exportApp = express();
-  exportApp.use(express.json());
-
-  const mockAuth = (req, res, next) => {
-    req.user = { id: 1, email: 'test@example.com' };
-    req.organization = { id: 1, name: 'Test Org' };
-    next();
-  };
-
-  exportApp.get('/api/bots/:id/export', mockAuth, async (req, res) => {
-    try {
-      const botResult = await db.query(
-        'SELECT * FROM bots WHERE id = $1 AND organization_id = $2',
-        [req.params.id, req.organization.id]
-      );
-
-      if (botResult.rows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Bot not found' });
-      }
-
-      const settingsResult = await db.query(
-        'SELECT * FROM bot_settings WHERE bot_id = $1',
-        [req.params.id]
-      );
-
-      const flowsResult = await db.query(
-        'SELECT * FROM bot_flows WHERE bot_id = $1',
-        [req.params.id]
-      );
-
-      const exportData = {
-        version: '1.0',
-        bot: botResult.rows[0],
-        settings: settingsResult.rows[0] || {},
-        flows: flowsResult.rows,
-        exportedAt: new Date().toISOString()
+    it('should handle multiple field updates at once', async () => {
+      const existingBot = { id: 1, name: 'Old', platform: 'telegram', description: 'Old desc', language: 'en', webhook_url: null, is_active: true };
+      const updatedBot = {
+        ...existingBot,
+        name: 'New Name',
+        description: 'New desc',
+        is_active: false,
+        language: 'tr'
       };
 
-      res.json({ success: true, data: exportData });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
+      db.query.mockResolvedValueOnce({ rows: [existingBot] });
+      db.query.mockResolvedValueOnce({ rows: [updatedBot] });
 
-  exportApp.post('/api/bots/import', mockAuth, async (req, res) => {
-    try {
-      const { data } = req.body;
+      const res = await request(app)
+        .put('/api/bots/1')
+        .send({
+          name: 'New Name',
+          description: 'New desc',
+          is_active: false,
+          language: 'tr'
+        });
 
-      if (!data || !data.bot) {
-        return res.status(400).json({ success: false, message: 'Invalid import data' });
-      }
+      expect(res.status).toBe(200);
+      expect(res.body.bot.name).toBe('New Name');
+      expect(res.body.bot.description).toBe('New desc');
+      expect(res.body.bot.is_active).toBe(false);
+    });
 
-      if (!data.version) {
-        return res.status(400).json({ success: false, message: 'Missing version in import data' });
-      }
+    it('should trim whitespace from bot name on create', async () => {
+      const newBot = { id: 1, name: 'Trimmed Bot', platform: 'telegram', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
 
-      const { bot, settings, flows } = data;
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: '  Trimmed Bot  ', platform: 'telegram' });
 
-      // Create new bot
-      const newBot = await db.query(
-        'INSERT INTO bots (name, platform, description, user_id, organization_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [bot.name + ' (imported)', bot.platform, bot.description, req.user.id, req.organization.id]
+      expect(res.status).toBe(201);
+      // Verify that trimmed name is used in query
+      expect(db.query).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['Trimmed Bot'])
       );
-
-      // Import settings if exist
-      if (settings && Object.keys(settings).length > 0) {
-        await db.query(
-          'INSERT INTO bot_settings (bot_id, welcome_message, language) VALUES ($1, $2, $3)',
-          [newBot.rows[0].id, settings.welcome_message, settings.language]
-        );
-      }
-
-      // Import flows if exist
-      if (flows && flows.length > 0) {
-        for (const flow of flows) {
-          await db.query(
-            'INSERT INTO bot_flows (bot_id, name, data) VALUES ($1, $2, $3)',
-            [newBot.rows[0].id, flow.name, flow.data]
-          );
-        }
-      }
-
-      res.status(201).json({ success: true, data: newBot.rows[0] });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-
-  describe('GET /api/bots/:id/export', () => {
-    it('should export bot data', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Test Bot', platform: 'telegram' }] })
-        .mockResolvedValueOnce({ rows: [{ welcome_message: 'Hi' }] })
-        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Flow 1' }] });
-
-      const res = await request(exportApp).get('/api/bots/1/export');
-
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.version).toBe('1.0');
-      expect(res.body.data.bot).toBeDefined();
-      expect(res.body.data.exportedAt).toBeDefined();
     });
 
-    it('should return 404 if bot not found', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
+    it('should convert platform to lowercase', async () => {
+      const newBot = { id: 1, name: 'Test Bot', platform: 'telegram', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
 
-      const res = await request(exportApp).get('/api/bots/999/export');
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Test Bot', platform: 'TELEGRAM' });
 
-      expect(res.status).toBe(404);
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(exportApp).get('/api/bots/1/export');
-
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe('POST /api/bots/import', () => {
-    it('should import bot data', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [{ id: 2, name: 'Test Bot (imported)' }] })
-        .mockResolvedValueOnce({ rowCount: 1 });
-
-      const res = await request(exportApp)
-        .post('/api/bots/import')
-        .send({
-          data: {
-            version: '1.0',
-            bot: { name: 'Test Bot', platform: 'telegram' },
-            settings: { welcome_message: 'Hi' },
-            flows: []
-          }
-        });
-
-      expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-    });
-
-    it('should return 400 if data is missing', async () => {
-      const res = await request(exportApp)
-        .post('/api/bots/import')
-        .send({});
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should return 400 if version is missing', async () => {
-      const res = await request(exportApp)
-        .post('/api/bots/import')
-        .send({
-          data: {
-            bot: { name: 'Test' }
-          }
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('version');
-    });
-
-    it('should return 400 if bot data is missing', async () => {
-      const res = await request(exportApp)
-        .post('/api/bots/import')
-        .send({
-          data: { version: '1.0' }
-        });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should handle database error', async () => {
-      db.query.mockRejectedValueOnce(new Error('Database error'));
-
-      const res = await request(exportApp)
-        .post('/api/bots/import')
-        .send({
-          data: {
-            version: '1.0',
-            bot: { name: 'Test', platform: 'telegram' }
-          }
-        });
-
-      expect(res.status).toBe(500);
-    });
-  });
-});
-
-// ========================================
-// MULTI-LANGUAGE BOT TESTS
-// ========================================
-describe('Bot Multi-Language Support', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
-
-  describe('Language Validation', () => {
-    it('should accept valid language code - en', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'en' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'en' });
       expect(res.status).toBe(201);
     });
 
-    it('should accept valid language code - tr', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'tr' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'tr' });
+    it('should handle null description on create', async () => {
+      const newBot = { id: 1, name: 'No Desc Bot', platform: 'telegram', description: null, organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'No Desc Bot', platform: 'telegram' });
+
       expect(res.status).toBe(201);
+      expect(res.body.bot.description).toBeNull();
     });
 
-    it('should accept valid language code - az', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'az' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'az' });
+    it('should use default language "en" when not provided', async () => {
+      const newBot = { id: 1, name: 'Default Lang Bot', platform: 'telegram', language: 'en', organization_id: 1 };
+      db.query.mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] });
+      db.query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      db.query.mockResolvedValueOnce({ rows: [newBot] });
+
+      const res = await request(app)
+        .post('/api/bots')
+        .send({ name: 'Default Lang Bot', platform: 'telegram' });
+
       expect(res.status).toBe(201);
-    });
-
-    it('should accept valid language code - ru', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'ru' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'ru' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept valid language code - ka (Georgian)', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'ka' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'ka' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept valid language code - de', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'de' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'de' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept auto-detect language', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'auto' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', language: 'auto' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should default to en when language not provided', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', language: 'en' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-  });
-
-  describe('Language Update', () => {
-    it('should update bot language successfully', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'en' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'tr' }] });
-      const res = await request(app).put('/api/bots/1').send({ language: 'tr' });
-      expect(res.status).toBe(200);
-    });
-
-    it('should update from auto to specific language', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'auto' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'fr' }] });
-      const res = await request(app).put('/api/bots/1').send({ language: 'fr' });
-      expect(res.status).toBe(200);
-    });
-
-    it('should update from specific language to auto', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, language: 'en' }] }).mockResolvedValueOnce({ rows: [{ id: 1, language: 'auto' }] });
-      const res = await request(app).put('/api/bots/1').send({ language: 'auto' });
-      expect(res.status).toBe(200);
-    });
-  });
-
-  describe('Unicode Bot Names', () => {
-    it('should accept bot name in Turkish', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Türkçe Bot' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Türkçe Bot', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name in Russian', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Русский Бот' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Русский Бот', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name in Arabic', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'بوت عربي' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'بوت عربي', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name in Chinese', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '中文机器人' }] });
-      const res = await request(app).post('/api/bots').send({ name: '中文机器人', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name in Japanese', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '日本語ボット' }] });
-      const res = await request(app).post('/api/bots').send({ name: '日本語ボット', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name in Georgian', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'ქართული ბოტი' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'ქართული ბოტი', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name with emojis', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: '🤖 Bot Name 🚀' }] });
-      const res = await request(app).post('/api/bots').send({ name: '🤖 Bot Name 🚀', platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-  });
-});
-
-// ========================================
-// BOT EDGE CASES
-// ========================================
-describe('Bot Edge Cases', () => {
-  beforeEach(() => { jest.clearAllMocks(); });
-
-  describe('Name Validation', () => {
-    it('should reject empty bot name', async () => {
-      const res = await request(app).post('/api/bots').send({ name: '', platform: 'telegram' });
-      expect(res.status).toBe(400);
-    });
-
-    it('should reject whitespace-only bot name', async () => {
-      const res = await request(app).post('/api/bots').send({ name: '   ', platform: 'telegram' });
-      expect(res.status).toBe(400);
-    });
-
-    it('should accept very long bot name', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'A'.repeat(255) }] });
-      const res = await request(app).post('/api/bots').send({ name: 'A'.repeat(255), platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should accept bot name with special characters', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "Bot's Name (v2.0) - Test!" }] });
-      const res = await request(app).post('/api/bots').send({ name: "Bot's Name (v2.0) - Test!", platform: 'telegram' });
-      expect(res.status).toBe(201);
-    });
-  });
-
-  describe('Platform Validation', () => {
-    it('should reject empty platform', async () => {
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: '' });
-      expect(res.status).toBe(400);
-    });
-
-    it('should reject invalid platform', async () => {
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'invalid' });
-      expect(res.status).toBe(400);
-    });
-
-    it('should accept platform case-insensitive', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, platform: 'telegram' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'TELEGRAM' });
-      expect([200, 201, 400]).toContain(res.status);
-    });
-  });
-
-  describe('Concurrent Bot Operations', () => {
-    it('should handle multiple bot creations', async () => {
-      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Bot' }] });
-      const promises = Array(5).fill(null).map((_, i) =>
-        request(app).post('/api/bots').send({ name: `Bot ${i}`, platform: 'telegram' })
-      );
-      const results = await Promise.all(promises);
-      results.forEach(res => expect(res.status).toBe(201));
-    });
-
-    it('should handle multiple bot updates', async () => {
-      db.query.mockResolvedValue({ rows: [{ id: 1, name: 'Updated' }] });
-      const promises = Array(3).fill(null).map((_, i) =>
-        request(app).put('/api/bots/1').send({ name: `Updated ${i}` })
-      );
-      const results = await Promise.all(promises);
-      results.forEach(res => expect(res.status).toBe(200));
-    });
-  });
-
-  describe('SQL Injection Prevention', () => {
-    it('should handle SQL injection in bot name', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: "'; DROP TABLE bots; --" }] });
-      const res = await request(app).post('/api/bots').send({ name: "'; DROP TABLE bots; --", platform: 'telegram' });
-      expect([201, 400]).toContain(res.status);
-    });
-
-    it('should handle SQL injection in bot ID', async () => {
-      db.query.mockResolvedValueOnce({ rows: [] });
-      const res = await request(app).get("/api/bots/1; DROP TABLE bots; --");
-      expect([404, 400, 500]).toContain(res.status);
-    });
-  });
-
-  describe('Additional Bot API Tests', () => {
-    it('should handle bot with description', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', description: 'My bot description' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', description: 'My bot description' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should handle bot with empty description', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', description: '' }] });
-      const res = await request(app).post('/api/bots').send({ name: 'Bot', platform: 'telegram', description: '' });
-      expect(res.status).toBe(201);
-    });
-
-    it('should list bots with pagination', async () => {
-      db.query.mockResolvedValueOnce({ rows: Array(10).fill({ id: 1, name: 'Bot' }) });
-      const res = await request(app).get('/api/bots');
-      expect(res.status).toBe(200);
-    });
-
-    it('should search bots by name', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'SearchBot' }] });
-      const res = await request(app).get('/api/bots');
-      expect(res.status).toBe(200);
-    });
-
-    it('should filter bots by platform', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'TelegramBot', platform: 'telegram' }] });
-      const res = await request(app).get('/api/bots');
-      expect(res.status).toBe(200);
-    });
-
-    it('should handle bot status update', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', status: 'active' }] });
-      const res = await request(app).put('/api/bots/1').send({ status: 'active' });
-      expect(res.status).toBe(200);
-    });
-
-    it('should handle bot deactivation', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bot', status: 'inactive' }] });
-      const res = await request(app).put('/api/bots/1').send({ status: 'inactive' });
-      expect(res.status).toBe(200);
     });
   });
 });
