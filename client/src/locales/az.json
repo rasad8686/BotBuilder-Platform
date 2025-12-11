@@ -986,5 +986,16 @@
     "workflows": "İş Axınları",
     "edit": "Redaktə",
     "messages": "Mesajlar"
+  },
+  "autonomous": {
+    "autonomousAgents": "Avtonom Agentlər",
+    "createAgent": "Agent Yarat",
+    "noAgentsYet": "Hələ Agent Yoxdur",
+    "createYourFirstAgent": "Mürəkkəb tapşırıqları avtomatlaşdırmaq üçün ilk avtonom agentinizi yaradın",
+    "agentName": "Agent Adı",
+    "agentDescription": "Agent Təsviri",
+    "capabilities": "Bacarıqlar",
+    "assignTask": "Tapşırıq Təyin Et",
+    "viewTasks": "Tapşırıqlara Bax"
   }
 }

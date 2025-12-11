@@ -18,7 +18,7 @@ const stepIcons = {
 
 const AgentTasks = () => {
   const { t } = useTranslation();
-  const { agentId } = useParams();
+  const { id: agentId } = useParams();
   const navigate = useNavigate();
 
   const [agent, setAgent] = useState(null);

@@ -947,5 +947,16 @@
     "workflows": "İş Akışları",
     "edit": "Düzenle",
     "messages": "Mesajlar"
+  },
+  "autonomous": {
+    "autonomousAgents": "Otonom Ajanlar",
+    "createAgent": "Ajan Oluştur",
+    "noAgentsYet": "Henüz Ajan Yok",
+    "createYourFirstAgent": "Karmaşık görevleri otomatikleştirmek için ilk otonom ajanınızı oluşturun",
+    "agentName": "Ajan Adı",
+    "agentDescription": "Ajan Açıklaması",
+    "capabilities": "Yetenekler",
+    "assignTask": "Görev Ata",
+    "viewTasks": "Görevleri Görüntüle"
   }
 }

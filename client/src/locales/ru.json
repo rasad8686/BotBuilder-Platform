@@ -947,5 +947,16 @@
     "workflows": "Рабочие процессы",
     "edit": "Редактировать",
     "messages": "Сообщения"
+  },
+  "autonomous": {
+    "autonomousAgents": "Автономные агенты",
+    "createAgent": "Создать агента",
+    "noAgentsYet": "Агентов пока нет",
+    "createYourFirstAgent": "Создайте своего первого автономного агента для автоматизации сложных задач",
+    "agentName": "Имя агента",
+    "agentDescription": "Описание агента",
+    "capabilities": "Возможности",
+    "assignTask": "Назначить задачу",
+    "viewTasks": "Просмотр задач"
   }
 }

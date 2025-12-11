@@ -709,6 +709,12 @@ app.use('/api/intents', require('./routes/intents'));
 app.use('/api/entities', require('./routes/entities'));
 app.use('/api/nlu', require('./routes/nlu'));
 
+// ✅ Autonomous Agents routes
+app.use('/api/autonomous', require('./routes/autonomous'));
+
+// ✅ Integrations routes
+app.use('/api/integrations', require('./routes/integrations'));
+
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
 

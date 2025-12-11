@@ -56,12 +56,14 @@ export default function Sidebar() {
   const agentLinks = [
     { path: '/ai-flow', icon: '🤖', label: t('sidebar.aiFlowStudio') },
     { path: '/agent-studio', icon: '🎯', label: t('sidebar.agentStudio') },
+    { path: '/autonomous-agents', icon: '🦾', label: t('sidebar.autonomousAgents', 'Autonomous Agents') },
     { path: '/workflows', icon: '🔄', label: t('sidebar.workflows') },
     { path: '/intents', icon: '🎯', label: t('sidebar.intentBuilder') },
     { path: '/orchestrations', icon: '🔀', label: t('sidebar.multiFlow') },
     { path: '/executions', icon: '📋', label: t('sidebar.executions') },
     { path: '/knowledge', icon: '🧠', label: t('sidebar.knowledgeBase') },
     { path: '/channels', icon: '📱', label: t('sidebar.channels') },
+    { path: '/integrations', icon: '🔌', label: t('sidebar.integrations', 'Integrations') },
     { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
   ];
 

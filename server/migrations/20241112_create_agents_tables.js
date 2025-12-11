@@ -2,10 +2,11 @@
  * Migration: Create agents tables for Multi-Agent AI system
  */
 
-exports.up = function(knex) {
-  return knex.schema
-    // 1. agents - AI agent definitions
-    .createTable('agents', function(table) {
+exports.up = async function(knex) {
+  // 1. agents - AI agent definitions
+  const hasAgents = await knex.schema.hasTable('agents');
+  if (!hasAgents) {
+    await knex.schema.createTable('agents', function(table) {
       table.increments('id').primary();
       table.integer('bot_id').unsigned().references('id').inTable('bots').onDelete('CASCADE');
       table.string('name', 255).notNullable();
@@ -23,10 +24,13 @@ exports.up = function(knex) {
 
       table.index(['bot_id', 'is_active']);
       table.index(['role']);
-    })
+    });
+  }
 
-    // 2. agent_workflows - workflow configurations
-    .createTable('agent_workflows', function(table) {
+  // 2. agent_workflows - workflow configurations
+  const hasWorkflows = await knex.schema.hasTable('agent_workflows');
+  if (!hasWorkflows) {
+    await knex.schema.createTable('agent_workflows', function(table) {
       table.increments('id').primary();
       table.integer('bot_id').unsigned().references('id').inTable('bots').onDelete('CASCADE');
       table.string('name', 255).notNullable();
@@ -41,10 +45,13 @@ exports.up = function(knex) {
 
       table.index(['bot_id', 'is_active']);
       table.index(['is_default']);
-    })
+    });
+  }
 
-    // 3. workflow_executions - execution logs
-    .createTable('workflow_executions', function(table) {
+  // 3. workflow_executions - execution logs
+  const hasExecutions = await knex.schema.hasTable('workflow_executions');
+  if (!hasExecutions) {
+    await knex.schema.createTable('workflow_executions', function(table) {
       table.increments('id').primary();
       table.integer('workflow_id').unsigned().references('id').inTable('agent_workflows').onDelete('CASCADE');
       table.integer('bot_id').unsigned().references('id').inTable('bots').onDelete('CASCADE');
@@ -62,10 +69,13 @@ exports.up = function(knex) {
       table.index(['bot_id']);
       table.index(['status']);
       table.index(['created_at']);
-    })
+    });
+  }
 
-    // 4. agent_execution_steps - individual agent steps
-    .createTable('agent_execution_steps', function(table) {
+  // 4. agent_execution_steps - individual agent steps
+  const hasSteps = await knex.schema.hasTable('agent_execution_steps');
+  if (!hasSteps) {
+    await knex.schema.createTable('agent_execution_steps', function(table) {
       table.increments('id').primary();
       table.integer('execution_id').unsigned().references('id').inTable('workflow_executions').onDelete('CASCADE');
       table.integer('agent_id').unsigned().references('id').inTable('agents').onDelete('CASCADE');
@@ -82,10 +92,13 @@ exports.up = function(knex) {
       table.index(['execution_id']);
       table.index(['agent_id']);
       table.index(['step_order']);
-    })
+    });
+  }
 
-    // 5. agent_messages - agent-to-agent messages
-    .createTable('agent_messages', function(table) {
+  // 5. agent_messages - agent-to-agent messages
+  const hasMessages = await knex.schema.hasTable('agent_messages');
+  if (!hasMessages) {
+    await knex.schema.createTable('agent_messages', function(table) {
       table.increments('id').primary();
       table.integer('execution_id').unsigned().references('id').inTable('workflow_executions').onDelete('CASCADE');
       table.integer('from_agent_id').unsigned().references('id').inTable('agents').onDelete('CASCADE');
@@ -100,6 +113,7 @@ exports.up = function(knex) {
       table.index(['to_agent_id']);
       table.index(['message_type']);
     });
+  }
 };
 
 exports.down = function(knex) {
