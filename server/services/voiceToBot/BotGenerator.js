@@ -40,7 +40,7 @@ class BotGenerator {
             userId,
             extractedData.name,
             extractedData.description || '',
-            'voice-to-bot',
+            'web',
             extractedData.language || options.language || 'en',
             true
           ]

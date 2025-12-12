@@ -43,8 +43,13 @@ router.post('/', checkPermission('member'), async (req, res) => {
     }
 
     // Validate platform value
-    const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger'];
-    if (!validPlatforms.includes(platform.toLowerCase())) {
+    let normalizedPlatform = platform.toLowerCase().trim();
+    // Auto-convert voice-to-bot to web platform
+    if (normalizedPlatform === 'voice-to-bot') {
+      normalizedPlatform = 'web';
+    }
+    const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger', 'web'];
+    if (!validPlatforms.includes(normalizedPlatform)) {
       return res.status(400).json({
         success: false,
         message: `Invalid platform. Valid platforms: ${validPlatforms.join(', ')}`
@@ -141,7 +146,7 @@ router.post('/', checkPermission('member'), async (req, res) => {
       organization_id,
       name.trim(),
       description ? description.trim() : null,
-      platform.toLowerCase().trim(),
+      normalizedPlatform,
       language ? language.toLowerCase().trim() : 'en',
       api_token,
       webhook_url ? webhook_url.trim() : null,
@@ -300,7 +305,16 @@ router.get('/', checkPermission('viewer'), async (req, res) => {
 router.get('/:id', checkPermission('viewer'), async (req, res) => {
   try {
     const { id } = req.params;
-    const organization_id = req.organization.id;
+
+    // Get organization_id safely
+    const organization_id = req.organization?.id;
+    if (!organization_id) {
+      log.error('GET bot - No organization context', { id, user_id: req.user?.id });
+      return res.status(403).json({
+        success: false,
+        message: 'Organization context required'
+      });
+    }
 
     log.debug('GET bot request', { id, organization_id, user_id: req.user?.id });
 
@@ -308,9 +322,9 @@ router.get('/:id', checkPermission('viewer'), async (req, res) => {
     const botId = parseInt(id, 10);
     if (!id || isNaN(botId) || botId < 1) {
       log.warn('Invalid bot ID', { id, parsed: botId });
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: 'Invalid bot ID'
+        message: 'Bot not found'
       });
     }
 
@@ -416,15 +430,20 @@ router.put('/:id', checkPermission('member'), async (req, res) => {
     }
 
     if (platform !== undefined) {
-      const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger'];
-      if (!validPlatforms.includes(platform.toLowerCase())) {
+      let normalizedPlatform = platform.toLowerCase().trim();
+      // Auto-convert voice-to-bot to web platform
+      if (normalizedPlatform === 'voice-to-bot') {
+        normalizedPlatform = 'web';
+      }
+      const validPlatforms = ['telegram', 'whatsapp', 'discord', 'slack', 'messenger', 'web'];
+      if (!validPlatforms.includes(normalizedPlatform)) {
         return res.status(400).json({
           success: false,
           message: `Invalid platform. Valid platforms: ${validPlatforms.join(', ')}`
         });
       }
       updates.push(`platform = $${paramCount}`);
-      values.push(platform.toLowerCase().trim());
+      values.push(normalizedPlatform);
       paramCount++;
     }
 

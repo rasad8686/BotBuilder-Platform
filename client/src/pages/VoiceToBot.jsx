@@ -23,6 +23,7 @@ const VoiceToBot = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customizations, setCustomizations] = useState({ name: '', description: '' });
+  const [micLoading, setMicLoading] = useState(false);
 
   // Refs
   const mediaRecorderRef = useRef(null);
@@ -87,10 +88,20 @@ const VoiceToBot = () => {
   // Start recording
   const startRecording = async () => {
     try {
+      setMicLoading(true);
       setError('');
 
       if (!session) {
         await startSession();
+      }
+
+      // Clean up any existing stream/recorder before starting new one
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current = null;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -124,6 +135,8 @@ const VoiceToBot = () => {
     } catch (err) {
       setError(t('voiceToBot.errors.microphoneAccess'));
       console.error('Microphone access error:', err);
+    } finally {
+      setMicLoading(false);
     }
   };
 
@@ -190,10 +203,22 @@ const VoiceToBot = () => {
       const data = await response.json();
 
       if (data.success) {
-        setTranscription(data.transcription);
+        // Post-process transcription to fix common misheard words
+        let processedTranscription = data.transcription;
+        const eldjoVariants = [
+          'el-dru', 'eldru', 'bildru', 'elzur', 'yaqut',
+          'el dru', 'el-drü', 'eldrü', 'eld-ru', 'elcü',
+          'ona elə', 'ona ele', 'ildur', 'İldur'
+        ];
+        eldjoVariants.forEach(variant => {
+          const regex = new RegExp(variant, 'gi');
+          processedTranscription = processedTranscription.replace(regex, 'Eldjo');
+        });
+
+        setTranscription(processedTranscription);
         setKeyPhrases(data.keyPhrases || []);
         setStep('extracting');
-        await extractIntents(data.transcription);
+        await extractIntents(processedTranscription);
       } else {
         throw new Error(data.error || 'Transcription failed');
       }
@@ -401,11 +426,14 @@ const VoiceToBot = () => {
               onClick={isRecording ? stopRecording : startRecording}
               style={{
                 ...styles.micButton,
-                ...(isRecording ? styles.micButtonRecording : {})
+                ...(isRecording ? styles.micButtonRecording : {}),
+                ...(micLoading ? styles.micButtonLoading : {})
               }}
-              disabled={loading}
+              disabled={micLoading}
             >
-              <span style={styles.micIcon}>{isRecording ? '⏹️' : '🎤'}</span>
+              <span style={styles.micIcon}>
+                {micLoading ? '⏳' : isRecording ? '⏹️' : '🎤'}
+              </span>
             </button>
 
             {isRecording && (
@@ -462,9 +490,26 @@ const VoiceToBot = () => {
         <div style={styles.previewSection}>
           <h2 style={styles.previewTitle}>{t('voiceToBot.botPreview', 'Bot Preview')}</h2>
 
+          {/* Editable Transcription */}
           <div style={styles.transcriptionBox}>
-            <strong>{t('voiceToBot.transcription', 'Transcription:')}</strong>
-            <p style={styles.transcriptionText}>"{transcription}"</p>
+            <div style={styles.transcriptionHeader}>
+              <strong>{t('voiceToBot.transcription', 'Transcription:')}</strong>
+              <span style={styles.editHint}>{t('voiceToBot.editHint', '(click to edit)')}</span>
+            </div>
+            <textarea
+              value={transcription}
+              onChange={(e) => setTranscription(e.target.value)}
+              style={styles.transcriptionInput}
+              rows={3}
+              placeholder={t('voiceToBot.transcriptionPlaceholder', 'Edit transcription here...')}
+            />
+            <button
+              onClick={() => extractIntents(transcription)}
+              style={styles.regenerateButton}
+              disabled={loading || !transcription.trim()}
+            >
+              {loading ? t('voiceToBot.regenerating', 'Regenerating...') : t('voiceToBot.regenerateBot', 'Regenerate Bot')}
+            </button>
           </div>
 
           <div style={styles.customizationSection}>
@@ -727,6 +772,11 @@ const styles = {
     animation: 'pulse 1.5s infinite',
     boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
   },
+  micButtonLoading: {
+    backgroundColor: '#9ca3af',
+    cursor: 'wait',
+    boxShadow: '0 4px 14px rgba(156, 163, 175, 0.4)'
+  },
   micIcon: {
     fontSize: '48px'
   },
@@ -814,6 +864,42 @@ const styles = {
     padding: '16px',
     borderRadius: '8px',
     marginBottom: '24px'
+  },
+  transcriptionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '8px'
+  },
+  editHint: {
+    fontSize: '12px',
+    color: '#6366f1',
+    fontWeight: '400'
+  },
+  transcriptionInput: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '8px',
+    border: '1px solid #bfdbfe',
+    fontSize: '14px',
+    resize: 'vertical',
+    fontFamily: 'inherit',
+    backgroundColor: 'white',
+    marginBottom: '12px',
+    boxSizing: 'border-box'
+  },
+  regenerateButton: {
+    backgroundColor: '#6366f1',
+    color: 'white',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   transcriptionText: {
     fontStyle: 'italic',
