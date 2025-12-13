@@ -12,7 +12,7 @@ const {
   EncryptionHelper
 } = require('../services/ai');
 const ragService = require('../services/ragService');
-const VoiceProcessor = require('../services/voiceToBot/VoiceProcessor');
+const GladiaProcessor = require('../services/voiceToBot/GladiaProcessor');
 
 let io = null;
 let executionSocket = null;
@@ -38,8 +38,8 @@ function initializeWebSocket(server) {
   executionSocket = new ExecutionSocket(io);
   executionSocket.initialize();
 
-  // Voice processor instance for streaming
-  const voiceProcessor = new VoiceProcessor();
+  // Gladia processor instance for real-time STT streaming
+  const gladiaProcessor = new GladiaProcessor();
 
   // Log connections
   io.on('connection', (socket) => {
@@ -55,7 +55,7 @@ function initializeWebSocket(server) {
     });
 
     // ========================================
-    // VOICE STREAMING (Google Cloud STT)
+    // VOICE STREAMING (Gladia Real-time STT)
     // ========================================
 
     // Track streaming state
@@ -87,8 +87,8 @@ function initializeWebSocket(server) {
         streamingTimeout = null;
       }
 
-      // Create streaming recognition session
-      streamingSession = voiceProcessor.createStreamingRecognition(
+      // Create streaming recognition session with Gladia
+      streamingSession = gladiaProcessor.createStreamingRecognition(
         { language },
         // onResult callback
         (result) => {
@@ -137,8 +137,8 @@ function initializeWebSocket(server) {
       );
 
       if (streamingSession) {
-        socket.emit('voice:ready', { status: 'streaming', provider: 'google-cloud' });
-        log.info('[WebSocket] Google Cloud STT streaming ready');
+        socket.emit('voice:ready', { status: 'streaming', provider: 'gladia' });
+        log.info('[WebSocket] Gladia real-time STT streaming ready');
 
         // Set timeout for max streaming duration (5 minutes)
         streamingTimeout = setTimeout(() => {
@@ -153,10 +153,10 @@ function initializeWebSocket(server) {
           }
         }, 5 * 60 * 1000);
       } else {
-        // Fallback: notify client to use Web Speech API
-        log.warn('[WebSocket] Google Cloud STT not available, using fallback');
+        // Fallback: notify client if Gladia is not available
+        log.warn('[WebSocket] Gladia STT not available, check API key');
         socket.emit('voice:fallback', {
-          reason: 'Google Cloud STT not available',
+          reason: 'Gladia STT not available - check GLADIA_API_KEY',
           useWebSpeech: true
         });
       }
