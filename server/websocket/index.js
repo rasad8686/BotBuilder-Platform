@@ -12,6 +12,7 @@ const {
   EncryptionHelper
 } = require('../services/ai');
 const ragService = require('../services/ragService');
+const VoiceProcessor = require('../services/voiceToBot/VoiceProcessor');
 
 let io = null;
 let executionSocket = null;
@@ -37,13 +38,194 @@ function initializeWebSocket(server) {
   executionSocket = new ExecutionSocket(io);
   executionSocket.initialize();
 
+  // Voice processor instance for streaming
+  const voiceProcessor = new VoiceProcessor();
+
   // Log connections
   io.on('connection', (socket) => {
     log.info(`[WebSocket] New connection: ${socket.id}`);
 
+    // Voice streaming state per socket
+    let streamingSession = null;
+    let finalTranscript = '';
+
     // Handle ping for keep-alive
     socket.on('ping', () => {
       socket.emit('pong');
+    });
+
+    // ========================================
+    // VOICE STREAMING (Google Cloud STT)
+    // ========================================
+
+    // Track streaming state
+    let streamingActive = false;
+    let audioChunkCount = 0;
+    let streamingTimeout = null;
+
+    // Start voice streaming session
+    socket.on('voice:start', (data) => {
+      const { language = 'az', sessionId } = data;
+      log.info('[WebSocket] Voice streaming started', { socketId: socket.id, language, sessionId });
+
+      // Clean up any existing session
+      if (streamingSession) {
+        try {
+          streamingSession.end();
+        } catch (e) {}
+        streamingSession = null;
+      }
+
+      // Reset state
+      finalTranscript = '';
+      audioChunkCount = 0;
+      streamingActive = true;
+
+      // Clear any existing timeout
+      if (streamingTimeout) {
+        clearTimeout(streamingTimeout);
+        streamingTimeout = null;
+      }
+
+      // Create streaming recognition session
+      streamingSession = voiceProcessor.createStreamingRecognition(
+        { language },
+        // onResult callback
+        (result) => {
+          if (!streamingActive) return;
+
+          // Log ALL results for debugging
+          log.info('[WebSocket] STT Result received', {
+            isFinal: result.isFinal,
+            transcript: result.transcript?.substring(0, 50),
+            confidence: result.confidence
+          });
+
+          if (result.isFinal) {
+            // Accumulate final transcript
+            finalTranscript += result.transcript + ' ';
+            socket.emit('voice:transcript', {
+              transcript: result.transcript,
+              isFinal: true,
+              confidence: result.confidence,
+              fullTranscript: finalTranscript.trim()
+            });
+            log.info('[WebSocket] Sent FINAL transcript to client', { transcript: result.transcript.substring(0, 50) });
+          } else {
+            // Send interim result immediately
+            socket.emit('voice:transcript', {
+              transcript: result.transcript,
+              isFinal: false,
+              confidence: result.confidence
+            });
+            log.info('[WebSocket] Sent INTERIM transcript to client', { transcript: result.transcript.substring(0, 50) });
+          }
+        },
+        // onError callback
+        (error) => {
+          log.error('[WebSocket] Voice streaming error', { error: error.message });
+          socket.emit('voice:error', { error: error.message });
+
+          // Try to recreate session on certain errors
+          if (error.code === 11 || error.message.includes('exceeded')) {
+            // Streaming limit exceeded, notify client to restart
+            streamingSession = null;
+            streamingActive = false;
+            socket.emit('voice:restart', { reason: 'Streaming limit exceeded' });
+          }
+        }
+      );
+
+      if (streamingSession) {
+        socket.emit('voice:ready', { status: 'streaming', provider: 'google-cloud' });
+        log.info('[WebSocket] Google Cloud STT streaming ready');
+
+        // Set timeout for max streaming duration (5 minutes)
+        streamingTimeout = setTimeout(() => {
+          if (streamingSession && streamingActive) {
+            log.info('[WebSocket] Streaming timeout reached, stopping');
+            socket.emit('voice:timeout', { reason: 'Max streaming duration reached' });
+            if (streamingSession) {
+              streamingSession.end();
+              streamingSession = null;
+            }
+            streamingActive = false;
+          }
+        }, 5 * 60 * 1000);
+      } else {
+        // Fallback: notify client to use Web Speech API
+        log.warn('[WebSocket] Google Cloud STT not available, using fallback');
+        socket.emit('voice:fallback', {
+          reason: 'Google Cloud STT not available',
+          useWebSpeech: true
+        });
+      }
+    });
+
+    // Receive audio chunk
+    socket.on('voice:audio', (audioData) => {
+      if (streamingSession && streamingActive && audioData) {
+        try {
+          // audioData is expected to be ArrayBuffer or Buffer
+          const buffer = Buffer.isBuffer(audioData) ? audioData : Buffer.from(audioData);
+
+          // Only process non-empty chunks
+          if (buffer.length > 0) {
+            streamingSession.write(buffer);
+            audioChunkCount++;
+
+            // Log every 50 chunks for debugging
+            if (audioChunkCount % 50 === 0) {
+              log.debug('[WebSocket] Audio chunks received', { count: audioChunkCount });
+            }
+          }
+        } catch (error) {
+          log.error('[WebSocket] Error writing audio chunk', { error: error.message });
+
+          // If stream is destroyed, notify client
+          if (error.message.includes('destroyed') || error.message.includes('ended')) {
+            socket.emit('voice:error', { error: 'Stream ended unexpectedly' });
+            streamingSession = null;
+            streamingActive = false;
+          }
+        }
+      }
+    });
+
+    // Stop voice streaming session
+    socket.on('voice:stop', () => {
+      log.info('[WebSocket] Voice streaming stopped', { socketId: socket.id, audioChunks: audioChunkCount });
+
+      // Clear timeout
+      if (streamingTimeout) {
+        clearTimeout(streamingTimeout);
+        streamingTimeout = null;
+      }
+
+      streamingActive = false;
+
+      if (streamingSession) {
+        try {
+          streamingSession.end();
+        } catch (e) {
+          log.warn('[WebSocket] Error ending stream', { error: e.message });
+        }
+        streamingSession = null;
+      }
+
+      // Send final accumulated transcript
+      socket.emit('voice:complete', {
+        finalTranscript: finalTranscript.trim(),
+        audioChunksProcessed: audioChunkCount
+      });
+    });
+
+    // Clean up on disconnect
+    socket.on('disconnect', () => {
+      if (streamingSession) {
+        streamingSession.end();
+        streamingSession = null;
+      }
     });
 
     // Handle widget join

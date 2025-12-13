@@ -1,6 +1,7 @@
 /**
  * Voice Processor Service
  * Handles audio processing and transcription for voice-to-bot feature
+ * Supports: Google Cloud STT (primary), Whisper (fallback), Gemini (correction)
  */
 
 const log = require('../../utils/logger');
@@ -8,9 +9,10 @@ const log = require('../../utils/logger');
 class VoiceProcessor {
   constructor(config = {}) {
     this.config = config;
-    // Note: API keys are read lazily in getOpenAIKey/getGeminiKey to ensure dotenv is loaded
+    // Note: API keys are read lazily to ensure dotenv is loaded
     this._openaiApiKey = config.openaiApiKey || null;
     this._geminiApiKey = config.geminiApiKey || null;
+    this._googleSpeechClient = null;
     this.supportedFormats = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'flac'];
     this.supportedLanguages = ['en', 'ru', 'tr', 'az', 'es', 'de', 'fr', 'zh', 'ja', 'ko', 'ar', 'pt'];
   }
@@ -24,22 +26,45 @@ class VoiceProcessor {
     return this._geminiApiKey || process.env.GEMINI_API_KEY;
   }
 
+  // Lazy getter for Google Cloud Speech client
+  get googleSpeechClient() {
+    if (!this._googleSpeechClient && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      try {
+        const speech = require('@google-cloud/speech');
+        this._googleSpeechClient = new speech.SpeechClient();
+        log.info('Google Cloud Speech client initialized');
+      } catch (error) {
+        log.warn('Google Cloud Speech client failed to initialize', { error: error.message });
+        this._googleSpeechClient = null;
+      }
+    }
+    return this._googleSpeechClient;
+  }
+
   /**
-   * Transcribe audio - Whisper first with custom vocabulary, then Gemini fallback
-   * Post-processing fixes "Eldjo" misrecognitions
+   * Transcribe audio - Google Cloud STT (primary) + Whisper (fallback) + Gemini (correction)
+   * Pipeline: Google STT → Gemini AI Correction → Post-processing
    */
   async transcribe(audioData, options = {}) {
     try {
       const startTime = Date.now();
       let result = null;
+      let baseText = null;
 
-      // Try Whisper FIRST (more reliable with prompt)
-      if (this.openaiApiKey) {
-        // Add custom vocabulary prompt for better recognition
-        // Include the exact word "Eldjo" multiple times to reinforce it
-        const customPrompt = 'Eldjo. The company name is Eldjo. Eldjo BotBuilder. Eldjo chatbot platform. Customer support bot for Eldjo. Azerbaijani company Eldjo.';
+      // STEP 1: Try Google Cloud STT FIRST (best quality for Az/Tr)
+      if (this.googleSpeechClient) {
+        result = await this.transcribeWithGoogleCloud(audioData, options, startTime);
+        if (result.success) {
+          baseText = result.text;
+          log.info('Google Cloud STT transcription', { text: baseText.substring(0, 100), provider: 'google' });
+        } else {
+          log.warn('Google Cloud STT failed, trying Whisper', { error: result.error });
+        }
+      }
 
-        // Force Azerbaijani language detection for az/tr
+      // STEP 2: Fallback to Whisper if Google failed
+      if (!baseText && this.openaiApiKey) {
+        const customPrompt = 'Eldjo bot, Eldjo chatbot, Eldjo müştəri botu, Eldjo satış botu, Eldjo şirkəti, Eldjo platforması. Eldjo Eldjo Eldjo.';
         const lang = options.language;
         const whisperLang = (lang === 'az' || lang === 'tr') ? 'az' : lang;
 
@@ -50,22 +75,37 @@ class VoiceProcessor {
         }, startTime);
 
         if (result.success) {
-          // Apply post-processing to fix brand names
-          result.text = this.fixBrandNames(result.text);
-          log.info('Whisper transcription successful', { text: result.text.substring(0, 50) });
-          return result;
+          baseText = result.text;
+          log.info('Whisper transcription', { text: baseText.substring(0, 100), provider: 'whisper' });
+        } else {
+          log.warn('Whisper transcription failed, trying Gemini only', { error: result.error });
         }
-        log.warn('Whisper transcription failed, trying Gemini', { error: result.error });
       }
 
-      // Fallback to Gemini
+      // STEP 3: Use Gemini to CORRECT the transcription (or transcribe if all failed)
       if (this.geminiApiKey) {
-        result = await this.transcribeWithGemini(audioData, options, startTime);
-        if (result.success) {
-          // Apply post-processing to fix brand names
-          result.text = this.fixBrandNames(result.text);
-          return result;
+        if (baseText) {
+          // Gemini CORRECTION mode - fix mistakes
+          const correctedText = await this.correctWithGemini(baseText, options.language || 'az');
+          if (correctedText) {
+            result.text = correctedText;
+            result.correctedByGemini = true;
+            log.info('Gemini correction applied', { original: baseText.substring(0, 50), corrected: correctedText.substring(0, 50) });
+          }
+        } else {
+          // Gemini TRANSCRIPTION mode - no other result available
+          result = await this.transcribeWithGemini(audioData, options, startTime);
+          if (result.success) {
+            baseText = result.text;
+          }
         }
+      }
+
+      // STEP 4: Apply post-processing to fix brand names
+      if (result && result.success) {
+        result.text = this.fixBrandNames(result.text);
+        result.processingTimeMs = Date.now() - startTime;
+        return result;
       }
 
       // Demo mode: return mock transcription if no API key
@@ -73,6 +113,172 @@ class VoiceProcessor {
     } catch (error) {
       log.error('Transcription error', { error: error.message });
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Transcribe audio using Google Cloud Speech-to-Text
+   * Best quality for Azerbaijani and Turkish
+   */
+  async transcribeWithGoogleCloud(audioData, options, startTime) {
+    try {
+      const client = this.googleSpeechClient;
+      if (!client) {
+        return { success: false, error: 'Google Cloud Speech client not available' };
+      }
+
+      // Convert audio to base64
+      let audioBase64;
+      if (Buffer.isBuffer(audioData)) {
+        audioBase64 = audioData.toString('base64');
+      } else if (typeof audioData === 'string') {
+        audioBase64 = audioData;
+      }
+
+      // Map language codes to Google format
+      const langMap = {
+        'az': 'az-AZ',
+        'tr': 'tr-TR',
+        'en': 'en-US',
+        'ru': 'ru-RU',
+        'de': 'de-DE',
+        'fr': 'fr-FR',
+        'es': 'es-ES'
+      };
+      const languageCode = langMap[options.language] || 'az-AZ';
+
+      // Get encoding based on format
+      const encodingMap = {
+        'webm': 'WEBM_OPUS',
+        'ogg': 'OGG_OPUS',
+        'flac': 'FLAC',
+        'wav': 'LINEAR16',
+        'mp3': 'MP3'
+      };
+      const encoding = encodingMap[options.format] || 'WEBM_OPUS';
+
+      const request = {
+        audio: {
+          content: audioBase64
+        },
+        config: {
+          encoding: encoding,
+          sampleRateHertz: options.format === 'wav' ? 16000 : undefined,
+          languageCode: languageCode,
+          // Alternative languages for better recognition
+          alternativeLanguageCodes: languageCode === 'az-AZ' ? ['tr-TR', 'ru-RU'] : undefined,
+          // Enable automatic punctuation
+          enableAutomaticPunctuation: true,
+          // Speech adaptation for brand names
+          speechContexts: [{
+            phrases: ['Eldjo', 'Eldjo bot', 'Eldjo chatbot', 'Eldjo müştəri', 'Eldjo satış'],
+            boost: 20
+          }],
+          // Model selection
+          model: 'latest_long',
+          useEnhanced: true
+        }
+      };
+
+      const [response] = await client.recognize(request);
+      const transcription = response.results
+        .map(result => result.alternatives[0].transcript)
+        .join(' ');
+
+      if (!transcription || transcription.trim() === '') {
+        return { success: false, error: 'No transcription returned from Google Cloud' };
+      }
+
+      const processingTime = Date.now() - startTime;
+
+      // Get confidence
+      const confidence = response.results[0]?.alternatives[0]?.confidence || 0.9;
+
+      return {
+        success: true,
+        text: transcription,
+        language: options.language,
+        duration: 0,
+        words: [],
+        segments: [],
+        confidence: confidence,
+        processingTimeMs: processingTime,
+        provider: 'google-cloud'
+      };
+    } catch (error) {
+      log.error('Google Cloud STT error', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Use Gemini to correct Whisper transcription errors
+   * Especially effective for brand names like "Eldjo"
+   */
+  async correctWithGemini(text, language = 'az') {
+    try {
+      const fetch = require('node-fetch');
+
+      const correctionPrompts = {
+        az: `Aşağıdakı transkripsiyanı düzəlt.
+DİQQƏT: "Eldjo" brend adıdır və MÜTLƏQ "Eldjo" kimi yazılmalıdır.
+Səhv variantlar: eldju, elçu, elcü, el-djo, bildru, elzur, ildur, əl çoğu, elçin, elçi və s.
+Hamısını "Eldjo" ilə əvəz et.
+Yalnız düzəldilmiş mətni qaytar, başqa heç nə yazma.
+
+Transkripsiya: "${text}"`,
+        tr: `Aşağıdaki transkripsiyonu düzelt.
+DİKKAT: "Eldjo" marka adıdır ve MUTLAKA "Eldjo" olarak yazılmalıdır.
+Yanlış varyantlar: eldju, elçu, elcü, el-djo, bildru, elzur, ildur ve benzerleri.
+Hepsini "Eldjo" ile değiştir.
+Sadece düzeltilmiş metni döndür, başka bir şey yazma.
+
+Transkripsiyon: "${text}"`,
+        en: `Correct the following transcription.
+IMPORTANT: "Eldjo" is a brand name and MUST be spelled exactly as "Eldjo".
+Wrong variants: eldju, el-djo, bildru, elzur, ildur, etc.
+Replace all of them with "Eldjo".
+Return ONLY the corrected text, nothing else.
+
+Transcription: "${text}"`,
+        ru: `Исправьте следующую транскрипцию.
+ВАЖНО: "Eldjo" - это название бренда и ДОЛЖНО быть написано именно как "Eldjo".
+Неправильные варианты: eldju, el-djo, bildru, elzur, ildur и т.д.
+Замените все на "Eldjo".
+Верните ТОЛЬКО исправленный текст.
+
+Транскрипция: "${text}"`
+      };
+
+      const prompt = correctionPrompts[language] || correctionPrompts.en;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 500
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        log.warn('Gemini correction failed', { status: response.status });
+        return null;
+      }
+
+      const result = await response.json();
+      const correctedText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      return correctedText || null;
+    } catch (error) {
+      log.error('Gemini correction error', { error: error.message });
+      return null;
     }
   }
 
@@ -95,17 +301,19 @@ class VoiceProcessor {
       const language = options.language || 'en';
 
       // Language-specific prompt for better transcription
+      // IMPORTANT: "Eldjo" is a brand name - must be spelled exactly as "Eldjo"
       const languagePrompts = {
-        en: 'Transcribe this audio accurately. Pay special attention to proper names and brand names like "Eldjo". Return only the transcribed text.',
-        az: 'Bu audionu dəqiq transkripsiya edin. "Eldjo" kimi xüsusi adlara diqqət yetirin. Yalnız transkripsiya edilmiş mətni qaytarın.',
-        ru: 'Точно транскрибируйте это аудио. Обратите особое внимание на имена собственные вроде "Eldjo". Верните только транскрибированный текст.',
-        tr: 'Bu sesi doğru bir şekilde yazıya dökün. "Eldjo" gibi özel isimlere dikkat edin. Sadece yazıya dökülmüş metni döndürün.'
+        en: 'Transcribe this audio word-for-word. CRITICAL: The brand name "Eldjo" must be spelled exactly as "Eldjo" (not Eldju, El-djo, or any other variation). Return ONLY the transcribed text, nothing else.',
+        az: 'Bu audionu sözbəsöz transkripsiya edin. KRİTİK: "Eldjo" brend adı dəqiq "Eldjo" kimi yazılmalıdır (Eldju, El-djo və ya başqa variant yox). YALNIZ transkripsiya edilmiş mətni qaytarın.',
+        ru: 'Транскрибируйте это аудио дословно. ВАЖНО: Название бренда "Eldjo" должно быть написано именно как "Eldjo" (не Eldju, El-djo или другие варианты). Верните ТОЛЬКО транскрибированный текст.',
+        tr: 'Bu sesi kelimesi kelimesine yazıya dökün. KRİTİK: "Eldjo" marka adı tam olarak "Eldjo" şeklinde yazılmalıdır (Eldju, El-djo veya başka bir varyasyon değil). SADECE yazıya dökülmüş metni döndürün.'
       };
 
       const prompt = languagePrompts[language] || languagePrompts.en;
 
+      // Use Gemini 2.5 Flash for best audio transcription
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-exp-1206:generateContent?key=${this.geminiApiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.geminiApiKey}`,
         {
           method: 'POST',
           headers: {
@@ -258,6 +466,179 @@ class VoiceProcessor {
     } catch (error) {
       log.error('Chunk transcription error', { error: error.message });
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Create a streaming recognition session for real-time transcription
+   * Uses Google Cloud Speech-to-Text Streaming API
+   * @param {Object} options - Streaming options
+   * @param {Function} onResult - Callback for transcription results
+   * @param {Function} onError - Callback for errors
+   * @returns {Object} - { write, end, stream }
+   */
+  createStreamingRecognition(options = {}, onResult, onError) {
+    const client = this.googleSpeechClient;
+    if (!client) {
+      log.warn('Google Cloud Speech client not available for streaming');
+      return null;
+    }
+
+    const language = options.language || 'az';
+    const langMap = {
+      'az': 'az-AZ',
+      'tr': 'tr-TR',
+      'en': 'en-US',
+      'ru': 'ru-RU',
+      'de': 'de-DE',
+      'fr': 'fr-FR',
+      'es': 'es-ES'
+    };
+    const languageCode = langMap[language] || 'az-AZ';
+
+    // Configure streaming request - optimized for FAST interim results with accuracy
+    const request = {
+      config: {
+        encoding: 'WEBM_OPUS',
+        sampleRateHertz: 48000,
+        audioChannelCount: 1,
+        languageCode: languageCode,
+        // Use 'default' model for fast interim results
+        model: 'default',
+        useEnhanced: false,
+        enableAutomaticPunctuation: false,
+        profanityFilter: false,
+        // STRONG speech adaptation - repeat Eldjo many times for maximum recognition
+        speechContexts: [{
+          phrases: [
+            // BRAND NAME - MAXIMUM PRIORITY - repeat multiple times
+            'Eldjo', 'Eldjo', 'Eldjo', 'Eldjo', 'Eldjo',
+            'eldjo', 'ELDJO',
+            // Common full phrases with Eldjo
+            'Eldjo bot', 'Eldjo botu', 'Eldjo chatbot',
+            'mənə Eldjo', 'bana Eldjo', 'bir Eldjo',
+            'mənə Eldjo bot', 'bana Eldjo bot',
+            'mənə Eldjo bot yarat', 'bana Eldjo bot yarat',
+            'Eldjo bot yarat', 'Eldjo botu yarat',
+            // Possible misrecognitions to boost correct form
+            'Elco bot', 'Elço bot', 'Eljo bot',
+            // Common Turkish/Azerbaijani phrases
+            'bot yarat', 'botu yarat', 'chatbot yarat',
+            'mənə bot', 'bana bot', 'bir bot',
+            'mənə', 'bana', 'yarat', 'bot', 'botu',
+            // Related business words
+            'müştəri', 'satış', 'dəstək', 'chatbot', 'müşteri'
+          ],
+          boost: 20
+        }],
+        singleUtterance: false
+      },
+      interimResults: true
+    };
+
+    log.info('Creating streaming recognition', { languageCode, model: 'default' });
+
+    try {
+      let isStreamEnded = false;
+      let lastTranscript = '';
+
+      const recognizeStream = client
+        .streamingRecognize(request)
+        .on('error', (error) => {
+          log.error('Streaming recognition error', { error: error.message, code: error.code });
+
+          // Don't report errors if stream was intentionally ended
+          if (isStreamEnded && error.code === 1) {
+            return; // Cancelled error after end() is expected
+          }
+
+          if (onError) onError(error);
+        })
+        .on('data', (data) => {
+          if (isStreamEnded) return;
+
+          if (data.results && data.results[0]) {
+            const result = data.results[0];
+            const transcript = result.alternatives[0]?.transcript || '';
+            const isFinal = result.isFinal;
+            const confidence = result.alternatives[0]?.confidence || 0;
+
+            // Skip duplicate interim results
+            if (!isFinal && transcript === lastTranscript) {
+              return;
+            }
+            lastTranscript = transcript;
+
+            // Log RAW transcript BEFORE fix (for debugging misrecognitions)
+            log.info('[STT RAW]', {
+              isFinal,
+              raw: transcript,
+              stability: result.stability || 0
+            });
+
+            // Apply brand name fixes
+            const correctedTranscript = this.fixBrandNames(transcript);
+
+            // Log if correction was made
+            if (correctedTranscript !== transcript) {
+              log.info('[STT CORRECTED]', {
+                from: transcript,
+                to: correctedTranscript
+              });
+            }
+
+            if (onResult) {
+              onResult({
+                transcript: correctedTranscript,
+                isFinal,
+                confidence,
+                raw: transcript,
+                stability: result.stability || 0
+              });
+            }
+
+            if (isFinal) {
+              log.debug('Streaming final result', {
+                transcript: correctedTranscript.substring(0, 50),
+                confidence
+              });
+            }
+          }
+        })
+        .on('end', () => {
+          log.debug('Streaming recognition ended');
+          isStreamEnded = true;
+        });
+
+      log.info('Streaming recognition session created', { languageCode });
+
+      return {
+        stream: recognizeStream,
+        write: (audioData) => {
+          if (recognizeStream && !recognizeStream.destroyed && !isStreamEnded) {
+            try {
+              recognizeStream.write(audioData);
+            } catch (e) {
+              log.warn('Error writing to stream', { error: e.message });
+            }
+          }
+        },
+        end: () => {
+          if (recognizeStream && !recognizeStream.destroyed && !isStreamEnded) {
+            isStreamEnded = true;
+            try {
+              recognizeStream.end();
+            } catch (e) {
+              log.warn('Error ending stream', { error: e.message });
+            }
+          }
+        },
+        isEnded: () => isStreamEnded
+      };
+    } catch (error) {
+      log.error('Failed to create streaming recognition', { error: error.message });
+      if (onError) onError(error);
+      return null;
     }
   }
 
@@ -443,10 +824,28 @@ class VoiceProcessor {
 
     // EXACT string replacements (case-insensitive) - highest priority
     const exactReplacements = [
+      // Turkish misrecognitions (MOST COMMON) - from real logs
+      'Ebru', 'ebru', 'EBRU',
+      'yılsu', 'Yılsu', 'yilsu', 'Yilsu',
+      'yıldız', 'Yıldız', 'yildiz', 'Yildiz',
+      'yılsı', 'Yılsı', 'yilsi', 'Yilsi',
+      'vallahi', 'Vallahi',
+      'elcio', 'Elcio', 'eljio', 'Eljio',
+      // Two-word splits (VERY COMMON in interim results)
+      'el jo', 'El Jo', 'el co', 'El Co', 'el cu', 'El Cu',
+      'el çu', 'El Çu', 'el ço', 'El Ço', 'el ce', 'El Ce',
+      'eld jo', 'Eld Jo', 'eld co', 'Eld Co',
+      'el yo', 'El Yo', 'el go', 'El Go',
+      'el do', 'El Do', 'eld o', 'Eld O',
       // Azerbaijani/Turkish misrecognitions
       'əl çoğu', 'əl çogu', 'əl coğu', 'əl cogu', 'el çoğu', 'el çogu',
       'el coğu', 'el cogu', 'əlçoğu', 'əlçogu', 'elçoğu', 'elçogu',
       'al chogu', 'al çogu', 'al cogu', 'alchogu',
+      'elçin', 'elçi', 'elçü', 'elcü', 'elcu', 'elçu',
+      'elçin borcu', 'elçin borcu ölçüsü',
+      // Single word Turkish variations
+      'eldo', 'Eldo', 'ello', 'Ello', 'elyo', 'Elyo',
+      'elce', 'Elce', 'elge', 'Elge',
       // Common speech recognition errors
       'elzur', 'el-zur', 'el zur', 'ilzur', 'il-zur', 'elzür', 'ilzür',
       'elzu', 'ilzu', 'elsu', 'ilsu', 'elzü', 'ilzü',
@@ -457,14 +856,19 @@ class VoiceProcessor {
       // German/Slavic misrecognitions
       'eldzü', 'eldzu', 'eldzju', 'eldžu', 'eldjü', 'eldju',
       'ildzü', 'ildzu', 'ildzju', 'ildžu', 'ildjü', 'ildju',
-      // Close variations (eldju -> Eldjo)
+      // Close variations
       'eltju', 'el-dju', 'el-djo', 'elcjo', 'elcju', 'eld-ju',
       // Other variations
       'eljo', 'elljo', 'eltjo', 'eltjo', 'eldyo', 'elidjo',
-      'el jo', 'eld jo', 'el-jo', 'eld-jo',
+      'el-jo', 'eld-jo',
       // More edge cases
       'elgeo', 'elgio', 'elgyo', 'eljio', 'elzho', 'eljou',
-      'eldio', 'eltio', 'elchio', 'elcio', 'elsio'
+      'eldio', 'eltio', 'elchio', 'elcio', 'elsio',
+      'ildur', 'İldur', 'eldur', 'Eldur',
+      'elco', 'elço', 'elso', 'elşo',
+      // Additional Turkish/Azerbaijani sounds
+      'əlco', 'Əlco', 'əlço', 'Əlço', 'əlyo', 'Əlyo',
+      'elcə', 'Elcə', 'elcö', 'Elcö'
     ];
 
     for (const wrong of exactReplacements) {
