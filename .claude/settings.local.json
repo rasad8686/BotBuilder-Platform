@@ -35,7 +35,13 @@
       "Bash(npx jest:*)",
       "Bash(timeout 300 npm test -- --coverage --coverageReporters=text-summary --forceExit --testTimeout=30000)",
       "Bash(sort:*)",
-      "Bash(npx knex:*)"
+      "Bash(npx knex:*)",
+      "WebSearch",
+      "Bash(ren:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill /PID 7404 /F)",
+      "Bash(taskkill:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

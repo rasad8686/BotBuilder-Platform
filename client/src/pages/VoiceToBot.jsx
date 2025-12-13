@@ -2,13 +2,218 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import API_URL from '../utils/api';
+import { io } from 'socket.io-client';
+
+// Professional Microphone Icon SVG Component
+const MicrophoneIcon = ({ isRecording, size = 48 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ filter: isRecording ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' : 'none' }}
+  >
+    <path
+      d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z"
+      fill="currentColor"
+    />
+    <path
+      d="M19 10V12C19 15.87 15.87 19 12 19C8.13 19 5 15.87 5 12V10H3V12C3 16.41 6.32 20.06 10.5 20.77V23H13.5V20.77C17.68 20.06 21 16.41 21 12V10H19Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+// Stop Icon SVG
+const StopIcon = ({ size = 36 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
+// Audio Waveform Visualizer Component
+const AudioWaveform = ({ isActive, audioLevel = 0 }) => {
+  const bars = 24;
+  const [levels, setLevels] = useState(Array(bars).fill(0.1));
+  const audioLevelRef = useRef(audioLevel);
+
+  // Keep ref updated with latest audioLevel
+  useEffect(() => {
+    audioLevelRef.current = audioLevel;
+  }, [audioLevel]);
+
+  useEffect(() => {
+    if (!isActive) {
+      setLevels(Array(bars).fill(0.1));
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const currentLevel = audioLevelRef.current;
+      setLevels(prev => prev.map((_, i) => {
+        const centerDistance = Math.abs(i - bars / 2) / (bars / 2);
+        // More dynamic response to audio
+        const baseLevel = 0.15 + Math.random() * 0.3 * (1 - centerDistance * 0.5);
+        const audioInfluence = currentLevel * 2 * (1 - centerDistance * 0.3);
+        return Math.min(1, baseLevel + audioInfluence);
+      }));
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [isActive]);
+
+  return (
+    <div style={waveformStyles.container}>
+      {levels.map((level, i) => (
+        <div
+          key={i}
+          style={{
+            ...waveformStyles.bar,
+            height: `${level * 100}%`,
+            opacity: 0.4 + level * 0.6,
+            background: `linear-gradient(180deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%)`,
+            transition: 'height 0.05s ease-out'
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const waveformStyles = {
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '3px',
+    height: '60px',
+    padding: '0 20px'
+  },
+  bar: {
+    width: '4px',
+    borderRadius: '2px',
+    minHeight: '4px'
+  }
+};
+
+// Animated Ring Component for Microphone
+const AnimatedRings = ({ isRecording }) => {
+  if (!isRecording) return null;
+
+  return (
+    <>
+      <div style={ringStyles.ring1} />
+      <div style={ringStyles.ring2} />
+      <div style={ringStyles.ring3} />
+    </>
+  );
+};
+
+const ringStyles = {
+  ring1: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    border: '2px solid rgba(168, 85, 247, 0.4)',
+    animation: 'ringPulse 2s ease-out infinite'
+  },
+  ring2: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    border: '2px solid rgba(99, 102, 241, 0.3)',
+    animation: 'ringPulse 2s ease-out infinite 0.5s'
+  },
+  ring3: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    border: '2px solid rgba(59, 130, 246, 0.2)',
+    animation: 'ringPulse 2s ease-out infinite 1s'
+  }
+};
+
+// Listening Animation Component
+const ListeningAnimation = () => (
+  <div style={listeningStyles.container}>
+    <div style={listeningStyles.orb}>
+      <div style={listeningStyles.orbInner} />
+      <div style={listeningStyles.orbGlow} />
+    </div>
+    <span style={listeningStyles.text}>Listening</span>
+    <div style={listeningStyles.dots}>
+      <span style={{ ...listeningStyles.dot, animationDelay: '0s' }} />
+      <span style={{ ...listeningStyles.dot, animationDelay: '0.2s' }} />
+      <span style={{ ...listeningStyles.dot, animationDelay: '0.4s' }} />
+    </div>
+  </div>
+);
+
+const listeningStyles = {
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    padding: '12px 24px',
+    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)',
+    borderRadius: '24px',
+    marginBottom: '16px'
+  },
+  orb: {
+    position: 'relative',
+    width: '16px',
+    height: '16px'
+  },
+  orbInner: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    animation: 'orbPulse 1.5s ease-in-out infinite'
+  },
+  orbGlow: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    filter: 'blur(6px)',
+    opacity: 0.5,
+    animation: 'orbPulse 1.5s ease-in-out infinite'
+  },
+  text: {
+    fontSize: '15px',
+    fontWeight: '500',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text'
+  },
+  dots: {
+    display: 'flex',
+    gap: '4px'
+  },
+  dot: {
+    width: '4px',
+    height: '4px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    animation: 'dotBounce 1s ease-in-out infinite'
+  }
+};
 
 const VoiceToBot = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   // State
-  const [step, setStep] = useState('idle'); // idle, recording, transcribing, extracting, preview, generating, completed
+  const [step, setStep] = useState('idle');
   const [session, setSession] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -24,21 +229,393 @@ const VoiceToBot = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customizations, setCustomizations] = useState({ name: '', description: '' });
   const [micLoading, setMicLoading] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [audioLevel, setAudioLevel] = useState(0);
 
   // Refs
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
   const streamRef = useRef(null);
-  const sessionRef = useRef(null); // For immediate session access
+  const sessionRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const socketRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const processorRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const useWebSocketStreamingRef = useRef(false);
 
-  // Fetch templates on mount
+  // Audio Level Analyzer - for waveform animation
+  const startAudioAnalyzer = (stream) => {
+    try {
+      // Stop any existing analyzer
+      stopAudioAnalyzer();
+
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const updateLevel = () => {
+        if (!analyserRef.current) return;
+
+        analyser.getByteFrequencyData(dataArray);
+        // Calculate RMS for better audio level detection
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i];
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const level = Math.min(1, rms / 128);
+
+        setAudioLevel(level);
+        animationFrameRef.current = requestAnimationFrame(updateLevel);
+      };
+
+      updateLevel();
+      console.log('[VoiceToBot] Audio analyzer started');
+    } catch (e) {
+      console.warn('[VoiceToBot] Audio analyzer error:', e);
+    }
+  };
+
+  const stopAudioAnalyzer = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    analyserRef.current = null;
+    setAudioLevel(0);
+  };
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    // Determine WebSocket URL based on environment
+    let wsUrl;
+    if (API_URL && API_URL !== '' && !API_URL.includes('render.com')) {
+      // Use API_URL if it's set and not the default render.com URL
+      wsUrl = API_URL.replace(/^http/, 'ws').replace(/\/api$/, '');
+    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Development: connect to backend on port 5000
+      wsUrl = `ws://${window.location.hostname}:5000`;
+    } else {
+      // Production: use same origin
+      wsUrl = window.location.origin.replace(/^http/, 'ws');
+    }
+
+    console.log('[VoiceToBot] Connecting to WebSocket:', wsUrl);
+
+    socketRef.current = io(wsUrl, {
+      path: '/ws',
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      upgrade: true
+    });
+
+    socketRef.current.on('connect', () => {
+      console.log('[VoiceToBot] WebSocket connected');
+    });
+
+    socketRef.current.on('voice:ready', (data) => {
+      console.log('[VoiceToBot] Voice streaming ready', data);
+      useWebSocketStreamingRef.current = true;
+
+      // Set a timeout - if no transcript received within 3 seconds, fallback to Web Speech
+      setTimeout(() => {
+        // Check if we still haven't received any transcript
+        if (useWebSocketStreamingRef.current && !document.querySelector('[data-transcript-received]')) {
+          console.log('[VoiceToBot] No transcript received, checking Web Speech fallback...');
+        }
+      }, 3000);
+    });
+
+    socketRef.current.on('voice:fallback', (data) => {
+      console.log('[VoiceToBot] Google Cloud STT not available:', data.reason);
+      useWebSocketStreamingRef.current = false;
+      // Do NOT fallback to Web Speech API - it produces incorrect results
+      // Just show a message that real-time transcription is not available
+      setInterimTranscript('(Real-time transcription not available)');
+    });
+
+    socketRef.current.on('voice:transcript', (data) => {
+      // Handle real-time transcription from Google Cloud STT
+      console.log('[VoiceToBot] Received transcript:', data);
+
+      if (data.isFinal) {
+        // Final result - add to live transcript
+        setLiveTranscript(prev => {
+          const newText = prev + data.transcript + ' ';
+          console.log('[VoiceToBot] Final transcript updated:', newText);
+          return newText;
+        });
+        setInterimTranscript('');
+      } else {
+        // Interim result - show as typing immediately
+        console.log('[VoiceToBot] Interim transcript:', data.transcript);
+        setInterimTranscript(data.transcript);
+      }
+    });
+
+    socketRef.current.on('voice:error', (data) => {
+      console.error('[VoiceToBot] Voice streaming error:', data.error);
+      useWebSocketStreamingRef.current = false;
+      // Do NOT fallback to Web Speech API - just log the error
+    });
+
+    socketRef.current.on('voice:restart', (data) => {
+      console.log('[VoiceToBot] Streaming restart requested:', data.reason);
+      // Restart streaming session if still recording
+      if (isRecording && streamRef.current) {
+        socketRef.current.emit('voice:start', {
+          language: language,
+          sessionId: sessionRef.current?.session_id
+        });
+      }
+    });
+
+    socketRef.current.on('voice:timeout', (data) => {
+      console.log('[VoiceToBot] Streaming timeout:', data.reason);
+      // Keep current transcripts, just log the timeout
+    });
+
+    socketRef.current.on('voice:complete', (data) => {
+      console.log('[VoiceToBot] Voice streaming complete', {
+        finalTranscript: data.finalTranscript?.substring(0, 50),
+        chunks: data.audioChunksProcessed
+      });
+    });
+
+    socketRef.current.on('disconnect', (reason) => {
+      console.log('[VoiceToBot] WebSocket disconnected:', reason);
+      useWebSocketStreamingRef.current = false;
+    });
+
+    socketRef.current.on('reconnect', (attemptNumber) => {
+      console.log('[VoiceToBot] WebSocket reconnected after', attemptNumber, 'attempts');
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
     return () => {
       stopRecording();
+      stopAudioAnalyzer();
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, []);
+
+  const getSpeechLangCode = (lang) => {
+    const langMap = {
+      'en': 'en-US',
+      'az': 'az-AZ',
+      'tr': 'tr-TR',
+      'ru': 'ru-RU',
+      'es': 'es-ES',
+      'de': 'de-DE',
+      'fr': 'fr-FR'
+    };
+    return langMap[lang] || 'en-US';
+  };
+
+  const startSpeechRecognition = (audioStream) => {
+    setLiveTranscript('');
+    setInterimTranscript('');
+
+    // Use ONLY Google Cloud STT for real-time transcription (more accurate)
+    // Do NOT use Web Speech API - it produces incorrect results
+    if (socketRef.current && socketRef.current.connected) {
+      console.log('[VoiceToBot] Starting Google Cloud STT streaming for real-time transcription...');
+
+      // Notify server to start streaming session
+      socketRef.current.emit('voice:start', {
+        language: language,
+        sessionId: sessionRef.current?.session_id
+      });
+
+      try {
+        // Create AudioContext for processing
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContext({ sampleRate: 48000 });
+
+        // Create media stream source (needed for audio context)
+        audioContextRef.current.createMediaStreamSource(audioStream);
+
+        // Determine best audio format for streaming
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+            ? 'audio/webm'
+            : 'audio/mp4';
+
+        console.log('[VoiceToBot] Using audio format:', mimeType);
+
+        const streamRecorder = new MediaRecorder(audioStream, { mimeType });
+
+        // Track chunk count for debugging
+        let chunkCount = 0;
+
+        streamRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && socketRef.current && socketRef.current.connected) {
+            chunkCount++;
+            // Convert blob to ArrayBuffer and send to server
+            event.data.arrayBuffer().then((buffer) => {
+              socketRef.current.emit('voice:audio', buffer);
+            }).catch(err => {
+              console.warn('[VoiceToBot] Error converting audio chunk:', err);
+            });
+          }
+        };
+
+        streamRecorder.onerror = (event) => {
+          console.error('[VoiceToBot] MediaRecorder error:', event.error);
+        };
+
+        streamRecorder.onstop = () => {
+          console.log('[VoiceToBot] MediaRecorder stopped, total chunks:', chunkCount);
+        };
+
+        // Start recording with 100ms chunks for Gemini-level real-time streaming
+        // 100ms = optimal balance between latency and accuracy
+        streamRecorder.start(100);
+        processorRef.current = streamRecorder;
+
+        console.log('[VoiceToBot] Audio streaming to Google Cloud STT started (100ms chunks, Gemini-level)');
+      } catch (error) {
+        console.error('[VoiceToBot] Failed to setup audio streaming:', error);
+      }
+    } else {
+      console.warn('[VoiceToBot] WebSocket not connected, cannot start Google Cloud STT');
+    }
+  };
+
+  const startWebSpeechRecognition = () => {
+    // Stop any existing recognition first
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {}
+      speechRecognitionRef.current = null;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('[VoiceToBot] Web Speech API not supported in this browser');
+      return;
+    }
+
+    console.log('[VoiceToBot] Initializing Web Speech API...');
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = getSpeechLangCode(language);
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      console.log('[VoiceToBot] Web Speech API started, listening...');
+    };
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      let final = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript + ' ';
+          console.log('[VoiceToBot] Web Speech final:', transcript);
+        } else {
+          interim = transcript;
+          console.log('[VoiceToBot] Web Speech interim:', transcript);
+        }
+      }
+
+      if (final) {
+        setLiveTranscript(prev => prev + final);
+      }
+      setInterimTranscript(interim);
+    };
+
+    recognition.onerror = (event) => {
+      console.warn('[VoiceToBot] Web Speech error:', event.error);
+      // Don't clear interim on no-speech, just wait
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        setInterimTranscript('');
+      }
+    };
+
+    recognition.onend = () => {
+      console.log('[VoiceToBot] Web Speech ended, checking if should restart...');
+      // Use ref to check if still recording (avoids stale closure)
+      if (streamRef.current && speechRecognitionRef.current === recognition) {
+        console.log('[VoiceToBot] Restarting Web Speech...');
+        try {
+          recognition.start();
+        } catch (e) {
+          console.warn('[VoiceToBot] Could not restart recognition:', e);
+        }
+      }
+    };
+
+    speechRecognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+      console.log('[VoiceToBot] Web Speech API recognition.start() called');
+    } catch (e) {
+      console.error('[VoiceToBot] Failed to start Web Speech:', e);
+    }
+  };
+
+  const stopSpeechRecognition = () => {
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit('voice:stop');
+    }
+
+    if (processorRef.current) {
+      try {
+        processorRef.current.stop();
+      } catch (e) {
+        console.warn('Error stopping processor:', e);
+      }
+      processorRef.current = null;
+    }
+
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current = null;
+    }
+
+    setInterimTranscript('');
+  };
 
   const fetchTemplates = async () => {
     try {
@@ -55,7 +632,6 @@ const VoiceToBot = () => {
     }
   };
 
-  // Start session - returns session for immediate use
   const startSession = async () => {
     try {
       setError('');
@@ -72,9 +648,9 @@ const VoiceToBot = () => {
       const data = await response.json();
       if (data.success) {
         setSession(data.session);
-        sessionRef.current = data.session; // Store in ref for immediate access
+        sessionRef.current = data.session;
         setStep('idle');
-        return data.session; // Return session for immediate use
+        return data.session;
       }
       return null;
     } catch (err) {
@@ -85,17 +661,17 @@ const VoiceToBot = () => {
     }
   };
 
-  // Start recording
   const startRecording = async () => {
     try {
       setMicLoading(true);
       setError('');
+      setLiveTranscript('');
+      setInterimTranscript('');
 
       if (!session) {
         await startSession();
       }
 
-      // Clean up any existing stream/recorder before starting new one
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -106,6 +682,9 @@ const VoiceToBot = () => {
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+
+      // Start audio analyzer for waveform
+      startAudioAnalyzer(stream);
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
@@ -122,12 +701,13 @@ const VoiceToBot = () => {
 
       mediaRecorder.onstop = handleRecordingStop;
 
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setStep('recording');
       setRecordingTime(0);
 
-      // Start timer
+      startSpeechRecognition(stream);
+
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -140,8 +720,10 @@ const VoiceToBot = () => {
     }
   };
 
-  // Stop recording
   const stopRecording = useCallback(() => {
+    stopSpeechRecognition();
+    stopAudioAnalyzer();
+
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -158,7 +740,6 @@ const VoiceToBot = () => {
     }
   }, [isRecording]);
 
-  // Handle recording stop
   const handleRecordingStop = async () => {
     if (audioChunksRef.current.length === 0) {
       setError(t('voiceToBot.errors.noAudio'));
@@ -177,13 +758,11 @@ const VoiceToBot = () => {
     await transcribeAudio(audioBlob);
   };
 
-  // Transcribe audio
   const transcribeAudio = async (audioBlob) => {
     try {
       setStep('transcribing');
       setLoading(true);
 
-      // Use sessionRef for immediate access
       const currentSession = sessionRef.current || session;
       if (!currentSession) {
         throw new Error('No session available');
@@ -203,15 +782,19 @@ const VoiceToBot = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Post-process transcription to fix common misheard words
         let processedTranscription = data.transcription;
         const eldjoVariants = [
+          'elçin', 'elçi', 'elçü', 'elcü', 'elcu', 'elçu',
+          'elçin borcu', 'elçin borcu ölçüsü',
+          'əl çoğu', 'əl çogu', 'el çoğu', 'el çogu',
           'el-dru', 'eldru', 'bildru', 'elzur', 'yaqut',
-          'el dru', 'el-drü', 'eldrü', 'eld-ru', 'elcü',
-          'ona elə', 'ona ele', 'ildur', 'İldur'
+          'el dru', 'el-drü', 'eldrü', 'eld-ru',
+          'ona elə', 'ona ele', 'ildur', 'İldur', 'eldur',
+          'eldju', 'eldjü', 'el-djo', 'el-dju',
+          'elco', 'elço', 'elso', 'elşo'
         ];
         eldjoVariants.forEach(variant => {
-          const regex = new RegExp(variant, 'gi');
+          const regex = new RegExp(variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
           processedTranscription = processedTranscription.replace(regex, 'Eldjo');
         });
 
@@ -231,7 +814,6 @@ const VoiceToBot = () => {
     }
   };
 
-  // Extract intents
   const extractIntents = async (text) => {
     try {
       setLoading(true);
@@ -267,7 +849,6 @@ const VoiceToBot = () => {
     }
   };
 
-  // Generate bot
   const generateBot = async () => {
     try {
       setStep('generating');
@@ -283,7 +864,7 @@ const VoiceToBot = () => {
         body: JSON.stringify({
           sessionId: (sessionRef.current || session)?.session_id,
           customizations,
-          extractedData // Send extracted data directly for template mode
+          extractedData
         })
       });
       const data = await response.json();
@@ -303,7 +884,6 @@ const VoiceToBot = () => {
     }
   };
 
-  // Reset
   const reset = () => {
     setStep('idle');
     setSession(null);
@@ -317,16 +897,16 @@ const VoiceToBot = () => {
     setRecordingTime(0);
     setCustomizations({ name: '', description: '' });
     setSelectedTemplate(null);
+    setLiveTranscript('');
+    setInterimTranscript('');
   };
 
-  // Use template
   const useTemplate = async (template) => {
     setSelectedTemplate(template);
     setLoading(true);
     setError('');
 
     try {
-      // Start session if not exists
       if (!session && !sessionRef.current) {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/voice-to-bot/start`, {
@@ -344,7 +924,6 @@ const VoiceToBot = () => {
         }
       }
 
-      // Use template data directly
       const templateData = {
         name: template.name,
         description: template.description,
@@ -369,14 +948,12 @@ const VoiceToBot = () => {
     }
   };
 
-  // Format time
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Go to bot
   const goToBot = () => {
     if (generatedBot) {
       navigate(`/bot/${generatedBot.id}/edit`);
@@ -418,10 +995,12 @@ const VoiceToBot = () => {
         </div>
       )}
 
-      {/* Recording Section */}
+      {/* Recording Section - Professional Design */}
       {(step === 'idle' || step === 'recording') && (
         <div style={styles.recordingSection}>
+          {/* Professional Microphone Button */}
           <div style={styles.microphoneContainer}>
+            <AnimatedRings isRecording={isRecording} />
             <button
               onClick={isRecording ? stopRecording : startRecording}
               style={{
@@ -431,25 +1010,74 @@ const VoiceToBot = () => {
               }}
               disabled={micLoading}
             >
-              <span style={styles.micIcon}>
-                {micLoading ? '⏳' : isRecording ? '⏹️' : '🎤'}
-              </span>
-            </button>
-
-            {isRecording && (
-              <div style={styles.recordingIndicator}>
-                <span style={styles.recordingDot}></span>
-                <span style={styles.recordingTime}>{formatTime(recordingTime)}</span>
+              <div style={styles.micButtonInner}>
+                {micLoading ? (
+                  <div style={styles.loadingSpinner} />
+                ) : isRecording ? (
+                  <StopIcon size={32} />
+                ) : (
+                  <MicrophoneIcon isRecording={isRecording} size={40} />
+                )}
               </div>
-            )}
+            </button>
           </div>
 
-          <p style={styles.instructions}>
-            {isRecording
-              ? t('voiceToBot.recording', 'Recording... Click to stop')
-              : t('voiceToBot.clickToRecord', 'Click the microphone to start recording')}
-          </p>
+          {/* Recording Info */}
+          {isRecording && (
+            <div style={styles.recordingInfo}>
+              <ListeningAnimation />
+              <div style={styles.recordingTime}>
+                <span style={styles.recordingDot} />
+                <span style={styles.timeText}>{formatTime(recordingTime)}</span>
+              </div>
+            </div>
+          )}
 
+          {/* Audio Waveform */}
+          {isRecording && (
+            <div style={styles.waveformContainer}>
+              <AudioWaveform isActive={isRecording} audioLevel={audioLevel} />
+            </div>
+          )}
+
+          {/* Instructions */}
+          {!isRecording && (
+            <p style={styles.instructions}>
+              {t('voiceToBot.clickToRecord', 'Click the microphone to start recording')}
+            </p>
+          )}
+
+          {/* Live Transcription Display */}
+          {isRecording && (
+            <div style={styles.liveTranscriptBox}>
+              <div style={styles.liveTranscriptHeader}>
+                <div style={styles.streamingBadge}>
+                  <span style={styles.streamingDot} />
+                  Real-time Transcription
+                </div>
+              </div>
+              {(liveTranscript || interimTranscript) ? (
+                <div style={styles.liveTranscriptContent}>
+                  <p style={styles.liveTranscriptText}>
+                    {liveTranscript}
+                    <span style={styles.interimText}>{interimTranscript}</span>
+                    <span style={styles.cursor} />
+                  </p>
+                </div>
+              ) : (
+                <div style={styles.waitingIndicator}>
+                  <div style={styles.waitingDots}>
+                    <span style={{ ...styles.waitingDot, animationDelay: '0s' }} />
+                    <span style={{ ...styles.waitingDot, animationDelay: '0.15s' }} />
+                    <span style={{ ...styles.waitingDot, animationDelay: '0.3s' }} />
+                  </div>
+                  <span style={styles.waitingText}>Waiting for speech...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Examples */}
           {!isRecording && (
             <div style={styles.exampleSection}>
               <h3 style={styles.exampleTitle}>{t('voiceToBot.examplePrompts', 'Example prompts:')}</h3>
@@ -463,18 +1091,27 @@ const VoiceToBot = () => {
         </div>
       )}
 
-      {/* Transcribing */}
+      {/* Transcribing - Professional Loading */}
       {step === 'transcribing' && (
         <div style={styles.processingSection}>
-          <div style={styles.spinner}></div>
+          <div style={styles.processingOrb}>
+            <div style={styles.orbCore} />
+            <div style={styles.orbRing1} />
+            <div style={styles.orbRing2} />
+          </div>
           <p style={styles.processingText}>{t('voiceToBot.transcribing', 'Transcribing your voice...')}</p>
+          <div style={styles.processingSubtext}>Processing audio with AI</div>
         </div>
       )}
 
       {/* Extracting */}
       {step === 'extracting' && (
         <div style={styles.processingSection}>
-          <div style={styles.spinner}></div>
+          <div style={styles.processingOrb}>
+            <div style={styles.orbCore} />
+            <div style={styles.orbRing1} />
+            <div style={styles.orbRing2} />
+          </div>
           <p style={styles.processingText}>{t('voiceToBot.extracting', 'Analyzing and extracting intents...')}</p>
           {transcription && (
             <div style={styles.transcriptionPreview}>
@@ -490,7 +1127,6 @@ const VoiceToBot = () => {
         <div style={styles.previewSection}>
           <h2 style={styles.previewTitle}>{t('voiceToBot.botPreview', 'Bot Preview')}</h2>
 
-          {/* Editable Transcription */}
           <div style={styles.transcriptionBox}>
             <div style={styles.transcriptionHeader}>
               <strong>{t('voiceToBot.transcription', 'Transcription:')}</strong>
@@ -621,8 +1257,13 @@ const VoiceToBot = () => {
       {/* Generating */}
       {step === 'generating' && (
         <div style={styles.processingSection}>
-          <div style={styles.spinner}></div>
+          <div style={styles.processingOrb}>
+            <div style={styles.orbCore} />
+            <div style={styles.orbRing1} />
+            <div style={styles.orbRing2} />
+          </div>
           <p style={styles.processingText}>{t('voiceToBot.generating', 'Generating your bot...')}</p>
+          <div style={styles.processingSubtext}>Creating intents, entities, and flows</div>
         </div>
       )}
 
@@ -753,7 +1394,11 @@ const styles = {
   },
   microphoneContainer: {
     position: 'relative',
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '160px',
+    height: '160px',
     marginBottom: '24px'
   },
   micButton: {
@@ -761,47 +1406,157 @@ const styles = {
     height: '120px',
     borderRadius: '50%',
     border: 'none',
-    backgroundColor: '#6366f1',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%)',
     color: 'white',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.35), 0 0 0 0 rgba(168, 85, 247, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 1
   },
   micButtonRecording: {
-    backgroundColor: '#ef4444',
-    animation: 'pulse 1.5s infinite',
-    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.4)',
+    animation: 'micPulse 2s ease-in-out infinite'
   },
   micButtonLoading: {
-    backgroundColor: '#9ca3af',
+    background: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
     cursor: 'wait',
-    boxShadow: '0 4px 14px rgba(156, 163, 175, 0.4)'
+    boxShadow: '0 4px 16px rgba(156, 163, 175, 0.4)'
   },
-  micIcon: {
-    fontSize: '48px'
+  micButtonInner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  recordingIndicator: {
+  loadingSpinner: {
+    width: '32px',
+    height: '32px',
+    border: '3px solid rgba(255,255,255,0.3)',
+    borderTop: '3px solid white',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  recordingInfo: {
+    marginBottom: '20px'
+  },
+  recordingTime: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    marginTop: '16px'
+    marginTop: '12px'
   },
   recordingDot: {
-    width: '12px',
-    height: '12px',
+    width: '10px',
+    height: '10px',
     borderRadius: '50%',
     backgroundColor: '#ef4444',
     animation: 'blink 1s infinite'
   },
-  recordingTime: {
+  timeText: {
     fontSize: '24px',
     fontWeight: '600',
-    color: '#ef4444'
+    fontFamily: 'monospace',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text'
+  },
+  waveformContainer: {
+    marginBottom: '24px',
+    padding: '16px',
+    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
+    borderRadius: '16px',
+    maxWidth: '500px',
+    margin: '0 auto 24px'
   },
   instructions: {
     fontSize: '16px',
     color: '#6b7280'
+  },
+  liveTranscriptBox: {
+    marginTop: '24px',
+    padding: '20px 24px',
+    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(99, 102, 241, 0.03) 100%)',
+    border: '1px solid rgba(168, 85, 247, 0.15)',
+    borderRadius: '16px',
+    maxWidth: '600px',
+    margin: '24px auto 0',
+    minHeight: '100px'
+  },
+  liveTranscriptHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '16px'
+  },
+  streamingBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    color: 'white',
+    padding: '6px 14px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  streamingDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: '#fff',
+    animation: 'blink 1s infinite'
+  },
+  liveTranscriptContent: {
+    position: 'relative'
+  },
+  liveTranscriptText: {
+    color: '#1a1a2e',
+    fontSize: '17px',
+    lineHeight: '1.7',
+    margin: 0,
+    fontFamily: 'inherit',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word'
+  },
+  interimText: {
+    color: '#9ca3af',
+    fontStyle: 'italic'
+  },
+  cursor: {
+    display: 'inline-block',
+    width: '2px',
+    height: '20px',
+    background: 'linear-gradient(180deg, #a855f7 0%, #6366f1 100%)',
+    marginLeft: '2px',
+    animation: 'cursorBlink 0.8s infinite',
+    verticalAlign: 'text-bottom'
+  },
+  waitingIndicator: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 0'
+  },
+  waitingDots: {
+    display: 'flex',
+    gap: '8px'
+  },
+  waitingDot: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    animation: 'dotBounce 1.2s ease-in-out infinite'
+  },
+  waitingText: {
+    fontSize: '14px',
+    color: '#9ca3af'
   },
   exampleSection: {
     marginTop: '40px',
@@ -829,18 +1584,57 @@ const styles = {
     textAlign: 'center',
     padding: '60px 20px'
   },
-  spinner: {
-    width: '48px',
-    height: '48px',
-    border: '4px solid #e5e7eb',
-    borderTop: '4px solid #6366f1',
+  processingOrb: {
+    position: 'relative',
+    width: '80px',
+    height: '80px',
+    margin: '0 auto 32px'
+  },
+  orbCore: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '40px',
+    height: '40px',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    margin: '0 auto 24px'
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%)',
+    boxShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+    animation: 'orbPulse 1.5s ease-in-out infinite'
+  },
+  orbRing1: {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    border: '2px solid transparent',
+    borderTopColor: '#a855f7',
+    borderBottomColor: '#6366f1',
+    animation: 'orbSpin 1.5s linear infinite'
+  },
+  orbRing2: {
+    position: 'absolute',
+    top: '-10px',
+    left: '-10px',
+    width: 'calc(100% + 20px)',
+    height: 'calc(100% + 20px)',
+    borderRadius: '50%',
+    border: '2px solid transparent',
+    borderLeftColor: '#3b82f6',
+    borderRightColor: '#a855f7',
+    animation: 'orbSpin 2s linear infinite reverse'
   },
   processingText: {
-    fontSize: '18px',
-    color: '#374151'
+    fontSize: '20px',
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: '8px'
+  },
+  processingSubtext: {
+    fontSize: '14px',
+    color: '#9ca3af'
   },
   transcriptionPreview: {
     marginTop: '24px',
@@ -900,11 +1694,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px'
-  },
-  transcriptionText: {
-    fontStyle: 'italic',
-    color: '#374151',
-    margin: '8px 0 0'
   },
   customizationSection: {
     display: 'grid',
@@ -1021,14 +1810,15 @@ const styles = {
     marginTop: '24px'
   },
   primaryButton: {
-    backgroundColor: '#6366f1',
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
     color: 'white',
     border: 'none',
     padding: '12px 32px',
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: '500',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)'
   },
   secondaryButton: {
     backgroundColor: 'white',
@@ -1072,7 +1862,10 @@ const styles = {
     display: 'block',
     fontSize: '32px',
     fontWeight: '700',
-    color: '#6366f1'
+    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text'
   },
   statLabel: {
     fontSize: '14px',
@@ -1125,14 +1918,65 @@ const styles = {
 // Add CSS animations
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+  @keyframes ringPulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
   }
-  @keyframes blink {
+
+  @keyframes micPulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4), 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4), 0 0 40px 8px rgba(239, 68, 68, 0.2);
+    }
+  }
+
+  @keyframes orbPulse {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes orbSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes dotBounce {
+    0%, 80%, 100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes cursorBlink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
   }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
