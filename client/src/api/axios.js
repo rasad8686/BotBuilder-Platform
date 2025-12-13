@@ -9,7 +9,21 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor - Add auth token and organization ID
+// Helper function to get CSRF token from cookie
+function getCsrfToken() {
+  const name = 'csrf_token=';
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return null;
+}
+
+// Request interceptor - Add auth token, organization ID, and CSRF token
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -21,6 +35,15 @@ axiosInstance.interceptors.request.use(
     const organizationId = localStorage.getItem('currentOrganizationId');
     if (organizationId) {
       config.headers['X-Organization-ID'] = organizationId;
+    }
+
+    // Add CSRF token for state-changing requests
+    const method = config.method?.toUpperCase();
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
     }
 
     return config;

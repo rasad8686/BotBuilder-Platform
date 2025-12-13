@@ -1,17 +1,28 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const log = require('../utils/logger');
+const { getAuthToken } = require('../utils/cookieHelper');
 
 /**
  * Authentication Middleware
  * Verifies JWT token and attaches user information to request object
+ *
+ * Token sources (in order of priority):
+ * 1. httpOnly cookie (auth_token) - Most secure, preferred
+ * 2. Authorization header (Bearer token) - For backward compatibility and API clients
+ *
  * Usage: Add to any route that requires authentication
  */
 const authenticateToken = (req, res, next) => {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    // Try to get token from cookie first (most secure)
+    let token = getAuthToken(req);
+
+    // Fallback to Authorization header for backward compatibility
+    if (!token) {
+      const authHeader = req.headers['authorization'];
+      token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    }
 
     // Check if token exists
     if (!token) {
