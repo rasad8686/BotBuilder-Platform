@@ -6,16 +6,20 @@ const bcrypt = require('bcryptjs');
 const morgan = require('morgan');
 const path = require('path');
 const http = require('http');
+const cookieParser = require('cookie-parser');
 const db = require('./db');
 const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
 const { detectCustomDomain } = require('./middleware/whitelabel');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const securityHeaders = require('./middleware/securityHeaders');
+const { csrfTokenMiddleware, csrfValidationMiddleware, csrfTokenEndpoint } = require('./middleware/csrf');
+const { sanitizeInput } = require('./middleware/validators');
 const { initializeWebSocket } = require('./websocket');
 const { validateEnvOrExit, getSecureEnv } = require('./utils/envValidator');
 const crypto = require('crypto');
 const emailService = require('./services/emailService');
+const { setAuthCookie, clearAuthCookie } = require('./utils/cookieHelper');
 
 // Load .env from parent directory (BotBuilder root)
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -171,7 +175,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-organization-id']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-organization-id', 'x-csrf-token']
 }));
 
 // ✅ Stripe webhook requires raw body for signature verification
@@ -179,6 +183,15 @@ app.use(cors({
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
+
+// ✅ XSS Input sanitization - clean all request bodies
+app.use(sanitizeInput);
+
+// ✅ Cookie parser for CSRF and JWT cookies
+app.use(cookieParser());
+
+// ✅ CSRF token generation (sets csrf_token cookie)
+app.use(csrfTokenMiddleware);
 
 // ✅ HTTP request logging with Morgan
 // Custom format: :method :url :status :response-time ms - :user-agent
@@ -211,6 +224,12 @@ app.use(detectCustomDomain);
 
 // ✅ Rate limiting for API routes
 app.use('/api/', apiLimiter);
+
+// ✅ CSRF validation for state-changing requests (POST, PUT, DELETE, PATCH)
+app.use('/api/', csrfValidationMiddleware);
+
+// ✅ CSRF token endpoint (for SPA to get token)
+app.get('/api/csrf-token', csrfTokenEndpoint);
 
 // ✅ Serve uploaded files (logos, favicons, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -396,10 +415,13 @@ app.post('/api/auth/register', async (req, res) => {
 
     log.info('Registration successful', { userId: user.id, email: user.email, orgId: organizationId });
 
+    // Set JWT as httpOnly cookie
+    setAuthCookie(res, token);
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully! Please check your email to verify your account.',
-      token: token,
+      token: token, // Still send token for backward compatibility
       user: {
         id: user.id,
         username: user.name,
@@ -532,10 +554,13 @@ app.post('/api/auth/login', async (req, res) => {
     // Log successful login to audit trail
     await logLogin(req, user.id, true);
 
+    // Set JWT as httpOnly cookie
+    setAuthCookie(res, token);
+
     res.json({
       success: true,
       message: 'Login successful!',
-      token: token,
+      token: token, // Still send token for backward compatibility
       user: {
         id: user.id,
         username: user.name,
@@ -551,6 +576,15 @@ app.post('/api/auth/login', async (req, res) => {
       message: 'Server error'
     });
   }
+});
+
+// ✅ Logout endpoint - Clear auth cookie
+app.post('/api/auth/logout', (req, res) => {
+  clearAuthCookie(res);
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 });
 
 // ✅ Demo Login Endpoint - Auto-login for demo account
@@ -609,12 +643,15 @@ app.post('/api/auth/demo', async (req, res) => {
     // Log demo login to audit trail
     await logLogin(req, user.id, true, 'Demo login');
 
+    // Set JWT as httpOnly cookie
+    setAuthCookie(res, token);
+
     log.info('Demo login successful', { userId: user.id, orgId: organizationId });
 
     res.json({
       success: true,
       message: 'Demo login successful! You are viewing a demo account.',
-      token: token,
+      token: token, // Still send token for backward compatibility
       user: {
         id: user.id,
         username: user.name,
