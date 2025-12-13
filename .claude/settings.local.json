@@ -41,7 +41,12 @@
       "Bash(tasklist:*)",
       "Bash(taskkill /PID 7404 /F)",
       "Bash(taskkill:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ffmpeg:*)",
+      "WebFetch(domain:docs.gladia.io)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(timeout /t 10 /nobreak)"
     ],
     "deny": [],
     "ask": []

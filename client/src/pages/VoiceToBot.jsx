@@ -32,6 +32,31 @@ const StopIcon = ({ size = 36 }) => (
   </svg>
 );
 
+// Pause Icon SVG
+const PauseIcon = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="4" width="4" height="16" rx="1" />
+    <rect x="14" y="4" width="4" height="16" rx="1" />
+  </svg>
+);
+
+// Play Icon SVG
+const PlayIcon = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+
+// Trash Icon SVG
+const TrashIcon = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
 // Audio Waveform Visualizer Component
 const AudioWaveform = ({ isActive, audioLevel = 0 }) => {
   const bars = 24;
@@ -232,6 +257,8 @@ const VoiceToBot = () => {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Refs
   const mediaRecorderRef = useRef(null);
@@ -354,16 +381,12 @@ const VoiceToBot = () => {
       console.log('[VoiceToBot] Received transcript:', data);
 
       if (data.isFinal) {
-        // Final result - add to live transcript
-        setLiveTranscript(prev => {
-          const newText = prev + data.transcript + ' ';
-          console.log('[VoiceToBot] Final transcript updated:', newText);
-          return newText;
-        });
+        // Final result - REPLACE (not accumulate) live transcript
+        setLiveTranscript(data.transcript);
         setInterimTranscript('');
+        console.log('[VoiceToBot] Final transcript REPLACED:', data.transcript);
       } else {
-        // Interim result - show as typing immediately
-        console.log('[VoiceToBot] Interim transcript:', data.transcript);
+        // Interim result - REPLACE with current text (no accumulation)
         setInterimTranscript(data.transcript);
       }
     });
@@ -740,6 +763,99 @@ const VoiceToBot = () => {
     }
   }, [isRecording]);
 
+  // Handle Pause/Resume recording
+  const handlePause = useCallback(() => {
+    if (isPaused) {
+      // RESUME
+      if (mediaRecorderRef.current?.state === 'paused') {
+        mediaRecorderRef.current.resume();
+      }
+      // Audio track-ları ENABLE et
+      if (streamRef.current) {
+        streamRef.current.getAudioTracks().forEach(track => {
+          track.enabled = true;
+        });
+      }
+      // Restart timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      setIsPaused(false);
+      console.log('[VoiceToBot] Recording resumed');
+    } else {
+      // PAUSE
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.pause();
+      }
+      // Audio track-ları DISABLE et - mikrofon susar
+      if (streamRef.current) {
+        streamRef.current.getAudioTracks().forEach(track => {
+          track.enabled = false;
+        });
+      }
+      // Stop timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setIsPaused(true);
+      console.log('[VoiceToBot] Recording paused');
+    }
+  }, [isPaused]);
+
+  // Handle Cancel recording - NO navigation, just reset
+  const handleCancel = useCallback(() => {
+    console.log('[VoiceToBot] Cancelling recording...');
+
+    // Stop speech recognition
+    stopSpeechRecognition();
+    stopAudioAnalyzer();
+
+    // Stop MediaRecorder without triggering onstop handler
+    if (mediaRecorderRef.current) {
+      try {
+        // Remove onstop handler to prevent transcription
+        mediaRecorderRef.current.onstop = null;
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+      mediaRecorderRef.current = null;
+    }
+
+    // Clear timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Stop media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // Stop WebSocket streaming
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit('voice:stop');
+    }
+
+    // Clear audio chunks
+    audioChunksRef.current = [];
+
+    // Reset ALL state - NO navigation
+    setIsRecording(false);
+    setIsPaused(false);
+    setRecordingTime(0);
+    setLiveTranscript('');
+    setInterimTranscript('');
+    setStep('idle');
+
+    // Show deleted message
+    setShowDeleted(true);
+    setTimeout(() => setShowDeleted(false), 2000);
+
+    console.log('[VoiceToBot] Recording cancelled, state reset');
+  }, []);
+
   const handleRecordingStop = async () => {
     if (audioChunksRef.current.length === 0) {
       setError(t('voiceToBot.errors.noAudio'));
@@ -975,6 +1091,14 @@ const VoiceToBot = () => {
         </div>
       )}
 
+      {/* Deleted Message */}
+      {showDeleted && (
+        <div style={styles.deletedMessage}>
+          <TrashIcon size={20} />
+          <span>Silindi!</span>
+        </div>
+      )}
+
       {/* Language Selection */}
       {step === 'idle' && !session && (
         <div style={styles.languageSection}>
@@ -1025,18 +1149,45 @@ const VoiceToBot = () => {
           {/* Recording Info */}
           {isRecording && (
             <div style={styles.recordingInfo}>
-              <ListeningAnimation />
+              {!isPaused && <ListeningAnimation />}
               <div style={styles.recordingTime}>
-                <span style={styles.recordingDot} />
+                <span style={{
+                  ...styles.recordingDot,
+                  backgroundColor: isPaused ? '#f59e0b' : '#ef4444',
+                  animation: isPaused ? 'none' : 'blink 1s infinite'
+                }} />
                 <span style={styles.timeText}>{formatTime(recordingTime)}</span>
               </div>
+              {/* Control Buttons */}
+              <div style={styles.controlButtons}>
+                <button
+                  onClick={handlePause}
+                  style={styles.pauseButton}
+                  title={isPaused ? 'Resume' : 'Pause'}
+                >
+                  {isPaused ? <PlayIcon size={20} /> : <PauseIcon size={20} />}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  style={styles.cancelButton}
+                  title="Cancel"
+                >
+                  <TrashIcon size={20} />
+                </button>
+              </div>
+              {/* Paused Indicator */}
+              {isPaused && (
+                <div style={styles.pausedIndicator}>
+                  <span style={styles.pausedText}>⏸️ Paused</span>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Audio Waveform */}
+          {/* Audio Waveform - stops when paused */}
           {isRecording && (
             <div style={styles.waveformContainer}>
-              <AudioWaveform isActive={isRecording} audioLevel={audioLevel} />
+              <AudioWaveform isActive={isRecording && !isPaused} audioLevel={isPaused ? 0 : audioLevel} />
             </div>
           )}
 
@@ -1371,6 +1522,20 @@ const styles = {
     cursor: 'pointer',
     color: '#dc2626'
   },
+  deletedMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    color: '#ef4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    marginBottom: '24px',
+    fontSize: '16px',
+    fontWeight: '600',
+    animation: 'fadeInOut 2s ease-in-out'
+  },
   languageSection: {
     marginBottom: '24px',
     textAlign: 'center'
@@ -1449,6 +1614,56 @@ const styles = {
     justifyContent: 'center',
     gap: '8px',
     marginTop: '12px'
+  },
+  controlButtons: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    marginTop: '16px'
+  },
+  pauseButton: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    color: 'white',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.35)',
+    transition: 'all 0.2s ease'
+  },
+  cancelButton: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    color: 'white',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)',
+    transition: 'all 0.2s ease'
+  },
+  pausedIndicator: {
+    marginTop: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  pausedText: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#f59e0b',
+    background: 'rgba(245, 158, 11, 0.1)',
+    padding: '6px 16px',
+    borderRadius: '20px',
+    border: '1px solid rgba(245, 158, 11, 0.3)'
   },
   recordingDot: {
     width: '10px',
@@ -1980,6 +2195,13 @@ styleSheet.textContent = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
   }
 `;
 document.head.appendChild(styleSheet);

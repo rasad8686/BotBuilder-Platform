@@ -17,8 +17,8 @@ const { validateEnvOrExit, getSecureEnv } = require('./utils/envValidator');
 const crypto = require('crypto');
 const emailService = require('./services/emailService');
 
-// Load .env from server directory (same directory as this file)
-dotenv.config({ path: path.join(__dirname, '.env') });
+// Load .env from parent directory (BotBuilder root)
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // ========================================
 // 🔐 VALIDATE ENVIRONMENT VARIABLES
