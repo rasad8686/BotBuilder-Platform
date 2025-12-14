@@ -82,6 +82,7 @@ export default function Sidebar() {
     { path: '/admin/audit-logs', icon: '📋', label: t('sidebar.auditLogs') },
     { path: '/admin/health', icon: '🔧', label: t('sidebar.systemHealth') },
     { path: '/admin/whitelabel', icon: '🎨', label: t('sidebar.whiteLabelSettings') },
+    { path: '/admin/rate-limiting', icon: '🛡️', label: t('sidebar.rateLimiting', 'Rate Limiting') },
   ];
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
