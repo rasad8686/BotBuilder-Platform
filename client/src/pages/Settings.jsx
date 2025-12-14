@@ -76,6 +76,16 @@ export default function Settings() {
               <span className="font-semibold text-gray-800 dark:text-white">{t('sidebar.usage')}</span>
               <span className="text-gray-600 dark:text-gray-400">→</span>
             </button>
+            <button
+              onClick={() => navigate('/settings/security')}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-purple-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span>🔐</span>
+                <span className="font-semibold text-gray-800 dark:text-white">{t('sidebar.security', 'Security')}</span>
+              </div>
+              <span className="text-gray-600 dark:text-gray-400">→</span>
+            </button>
           </div>
         </div>
 

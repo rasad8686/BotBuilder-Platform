@@ -79,27 +79,23 @@ async function createSession(userId, req) {
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    // Get current session token from cookie or header
-    const currentToken = req.cookies?.session_token || req.headers['x-session-token'];
-
     const result = await db.query(
-      `SELECT id, device_info, ip_address, created_at, last_activity_at,
-              session_token = $2 as is_current
+      `SELECT id, device_info, ip_address, created_at, last_activity_at
        FROM user_sessions
        WHERE user_id = $1 AND is_active = true AND expires_at > NOW()
        ORDER BY last_activity_at DESC`,
-      [req.user.id, currentToken]
+      [req.user.id]
     );
 
     res.json({
       success: true,
-      sessions: result.rows.map(session => ({
+      sessions: result.rows.map((session, index) => ({
         id: session.id,
         deviceInfo: session.device_info,
         ipAddress: session.ip_address,
         createdAt: session.created_at,
         lastActivity: session.last_activity_at,
-        isCurrent: session.is_current
+        isCurrent: index === 0 // Most recent session is current
       }))
     });
   } catch (error) {
@@ -160,19 +156,22 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
 /**
  * DELETE /api/sessions
- * Logout from all other sessions (except current)
+ * Logout from all other sessions (except most recent)
  */
 router.delete('/', authenticateToken, async (req, res) => {
   try {
-    const currentToken = req.cookies?.session_token || req.headers['x-session-token'];
-
-    // Deactivate all sessions except current
+    // Deactivate all sessions except the most recent one
     const result = await db.query(
       `UPDATE user_sessions
        SET is_active = false
-       WHERE user_id = $1 AND is_active = true AND session_token != $2
+       WHERE user_id = $1 AND is_active = true
+       AND id NOT IN (
+         SELECT id FROM user_sessions
+         WHERE user_id = $1 AND is_active = true
+         ORDER BY last_activity_at DESC LIMIT 1
+       )
        RETURNING id`,
-      [req.user.id, currentToken || '']
+      [req.user.id]
     );
 
     // Audit log
