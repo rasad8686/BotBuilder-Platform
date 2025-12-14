@@ -255,8 +255,8 @@ app.get('/test', (req, res) => {
   });
 });
 
-// ✅ Auth routes
-app.post('/api/auth/register', async (req, res) => {
+// ✅ Auth routes - with rate limiting for brute force protection
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   log.info('Registration attempt', { email: req.body.email });
 
   try {
@@ -448,9 +448,9 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorCode } = req.body;
 
     // Validation
     if (!email || !password) {
@@ -459,9 +459,9 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
-    // Query database for user (using correct column names from schema)
+    // Query database for user (including 2FA fields)
     const result = await db.query(
-      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash, two_factor_enabled, two_factor_secret FROM users WHERE email = $1',
       [email]
     );
 
@@ -487,6 +487,53 @@ app.post('/api/auth/login', async (req, res) => {
         success: false,
         message: 'Invalid email or password'
       });
+    }
+
+    // Check if 2FA is enabled
+    if (user.two_factor_enabled) {
+      // If no 2FA code provided, require it
+      if (!twoFactorCode) {
+        return res.status(200).json({
+          success: true,
+          requires2FA: true,
+          message: 'Please enter your 2FA code'
+        });
+      }
+
+      // Validate 2FA code
+      const speakeasy = require('speakeasy');
+      let verified = speakeasy.totp.verify({
+        secret: user.two_factor_secret,
+        encoding: 'base32',
+        token: twoFactorCode,
+        window: 1
+      });
+
+      // If TOTP fails, try backup code
+      if (!verified) {
+        const codeHash = crypto.createHash('sha256').update(twoFactorCode.toUpperCase()).digest('hex');
+        const backupResult = await db.query(
+          'SELECT id FROM two_factor_backup_codes WHERE user_id = $1 AND code_hash = $2 AND used = false',
+          [user.id, codeHash]
+        );
+
+        if (backupResult.rows.length > 0) {
+          await db.query(
+            'UPDATE two_factor_backup_codes SET used = true, used_at = NOW() WHERE id = $1',
+            [backupResult.rows[0].id]
+          );
+          verified = true;
+          log.info('Backup code used for login', { userId: user.id });
+        }
+      }
+
+      if (!verified) {
+        await logLogin(req, user.id, false, 'Invalid 2FA code');
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid 2FA code'
+        });
+      }
     }
 
     // Get user's default organization (first one they joined or own)
@@ -565,7 +612,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         username: user.name,
         email: user.email,
-        currentOrganizationId: organizationId
+        currentOrganizationId: organizationId,
+        has2FA: user.two_factor_enabled || false
       }
     });
 
@@ -769,6 +817,12 @@ app.use('/api/auth', require('./routes/passwordReset'));
 
 // ✅ Email Verification routes
 app.use('/api/auth', require('./routes/emailVerification'));
+
+// ✅ Two-Factor Authentication routes
+app.use('/api/auth/2fa', require('./routes/twoFactor'));
+
+// ✅ Session Management routes
+app.use('/api/sessions', require('./routes/sessions'));
 
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

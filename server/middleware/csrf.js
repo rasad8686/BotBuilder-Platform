@@ -34,6 +34,7 @@ const EXEMPT_ROUTES = [
   '/auth/reset-password',      // Password reset
   '/auth/verify-email',        // Email verification
   '/auth/resend-verification', // Resend verification email
+  '/auth/2fa/validate',        // 2FA validation during login
   '/billing/webhook',          // Stripe webhook
   '/widget/',                  // Widget API (embedded in external sites)
   '/voice-to-bot/',            // Voice upload
