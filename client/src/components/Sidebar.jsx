@@ -50,6 +50,7 @@ export default function Sidebar() {
     { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
     { path: '/team', icon: '👥', label: t('sidebar.team') },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
+    { path: '/settings/security', icon: '🔐', label: t('sidebar.security', 'Security') },
   ];
 
   // Multi-Agent AI links (shown in bot context)

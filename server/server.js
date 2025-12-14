@@ -20,6 +20,7 @@ const { validateEnvOrExit, getSecureEnv } = require('./utils/envValidator');
 const crypto = require('crypto');
 const emailService = require('./services/emailService');
 const { setAuthCookie, clearAuthCookie } = require('./utils/cookieHelper');
+const { createSession } = require('./routes/sessions');
 
 // Load .env from parent directory (BotBuilder root)
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -415,6 +416,13 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
 
     log.info('Registration successful', { userId: user.id, email: user.email, orgId: organizationId });
 
+    // Create session record in database (non-blocking)
+    try {
+      await createSession(user.id, req);
+    } catch (sessionError) {
+      log.error('Session creation failed', { error: sessionError.message, userId: user.id });
+    }
+
     // Set JWT as httpOnly cookie
     setAuthCookie(res, token);
 
@@ -459,11 +467,26 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       });
     }
 
-    // Query database for user (including 2FA fields)
+    // Query database for user
     const result = await db.query(
-      'SELECT id, name, email, password_hash, two_factor_enabled, two_factor_secret FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
       [email]
     );
+
+    // Get 2FA fields separately (may not exist if migration not run)
+    let twoFactorData = { two_factor_enabled: false, two_factor_secret: null };
+    try {
+      const tfaResult = await db.query(
+        'SELECT two_factor_enabled, two_factor_secret FROM users WHERE email = $1',
+        [email]
+      );
+      if (tfaResult.rows.length > 0) {
+        twoFactorData = tfaResult.rows[0];
+      }
+    } catch (tfaError) {
+      // 2FA columns don't exist yet - continue without 2FA
+      log.debug('2FA columns not found, skipping 2FA check');
+    }
 
     // Check if user exists
     if (result.rows.length === 0) {
@@ -490,7 +513,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     }
 
     // Check if 2FA is enabled
-    if (user.two_factor_enabled) {
+    if (twoFactorData.two_factor_enabled) {
       // If no 2FA code provided, require it
       if (!twoFactorCode) {
         return res.status(200).json({
@@ -503,7 +526,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       // Validate 2FA code
       const speakeasy = require('speakeasy');
       let verified = speakeasy.totp.verify({
-        secret: user.two_factor_secret,
+        secret: twoFactorData.two_factor_secret,
         encoding: 'base32',
         token: twoFactorCode,
         window: 1
@@ -601,6 +624,13 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     // Log successful login to audit trail
     await logLogin(req, user.id, true);
 
+    // Create session record in database (non-blocking)
+    try {
+      await createSession(user.id, req);
+    } catch (sessionError) {
+      log.error('Session creation failed', { error: sessionError.message, userId: user.id });
+    }
+
     // Set JWT as httpOnly cookie
     setAuthCookie(res, token);
 
@@ -613,7 +643,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         username: user.name,
         email: user.email,
         currentOrganizationId: organizationId,
-        has2FA: user.two_factor_enabled || false
+        has2FA: twoFactorData.two_factor_enabled || false
       }
     });
 
@@ -690,6 +720,13 @@ app.post('/api/auth/demo', async (req, res) => {
 
     // Log demo login to audit trail
     await logLogin(req, user.id, true, 'Demo login');
+
+    // Create session record in database (non-blocking)
+    try {
+      await createSession(user.id, req);
+    } catch (sessionError) {
+      log.error('Session creation failed', { error: sessionError.message, userId: user.id });
+    }
 
     // Set JWT as httpOnly cookie
     setAuthCookie(res, token);
