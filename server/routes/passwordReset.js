@@ -57,6 +57,20 @@ router.post('/forgot-password', async (req, res) => {
       [user.id, token, expiresAt]
     );
 
+    // Generate reset link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+    // Development mode - show link in console
+    if (process.env.NODE_ENV !== 'production') {
+      log.info('========================================');
+      log.info('🔐 PASSWORD RESET LINK (Development Mode)');
+      log.info('========================================');
+      log.info(`Email: ${user.email}`);
+      log.info(`Reset Link: ${resetLink}`);
+      log.info('========================================');
+    }
+
     // Send reset email
     try {
       await emailService.sendPasswordResetEmail(user.email, token, user.name);
@@ -66,10 +80,20 @@ router.post('/forgot-password', async (req, res) => {
       // Don't expose email sending failure to user
     }
 
-    res.json({
-      success: true,
-      message: 'If an account exists with this email, you will receive a password reset link.'
-    });
+    // Development mode - return token directly for easy testing
+    if (process.env.NODE_ENV !== 'production') {
+      res.json({
+        success: true,
+        devMode: true,
+        token: token,
+        message: 'Development mode - use the token below to reset password'
+      });
+    } else {
+      res.json({
+        success: true,
+        message: 'If an account exists with this email, you will receive a password reset link.'
+      });
+    }
 
   } catch (error) {
     log.error('Forgot password error', { error: error.message });

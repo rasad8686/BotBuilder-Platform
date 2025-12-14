@@ -11,6 +11,14 @@ export default function ForgotPassword() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Development mode states
+  const [devMode, setDevMode] = useState(false);
+  const [token, setToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -26,7 +34,13 @@ export default function ForgotPassword() {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess(true);
+        // Check if development mode with token
+        if (data.devMode && data.token) {
+          setDevMode(true);
+          setToken(data.token);
+        } else {
+          setSuccess(true);
+        }
       } else {
         setError(data.error || t('forgotPassword.error'));
       }
@@ -36,6 +50,119 @@ export default function ForgotPassword() {
       setLoading(false);
     }
   };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password: newPassword })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setResetSuccess(true);
+      } else {
+        setError(data.error || 'Failed to reset password');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Reset success view
+  if (resetSuccess) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.successBox}>
+            <div style={styles.successIcon}>✅</div>
+            <h2 style={styles.successTitle}>Password Reset Successful!</h2>
+            <p style={styles.successText}>Your password has been changed. You can now login with your new password.</p>
+            <Link to="/login" style={styles.backButton}>
+              → Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Development mode - show reset form directly
+  if (devMode) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.header}>
+            <div style={styles.devBadge}>🔧 DEV MODE</div>
+            <h1 style={styles.title}>🔐 Reset Password</h1>
+            <p style={styles.subtitle}>Enter your new password below</p>
+          </div>
+
+          <form onSubmit={handleResetPassword} style={styles.form}>
+            {error && <div style={styles.error}>{error}</div>}
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                style={styles.input}
+                required
+                minLength={8}
+                autoFocus
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                style={styles.input}
+                required
+                minLength={8}
+              />
+            </div>
+
+            <button
+              type="submit"
+              style={styles.submitButton}
+              disabled={resetLoading || !newPassword || !confirmPassword}
+            >
+              {resetLoading ? 'Resetting...' : 'Reset Password'}
+            </button>
+
+            <Link to="/login" style={styles.link}>
+              ← Back to Login
+            </Link>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -120,6 +247,16 @@ const styles = {
     color: '#9ca3af',
     fontSize: '14px',
     margin: 0
+  },
+  devBadge: {
+    display: 'inline-block',
+    backgroundColor: '#f59e0b',
+    color: '#000',
+    fontSize: '12px',
+    fontWeight: '700',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    marginBottom: '16px'
   },
   form: {
     display: 'flex',
