@@ -531,4 +531,242 @@ router.get('/billing-stats', organizationContext, requireOrganization, checkPerm
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// RATE LIMITING ADMIN ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/admin/rate-limit/settings
+ * Get current rate limiting settings
+ * Admin only
+ */
+router.get('/rate-limit/settings', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    log.info('Fetching rate limit settings');
+
+    const result = await db.query('SELECT * FROM rate_limit_settings ORDER BY id DESC LIMIT 1');
+
+    if (result.rows.length === 0) {
+      // Return default settings if none exist
+      return res.status(200).json({
+        success: true,
+        settings: {
+          enabled: true,
+          max_attempts: 5,
+          window_minutes: 15,
+          block_duration_minutes: 15
+        }
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      settings: {
+        enabled: result.rows[0].enabled,
+        max_attempts: result.rows[0].max_attempts,
+        window_minutes: result.rows[0].window_minutes,
+        block_duration_minutes: result.rows[0].block_duration_minutes
+      }
+    });
+
+  } catch (error) {
+    log.error('Get rate limit settings error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve rate limit settings',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/rate-limit/settings
+ * Update rate limiting settings
+ * Admin only
+ */
+router.put('/rate-limit/settings', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    const { enabled, max_attempts, window_minutes, block_duration_minutes } = req.body;
+
+    log.info('Updating rate limit settings', { enabled, max_attempts, window_minutes, block_duration_minutes });
+
+    // Validate inputs
+    if (max_attempts !== undefined && (max_attempts < 1 || max_attempts > 100)) {
+      return res.status(400).json({
+        success: false,
+        message: 'max_attempts must be between 1 and 100'
+      });
+    }
+
+    if (window_minutes !== undefined && (window_minutes < 1 || window_minutes > 1440)) {
+      return res.status(400).json({
+        success: false,
+        message: 'window_minutes must be between 1 and 1440 (24 hours)'
+      });
+    }
+
+    if (block_duration_minutes !== undefined && (block_duration_minutes < 1 || block_duration_minutes > 10080)) {
+      return res.status(400).json({
+        success: false,
+        message: 'block_duration_minutes must be between 1 and 10080 (1 week)'
+      });
+    }
+
+    // Check if settings exist
+    const existingResult = await db.query('SELECT id FROM rate_limit_settings LIMIT 1');
+
+    if (existingResult.rows.length === 0) {
+      // Insert new settings
+      await db.query(
+        `INSERT INTO rate_limit_settings (enabled, max_attempts, window_minutes, block_duration_minutes, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [
+          enabled !== undefined ? enabled : true,
+          max_attempts || 5,
+          window_minutes || 15,
+          block_duration_minutes || 15
+        ]
+      );
+    } else {
+      // Update existing settings
+      await db.query(
+        `UPDATE rate_limit_settings SET
+          enabled = COALESCE($1, enabled),
+          max_attempts = COALESCE($2, max_attempts),
+          window_minutes = COALESCE($3, window_minutes),
+          block_duration_minutes = COALESCE($4, block_duration_minutes),
+          updated_at = NOW()
+         WHERE id = $5`,
+        [enabled, max_attempts, window_minutes, block_duration_minutes, existingResult.rows[0].id]
+      );
+    }
+
+    // Fetch updated settings
+    const result = await db.query('SELECT * FROM rate_limit_settings ORDER BY id DESC LIMIT 1');
+
+    log.info('Rate limit settings updated successfully');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Rate limit settings updated successfully',
+      settings: {
+        enabled: result.rows[0].enabled,
+        max_attempts: result.rows[0].max_attempts,
+        window_minutes: result.rows[0].window_minutes,
+        block_duration_minutes: result.rows[0].block_duration_minutes
+      }
+    });
+
+  } catch (error) {
+    log.error('Update rate limit settings error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update rate limit settings',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/rate-limit/blocked
+ * Get list of blocked users/IPs
+ * Admin only
+ */
+router.get('/rate-limit/blocked', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    log.info('Fetching blocked users list');
+
+    const result = await db.query(`
+      SELECT id, email, ip_address, attempt_count, blocked_at, blocked_until, reason
+      FROM rate_limit_blocked
+      WHERE blocked_until > NOW()
+      ORDER BY blocked_at DESC
+    `);
+
+    return res.status(200).json({
+      success: true,
+      blocked: result.rows,
+      count: result.rows.length
+    });
+
+  } catch (error) {
+    log.error('Get blocked users error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve blocked users',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/rate-limit/blocked/:id
+ * Unblock a specific user/IP
+ * Admin only
+ */
+router.delete('/rate-limit/blocked/:id', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    log.info('Unblocking user', { id });
+
+    const result = await db.query(
+      'DELETE FROM rate_limit_blocked WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blocked entry not found'
+      });
+    }
+
+    log.info('User unblocked successfully', { id, email: result.rows[0].email, ip: result.rows[0].ip_address });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User unblocked successfully',
+      unblocked: result.rows[0]
+    });
+
+  } catch (error) {
+    log.error('Unblock user error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unblock user',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/rate-limit/blocked
+ * Unblock all users/IPs (reset all limits)
+ * Admin only
+ */
+router.delete('/rate-limit/blocked', organizationContext, requireOrganization, checkPermission('admin'), async (req, res) => {
+  try {
+    log.info('Unblocking all users');
+
+    const result = await db.query('DELETE FROM rate_limit_blocked RETURNING id');
+
+    log.info('All users unblocked', { count: result.rows.length });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully unblocked ${result.rows.length} entries`,
+      count: result.rows.length
+    });
+
+  } catch (error) {
+    log.error('Unblock all users error', { error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unblock all users',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
 module.exports = router;
