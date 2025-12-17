@@ -35,10 +35,13 @@ const EXEMPT_ROUTES = [
   '/auth/verify-email',        // Email verification
   '/auth/resend-verification', // Resend verification email
   '/auth/2fa/validate',        // 2FA validation during login
+  '/admin-auth/login',         // Admin login - no session yet
+  '/admin-auth/logout',        // Admin logout
   '/billing/webhook',          // Stripe webhook
   '/widget/',                  // Widget API (embedded in external sites)
   '/voice-to-bot/',            // Voice upload
   '/webhooks/',                // Channel webhooks (full path)
+  '/fine-tuning/',             // Fine-tuning API (has own auth)
 ];
 
 /**

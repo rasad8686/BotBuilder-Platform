@@ -59,9 +59,14 @@ export default function Layout({ children }) {
   }, []);
 
   const handleLogout = () => {
+    // Check if user was admin before clearing localStorage
+    const wasAdmin = localStorage.getItem('adminToken') ||
+                     (user?.isSuperAdmin || user?.is_superadmin);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    navigate(wasAdmin ? '/admin/login' : '/login');
   };
 
   const checkVerificationStatus = async (email) => {
@@ -137,16 +142,30 @@ export default function Layout({ children }) {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                  <span className="text-purple-600 dark:text-purple-300 text-sm font-medium">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  (user?.isSuperAdmin || user?.is_superadmin)
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                    : 'bg-purple-100 dark:bg-purple-900'
+                }`}>
+                  <span className={`text-sm font-bold ${
+                    (user?.isSuperAdmin || user?.is_superadmin)
+                      ? 'text-white'
+                      : 'text-purple-600 dark:text-purple-300'
+                  }`}>
                     {user?.name?.charAt(0)?.toUpperCase() || '👤'}
                   </span>
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">
-                  {user?.name || 'User'}
+                  {(user?.isSuperAdmin || user?.is_superadmin)
+                    ? t('header.superAdmin')
+                    : (user?.name || 'User')
+                  }
                 </span>
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
 
               {/* User Dropdown Menu */}
