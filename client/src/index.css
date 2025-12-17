@@ -77,3 +77,334 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* =====================================================
+   METRICS DASHBOARD STYLES
+   ===================================================== */
+.metrics-dashboard {
+  padding: 1.5rem;
+}
+
+.metrics-dashboard.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+}
+
+.metrics-dashboard .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.metrics-dashboard.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 1rem;
+}
+
+.metrics-dashboard .error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+/* Header */
+.metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.metrics-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+.metrics-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Tabs */
+.metrics-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--theme-border);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+
+.metrics-tabs .tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.metrics-tabs .tab:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.metrics-tabs .tab.active {
+  background: #8b5cf6;
+  color: white;
+}
+
+/* Content */
+.metrics-content {
+  min-height: 400px;
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--theme-text-secondary);
+}
+
+/* Overview Tab */
+.overview-tab .summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.summary-card .card-icon {
+  font-size: 1.5rem;
+}
+
+.summary-card .card-content {
+  flex: 1;
+}
+
+.summary-card .card-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+.summary-card .card-label {
+  font-size: 0.75rem;
+  color: var(--theme-text-secondary);
+  margin-top: 0.25rem;
+}
+
+.summary-card .card-subvalue {
+  font-size: 0.75rem;
+  color: var(--theme-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Mini Charts */
+.mini-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.mini-chart {
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.mini-chart h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 0.75rem;
+}
+
+/* Chart Tab */
+.chart-tab {
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.chart-tab h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 1rem;
+}
+
+/* Comparison Tab */
+.comparison-tab .comparison-chart {
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-tab .comparison-chart h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 1rem;
+}
+
+/* Comparison Table */
+.comparison-table {
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.comparison-table h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 1rem;
+}
+
+.comparison-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.comparison-table th {
+  font-weight: 600;
+  color: var(--theme-text-secondary);
+  white-space: nowrap;
+}
+
+.comparison-table td {
+  color: var(--theme-text);
+}
+
+.comparison-table .status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.comparison-table .status-badge.completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.comparison-table .status-badge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.comparison-table .status-badge.training {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+/* Buttons */
+.metrics-dashboard .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.metrics-dashboard .btn-primary {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+}
+
+.metrics-dashboard .btn-primary:hover {
+  background: #7c3aed;
+}
+
+.metrics-dashboard .btn-secondary {
+  background: var(--theme-bg-secondary);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+}
+
+.metrics-dashboard .btn-secondary:hover {
+  background: var(--theme-bg);
+}
+
+.metrics-dashboard .btn-outline {
+  background: transparent;
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+}
+
+.metrics-dashboard .btn-outline:hover {
+  background: var(--theme-bg);
+}
+
+.metrics-dashboard .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark mode adjustments */
+.dark .comparison-table .status-badge.completed {
+  background: rgba(22, 163, 74, 0.2);
+  color: #4ade80;
+}
+
+.dark .comparison-table .status-badge.failed {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.dark .comparison-table .status-badge.training {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+}

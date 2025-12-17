@@ -7,7 +7,17 @@ const OrganizationContext = createContext(null);
 export const useOrganization = () => {
   const context = useContext(OrganizationContext);
   if (!context) {
-    throw new Error('useOrganization must be used within OrganizationProvider');
+    // Return default values when used outside OrganizationProvider (e.g., superadmin pages)
+    return {
+      organizations: [],
+      currentOrganization: null,
+      userRole: null,
+      loading: false,
+      error: null,
+      isAuthenticated: false,
+      switchOrganization: () => {},
+      refreshOrganizations: () => {}
+    };
   }
   return context;
 };

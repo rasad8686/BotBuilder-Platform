@@ -208,63 +208,63 @@ export default function EditBot() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="text-4xl mb-4 animate-pulse">⏳</div>
-          <div className="text-xl text-gray-600">Loading bot details...</div>
+          <div className="text-xl text-gray-600 dark:text-gray-400">Loading bot details...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 transition-colors duration-300">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <Link
           to="/mybots"
-          className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium mb-4"
+          className="inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium mb-4"
         >
           ← Back to My Bots
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
             Edit Bot ✏️
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Update your bot's information and settings
           </p>
         </div>
 
         {/* Success Message */}
         {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+          <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
             ✅ Bot updated successfully! Redirecting...
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
             ⚠️ {error}
           </div>
         )}
 
         {/* Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 mb-6 transition-colors duration-300">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Bot Name */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Bot Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.name ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.name ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
                 placeholder="e.g., Customer Support Bot"
                 maxLength={255}
@@ -276,14 +276,14 @@ export default function EditBot() {
 
             {/* Platform */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Platform <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.platform}
                 onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.platform ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.platform ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
               >
                 <option value="telegram">✈️ Telegram</option>
@@ -299,13 +299,13 @@ export default function EditBot() {
 
             {/* Language */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Bot Language
               </label>
               <select
                 value={formData.language}
                 onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
               >
                 {languages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -313,54 +313,54 @@ export default function EditBot() {
                   </option>
                 ))}
               </select>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Select the language for bot responses. Use "Auto-detect" to automatically detect user's language.
               </p>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                 placeholder="Describe what your bot does..."
               />
-              <p className="text-gray-500 text-sm mt-1">Optional</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Optional</p>
             </div>
 
             {/* Webhook URL */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Webhook URL
               </label>
               <input
                 type="url"
                 value={formData.webhook_url}
                 onChange={(e) => setFormData({ ...formData, webhook_url: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.webhook_url ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.webhook_url ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
                 placeholder="https://your-domain.com/webhook"
               />
               {fieldErrors.webhook_url && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.webhook_url}</p>
               )}
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Optional - URL to receive bot event notifications
               </p>
             </div>
 
             {/* Active Status Toggle */}
             <div>
-              <label className="flex items-center justify-between p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex items-center justify-between p-4 border border-gray-300 dark:border-slate-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                 <div>
-                  <span className="text-gray-700 font-semibold">Active Status</span>
-                  <p className="text-sm text-gray-500">
+                  <span className="text-gray-700 dark:text-gray-300 font-semibold">Active Status</span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {formData.is_active ? 'Bot is currently active' : 'Bot is currently inactive'}
                   </p>
                 </div>
@@ -413,15 +413,15 @@ export default function EditBot() {
         </div>
 
         {/* API Token Display (Read-Only) */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">API Token</h2>
-          <p className="text-gray-600 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 transition-colors duration-300">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">API Token</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             Use this token to authenticate API requests for this bot. Keep it secure!
           </p>
 
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg p-4">
             <div className="flex items-center gap-2">
-              <code className="flex-1 bg-white px-3 py-2 rounded border border-gray-300 text-sm break-all font-mono">
+              <code className="flex-1 bg-white dark:bg-slate-800 px-3 py-2 rounded border border-gray-300 dark:border-slate-600 text-sm break-all font-mono dark:text-gray-200">
                 {apiToken || 'No token available'}
               </code>
               {apiToken && (
@@ -435,8 +435,8 @@ export default function EditBot() {
             </div>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mt-4">
+            <p className="text-sm text-yellow-800 dark:text-yellow-400">
               ⚠️ <strong>Note:</strong> API tokens cannot be changed. If you suspect your token has been compromised, please delete and recreate the bot.
             </p>
           </div>

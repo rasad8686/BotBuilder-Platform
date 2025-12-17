@@ -187,46 +187,46 @@ export default function CreateBot() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 transition-colors duration-300">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <Link
           to="/mybots"
-          className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium mb-4"
+          className="inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium mb-4"
         >
           ← Back to My Bots
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
             Create New Bot 🤖
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Fill in the details below to create your chatbot
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
             ⚠️ {error}
           </div>
         )}
 
         {/* Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 transition-colors duration-300">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Bot Name */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Bot Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.name ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.name ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
                 placeholder="e.g., Customer Support Bot"
                 maxLength={255}
@@ -238,14 +238,14 @@ export default function CreateBot() {
 
             {/* Platform */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Platform <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.platform}
                 onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.platform ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.platform ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
               >
                 <option value="telegram">✈️ Telegram</option>
@@ -261,13 +261,13 @@ export default function CreateBot() {
 
             {/* Language */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Bot Language
               </label>
               <select
                 value={formData.language}
                 onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
               >
                 {languages.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -275,44 +275,44 @@ export default function CreateBot() {
                   </option>
                 ))}
               </select>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Select the language for bot responses. Use "Auto-detect" to automatically detect user's language.
               </p>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white"
                 placeholder="Describe what your bot does..."
               />
-              <p className="text-gray-500 text-sm mt-1">Optional</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Optional</p>
             </div>
 
             {/* Webhook URL */}
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2">
                 Webhook URL
               </label>
               <input
                 type="url"
                 value={formData.webhook_url}
                 onChange={(e) => setFormData({ ...formData, webhook_url: e.target.value })}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  fieldErrors.webhook_url ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-white ${
+                  fieldErrors.webhook_url ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
                 placeholder="https://your-domain.com/webhook"
               />
               {fieldErrors.webhook_url && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.webhook_url}</p>
               )}
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Optional - URL to receive bot event notifications
               </p>
             </div>
@@ -345,24 +345,24 @@ export default function CreateBot() {
           <div className="absolute inset-0 bg-black bg-opacity-50" />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full p-6">
             <div className="text-center mb-4">
               <div className="text-5xl mb-2">🎉</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Bot Created Successfully!
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Save your API token now - you won't be able to see it again!
               </p>
             </div>
 
             {/* API Token Display */}
-            <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg p-4 mb-4">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 API Token
               </label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 bg-white px-3 py-2 rounded border border-gray-300 text-sm break-all">
+                <code className="flex-1 bg-white dark:bg-slate-800 px-3 py-2 rounded border border-gray-300 dark:border-slate-600 text-sm break-all dark:text-gray-200">
                   {apiToken}
                 </code>
                 <button
@@ -374,8 +374,8 @@ export default function CreateBot() {
               </div>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-400">
                 ⚠️ <strong>Important:</strong> Store this token securely. You'll need it to authenticate API requests for this bot.
               </p>
             </div>
