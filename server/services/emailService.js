@@ -10,7 +10,7 @@ class EmailService {
   constructor() {
     this.resendApiKey = process.env.RESEND_API_KEY;
     this.fromEmail = process.env.EMAIL_FROM || 'noreply@botbuilder.com';
-    this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
   }
 
   /**

@@ -35,6 +35,7 @@ import WorkClone from './pages/WorkClone';
 import CloneTraining from './pages/CloneTraining';
 import CloneSettings from './pages/CloneSettings';
 import VoiceToBot from './pages/VoiceToBot';
+import FineTuning from './pages/FineTuning';
 
 // New SaaS Pages
 import Billing from './pages/Billing';
@@ -42,6 +43,7 @@ import ApiTokens from './pages/APITokens';
 import Webhooks from './pages/Webhooks';
 import Usage from './pages/Usage';
 import Settings from './pages/Settings';
+import SecuritySettings from './pages/SecuritySettings';
 import OrganizationSettings from './pages/OrganizationSettings';
 import TeamSettings from './pages/TeamSettings';
 
@@ -51,6 +53,13 @@ import AdminAuditLogs from './pages/AdminAuditLogs';
 import AdminHealth from './pages/AdminHealth';
 import WhiteLabelSettings from './pages/WhiteLabelSettings';
 import AdminStats from './pages/AdminStats';
+import AdminRateLimiting from './pages/AdminRateLimiting';
+import AdminRoles from './pages/AdminRoles';
+import AdminLogin from './pages/AdminLogin';
+
+// Superadmin Pages
+import SuperadminDashboard from './pages/Superadmin/Dashboard';
+import SuperadminRouteGuard from './components/SuperadminRouteGuard';
 
 // Legal Pages
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -90,6 +99,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+
+          {/* Admin Login - Separate secure login for admins */}
+          <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<PrivateRoute><AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp></PrivateRoute>} />
@@ -143,12 +155,16 @@ function App() {
         {/* Voice-to-Bot Route */}
         <Route path="/voice-to-bot" element={<PrivateRoute><AuthenticatedApp><Layout><VoiceToBot /></Layout></AuthenticatedApp></PrivateRoute>} />
 
+        {/* AI Fine-tuning Route */}
+        <Route path="/fine-tuning" element={<PrivateRoute><AuthenticatedApp><Layout><FineTuning /></Layout></AuthenticatedApp></PrivateRoute>} />
+
         {/* New SaaS Routes - With Sidebar and Organization Context */}
         <Route path="/billing" element={<PrivateRoute><AuthenticatedApp><Layout><Billing /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/api-tokens" element={<PrivateRoute><AuthenticatedApp><Layout><ApiTokens /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/webhooks" element={<PrivateRoute><AuthenticatedApp><Layout><Webhooks /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/usage" element={<PrivateRoute><AuthenticatedApp><Layout><Usage /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><AuthenticatedApp><Layout><Settings /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/settings/security" element={<PrivateRoute><AuthenticatedApp><Layout><SecuritySettings /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Organization Routes */}
         <Route path="/organizations/settings" element={<PrivateRoute><AuthenticatedApp><Layout><OrganizationSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
@@ -162,6 +178,11 @@ function App() {
         <Route path="/admin/health" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminHealth /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
         <Route path="/admin/whitelabel" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><WhiteLabelSettings /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
         <Route path="/admin/stats" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminStats /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/rate-limiting" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminRateLimiting /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/admin/roles" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><AdminRoles /></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
+
+        {/* Superadmin Routes - Protected by SuperadminRouteGuard */}
+        <Route path="/superadmin/dashboard" element={<SuperadminRouteGuard><Layout><SuperadminDashboard /></Layout></SuperadminRouteGuard>} />
       </Routes>
         <ToastContainer />
         </Router>

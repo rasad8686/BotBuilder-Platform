@@ -11,7 +11,7 @@ const db = require('./db');
 const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
 const { detectCustomDomain } = require('./middleware/whitelabel');
-const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, authLimiter, dbAuthLimiter, recordFailedLogin } = require('./middleware/rateLimiter');
 const securityHeaders = require('./middleware/securityHeaders');
 const { csrfTokenMiddleware, csrfValidationMiddleware, csrfTokenEndpoint } = require('./middleware/csrf');
 const { sanitizeInput } = require('./middleware/validators');
@@ -456,7 +456,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', authLimiter, async (req, res) => {
+app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async (req, res) => {
   try {
     const { email, password, twoFactorCode } = req.body;
 
@@ -469,7 +469,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
     // Query database for user
     const result = await db.query(
-      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash, is_superadmin FROM users WHERE email = $1',
       [email]
     );
 
@@ -643,7 +643,9 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         username: user.name,
         email: user.email,
         currentOrganizationId: organizationId,
-        has2FA: twoFactorData.two_factor_enabled || false
+        has2FA: twoFactorData.two_factor_enabled || false,
+        is_superadmin: user.is_superadmin || false,
+        isSuperAdmin: user.is_superadmin || false
       }
     });
 
@@ -860,6 +862,18 @@ app.use('/api/auth/2fa', require('./routes/twoFactor'));
 
 // ✅ Session Management routes
 app.use('/api/sessions', require('./routes/sessions'));
+
+// ✅ Roles CRUD API (Enterprise RBAC)
+app.use('/api/roles', require('./routes/roles'));
+
+// ✅ Superadmin routes (Platform-wide administration)
+app.use('/api/superadmin', require('./routes/superadmin'));
+
+// ✅ Admin authentication routes (Separate admin login flow)
+app.use('/api/admin-auth', require('./routes/adminAuth'));
+
+// ✅ AI Fine-tuning routes (Custom Model Training)
+app.use('/api/fine-tuning', require('./routes/fineTuning'));
 
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

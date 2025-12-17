@@ -8,12 +8,14 @@ import { useTheme } from '../contexts/ThemeContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 import FeedbackModal from './FeedbackModal';
 import ThemeToggle from './ThemeToggle';
+import api from '../api/axios';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -21,6 +23,40 @@ export default function Sidebar() {
   const { userRole } = useOrganization();
   const { brand } = useBrand();
   const { isDark } = useTheme();
+
+  // Check superadmin status
+  useEffect(() => {
+    const checkSuperadmin = () => {
+      // First check localStorage (faster, no API call needed)
+      const adminUserStr = localStorage.getItem('adminUser');
+      const userStr = localStorage.getItem('user');
+
+      if (adminUserStr) {
+        try {
+          const adminUser = JSON.parse(adminUserStr);
+          if (adminUser.isSuperAdmin || adminUser.is_superadmin) {
+            setIsSuperAdmin(true);
+            return;
+          }
+        } catch (e) {
+          // Error parsing
+        }
+      }
+
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.isSuperAdmin || user.is_superadmin) {
+            setIsSuperAdmin(true);
+            return;
+          }
+        } catch (e) {
+          // Error parsing
+        }
+      }
+    };
+    checkSuperadmin();
+  }, []);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -35,8 +71,10 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     if (confirm(t('sidebar.logoutConfirm'))) {
+      // Check if user was superadmin before clearing localStorage
+      const wasAdmin = isSuperAdmin || localStorage.getItem('adminToken');
       localStorage.clear();
-      navigate('/login');
+      navigate(wasAdmin ? '/admin/login' : '/login');
     }
   };
 
@@ -70,6 +108,7 @@ export default function Sidebar() {
     { path: '/work-clone', icon: '👤', label: t('sidebar.workClone', 'Work Clone') },
     { path: '/voice-to-bot', icon: '🎙️', label: t('sidebar.voiceToBot', 'Voice to Bot') },
     { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
+    { path: '/fine-tuning', icon: '🧠', label: t('sidebar.fineTuning', 'AI Fine-tuning') },
   ];
 
   // Get botId from URL if on a bot-specific page
@@ -83,6 +122,12 @@ export default function Sidebar() {
     { path: '/admin/health', icon: '🔧', label: t('sidebar.systemHealth') },
     { path: '/admin/whitelabel', icon: '🎨', label: t('sidebar.whiteLabelSettings') },
     { path: '/admin/rate-limiting', icon: '🛡️', label: t('sidebar.rateLimiting', 'Rate Limiting') },
+    { path: '/admin/roles', icon: '👔', label: t('sidebar.roles', 'Role Management') },
+  ];
+
+  // Superadmin links - only shown to superadmins
+  const superadminLinks = [
+    { path: '/superadmin/dashboard', icon: '👑', label: t('sidebar.superadminDashboard', 'Superadmin Panel') },
   ];
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
@@ -301,6 +346,41 @@ export default function Sidebar() {
                 ))}
               </>
             )}
+
+            {/* Superadmin Section - Only visible to superadmins */}
+            {isSuperAdmin && (
+              <>
+                <li className="pt-4 pb-2">
+                  <div className="flex items-center gap-2 px-4">
+                    <div className="flex-1 h-px bg-yellow-400 dark:bg-yellow-600"></div>
+                    <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
+                      {t('sidebar.superadmin', 'Superadmin')}
+                    </span>
+                    <div className="flex-1 h-px bg-yellow-400 dark:bg-yellow-600"></div>
+                  </div>
+                </li>
+                {superadminLinks.map((link) => (
+                  <li key={link.path}>
+                    <Link
+                      to={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg
+                        transition-all duration-200
+                        ${
+                          isActive(link.path)
+                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-slate-800 hover:text-yellow-600 dark:hover:text-yellow-400'
+                        }
+                      `}
+                    >
+                      <span className="text-xl">{link.icon}</span>
+                      <span className="font-medium">{link.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </>
+            )}
           </ul>
         </nav>
 
@@ -318,7 +398,7 @@ export default function Sidebar() {
                       <div className="text-sm font-semibold text-gray-800 dark:text-white truncate">
                         {user.name}
                       </div>
-                      {isAdmin && (
+                      {isAdmin && !isSuperAdmin && (
                         <span className="text-[10px] font-bold text-purple-600 bg-purple-100 dark:bg-purple-900 dark:text-purple-300 px-1.5 py-0.5 rounded">
                           ADMIN
                         </span>
