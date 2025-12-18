@@ -875,6 +875,12 @@ app.use('/api/admin-auth', require('./routes/adminAuth'));
 // ✅ AI Fine-tuning routes (Custom Model Training)
 app.use('/api/fine-tuning', require('./routes/fineTuning'));
 
+// ✅ Enterprise SSO routes (SAML/OIDC authentication)
+app.use('/api/sso', require('./routes/sso'));
+
+// ✅ SCIM 2.0 Provisioning routes (User provisioning from IdP)
+app.use('/scim/v2', require('./routes/scim'));
+
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
