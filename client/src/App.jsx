@@ -46,6 +46,8 @@ import Settings from './pages/Settings';
 import SecuritySettings from './pages/SecuritySettings';
 import OrganizationSettings from './pages/OrganizationSettings';
 import TeamSettings from './pages/TeamSettings';
+import SSOSettings from './pages/SSOSettings';
+import SSOCallback from './pages/SSOCallback';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -102,6 +104,9 @@ function App() {
 
           {/* Admin Login - Separate secure login for admins */}
           <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* SSO Callback - Handles token after SSO authentication */}
+          <Route path="/sso/callback" element={<SSOCallback />} />
 
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<PrivateRoute><AuthenticatedApp><Layout><Dashboard /></Layout></AuthenticatedApp></PrivateRoute>} />
@@ -165,6 +170,7 @@ function App() {
         <Route path="/usage" element={<PrivateRoute><AuthenticatedApp><Layout><Usage /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><AuthenticatedApp><Layout><Settings /></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/settings/security" element={<PrivateRoute><AuthenticatedApp><Layout><SecuritySettings /></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/settings/sso" element={<PrivateRoute><AuthenticatedApp><Layout><SSOSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Organization Routes */}
         <Route path="/organizations/settings" element={<PrivateRoute><AuthenticatedApp><Layout><OrganizationSettings /></Layout></AuthenticatedApp></PrivateRoute>} />
