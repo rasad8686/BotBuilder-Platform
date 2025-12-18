@@ -89,6 +89,7 @@ export default function Sidebar() {
     { path: '/team', icon: '👥', label: t('sidebar.team') },
     { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
     { path: '/settings/security', icon: '🔐', label: t('sidebar.security', 'Security') },
+    { path: '/settings/sso', icon: '🛡️', label: t('sidebar.sso', 'Enterprise SSO') },
   ];
 
   // Multi-Agent AI links (shown in bot context)
