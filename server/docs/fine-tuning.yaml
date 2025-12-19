@@ -1,0 +1,418 @@
+# Fine-Tuning API Documentation
+
+paths:
+  /api/fine-tuning/models:
+    get:
+      tags:
+        - Fine-Tuning
+      summary: List fine-tuned models
+      description: Get all fine-tuned models for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of models
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  models:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FineTuningModel'
+
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Create fine-tuning model
+      description: Create a new fine-tuning model (draft)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - base_model
+              properties:
+                name:
+                  type: string
+                  example: customer-support-model
+                base_model:
+                  type: string
+                  enum: [gpt-4o-mini-2024-07-18, gpt-4o-2024-08-06]
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Model created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  model:
+                    $ref: '#/components/schemas/FineTuningModel'
+
+  /api/fine-tuning/models/{modelId}:
+    get:
+      tags:
+        - Fine-Tuning
+      summary: Get model details
+      description: Get fine-tuning model details and training status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Model details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  model:
+                    $ref: '#/components/schemas/FineTuningModel'
+                  jobs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        status:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+
+    put:
+      tags:
+        - Fine-Tuning
+      summary: Update model
+      description: Update model name or description
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Model updated
+
+    delete:
+      tags:
+        - Fine-Tuning
+      summary: Delete model
+      description: Delete fine-tuning model and associated data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Model deleted
+
+  /api/fine-tuning/models/{modelId}/examples:
+    get:
+      tags:
+        - Fine-Tuning
+      summary: List training examples
+      description: Get training examples for a model
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of examples
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  examples:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrainingExample'
+                  pagination:
+                    type: object
+
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Add training example
+      description: Add a training example to the model
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingExample'
+      responses:
+        '201':
+          description: Example added
+
+  /api/fine-tuning/models/{modelId}/examples/bulk:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Bulk add examples
+      description: Add multiple training examples at once
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                examples:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TrainingExample'
+      responses:
+        '201':
+          description: Examples added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  added:
+                    type: integer
+
+  /api/fine-tuning/models/{modelId}/upload:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Upload training file
+      description: Upload JSONL training file
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: JSONL file with training examples
+      responses:
+        '200':
+          description: File uploaded and parsed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  examples_count:
+                    type: integer
+
+  /api/fine-tuning/models/{modelId}/train:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Start training
+      description: Start fine-tuning job on OpenAI
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hyperparameters:
+                  type: object
+                  properties:
+                    n_epochs:
+                      type: integer
+                      default: 3
+                    batch_size:
+                      type: integer
+                    learning_rate_multiplier:
+                      type: number
+      responses:
+        '200':
+          description: Training started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  job_id:
+                    type: string
+                  estimated_cost:
+                    type: number
+
+  /api/fine-tuning/models/{modelId}/cancel:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Cancel training
+      description: Cancel running training job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Training cancelled
+
+  /api/fine-tuning/models/{modelId}/deploy:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Deploy model to bot
+      description: Deploy fine-tuned model to a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+      responses:
+        '200':
+          description: Model deployed
+
+  /api/fine-tuning/estimate-cost:
+    post:
+      tags:
+        - Fine-Tuning
+      summary: Estimate training cost
+      description: Calculate estimated training cost
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - base_model
+                - token_count
+              properties:
+                base_model:
+                  type: string
+                token_count:
+                  type: integer
+                epochs:
+                  type: integer
+                  default: 3
+      responses:
+        '200':
+          description: Cost estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estimated_cost:
+                    type: number
+                  breakdown:
+                    type: object

@@ -1,0 +1,243 @@
+# Channels API Documentation
+
+paths:
+  /api/bots/{botId}/channels:
+    get:
+      tags:
+        - Channels
+      summary: List channels
+      description: Get all channels for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Channel'
+
+    post:
+      tags:
+        - Channels
+      summary: Create channel
+      description: Add a new channel integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - name
+              properties:
+                type:
+                  type: string
+                  enum: [telegram, slack, discord, whatsapp, web]
+                name:
+                  type: string
+                config:
+                  type: object
+                  description: Channel-specific configuration
+      responses:
+        '201':
+          description: Channel created
+
+  /api/bots/{botId}/channels/{channelId}:
+    put:
+      tags:
+        - Channels
+      summary: Update channel
+      description: Update channel configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                config:
+                  type: object
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Channel updated
+
+    delete:
+      tags:
+        - Channels
+      summary: Delete channel
+      description: Remove a channel integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Channel deleted
+
+  # Telegram specific
+  /api/telegram/webhook/{botId}:
+    post:
+      tags:
+        - Channels
+      summary: Telegram webhook
+      description: Receive Telegram updates
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Telegram Update object
+      responses:
+        '200':
+          description: Webhook processed
+
+  /api/bots/{botId}/telegram/setup:
+    post:
+      tags:
+        - Channels
+      summary: Setup Telegram bot
+      description: Configure Telegram bot token and webhook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Telegram Bot API token
+      responses:
+        '200':
+          description: Telegram setup complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webhookUrl:
+                    type: string
+                  botInfo:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                      first_name:
+                        type: string
+
+  # Slack specific
+  /api/slack/events:
+    post:
+      tags:
+        - Channels
+      summary: Slack events
+      description: Receive Slack events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Event processed
+
+  /api/bots/{botId}/slack/setup:
+    post:
+      tags:
+        - Channels
+      summary: Setup Slack bot
+      description: Configure Slack bot credentials
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_token
+                - signing_secret
+              properties:
+                bot_token:
+                  type: string
+                signing_secret:
+                  type: string
+                app_id:
+                  type: string
+      responses:
+        '200':
+          description: Slack setup complete

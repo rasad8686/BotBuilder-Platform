@@ -483,8 +483,15 @@ async function getUsage(req, res) {
     );
     const messagesCount = parseInt(messagesResult.rows[0].count);
 
-    // Calculate API calls (if tracked)
-    const apiCallsCount = 0; // TODO: Implement API call tracking
+    // Calculate API calls from ai_usage_logs
+    const apiCallsResult = await db.query(
+      `SELECT COUNT(*) as count
+       FROM ai_usage_logs
+       WHERE organization_id = $1
+       AND created_at >= DATE_TRUNC('month', CURRENT_DATE)`,
+      [organizationId]
+    );
+    const apiCallsCount = parseInt(apiCallsResult.rows[0].count)
 
     return res.status(200).json({
       success: true,

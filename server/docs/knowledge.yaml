@@ -1,0 +1,220 @@
+# Knowledge Base API Documentation
+
+paths:
+  /api/bots/{botId}/knowledge:
+    get:
+      tags:
+        - Knowledge Base
+      summary: List documents
+      description: Get all knowledge base documents for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeDocument'
+
+    post:
+      tags:
+        - Knowledge Base
+      summary: Upload document
+      description: Upload a document to the knowledge base
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, TXT, DOCX, MD)
+                title:
+                  type: string
+                  description: Document title
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  document:
+                    $ref: '#/components/schemas/KnowledgeDocument'
+        '400':
+          description: Invalid file type
+
+  /api/bots/{botId}/knowledge/{documentId}:
+    get:
+      tags:
+        - Knowledge Base
+      summary: Get document
+      description: Get a specific document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  document:
+                    $ref: '#/components/schemas/KnowledgeDocument'
+                  chunks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        content:
+                          type: string
+                        embedding_status:
+                          type: string
+
+    delete:
+      tags:
+        - Knowledge Base
+      summary: Delete document
+      description: Remove a document from knowledge base
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Document deleted
+
+  /api/bots/{botId}/knowledge/{documentId}/reprocess:
+    post:
+      tags:
+        - Knowledge Base
+      summary: Reprocess document
+      description: Re-chunk and re-embed a document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reprocessing started
+
+  /api/bots/{botId}/knowledge/search:
+    post:
+      tags:
+        - Knowledge Base
+      summary: Search knowledge base
+      description: Semantic search across documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: Search query
+                limit:
+                  type: integer
+                  default: 5
+                threshold:
+                  type: number
+                  default: 0.7
+                  description: Similarity threshold (0-1)
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        document_id:
+                          type: integer
+                        document_title:
+                          type: string
+                        chunk_content:
+                          type: string
+                        similarity:
+                          type: number

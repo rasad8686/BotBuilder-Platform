@@ -1,0 +1,310 @@
+# Bots API Documentation
+
+paths:
+  /api/bots:
+    get:
+      tags:
+        - Bots
+      summary: List all bots
+      description: Get all bots for the current organization
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by bot name
+      responses:
+        '200':
+          description: List of bots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bot'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Bots
+      summary: Create a new bot
+      description: Create a new chatbot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBotRequest'
+      responses:
+        '201':
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/bots/{botId}:
+    get:
+      tags:
+        - Bots
+      summary: Get bot by ID
+      description: Get a specific bot's details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Bots
+      summary: Update bot
+      description: Update bot configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBotRequest'
+      responses:
+        '200':
+          description: Bot updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Bots
+      summary: Delete bot
+      description: Permanently delete a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/bots/{botId}/clone:
+    post:
+      tags:
+        - Bots
+      summary: Clone bot
+      description: Create a copy of an existing bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name for the cloned bot
+      responses:
+        '201':
+          description: Bot cloned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+
+  /api/bots/{botId}/flows:
+    get:
+      tags:
+        - Flows
+      summary: Get bot flows
+      description: Get all conversation flows for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of flows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  flows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        nodes:
+                          type: array
+                        edges:
+                          type: array
+
+    post:
+      tags:
+        - Flows
+      summary: Create flow
+      description: Create a new conversation flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                nodes:
+                  type: array
+                edges:
+                  type: array
+      responses:
+        '201':
+          description: Flow created
+
+  /api/bots/{botId}/flows/{flowId}:
+    put:
+      tags:
+        - Flows
+      summary: Update flow
+      description: Update a conversation flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: flowId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                nodes:
+                  type: array
+                edges:
+                  type: array
+      responses:
+        '200':
+          description: Flow updated
+
+    delete:
+      tags:
+        - Flows
+      summary: Delete flow
+      description: Delete a conversation flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: flowId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Flow deleted
