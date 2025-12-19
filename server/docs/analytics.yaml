@@ -1,0 +1,148 @@
+# Analytics API Documentation
+
+paths:
+  /api/analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics overview
+      description: Get overview statistics for the organization
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/analytics/messages:
+    get:
+      tags:
+        - Analytics
+      summary: Get message analytics
+      description: Get message volume and trends
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Message analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        count:
+                          type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/analytics/usage:
+    get:
+      tags:
+        - Analytics
+      summary: Get AI usage analytics
+      description: Get AI token usage and costs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: month
+      responses:
+        '200':
+          description: Usage analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usage:
+                    type: object
+                    properties:
+                      total_tokens:
+                        type: integer
+                      prompt_tokens:
+                        type: integer
+                      completion_tokens:
+                        type: integer
+                      total_cost:
+                        type: number
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/analytics/bots:
+    get:
+      tags:
+        - Analytics
+      summary: Get bot analytics
+      description: Get analytics for all bots
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Bot analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bots:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bot_id:
+                          type: integer
+                        bot_name:
+                          type: string
+                        message_count:
+                          type: integer
+                        user_count:
+                          type: integer
+                        avg_response_time:
+                          type: number
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'

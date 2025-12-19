@@ -329,7 +329,22 @@ class SSOService {
         return { success: true, message: 'Domain already verified' };
       }
 
-      // In production, this would check DNS TXT record
+      // Skip DNS verification in development/test mode
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+
+      if (isDevelopment) {
+        // Auto-verify in development mode for testing
+        await db.query(
+          'UPDATE sso_domains SET is_verified = true, verified_at = NOW() WHERE id = $1',
+          [domainId]
+        );
+
+        log.info('SSO domain auto-verified (development mode)', { domainId, domain: ssoDomain.domain });
+
+        return { success: true, message: 'Domain verified successfully (development mode)' };
+      }
+
+      // In production, check DNS TXT record
       const dns = require('dns').promises;
 
       try {

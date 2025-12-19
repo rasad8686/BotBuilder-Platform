@@ -35,6 +35,9 @@ class SAMLService {
       const requestId = '_' + crypto.randomBytes(21).toString('hex');
       const issueInstant = new Date().toISOString();
 
+      // Get SSO URL from settings (support both naming conventions)
+      const idpSsoUrl = config.settings?.sso_url || config.settings?.idp_sso_url || '';
+
       // Build SAML AuthnRequest
       const authnRequest = `<?xml version="1.0" encoding="UTF-8"?>
 <samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
@@ -42,7 +45,7 @@ class SAMLService {
                     ID="${requestId}"
                     Version="2.0"
                     IssueInstant="${issueInstant}"
-                    Destination="${config.settings?.sso_url || ''}"
+                    Destination="${idpSsoUrl}"
                     AssertionConsumerServiceURL="${acsUrl}"
                     ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
   <saml:Issuer>${entityId}</saml:Issuer>
@@ -55,8 +58,8 @@ class SAMLService {
       const encoded = deflated.toString('base64');
       const urlEncoded = encodeURIComponent(encoded);
 
-      // Get SSO URL from metadata or settings
-      let ssoUrl = config.settings?.sso_url;
+      // Get SSO URL (already fetched above)
+      let ssoUrl = idpSsoUrl;
 
       // If metadata URL is provided, try to fetch SSO URL
       if (!ssoUrl && config.metadata_url) {

@@ -1,0 +1,602 @@
+# Voice to Bot API Documentation
+
+paths:
+  /api/voice-to-bot/start:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Start voice session
+      description: Start a new voice-to-bot creation session
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  default: en
+                  description: Language code for transcription
+      responses:
+        '201':
+          description: Session started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    $ref: '#/components/schemas/VoiceSession'
+                  supportedFormats:
+                    type: array
+                    items:
+                      type: string
+                  supportedLanguages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/voice-to-bot/sessions:
+    get:
+      tags:
+        - Voice to Bot
+      summary: List sessions
+      description: Get user's voice-to-bot sessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [recording, transcribing, extracting, extracted, generating, completed, error]
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceSession'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/voice-to-bot/sessions/{sessionId}:
+    get:
+      tags:
+        - Voice to Bot
+      summary: Get session
+      description: Get session details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    $ref: '#/components/schemas/VoiceSession'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Voice to Bot
+      summary: Delete session
+      description: Delete a voice-to-bot session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/voice-to-bot/transcribe:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Transcribe audio
+      description: Transcribe audio file to text
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: Audio file (webm, mp3, wav, ogg, m4a, flac)
+                sessionId:
+                  type: string
+                  format: uuid
+                language:
+                  type: string
+                  description: Language code
+      responses:
+        '200':
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  transcription:
+                    type: string
+                  originalTranscription:
+                    type: string
+                    description: Before AI correction
+                  wasCorrected:
+                    type: boolean
+                  language:
+                    type: string
+                  confidence:
+                    type: number
+                  duration:
+                    type: number
+                    description: Audio duration in seconds
+                  words:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        word:
+                          type: string
+                        start:
+                          type: number
+                        end:
+                          type: number
+                  keyPhrases:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Invalid audio or missing file
+
+  /api/voice-to-bot/transcribe-chunk:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Transcribe audio chunk
+      description: Transcribe audio chunk for real-time streaming
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+                - sessionId
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                sessionId:
+                  type: string
+                  format: uuid
+                chunkNumber:
+                  type: integer
+                isFinal:
+                  type: string
+                  enum: ['true', 'false']
+                previousText:
+                  type: string
+      responses:
+        '200':
+          description: Chunk transcription
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  text:
+                    type: string
+                  confidence:
+                    type: number
+                  isFinal:
+                    type: boolean
+                  chunkNumber:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/voice-to-bot/extract:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Extract intents
+      description: Extract intents and entities from transcription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+                text:
+                  type: string
+                  description: Override text (uses session transcription if not provided)
+      responses:
+        '200':
+          description: Extracted data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  extracted:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      intents:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            examples:
+                              type: array
+                              items:
+                                type: string
+                            responses:
+                              type: array
+                              items:
+                                type: string
+                      entities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            type:
+                              type: string
+                            values:
+                              type: array
+                              items:
+                                type: string
+                      flows:
+                        type: array
+                        items:
+                          type: object
+                      suggestedFeatures:
+                        type: array
+                        items:
+                          type: string
+                  preview:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/voice-to-bot/generate:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Generate bot
+      description: Generate bot from extracted data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+                  description: Session ID (for session mode)
+                extractedData:
+                  type: object
+                  description: Direct data (for template mode)
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    category:
+                      type: string
+                    language:
+                      type: string
+                    intents:
+                      type: array
+                      items:
+                        type: object
+                    entities:
+                      type: array
+                      items:
+                        type: object
+                    flows:
+                      type: array
+                      items:
+                        type: object
+                customizations:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+      responses:
+        '200':
+          description: Bot generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+                  intents:
+                    type: array
+                    items:
+                      type: object
+                  entities:
+                    type: array
+                    items:
+                      type: object
+                  flow:
+                    type: object
+                  message:
+                    type: string
+        '400':
+          description: No extracted data available
+
+  /api/voice-to-bot/preview:
+    post:
+      tags:
+        - Voice to Bot
+      summary: Preview bot
+      description: Preview bot without saving
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Bot preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  preview:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/voice-to-bot/templates:
+    get:
+      tags:
+        - Voice to Bot
+      summary: List templates
+      description: Get available bot templates
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  templates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        category:
+                          type: string
+                        preview_image:
+                          type: string
+
+  /api/voice-to-bot/templates/{id}:
+    get:
+      tags:
+        - Voice to Bot
+      summary: Get template
+      description: Get template details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  template:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/voice-to-bot/supported:
+    get:
+      tags:
+        - Voice to Bot
+      summary: Get supported formats
+      description: Get supported audio formats and languages
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Supported formats and languages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  formats:
+                    type: array
+                    items:
+                      type: string
+                  languages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+
+components:
+  schemas:
+    VoiceSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        user_id:
+          type: integer
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [recording, transcribing, extracting, extracted, generating, completed, error]
+        language:
+          type: string
+        transcription:
+          type: string
+        extracted_name:
+          type: string
+        extracted_description:
+          type: string
+        extracted_intents:
+          type: object
+        extracted_entities:
+          type: object
+        extracted_flows:
+          type: object
+        ai_analysis:
+          type: object
+        generation_config:
+          type: object
+        generated_bot_id:
+          type: integer
+        bot_name:
+          type: string
+        processing_time_ms:
+          type: integer
+        error_message:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time

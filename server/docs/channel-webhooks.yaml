@@ -1,0 +1,231 @@
+# Channel Webhooks API Documentation
+
+paths:
+  /webhooks/whatsapp:
+    get:
+      tags:
+        - Channels
+      summary: WhatsApp webhook verification
+      description: Verify WhatsApp webhook endpoint (Meta verification)
+      parameters:
+        - name: hub.mode
+          in: query
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification successful
+          content:
+            text/plain:
+              schema:
+                type: string
+        '403':
+          description: Verification failed
+
+    post:
+      tags:
+        - Channels
+      summary: WhatsApp webhook
+      description: Receive WhatsApp messages and status updates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: WhatsApp webhook payload
+      responses:
+        '200':
+          description: Event received
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: EVENT_RECEIVED
+        '401':
+          description: Invalid signature
+
+  /webhooks/instagram:
+    get:
+      tags:
+        - Channels
+      summary: Instagram webhook verification
+      description: Verify Instagram webhook endpoint (Meta verification)
+      parameters:
+        - name: hub.mode
+          in: query
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification successful
+        '403':
+          description: Verification failed
+
+    post:
+      tags:
+        - Channels
+      summary: Instagram webhook
+      description: Receive Instagram messages, reactions, and story mentions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Instagram webhook payload
+      responses:
+        '200':
+          description: Event received
+        '401':
+          description: Invalid signature
+
+  /webhooks/telegram/{botToken}:
+    post:
+      tags:
+        - Channels
+      summary: Telegram webhook
+      description: Receive Telegram bot updates
+      parameters:
+        - name: botToken
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Telegram bot token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Telegram Update object
+      responses:
+        '200':
+          description: Update processed
+        '404':
+          description: Bot not found
+
+  /webhooks/channel/{channelId}:
+    post:
+      tags:
+        - Channels
+      summary: Generic channel webhook
+      description: Generic webhook endpoint for any channel by ID
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: secret
+          in: query
+          schema:
+            type: string
+          description: Webhook secret (alternative to header)
+        - name: x-webhook-secret
+          in: header
+          schema:
+            type: string
+          description: Webhook secret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+        '401':
+          description: Invalid webhook secret
+        '404':
+          description: Channel not found
+
+  /webhooks/status:
+    get:
+      tags:
+        - Channels
+      summary: Get webhook status
+      description: Get webhook configuration status for all channels
+      responses:
+        '200':
+          description: Webhook status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  whatsapp:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+                      verifyToken:
+                        type: string
+                      appSecret:
+                        type: string
+                      endpoint:
+                        type: string
+                  instagram:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+                      verifyToken:
+                        type: string
+                      appSecret:
+                        type: string
+                      endpoint:
+                        type: string
+                  telegram:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+                      endpoint:
+                        type: string
+
+  /webhooks/test:
+    post:
+      tags:
+        - Channels
+      summary: Test webhook
+      description: Test webhook endpoint (development only)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  received:
+                    type: object
+                    properties:
+                      timestamp:
+                        type: string
+                        format: date-time
+                      body:
+                        type: object

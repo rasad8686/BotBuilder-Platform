@@ -1,0 +1,422 @@
+# Orchestrations API Documentation
+
+paths:
+  /api/orchestrations:
+    get:
+      tags:
+        - Workflows
+      summary: List orchestrations
+      description: Get all orchestrations for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Orchestrations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Orchestration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Workflows
+      summary: Create orchestration
+      description: Create a new orchestration for managing flow transitions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - name
+              properties:
+                bot_id:
+                  type: integer
+                name:
+                  type: string
+                  example: Main Conversation Flow
+                entry_flow_id:
+                  type: integer
+                  description: ID of the initial flow
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Orchestration created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Orchestration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/orchestrations/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get orchestration
+      description: Get orchestration by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Orchestration details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Orchestration'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Workflows
+      summary: Update orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                entry_flow_id:
+                  type: integer
+                description:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Orchestration updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Workflows
+      summary: Delete orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Orchestration deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/orchestrations/{id}/transitions:
+    get:
+      tags:
+        - Workflows
+      summary: Get transitions
+      description: Get all transitions for an orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transitions list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transition'
+
+    post:
+      tags:
+        - Workflows
+      summary: Add transition
+      description: Add a new transition between flows
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - from_flow_id
+                - to_flow_id
+                - trigger_type
+              properties:
+                from_flow_id:
+                  type: integer
+                to_flow_id:
+                  type: integer
+                trigger_type:
+                  type: string
+                  enum: [intent, keyword, condition, fallback, complete]
+                trigger_value:
+                  type: object
+                priority:
+                  type: integer
+                  default: 0
+      responses:
+        '201':
+          description: Transition created
+
+  /api/orchestrations/{id}/transitions/{transitionId}:
+    delete:
+      tags:
+        - Workflows
+      summary: Remove transition
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: transitionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transition removed
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/orchestrations/{id}/variables:
+    get:
+      tags:
+        - Workflows
+      summary: Get variables
+      description: Get all variables for an orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Variables list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrchestrationVariable'
+
+    post:
+      tags:
+        - Workflows
+      summary: Add variable
+      description: Add a new variable to orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [string, number, boolean, object, array]
+                  default: string
+                default_value:
+                  type: string
+                scope:
+                  type: string
+                  enum: [session, global]
+                  default: session
+      responses:
+        '201':
+          description: Variable created
+
+  /api/orchestrations/{id}/execute:
+    post:
+      tags:
+        - Workflows
+      summary: Execute orchestration
+      description: Start executing an orchestration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - session_id
+              properties:
+                session_id:
+                  type: string
+                input:
+                  type: string
+      responses:
+        '200':
+          description: Execution result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      current_flow_id:
+                        type: integer
+                      response:
+                        type: string
+                      state:
+                        type: object
+
+components:
+  schemas:
+    Orchestration:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        entry_flow_id:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Transition:
+      type: object
+      properties:
+        id:
+          type: integer
+        orchestration_id:
+          type: integer
+        from_flow_id:
+          type: integer
+        to_flow_id:
+          type: integer
+        trigger_type:
+          type: string
+        trigger_value:
+          type: object
+        priority:
+          type: integer
+
+    OrchestrationVariable:
+      type: object
+      properties:
+        id:
+          type: integer
+        orchestration_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        default_value:
+          type: string
+        scope:
+          type: string

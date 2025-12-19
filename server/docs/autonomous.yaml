@@ -1,0 +1,541 @@
+# Autonomous Agents API Documentation
+
+paths:
+  /api/autonomous/agents:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: List all agents
+      description: Get all autonomous agents for the current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, draft]
+          description: Filter by agent status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutonomousAgent'
+                  count:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Autonomous Agents
+      summary: Create agent
+      description: Create a new autonomous agent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Research Assistant
+                description:
+                  type: string
+                  example: Autonomous agent for research tasks
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                  example: [web_search, summarize, analyze]
+                model:
+                  type: string
+                  example: gpt-4
+                temperature:
+                  type: number
+                  minimum: 0
+                  maximum: 2
+                  default: 0.7
+                max_tokens:
+                  type: integer
+                  default: 4096
+                system_prompt:
+                  type: string
+                settings:
+                  type: object
+      responses:
+        '201':
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agent:
+                    $ref: '#/components/schemas/AutonomousAgent'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/autonomous/agents/{id}:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: Get agent by ID
+      description: Get a specific autonomous agent with stats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agent:
+                    allOf:
+                      - $ref: '#/components/schemas/AutonomousAgent'
+                      - type: object
+                        properties:
+                          stats:
+                            type: object
+                            properties:
+                              total_tasks:
+                                type: integer
+                              completed_tasks:
+                                type: integer
+                              avg_execution_time:
+                                type: number
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    put:
+      tags:
+        - Autonomous Agents
+      summary: Update agent
+      description: Update an autonomous agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                model:
+                  type: string
+                temperature:
+                  type: number
+                max_tokens:
+                  type: integer
+                system_prompt:
+                  type: string
+                settings:
+                  type: object
+                status:
+                  type: string
+                  enum: [active, inactive, draft]
+      responses:
+        '200':
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agent:
+                    $ref: '#/components/schemas/AutonomousAgent'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Autonomous Agents
+      summary: Delete agent
+      description: Delete an autonomous agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Agent deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/autonomous/agents/{id}/tasks:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: List agent tasks
+      description: Get all tasks for an agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, completed, failed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentTask'
+                  count:
+                    type: integer
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Autonomous Agents
+      summary: Create and execute task
+      description: Create a new task for an agent, optionally execute immediately
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_description
+              properties:
+                task_description:
+                  type: string
+                  example: Research the latest AI trends and summarize
+                input_data:
+                  type: object
+                  description: Additional input data for the task
+                execute_now:
+                  type: boolean
+                  default: true
+                  description: Whether to start execution immediately
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  task:
+                    $ref: '#/components/schemas/AgentTask'
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/autonomous/tasks/{id}:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: Get task details
+      description: Get details of a specific task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  task:
+                    $ref: '#/components/schemas/AgentTask'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/autonomous/tasks/{id}/steps:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: Get task execution steps
+      description: Get all execution steps for a task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task steps
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  task_id:
+                    type: integer
+                  task_status:
+                    type: string
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        step_number:
+                          type: integer
+                        action:
+                          type: string
+                        input:
+                          type: object
+                        output:
+                          type: object
+                        status:
+                          type: string
+                        started_at:
+                          type: string
+                          format: date-time
+                        completed_at:
+                          type: string
+                          format: date-time
+                  count:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/autonomous/tasks/{id}/execute:
+    post:
+      tags:
+        - Autonomous Agents
+      summary: Execute pending task
+      description: Start execution of a pending task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task execution started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  task_id:
+                    type: integer
+        '400':
+          description: Task cannot be executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/autonomous/tools:
+    get:
+      tags:
+        - Autonomous Agents
+      summary: List available tools
+      description: Get all available tools for autonomous agents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tools:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        parameters:
+                          type: object
+                  count:
+                    type: integer
+
+components:
+  schemas:
+    AutonomousAgent:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        model:
+          type: string
+        temperature:
+          type: number
+        max_tokens:
+          type: integer
+        system_prompt:
+          type: string
+        settings:
+          type: object
+        status:
+          type: string
+          enum: [active, inactive, draft]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AgentTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        agent_id:
+          type: integer
+        task_description:
+          type: string
+        input_data:
+          type: object
+        output:
+          type: object
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        error_message:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time

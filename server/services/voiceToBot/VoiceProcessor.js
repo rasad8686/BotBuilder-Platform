@@ -1195,6 +1195,168 @@ Important: "Eldjo" is a brand name - spell it exactly as "Eldjo".`;
   validateLanguage(language) {
     return !!SUPPORTED_LANGUAGES[language?.toLowerCase()];
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PREPROCESSING
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Preprocess audio before transcription
+   * @param {Buffer} audioBuffer - Raw audio data
+   * @param {Object} options - Processing options
+   * @returns {Promise<{success: boolean, buffer: Buffer, format: string, error?: string}>}
+   */
+  async preprocessAudio(audioBuffer, options = {}) {
+    try {
+      if (!audioBuffer || audioBuffer.length === 0) {
+        return { success: false, error: 'No audio data provided' };
+      }
+
+      const format = options.format || 'webm';
+
+      // Validate format
+      if (!this.validateFormat(format)) {
+        return { success: false, error: `Unsupported format: ${format}` };
+      }
+
+      // For now, pass through the buffer as-is
+      // Future: Add noise reduction, normalization, format conversion
+      log.debug('[VoiceProcessor] Audio preprocessed', {
+        size: audioBuffer.length,
+        format
+      });
+
+      return {
+        success: true,
+        buffer: audioBuffer,
+        format: format
+      };
+    } catch (error) {
+      log.error('[VoiceProcessor] Preprocessing failed', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TEXT CLEANING & CORRECTION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Clean transcription text
+   * @param {string} text - Raw transcription
+   * @returns {string} Cleaned text
+   */
+  cleanTranscription(text) {
+    if (!text) return '';
+
+    let cleaned = text;
+
+    // Remove multiple spaces
+    cleaned = cleaned.replace(/\s+/g, ' ');
+
+    // Remove leading/trailing whitespace
+    cleaned = cleaned.trim();
+
+    // Fix common punctuation issues
+    cleaned = cleaned.replace(/\s+([.,!?;:])/g, '$1');
+    cleaned = cleaned.replace(/([.,!?;:])(?=[A-Za-z])/g, '$1 ');
+
+    // Apply brand name fixes
+    cleaned = this._fixBrandNames(cleaned);
+
+    return cleaned;
+  }
+
+  /**
+   * AI-powered transcription correction
+   * @param {string} text - Cleaned transcription
+   * @param {string} language - Language code
+   * @returns {Promise<{text: string, corrected: boolean}>}
+   */
+  async correctTranscription(text, language = 'en') {
+    if (!text || text.trim().length === 0) {
+      return { text: '', corrected: false };
+    }
+
+    // If no Gemini API key, return as-is
+    if (!this.geminiApiKey) {
+      log.debug('[VoiceProcessor] Gemini API key not available, skipping correction');
+      return { text, corrected: false };
+    }
+
+    try {
+      const corrected = await this._geminiCorrect(text, null, null, language);
+
+      if (corrected && corrected !== text) {
+        log.debug('[VoiceProcessor] Text corrected', {
+          original: text.substring(0, 50),
+          corrected: corrected.substring(0, 50)
+        });
+        return { text: corrected, corrected: true };
+      }
+
+      return { text, corrected: false };
+    } catch (error) {
+      log.warn('[VoiceProcessor] Correction failed', { error: error.message });
+      return { text, corrected: false };
+    }
+  }
+
+  /**
+   * Extract key phrases from transcription
+   * @param {string} text - Transcription text
+   * @returns {string[]} Array of key phrases
+   */
+  extractKeyPhrases(text) {
+    if (!text || text.trim().length === 0) {
+      return [];
+    }
+
+    const phrases = [];
+
+    // Extract quoted phrases
+    const quotedMatches = text.match(/"([^"]+)"/g);
+    if (quotedMatches) {
+      quotedMatches.forEach(m => phrases.push(m.replace(/"/g, '')));
+    }
+
+    // Extract capitalized multi-word phrases (proper nouns)
+    const properNouns = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b/g);
+    if (properNouns) {
+      properNouns.forEach(p => {
+        if (!phrases.includes(p)) phrases.push(p);
+      });
+    }
+
+    // Extract important keywords
+    const keywords = [
+      'Eldjo', 'chatbot', 'bot', 'WhatsApp', 'Telegram', 'Facebook',
+      'müştəri', 'müşteri', 'customer', 'dəstək', 'destek', 'support',
+      'satış', 'sales', 'sifariş', 'sipariş', 'order', 'məhsul', 'ürün', 'product'
+    ];
+
+    keywords.forEach(keyword => {
+      if (text.toLowerCase().includes(keyword.toLowerCase()) && !phrases.includes(keyword)) {
+        phrases.push(keyword);
+      }
+    });
+
+    return phrases.slice(0, 10); // Limit to 10 phrases
+  }
+
+  /**
+   * Transcribe audio chunk for real-time streaming
+   * @param {Buffer} audioBuffer - Audio chunk
+   * @param {Object} options - Transcription options
+   * @returns {Promise<Object>} Transcription result
+   */
+  async transcribeChunk(audioBuffer, options = {}) {
+    // Use the main transcribe method for chunks
+    return this.transcribe(audioBuffer, {
+      ...options,
+      isChunk: true
+    });
+  }
 }
 
 module.exports = VoiceProcessor;

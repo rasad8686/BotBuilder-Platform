@@ -1,0 +1,216 @@
+# Integrations API Documentation
+
+paths:
+  /api/integrations:
+    get:
+      tags:
+        - Integrations
+      summary: List integrations
+      description: Get all integrations for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Integrations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  integrations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Integration'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Integrations
+      summary: Create integration
+      description: Create a new integration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - config
+              properties:
+                type:
+                  type: string
+                  enum: [slack, discord, telegram, whatsapp, zapier, make, n8n]
+                name:
+                  type: string
+                config:
+                  type: object
+                  description: Integration-specific configuration
+      responses:
+        '201':
+          description: Integration created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/integrations/{id}:
+    get:
+      tags:
+        - Integrations
+      summary: Get integration by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Integration details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Integrations
+      summary: Update integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                config:
+                  type: object
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Integration updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Integrations
+      summary: Delete integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Integration deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/integrations/{id}/test:
+    post:
+      tags:
+        - Integrations
+      summary: Test integration
+      description: Test the integration connection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/integrations/available:
+    get:
+      tags:
+        - Integrations
+      summary: List available integration types
+      description: Get all available integration types
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Available integrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  types:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        icon:
+                          type: string
+                        config_schema:
+                          type: object
+
+components:
+  schemas:
+    Integration:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        type:
+          type: string
+        name:
+          type: string
+        config:
+          type: object
+        is_active:
+          type: boolean
+        last_synced_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

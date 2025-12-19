@@ -143,17 +143,81 @@ router.get('/organizations/:orgId/ai/billing', checkPermission('viewer'), getOrg
 // ═══════════════════════════════════════════════════════════
 // CONVERSATION MANAGEMENT (Future)
 // ═══════════════════════════════════════════════════════════
+// CONVERSATION HISTORY ROUTES
+// ═══════════════════════════════════════════════════════════
 
 /**
  * GET /api/bots/:botId/ai/conversations/:sessionId
  * Get conversation history for a session
- * TODO: Implement if needed
  */
+router.get('/bots/:botId/ai/conversations/:sessionId', checkPermission('bots', 'read'), async (req, res) => {
+  try {
+    const { botId, sessionId } = req.params;
+    const db = require('../db');
+
+    // Verify bot ownership
+    const botCheck = await db.query(
+      'SELECT id FROM bots WHERE id = $1 AND organization_id = $2',
+      [botId, req.organization.id]
+    );
+
+    if (botCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    // Get conversation history from widget_messages
+    const result = await db.query(
+      `SELECT id, role, content, created_at
+       FROM widget_messages
+       WHERE bot_id = $1 AND session_id = $2
+       ORDER BY created_at ASC`,
+      [botId, sessionId]
+    );
+
+    res.json({
+      success: true,
+      sessionId,
+      messages: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch conversation history' });
+  }
+});
 
 /**
  * DELETE /api/bots/:botId/ai/conversations/:sessionId
  * Clear conversation history for a session
- * TODO: Implement if needed
  */
+router.delete('/bots/:botId/ai/conversations/:sessionId', checkPermission('bots', 'delete'), async (req, res) => {
+  try {
+    const { botId, sessionId } = req.params;
+    const db = require('../db');
+
+    // Verify bot ownership
+    const botCheck = await db.query(
+      'SELECT id FROM bots WHERE id = $1 AND organization_id = $2',
+      [botId, req.organization.id]
+    );
+
+    if (botCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Bot not found' });
+    }
+
+    // Delete conversation history
+    const result = await db.query(
+      'DELETE FROM widget_messages WHERE bot_id = $1 AND session_id = $2 RETURNING id',
+      [botId, sessionId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Conversation history cleared',
+      deletedCount: result.rows.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to clear conversation history' });
+  }
+});
 
 module.exports = router;

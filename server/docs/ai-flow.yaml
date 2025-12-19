@@ -1,0 +1,373 @@
+# AI Flow Generation API Documentation
+
+paths:
+  /api/ai/flow/generate:
+    post:
+      tags:
+        - AI
+      summary: Generate flow from prompt
+      description: Generate a new bot flow from a natural language prompt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  minLength: 10
+                  example: Create a customer support flow that handles refund requests
+                options:
+                  type: object
+                  properties:
+                    language:
+                      type: string
+                      example: en
+                    style:
+                      type: string
+                      enum: [friendly, professional, casual]
+      responses:
+        '200':
+          description: Flow generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  flow:
+                    $ref: '#/components/schemas/GeneratedFlow'
+                  metadata:
+                    type: object
+                    properties:
+                      tokensUsed:
+                        type: integer
+                      generationTime:
+                        type: number
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/ai/flow/improve:
+    post:
+      tags:
+        - AI
+      summary: Improve existing flow
+      description: Improve an existing flow based on suggestions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - flow
+                - suggestions
+              properties:
+                flow:
+                  $ref: '#/components/schemas/GeneratedFlow'
+                suggestions:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - Add error handling for invalid input
+                    - Make responses more friendly
+      responses:
+        '200':
+          description: Flow improved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  flow:
+                    $ref: '#/components/schemas/GeneratedFlow'
+                  changes:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/ai/flow/suggest-nodes:
+    post:
+      tags:
+        - AI
+      summary: Get node suggestions
+      description: Get AI-powered suggestions for next nodes in a flow
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - flow
+              properties:
+                flow:
+                  $ref: '#/components/schemas/GeneratedFlow'
+      responses:
+        '200':
+          description: Suggestions generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        label:
+                          type: string
+                        description:
+                          type: string
+
+  /api/ai/flow/generate-content:
+    post:
+      tags:
+        - AI
+      summary: Generate node content
+      description: Generate content for a specific node type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nodeType
+              properties:
+                nodeType:
+                  type: string
+                  enum: [message, question, input, menu, condition, action, api_call, email, ai_response]
+                context:
+                  type: object
+                  properties:
+                    topic:
+                      type: string
+                    tone:
+                      type: string
+      responses:
+        '200':
+          description: Content generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  content:
+                    type: object
+                  nodeType:
+                    type: string
+
+  /api/ai/flow/templates:
+    get:
+      tags:
+        - AI
+      summary: List flow templates
+      description: Get all available flow templates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search templates
+      responses:
+        '200':
+          description: Templates list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FlowTemplate'
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                  total:
+                    type: integer
+
+  /api/ai/flow/templates/{id}:
+    get:
+      tags:
+        - AI
+      summary: Get template by ID
+      description: Get a specific flow template
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  template:
+                    $ref: '#/components/schemas/FlowTemplate'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/ai/flow/analyze:
+    post:
+      tags:
+        - AI
+      summary: Analyze flow
+      description: Analyze a flow and provide insights and suggestions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - flow
+              properties:
+                flow:
+                  $ref: '#/components/schemas/GeneratedFlow'
+      responses:
+        '200':
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  analysis:
+                    type: object
+                    properties:
+                      validation:
+                        type: object
+                        properties:
+                          isValid:
+                            type: boolean
+                          nodeCount:
+                            type: integer
+                          edgeCount:
+                            type: integer
+                      staticAnalysis:
+                        type: object
+                        properties:
+                          hasStartNode:
+                            type: boolean
+                          hasEndNode:
+                            type: boolean
+                          orphanedNodes:
+                            type: array
+                            items:
+                              type: string
+                          deadEnds:
+                            type: array
+                            items:
+                              type: string
+                      suggestions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              enum: [error, warning, info]
+                            message:
+                              type: string
+                            action:
+                              type: string
+
+components:
+  schemas:
+    GeneratedFlow:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              position:
+                type: object
+              data:
+                type: object
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              source:
+                type: string
+              target:
+                type: string
+        variables:
+          type: array
+          items:
+            type: object
+
+    FlowTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        flow:
+          $ref: '#/components/schemas/GeneratedFlow'
+        preview:
+          type: string

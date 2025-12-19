@@ -1,0 +1,198 @@
+# Messages API Documentation
+
+paths:
+  /api/messages:
+    get:
+      tags:
+        - Messages
+      summary: List messages
+      description: Get all messages for a bot or conversation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by bot ID
+        - name: session_id
+          in: query
+          schema:
+            type: string
+          description: Filter by session ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  pagination:
+                    type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Messages
+      summary: Send message
+      description: Send a new message to a bot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - content
+              properties:
+                bot_id:
+                  type: integer
+                content:
+                  type: string
+                  example: Hello, how can you help me?
+                session_id:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Message sent and response received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    $ref: '#/components/schemas/Message'
+                  response:
+                    $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/messages/{id}:
+    get:
+      tags:
+        - Messages
+      summary: Get message by ID
+      description: Get a specific message
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Message details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    $ref: '#/components/schemas/Message'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Messages
+      summary: Delete message
+      description: Delete a message
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Message deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/messages/session/{sessionId}:
+    get:
+      tags:
+        - Messages
+      summary: Get session messages
+      description: Get all messages for a session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        session_id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        metadata:
+          type: object
+        tokens_used:
+          type: integer
+        created_at:
+          type: string
+          format: date-time

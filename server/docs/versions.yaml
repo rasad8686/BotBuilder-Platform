@@ -1,0 +1,216 @@
+# Version Control API Documentation
+
+paths:
+  /api/versions:
+    get:
+      tags:
+        - Versions
+      summary: List versions
+      description: Get all versions for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Versions list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Versions
+      summary: Create version
+      description: Create a new version (snapshot) of the bot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+                name:
+                  type: string
+                  example: v1.2.0
+                description:
+                  type: string
+                  example: Added new intents for product queries
+      responses:
+        '201':
+          description: Version created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  version:
+                    $ref: '#/components/schemas/Version'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/versions/{id}:
+    get:
+      tags:
+        - Versions
+      summary: Get version by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Version details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  version:
+                    $ref: '#/components/schemas/Version'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Versions
+      summary: Delete version
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Version deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/versions/{id}/restore:
+    post:
+      tags:
+        - Versions
+      summary: Restore version
+      description: Restore bot to a previous version
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Version restored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/versions/{id}/diff:
+    get:
+      tags:
+        - Versions
+      summary: Get version diff
+      description: Compare version with current bot state
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: compare_to
+          in: query
+          schema:
+            type: integer
+          description: Version ID to compare against (default is current)
+      responses:
+        '200':
+          description: Version diff
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  diff:
+                    type: object
+                    properties:
+                      added:
+                        type: array
+                        items:
+                          type: string
+                      removed:
+                        type: array
+                        items:
+                          type: string
+                      modified:
+                        type: array
+                        items:
+                          type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    Version:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        snapshot:
+          type: object
+          description: Complete bot configuration snapshot
+        created_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time

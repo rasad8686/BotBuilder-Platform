@@ -8,7 +8,17 @@ const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const log = require('../utils/logger');
-const { TwilioService, SpeechToText, TextToSpeech } = require('../services/voice');
+const {
+  TwilioService,
+  SpeechToText,
+  TextToSpeech,
+  VoiceQueue,
+  LanguageSupport,
+  VoiceAnalytics,
+  VoiceStorage,
+  FormatConverter,
+  StreamingTranscription
+} = require('../services/voice');
 
 // All routes require authentication except webhooks
 router.use((req, res, next) => {
@@ -677,6 +687,651 @@ router.post('/synthesize', async (req, res) => {
   } catch (error) {
     log.error('Error synthesizing speech', { error: error.message });
     res.status(500).json({ error: 'Failed to synthesize speech' });
+  }
+});
+
+// ==========================================
+// LANGUAGE SUPPORT
+// ==========================================
+
+/**
+ * GET /api/voice/languages
+ * Get supported languages for voice services
+ */
+router.get('/languages', async (req, res) => {
+  try {
+    const { provider } = req.query;
+
+    const languages = LanguageSupport.getSupportedLanguages();
+
+    // If provider specified, filter by provider support
+    if (provider) {
+      const providerLanguages = languages.filter(lang => {
+        const codes = LanguageSupport.getSTTCode(lang.code, provider);
+        return codes !== null;
+      });
+
+      return res.json({
+        success: true,
+        provider,
+        languages: providerLanguages,
+        total: providerLanguages.length
+      });
+    }
+
+    res.json({
+      success: true,
+      languages,
+      total: languages.length,
+      providers: ['whisper', 'google', 'deepgram', 'azure', 'gladia']
+    });
+  } catch (error) {
+    log.error('Error getting languages', { error: error.message });
+    res.status(500).json({ error: 'Failed to get languages' });
+  }
+});
+
+/**
+ * GET /api/voice/languages/:code
+ * Get language details
+ */
+router.get('/languages/:code', async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const language = LanguageSupport.getLanguageInfo(code);
+
+    if (!language) {
+      return res.status(404).json({ error: 'Language not supported' });
+    }
+
+    // Get provider-specific codes
+    const providerCodes = {
+      whisper: LanguageSupport.getSTTCode(code, 'whisper'),
+      google: LanguageSupport.getSTTCode(code, 'google'),
+      deepgram: LanguageSupport.getSTTCode(code, 'deepgram'),
+      azure: LanguageSupport.getSTTCode(code, 'azure')
+    };
+
+    res.json({
+      success: true,
+      language: {
+        ...language,
+        providerCodes
+      }
+    });
+  } catch (error) {
+    log.error('Error getting language', { error: error.message });
+    res.status(500).json({ error: 'Failed to get language' });
+  }
+});
+
+/**
+ * POST /api/voice/languages/detect
+ * Detect language from text
+ */
+router.post('/languages/detect', async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    const result = LanguageSupport.detectLanguage(text);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error detecting language', { error: error.message });
+    res.status(500).json({ error: 'Failed to detect language' });
+  }
+});
+
+// ==========================================
+// VOICE ANALYTICS
+// ==========================================
+
+/**
+ * GET /api/voice/stats
+ * Get voice usage statistics
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const userId = req.user.id;
+    const { startDate, endDate, provider, language, botId } = req.query;
+
+    const stats = await VoiceAnalytics.getStats({
+      organizationId,
+      userId,
+      botId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      provider,
+      language
+    });
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    log.error('Error getting voice stats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get voice statistics' });
+  }
+});
+
+/**
+ * GET /api/voice/stats/realtime
+ * Get real-time voice metrics
+ */
+router.get('/stats/realtime', async (req, res) => {
+  try {
+    const metrics = VoiceAnalytics.getRealTimeMetrics();
+
+    res.json({
+      success: true,
+      metrics
+    });
+  } catch (error) {
+    log.error('Error getting realtime stats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get realtime statistics' });
+  }
+});
+
+// ==========================================
+// FORMAT CONVERSION
+// ==========================================
+
+/**
+ * POST /api/voice/convert
+ * Convert audio format
+ */
+router.post('/convert', async (req, res) => {
+  try {
+    const {
+      outputFormat = 'wav',
+      sampleRate,
+      channels,
+      bitrate,
+      preset,
+      normalize,
+      removeNoise
+    } = req.body;
+
+    // Check if file was uploaded
+    if (!req.files || !req.files.audio) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+
+    const audioFile = req.files.audio;
+    const inputFormat = audioFile.name.split('.').pop().toLowerCase();
+
+    // Check if ffmpeg is available
+    const isAvailable = await FormatConverter.isAvailable();
+    if (!isAvailable) {
+      return res.status(503).json({ error: 'Audio conversion service not available (ffmpeg not found)' });
+    }
+
+    const result = await FormatConverter.convert(audioFile.data, {
+      inputFormat,
+      outputFormat,
+      sampleRate: sampleRate ? parseInt(sampleRate) : undefined,
+      channels: channels ? parseInt(channels) : undefined,
+      bitrate,
+      preset,
+      normalize: normalize === 'true' || normalize === true,
+      removeNoise: removeNoise === 'true' || removeNoise === true
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: 'Conversion failed' });
+    }
+
+    res.set('Content-Type', `audio/${outputFormat}`);
+    res.set('Content-Disposition', `attachment; filename="converted.${outputFormat}"`);
+    res.send(result.buffer);
+  } catch (error) {
+    log.error('Error converting audio', { error: error.message });
+    res.status(500).json({ error: 'Failed to convert audio' });
+  }
+});
+
+/**
+ * GET /api/voice/convert/formats
+ * Get supported conversion formats
+ */
+router.get('/convert/formats', async (req, res) => {
+  try {
+    const formats = FormatConverter.getSupportedFormats();
+    const presets = FormatConverter.getPresets();
+    const isAvailable = await FormatConverter.isAvailable();
+
+    res.json({
+      success: true,
+      available: isAvailable,
+      formats,
+      presets
+    });
+  } catch (error) {
+    log.error('Error getting formats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get formats' });
+  }
+});
+
+// ==========================================
+// VOICE FILE STORAGE
+// ==========================================
+
+/**
+ * POST /api/voice/files
+ * Upload voice file
+ */
+router.post('/files', async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const userId = req.user.id;
+    const { botId, metadata = {} } = req.body;
+
+    if (!req.files || !req.files.audio) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+
+    const audioFile = req.files.audio;
+    const format = audioFile.name.split('.').pop().toLowerCase();
+
+    const result = await VoiceStorage.store(audioFile.data, {
+      organizationId,
+      userId,
+      botId,
+      format,
+      metadata: {
+        ...metadata,
+        originalName: audioFile.name,
+        mimeType: audioFile.mimetype
+      }
+    });
+
+    log.info('Voice file uploaded', { filename: result.filename, userId });
+
+    res.status(201).json({
+      success: true,
+      file: result
+    });
+  } catch (error) {
+    log.error('Error uploading voice file', { error: error.message });
+    res.status(500).json({ error: 'Failed to upload voice file' });
+  }
+});
+
+/**
+ * GET /api/voice/files
+ * List voice files
+ */
+router.get('/files', async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const { limit = 100 } = req.query;
+
+    const files = await VoiceStorage.list({
+      prefix: organizationId ? String(organizationId) : undefined,
+      limit: parseInt(limit)
+    });
+
+    res.json({
+      success: true,
+      files,
+      total: files.length
+    });
+  } catch (error) {
+    log.error('Error listing voice files', { error: error.message });
+    res.status(500).json({ error: 'Failed to list voice files' });
+  }
+});
+
+/**
+ * GET /api/voice/files/:filename
+ * Get voice file
+ */
+router.get('/files/:filename(*)', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const organizationId = req.user.organizationId;
+
+    // Security check: ensure user can only access their org's files
+    if (organizationId && !filename.startsWith(String(organizationId))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await VoiceStorage.retrieve(filename);
+
+    res.set('Content-Type', result.contentType);
+    res.send(result.buffer);
+  } catch (error) {
+    log.error('Error retrieving voice file', { error: error.message });
+    res.status(500).json({ error: 'Failed to retrieve voice file' });
+  }
+});
+
+/**
+ * DELETE /api/voice/files/:filename
+ * Delete voice file
+ */
+router.delete('/files/:filename(*)', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const organizationId = req.user.organizationId;
+
+    // Security check
+    if (organizationId && !filename.startsWith(String(organizationId))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await VoiceStorage.delete(filename);
+
+    log.info('Voice file deleted', { filename });
+
+    res.json({
+      success: true,
+      message: 'File deleted'
+    });
+  } catch (error) {
+    log.error('Error deleting voice file', { error: error.message });
+    res.status(500).json({ error: 'Failed to delete voice file' });
+  }
+});
+
+/**
+ * GET /api/voice/files/:filename/url
+ * Get signed URL for voice file
+ */
+router.get('/files/:filename(*)/url', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const { expiresIn = 3600 } = req.query;
+    const organizationId = req.user.organizationId;
+
+    // Security check
+    if (organizationId && !filename.startsWith(String(organizationId))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const url = await VoiceStorage.getSignedUrl(filename, parseInt(expiresIn));
+
+    res.json({
+      success: true,
+      url,
+      expiresIn: parseInt(expiresIn)
+    });
+  } catch (error) {
+    log.error('Error getting signed URL', { error: error.message });
+    res.status(500).json({ error: 'Failed to get signed URL' });
+  }
+});
+
+/**
+ * GET /api/voice/storage/stats
+ * Get storage statistics
+ */
+router.get('/storage/stats', async (req, res) => {
+  try {
+    const stats = await VoiceStorage.getStorageStats();
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    log.error('Error getting storage stats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get storage statistics' });
+  }
+});
+
+// ==========================================
+// TRANSCRIPTION QUEUE
+// ==========================================
+
+/**
+ * POST /api/voice/transcribe
+ * Add transcription job to queue
+ */
+router.post('/transcribe', async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const userId = req.user.id;
+    const {
+      provider = 'whisper',
+      language,
+      priority = 'normal',
+      options = {}
+    } = req.body;
+
+    if (!req.files || !req.files.audio) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+
+    const audioFile = req.files.audio;
+
+    // Add to queue
+    const job = await VoiceQueue.addJob({
+      audioBuffer: audioFile.data,
+      provider,
+      language: language || 'en',
+      priority: priority === 'high' ? 1 : priority === 'low' ? 3 : 2,
+      organizationId,
+      userId,
+      options: {
+        ...options,
+        originalFilename: audioFile.name
+      }
+    });
+
+    res.status(202).json({
+      success: true,
+      message: 'Transcription job queued',
+      job: {
+        id: job.id,
+        status: job.status,
+        provider: job.provider,
+        priority: job.priority,
+        createdAt: job.createdAt
+      }
+    });
+  } catch (error) {
+    log.error('Error queueing transcription', { error: error.message });
+    res.status(500).json({ error: 'Failed to queue transcription' });
+  }
+});
+
+/**
+ * GET /api/voice/transcribe/:jobId
+ * Get transcription job status
+ */
+router.get('/transcribe/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    const job = VoiceQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    res.json({
+      success: true,
+      job: {
+        id: job.id,
+        status: job.status,
+        provider: job.provider,
+        result: job.result,
+        error: job.error,
+        retries: job.retries,
+        createdAt: job.createdAt,
+        completedAt: job.completedAt
+      }
+    });
+  } catch (error) {
+    log.error('Error getting job status', { error: error.message });
+    res.status(500).json({ error: 'Failed to get job status' });
+  }
+});
+
+/**
+ * GET /api/voice/queue/stats
+ * Get queue statistics
+ */
+router.get('/queue/stats', async (req, res) => {
+  try {
+    const stats = VoiceQueue.getStats();
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    log.error('Error getting queue stats', { error: error.message });
+    res.status(500).json({ error: 'Failed to get queue statistics' });
+  }
+});
+
+// ==========================================
+// STREAMING TRANSCRIPTION
+// ==========================================
+
+/**
+ * POST /api/voice/stream/session
+ * Create streaming transcription session
+ */
+router.post('/stream/session', async (req, res) => {
+  try {
+    const {
+      provider = 'deepgram',
+      language = 'en',
+      sampleRate = 16000,
+      encoding = 'linear16',
+      interimResults = true,
+      model = 'general'
+    } = req.body;
+
+    const session = StreamingTranscription.createSession({
+      provider,
+      language,
+      sampleRate,
+      encoding,
+      interimResults,
+      model
+    });
+
+    res.status(201).json({
+      success: true,
+      session
+    });
+  } catch (error) {
+    log.error('Error creating streaming session', { error: error.message });
+    res.status(500).json({ error: 'Failed to create streaming session' });
+  }
+});
+
+/**
+ * POST /api/voice/stream/:sessionId/start
+ * Start streaming session
+ */
+router.post('/stream/:sessionId/start', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const result = await StreamingTranscription.startSession(sessionId);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error starting streaming session', { error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to start streaming session' });
+  }
+});
+
+/**
+ * POST /api/voice/stream/:sessionId/audio
+ * Send audio chunk to streaming session
+ */
+router.post('/stream/:sessionId/audio', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!req.body || req.body.length === 0) {
+      return res.status(400).json({ error: 'Audio data is required' });
+    }
+
+    StreamingTranscription.sendAudio(sessionId, req.body);
+
+    res.json({ success: true });
+  } catch (error) {
+    log.error('Error sending audio', { error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to send audio' });
+  }
+});
+
+/**
+ * POST /api/voice/stream/:sessionId/end
+ * End streaming session
+ */
+router.post('/stream/:sessionId/end', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const result = await StreamingTranscription.endSession(sessionId);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error ending streaming session', { error: error.message });
+    res.status(500).json({ error: error.message || 'Failed to end streaming session' });
+  }
+});
+
+/**
+ * GET /api/voice/stream/:sessionId/status
+ * Get streaming session status
+ */
+router.get('/stream/:sessionId/status', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const status = StreamingTranscription.getSessionStatus(sessionId);
+
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    log.error('Error getting session status', { error: error.message });
+    res.status(500).json({ error: 'Failed to get session status' });
+  }
+});
+
+/**
+ * GET /api/voice/stream/sessions
+ * Get all active streaming sessions
+ */
+router.get('/stream/sessions', async (req, res) => {
+  try {
+    const sessions = StreamingTranscription.getActiveSessions();
+
+    res.json({
+      success: true,
+      sessions,
+      total: sessions.length
+    });
+  } catch (error) {
+    log.error('Error getting active sessions', { error: error.message });
+    res.status(500).json({ error: 'Failed to get active sessions' });
   }
 });
 

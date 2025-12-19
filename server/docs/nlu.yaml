@@ -1,0 +1,413 @@
+# NLU (Natural Language Understanding) API Documentation
+
+paths:
+  /api/intents:
+    get:
+      tags:
+        - NLU
+      summary: List intents
+      description: Get all intents for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Intents list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  intents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Intent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - NLU
+      summary: Create intent
+      description: Create a new intent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - name
+              properties:
+                bot_id:
+                  type: integer
+                name:
+                  type: string
+                  example: greeting
+                description:
+                  type: string
+                training_phrases:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - hello
+                    - hi there
+                    - good morning
+                responses:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Intent created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/intents/{id}:
+    get:
+      tags:
+        - NLU
+      summary: Get intent by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Intent details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - NLU
+      summary: Update intent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Intent updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - NLU
+      summary: Delete intent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Intent deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/entities:
+    get:
+      tags:
+        - NLU
+      summary: List entities
+      description: Get all entities for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entities list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  entities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Entity'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - NLU
+      summary: Create entity
+      description: Create a new entity
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - name
+                - type
+              properties:
+                bot_id:
+                  type: integer
+                name:
+                  type: string
+                  example: product_name
+                type:
+                  type: string
+                  enum: [list, pattern, system]
+                values:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      value:
+                        type: string
+                      synonyms:
+                        type: array
+                        items:
+                          type: string
+      responses:
+        '201':
+          description: Entity created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/entities/{id}:
+    get:
+      tags:
+        - NLU
+      summary: Get entity by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entity details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - NLU
+      summary: Update entity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Entity updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - NLU
+      summary: Delete entity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Entity deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/nlu/parse:
+    post:
+      tags:
+        - NLU
+      summary: Parse text
+      description: Parse text to extract intents and entities
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - text
+              properties:
+                bot_id:
+                  type: integer
+                text:
+                  type: string
+                  example: I want to order a pizza
+      responses:
+        '200':
+          description: Parse result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  intent:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      confidence:
+                        type: number
+                  entities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        entity:
+                          type: string
+                        value:
+                          type: string
+                        start:
+                          type: integer
+                        end:
+                          type: integer
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/nlu/train:
+    post:
+      tags:
+        - NLU
+      summary: Train NLU model
+      description: Train the NLU model with current intents and entities
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+      responses:
+        '200':
+          description: Training started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  training_id:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    Intent:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        training_phrases:
+          type: array
+          items:
+            type: string
+        responses:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Entity:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        values:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

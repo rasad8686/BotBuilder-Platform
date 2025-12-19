@@ -7,7 +7,6 @@ const path = require('path');
 const fs = require('fs');
 const {
   AIProviderFactory,
-  AIMessageHandler,
   EncryptionHelper
 } = require('../services/ai');
 const ragService = require('../services/ragService');
@@ -234,11 +233,7 @@ router.post('/:botId/message', async (req, res) => {
           }
 
           // Add language instruction to system prompt
-          console.log('\n========== LANGUAGE DEBUG ==========');
-          console.log('Bot ID:', bot.id);
-          console.log('Bot Language:', bot.language);
-          console.log('Is not English:', bot.language !== 'en');
-          console.log('=====================================\n');
+          log.debug('Language config', { botId: bot.id, language: bot.language });
 
           if (bot.language && bot.language !== 'en') {
             const languageNames = {
@@ -262,10 +257,7 @@ router.post('/:botId/message', async (req, res) => {
             };
             const langName = languageNames[bot.language] || bot.language;
             systemPrompt = `[LANGUAGE REQUIREMENT: ${langName.toUpperCase()}]\n\n${systemPrompt}\n\n---\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Do NOT use any other language. Every single word of your response must be in ${langName}.`;
-            console.log('\n========== SYSTEM PROMPT ==========');
-            console.log('Language Name:', langName);
-            console.log('System Prompt Preview:', systemPrompt.substring(0, 300));
-            console.log('====================================\n');
+            log.debug('Language prompt applied', { language: langName });
           }
 
           // Get conversation history for context

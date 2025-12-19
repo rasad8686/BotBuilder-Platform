@@ -3,6 +3,7 @@
 -- =====================================================
 -- This migration enables pgvector extension and upgrades
 -- the chunks table to use native vector type for embeddings
+-- SAFE migration: uses ALTER TABLE to preserve existing data
 -- =====================================================
 
 -- Step 1: Enable pgvector extension
@@ -23,42 +24,53 @@ BEGIN
   END IF;
 END $$;
 
--- Step 3: Create new chunks table with proper vector column
--- First, backup existing chunks if any
-CREATE TABLE IF NOT EXISTS chunks_backup AS SELECT * FROM chunks;
+-- Step 3: Add token_count column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'chunks' AND column_name = 'token_count'
+  ) THEN
+    ALTER TABLE chunks ADD COLUMN token_count INTEGER;
+  END IF;
+END $$;
 
--- Drop existing chunks table and recreate with vector type
-DROP TABLE IF EXISTS chunks CASCADE;
+-- Step 4: Convert embedding column from TEXT to vector(1536)
+-- This preserves existing data - pgvector can parse '[0.1,0.2,...]' format
+DO $$
+DECLARE
+  current_type TEXT;
+BEGIN
+  -- Check current column type
+  SELECT udt_name INTO current_type
+  FROM information_schema.columns
+  WHERE table_name = 'chunks' AND column_name = 'embedding';
 
-CREATE TABLE chunks (
-  id SERIAL PRIMARY KEY,
-  document_id INTEGER NOT NULL,
-  knowledge_base_id INTEGER NOT NULL,
-  content TEXT NOT NULL,
-  -- Vector embedding: 1536 dimensions for OpenAI text-embedding-3-small/ada-002
-  -- 3072 dimensions for text-embedding-3-large
-  embedding vector(1536),
-  chunk_index INTEGER NOT NULL DEFAULT 0,
-  start_char INTEGER,
-  end_char INTEGER,
-  token_count INTEGER,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  -- Only convert if not already vector type
+  IF current_type IS NOT NULL AND current_type != 'vector' THEN
+    -- Convert TEXT to vector (pgvector parses '[...]' format automatically)
+    ALTER TABLE chunks
+    ALTER COLUMN embedding TYPE vector(1536)
+    USING CASE
+      WHEN embedding IS NULL THEN NULL
+      WHEN embedding = '' THEN NULL
+      ELSE embedding::vector(1536)
+    END;
 
-  -- Foreign keys
-  CONSTRAINT fk_chunks_document FOREIGN KEY (document_id)
-    REFERENCES documents(id) ON DELETE CASCADE,
-  CONSTRAINT fk_chunks_knowledge_base FOREIGN KEY (knowledge_base_id)
-    REFERENCES knowledge_bases(id) ON DELETE CASCADE
-);
+    RAISE NOTICE 'Converted embedding column from % to vector(1536)', current_type;
+  ELSIF current_type = 'vector' THEN
+    RAISE NOTICE 'Embedding column already vector type';
+  END IF;
+END $$;
 
--- Step 4: Create indexes for vector similarity search
--- HNSW index - better for high recall, good for most use cases
-CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw
+-- Step 5: Create HNSW index for vector similarity search (if not exists)
+-- Drop old index if exists with different config
+DROP INDEX IF EXISTS idx_chunks_embedding_hnsw;
+CREATE INDEX idx_chunks_embedding_hnsw
   ON chunks USING hnsw (embedding vector_cosine_ops)
   WITH (m = 16, ef_construction = 64);
 
--- Standard indexes for filtering
+-- Standard indexes for filtering (if not exist)
 CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON chunks(document_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_knowledge_base_id ON chunks(knowledge_base_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_chunk_index ON chunks(chunk_index);

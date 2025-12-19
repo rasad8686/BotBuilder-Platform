@@ -11,6 +11,7 @@
 const db = require('../db');
 const log = require('../utils/logger');
 const fs = require('fs').promises;
+const fsSync = require('fs');  // For createReadStream
 const path = require('path');
 
 // OpenAI SDK for fine-tuning
@@ -59,6 +60,7 @@ async function getModels(organizationId, options = {}) {
   let query = `
     SELECT m.*,
            (SELECT COUNT(*) FROM fine_tune_datasets WHERE fine_tune_model_id = m.id) as dataset_count,
+           (SELECT COUNT(*) FROM fine_tune_datasets WHERE fine_tune_model_id = m.id AND status = 'ready') as ready_dataset_count,
            (SELECT COUNT(*) FROM fine_tune_jobs WHERE fine_tune_model_id = m.id) as job_count
     FROM fine_tune_models m
     WHERE m.organization_id = $1
@@ -308,22 +310,29 @@ async function validateDataset(datasetId, filePath, format) {
       [status, rowCount, JSON.stringify(errors), datasetId]
     );
 
-    // Update model status if dataset is ready
-    if (status === 'ready') {
-      const dataset = await db.query('SELECT fine_tune_model_id FROM fine_tune_datasets WHERE id = $1', [datasetId]);
+    // Update model status back to pending (whether validation passed or failed)
+    const dataset = await db.query('SELECT fine_tune_model_id FROM fine_tune_datasets WHERE id = $1', [datasetId]);
+    await db.query(
+      "UPDATE fine_tune_models SET status = 'pending' WHERE id = $1",
+      [dataset.rows[0].fine_tune_model_id]
+    );
+
+    log.info('Dataset validated', { datasetId, rowCount, errorCount: errors.length, status });
+    return { rowCount, errors };
+  } catch (err) {
+    // Update dataset status to error
+    await db.query(
+      "UPDATE fine_tune_datasets SET status = 'error', validation_errors = $1 WHERE id = $2",
+      [JSON.stringify([{ error: err.message }]), datasetId]
+    );
+    // Also update model status back to pending on error
+    const dataset = await db.query('SELECT fine_tune_model_id FROM fine_tune_datasets WHERE id = $1', [datasetId]);
+    if (dataset.rows[0]) {
       await db.query(
         "UPDATE fine_tune_models SET status = 'pending' WHERE id = $1",
         [dataset.rows[0].fine_tune_model_id]
       );
     }
-
-    log.info('Dataset validated', { datasetId, rowCount, errorCount: errors.length });
-    return { rowCount, errors };
-  } catch (err) {
-    await db.query(
-      "UPDATE fine_tune_datasets SET status = 'error', validation_errors = $1 WHERE id = $2",
-      [JSON.stringify([{ error: err.message }]), datasetId]
-    );
     throw err;
   }
 }
@@ -398,10 +407,9 @@ async function startOpenAIFineTuning(jobId, modelId, dataset, baseModel, config)
     // Update job status
     await db.query("UPDATE fine_tune_jobs SET status = 'validating_files' WHERE id = $1", [jobId]);
 
-    // Read and upload file to OpenAI
-    const fileContent = await fs.readFile(dataset.file_path);
+    // Upload file to OpenAI using ReadStream
     const file = await openai.files.create({
-      file: fileContent,
+      file: fsSync.createReadStream(dataset.file_path),
       purpose: 'fine-tune'
     });
 
