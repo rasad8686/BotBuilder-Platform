@@ -1,0 +1,380 @@
+# Telegram Channel API Documentation
+
+paths:
+  /api/channels/telegram:
+    get:
+      tags:
+        - Channels
+        - Telegram
+      summary: List Telegram channels
+      description: Get all Telegram bot integrations for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of Telegram channels
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TelegramChannel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/channels/telegram/stats:
+    get:
+      tags:
+        - Channels
+        - Telegram
+      summary: Get channel statistics
+      description: Get usage statistics for Telegram channels
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: channelId
+          in: query
+          schema:
+            type: integer
+          description: Filter by specific channel
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Channel statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+                    properties:
+                      total_messages:
+                        type: integer
+                      total_users:
+                        type: integer
+                      active_chats:
+                        type: integer
+                      response_time_avg:
+                        type: number
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/channels/telegram/connect:
+    post:
+      tags:
+        - Channels
+        - Telegram
+      summary: Connect Telegram bot
+      description: Connect a new Telegram bot using its token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - botToken
+              properties:
+                botToken:
+                  type: string
+                  description: Telegram bot token from @BotFather
+                  example: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                botId:
+                  type: integer
+                  description: BotBuilder bot ID to associate
+      responses:
+        '201':
+          description: Telegram bot connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  channel:
+                    $ref: '#/components/schemas/TelegramChannel'
+                  webhookUrl:
+                    type: string
+                    description: Webhook URL configured for the bot
+        '400':
+          description: Invalid bot token
+        '409':
+          description: Bot already connected
+
+  /api/channels/telegram/test:
+    post:
+      tags:
+        - Channels
+        - Telegram
+      summary: Test connection
+      description: Test Telegram bot connection
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                botToken:
+                  type: string
+                  description: Bot token to test (for new connections)
+                channelId:
+                  type: integer
+                  description: Existing channel ID to test
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  botInfo:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      first_name:
+                        type: string
+                      can_read_all_group_messages:
+                        type: boolean
+        '400':
+          description: Invalid token or connection failed
+
+  /api/channels/telegram/{id}:
+    get:
+      tags:
+        - Channels
+        - Telegram
+      summary: Get Telegram channel
+      description: Get a specific Telegram channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  channel:
+                    $ref: '#/components/schemas/TelegramChannel'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Channels
+        - Telegram
+      summary: Update Telegram channel
+      description: Update Telegram channel settings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Enable/disable the channel
+                settings:
+                  type: object
+                  properties:
+                    welcome_message:
+                      type: string
+                    auto_reply:
+                      type: boolean
+                    typing_indicator:
+                      type: boolean
+                botId:
+                  type: integer
+                  description: Associated BotBuilder bot ID
+      responses:
+        '200':
+          description: Channel updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Channels
+        - Telegram
+      summary: Disconnect Telegram bot
+      description: Disconnect and remove Telegram bot integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot disconnected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/channels/telegram/{id}/send-test:
+    post:
+      tags:
+        - Channels
+        - Telegram
+      summary: Send test message
+      description: Send a test message via Telegram
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chatId
+                - message
+              properties:
+                chatId:
+                  type: string
+                  description: Telegram chat ID to send to
+                message:
+                  type: string
+                  description: Message text to send
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messageId:
+                    type: integer
+        '400':
+          description: Failed to send message
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/channels/telegram/{id}/refresh-webhook:
+    post:
+      tags:
+        - Channels
+        - Telegram
+      summary: Refresh webhook
+      description: Regenerate webhook URL and secret
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Webhook refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webhookUrl:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    TelegramChannel:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        bot_id:
+          type: integer
+          description: Associated BotBuilder bot
+        telegram_bot_id:
+          type: string
+          description: Telegram bot ID
+        telegram_username:
+          type: string
+          description: Telegram bot username
+        webhook_url:
+          type: string
+        webhook_secret:
+          type: string
+        is_active:
+          type: boolean
+        settings:
+          type: object
+          properties:
+            welcome_message:
+              type: string
+            auto_reply:
+              type: boolean
+            typing_indicator:
+              type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

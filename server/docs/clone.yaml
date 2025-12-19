@@ -1,0 +1,824 @@
+# Work Clones API Documentation
+
+paths:
+  /api/clones:
+    get:
+      tags:
+        - Work Clones
+      summary: List work clones
+      description: Get all work clones for the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of clones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkClone'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Work Clones
+      summary: Create work clone
+      description: Create a new work clone for AI-powered content generation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Professional Writer
+                description:
+                  type: string
+                  example: Clone trained on my professional writing style
+                avatar_url:
+                  type: string
+                ai_model:
+                  type: string
+                  default: gpt-4
+                temperature:
+                  type: number
+                  default: 0.7
+                max_tokens:
+                  type: integer
+                  default: 2048
+                base_system_prompt:
+                  type: string
+                personality_prompt:
+                  type: string
+                writing_style_prompt:
+                  type: string
+                tone_settings:
+                  type: object
+                  properties:
+                    formality:
+                      type: string
+                      enum: [casual, neutral, formal]
+                    tone:
+                      type: string
+                settings:
+                  type: object
+      responses:
+        '201':
+          description: Clone created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clone:
+                    $ref: '#/components/schemas/WorkClone'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/clones/{id}:
+    get:
+      tags:
+        - Work Clones
+      summary: Get clone by ID
+      description: Get a specific work clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Clone details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clone:
+                    $ref: '#/components/schemas/WorkClone'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Work Clones
+      summary: Update clone
+      description: Update a work clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                avatar_url:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, training, ready, archived]
+                ai_model:
+                  type: string
+                temperature:
+                  type: number
+                max_tokens:
+                  type: integer
+                base_system_prompt:
+                  type: string
+                personality_prompt:
+                  type: string
+                writing_style_prompt:
+                  type: string
+                style_profile:
+                  type: object
+                tone_settings:
+                  type: object
+                vocabulary_preferences:
+                  type: object
+                response_patterns:
+                  type: object
+                is_active:
+                  type: boolean
+                settings:
+                  type: object
+      responses:
+        '200':
+          description: Clone updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Work Clones
+      summary: Delete clone
+      description: Delete a work clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Clone deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/training:
+    get:
+      tags:
+        - Work Clones
+      summary: Get training data
+      description: Get all training data for a clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Training data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  trainingData:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CloneTrainingData'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    post:
+      tags:
+        - Work Clones
+      summary: Add training data
+      description: Add a training sample to a clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - original_content
+              properties:
+                data_type:
+                  type: string
+                  enum: [email, message, document, social_post]
+                source:
+                  type: string
+                original_content:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Training data added
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/training/bulk:
+    post:
+      tags:
+        - Work Clones
+      summary: Bulk add training data
+      description: Add multiple training samples at once
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      data_type:
+                        type: string
+                      source:
+                        type: string
+                      original_content:
+                        type: string
+                      metadata:
+                        type: object
+      responses:
+        '200':
+          description: Training data added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  added:
+                    type: integer
+                  skipped:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/training/{dataId}:
+    delete:
+      tags:
+        - Work Clones
+      summary: Delete training data
+      description: Delete a training sample
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: dataId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Training data deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/train:
+    post:
+      tags:
+        - Work Clones
+      summary: Train clone
+      description: Start training process for a clone with uploaded data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Training completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  trainingScore:
+                    type: number
+                  samplesUsed:
+                    type: integer
+        '400':
+          description: Insufficient training data
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/generate:
+    post:
+      tags:
+        - Work Clones
+      summary: Generate response
+      description: Generate content using the trained clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  example: Write a professional email to a client
+                type:
+                  type: string
+                  enum: [email, message, document, general]
+                context:
+                  type: object
+                  properties:
+                    subject:
+                      type: string
+                    topic:
+                      type: string
+                    recipient:
+                      type: string
+                options:
+                  type: object
+                  properties:
+                    length:
+                      type: string
+                      enum: [short, medium, long]
+                    tone:
+                      type: string
+      responses:
+        '200':
+          description: Response generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  response:
+                    type: string
+                  responseId:
+                    type: integer
+                  tokens:
+                    type: object
+                    properties:
+                      input:
+                        type: integer
+                      output:
+                        type: integer
+                  latencyMs:
+                    type: integer
+                  similarity:
+                    type: number
+                    description: Similarity score to trained style
+        '404':
+          description: Clone not found or not ready
+
+  /api/clones/{id}/refine:
+    post:
+      tags:
+        - Work Clones
+      summary: Refine text
+      description: Edit/refine text using clone's style
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - instructions
+              properties:
+                text:
+                  type: string
+                  description: Text to refine
+                instructions:
+                  type: string
+                  description: Refinement instructions
+      responses:
+        '200':
+          description: Text refined
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  refinedText:
+                    type: string
+                  tokens:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/responses:
+    get:
+      tags:
+        - Work Clones
+      summary: Get response history
+      description: Get generated response history for a clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Response history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  responses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CloneResponse'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/{id}/responses/{responseId}/feedback:
+    post:
+      tags:
+        - Work Clones
+      summary: Submit feedback
+      description: Rate and provide feedback on a generated response
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: responseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                feedback:
+                  type: string
+                editedResponse:
+                  type: string
+                  description: User-edited version of the response
+      responses:
+        '200':
+          description: Feedback saved
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/clones/analyze-style:
+    post:
+      tags:
+        - Work Clones
+      summary: Analyze text style
+      description: Analyze text style without saving
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Text to analyze
+      responses:
+        '200':
+          description: Style analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  analysis:
+                    type: object
+                    properties:
+                      tone:
+                        type: string
+                      formality:
+                        type: string
+                      vocabulary_level:
+                        type: string
+                      sentence_structure:
+                        type: object
+                      key_phrases:
+                        type: array
+                        items:
+                          type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/clones/{id}/stats:
+    get:
+      tags:
+        - Work Clones
+      summary: Get clone statistics
+      description: Get usage statistics for a clone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Clone statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clone:
+                    $ref: '#/components/schemas/WorkClone'
+                  usage:
+                    type: object
+                    properties:
+                      total_responses:
+                        type: integer
+                      avg_rating:
+                        type: number
+                      total_input_tokens:
+                        type: integer
+                      total_output_tokens:
+                        type: integer
+                      avg_latency:
+                        type: integer
+                      avg_similarity:
+                        type: number
+                      edited_count:
+                        type: integer
+                      used_count:
+                        type: integer
+                  training:
+                    type: object
+                    properties:
+                      total_samples:
+                        type: integer
+                      avg_quality:
+                        type: number
+                      processed_count:
+                        type: integer
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    WorkClone:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        avatar_url:
+          type: string
+        status:
+          type: string
+          enum: [draft, training, ready, archived]
+        ai_model:
+          type: string
+        temperature:
+          type: number
+        max_tokens:
+          type: integer
+        base_system_prompt:
+          type: string
+        personality_prompt:
+          type: string
+        writing_style_prompt:
+          type: string
+        style_profile:
+          type: object
+        tone_settings:
+          type: object
+        vocabulary_preferences:
+          type: object
+        response_patterns:
+          type: object
+        training_samples_count:
+          type: integer
+        training_score:
+          type: number
+        is_active:
+          type: boolean
+        last_trained_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CloneTrainingData:
+      type: object
+      properties:
+        id:
+          type: integer
+        clone_id:
+          type: integer
+        data_type:
+          type: string
+        source:
+          type: string
+        original_content:
+          type: string
+        processed_content:
+          type: string
+        extracted_features:
+          type: object
+        style_markers:
+          type: object
+        quality_score:
+          type: number
+        is_approved:
+          type: boolean
+        is_processed:
+          type: boolean
+        processed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CloneResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        clone_id:
+          type: integer
+        user_id:
+          type: integer
+        input_prompt:
+          type: string
+        generated_response:
+          type: string
+        response_type:
+          type: string
+        context:
+          type: string
+        input_tokens:
+          type: integer
+        output_tokens:
+          type: integer
+        latency_ms:
+          type: integer
+        similarity_score:
+          type: number
+        rating:
+          type: integer
+        feedback:
+          type: string
+        edited_response:
+          type: string
+        was_edited:
+          type: boolean
+        was_used:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time

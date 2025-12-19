@@ -1,0 +1,204 @@
+# API Tokens Documentation
+
+paths:
+  /api/api-tokens:
+    get:
+      tags:
+        - API Tokens
+      summary: List API tokens
+      description: Get all API tokens for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: API tokens list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tokens:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiToken'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - API Tokens
+      summary: Create API token
+      description: Create a new API token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Production API Key
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                  example: [bots.read, bots.write, messages.read]
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: Optional expiration date
+      responses:
+        '201':
+          description: Token created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                    description: The API token (only shown once)
+                  token_id:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/api-tokens/{id}:
+    get:
+      tags:
+        - API Tokens
+      summary: Get token by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Token details (without secret)
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - API Tokens
+      summary: Update token
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Token updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - API Tokens
+      summary: Revoke token
+      description: Revoke an API token
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Token revoked
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/api-tokens/scopes:
+    get:
+      tags:
+        - API Tokens
+      summary: List available scopes
+      description: Get all available API token scopes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Available scopes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  scopes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+
+components:
+  schemas:
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        name:
+          type: string
+        prefix:
+          type: string
+          description: Token prefix for identification
+        scopes:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        last_used_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time

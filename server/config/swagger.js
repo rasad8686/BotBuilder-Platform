@@ -62,22 +62,35 @@ Authorization: Bearer <your_jwt_token>
     ],
     tags: [
       { name: 'Authentication', description: 'User authentication and registration' },
-      { name: 'Bots', description: 'Bot management operations' },
-      { name: 'AI', description: 'AI configuration and chat' },
-      { name: 'Channels', description: 'Channel integrations (Telegram, Slack, etc.)' },
-      { name: 'Knowledge Base', description: 'Document and knowledge management' },
-      { name: 'Fine-Tuning', description: 'AI model fine-tuning' },
-      { name: 'Organizations', description: 'Organization management' },
-      { name: 'Team', description: 'Team and member management' },
-      { name: 'Billing', description: 'Subscription and billing' },
-      { name: 'SSO', description: 'Single Sign-On (SAML, OIDC)' },
-      { name: 'SCIM', description: 'SCIM user provisioning' },
-      { name: 'Analytics', description: 'Usage analytics and reporting' },
-      { name: 'Widget', description: 'Embeddable chat widget' },
-      { name: 'Flows', description: 'Bot conversation flows' },
-      { name: 'Webhooks', description: 'Webhook management' },
       { name: 'Admin', description: 'Admin panel operations' },
-      { name: 'Voice', description: 'Voice-to-bot functionality' }
+      { name: 'AI', description: 'AI configuration, chat, and flow generation' },
+      { name: 'Analytics', description: 'Usage analytics and reporting' },
+      { name: 'Autonomous', description: 'Autonomous AI agents' },
+      { name: 'Billing', description: 'Subscription and billing' },
+      { name: 'Bots', description: 'Bot management operations' },
+      { name: 'Channels', description: 'Channel integrations (Telegram, Slack, WhatsApp, Instagram)' },
+      { name: 'Clone', description: 'Voice and personality cloning' },
+      { name: 'Fine-Tuning', description: 'AI model fine-tuning' },
+      { name: 'Flows', description: 'Bot conversation flows' },
+      { name: 'Integrations', description: 'Third-party integrations' },
+      { name: 'Knowledge Base', description: 'Document and knowledge management' },
+      { name: 'Messages', description: 'Message history and management' },
+      { name: 'NLU', description: 'Natural Language Understanding (Intents & Entities)' },
+      { name: 'Organizations', description: 'Organization management' },
+      { name: 'Plugins', description: 'Bot plugins and extensions' },
+      { name: 'Roles', description: 'Role-based access control' },
+      { name: 'SCIM', description: 'SCIM user provisioning' },
+      { name: 'Sessions', description: 'Chat session management' },
+      { name: 'SSO', description: 'Single Sign-On (SAML, OIDC)' },
+      { name: 'Superadmin', description: 'Superadmin operations' },
+      { name: 'Team', description: 'Team and member management' },
+      { name: 'Tools', description: 'Bot tools and actions' },
+      { name: 'Versions', description: 'Bot version management' },
+      { name: 'Voice', description: 'Voice-to-bot functionality' },
+      { name: 'Webhooks', description: 'Webhook management' },
+      { name: 'Widget', description: 'Embeddable chat widget' },
+      { name: 'Whitelabel', description: 'White-label customization' },
+      { name: 'Workflows', description: 'Multi-agent workflows and orchestrations' }
     ],
     components: {
       securitySchemes: {
@@ -128,7 +141,23 @@ Authorization: Bearer <your_jwt_token>
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            token: { type: 'string', description: 'JWT token' },
+            token: { type: 'string', description: 'JWT access token (15 min)' },
+            refreshToken: { type: 'string', description: 'Refresh token (7 days)' },
+            expiresIn: { type: 'integer', description: 'Access token expiry in seconds', example: 900 },
+            refreshExpiresAt: { type: 'string', format: 'date-time', description: 'Refresh token expiry time' },
+            user: { $ref: '#/components/schemas/User' }
+          }
+        },
+        TokenResponse: {
+          type: 'object',
+          description: 'JWT token response with refresh token rotation',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            token: { type: 'string', description: 'JWT access token (expires in 15 minutes)' },
+            refreshToken: { type: 'string', description: 'Refresh token (expires in 7 days, single use)' },
+            expiresIn: { type: 'integer', description: 'Access token expiry in seconds', example: 900 },
+            refreshExpiresAt: { type: 'string', format: 'date-time', description: 'Refresh token expiry timestamp' },
             user: { $ref: '#/components/schemas/User' }
           }
         },
@@ -410,9 +439,9 @@ Authorization: Bearer <your_jwt_token>
     ]
   },
   apis: [
-    './routes/*.js',
-    './server.js',
-    './docs/*.yaml'
+    './server/routes/*.js',
+    './server/server.js',
+    './server/docs/*.yaml'
   ]
 };
 

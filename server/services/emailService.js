@@ -232,6 +232,104 @@ If you didn't create an account with BotBuilder, you can safely ignore this emai
     log.info('Verification email sent successfully', { to: email });
     return result;
   }
+
+  /**
+   * Send training complete notification
+   */
+  async sendTrainingCompleteEmail(email, data) {
+    const { modelName, fineTunedModel, trainedTokens, userName } = data;
+    const dashboardUrl = `${this.frontendUrl}/fine-tuning`;
+
+    const subject = '✅ Training Complete - BotBuilder';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0f; color: #e5e7eb; padding: 40px 20px; margin: 0;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #12121a; border-radius: 16px; padding: 40px; border: 1px solid #2d2d3a;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #22c55e; margin: 0; font-size: 28px;">🎉 Training Complete!</h1>
+          </div>
+          <p style="margin-bottom: 16px; font-size: 16px; line-height: 1.6;">
+            Hi${userName ? ` ${userName}` : ''},
+          </p>
+          <p style="margin-bottom: 24px; font-size: 16px; line-height: 1.6;">
+            Your fine-tuning job has completed successfully!
+          </p>
+          <div style="background-color: #1a1a2e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Model Name</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">${modelName}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Fine-tuned Model ID</p>
+            <p style="margin: 0 0 16px 0; font-size: 14px; font-family: monospace; color: #8b5cf6;">${fineTunedModel}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Tokens Trained</p>
+            <p style="margin: 0; font-size: 16px;">${trainedTokens?.toLocaleString() || 'N/A'}</p>
+          </div>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
+              View Dashboard
+            </a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `Your fine-tuning job "${modelName}" has completed successfully!\n\nFine-tuned Model ID: ${fineTunedModel}\nTokens Trained: ${trainedTokens?.toLocaleString() || 'N/A'}\n\nView your dashboard: ${dashboardUrl}`;
+
+    return this.sendEmail({ to: email, subject, html, text });
+  }
+
+  /**
+   * Send training failed notification
+   */
+  async sendTrainingFailedEmail(email, data) {
+    const { modelName, error, userName } = data;
+    const dashboardUrl = `${this.frontendUrl}/fine-tuning`;
+
+    const subject = '❌ Training Failed - BotBuilder';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0f; color: #e5e7eb; padding: 40px 20px; margin: 0;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #12121a; border-radius: 16px; padding: 40px; border: 1px solid #2d2d3a;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #ef4444; margin: 0; font-size: 28px;">Training Failed</h1>
+          </div>
+          <p style="margin-bottom: 16px; font-size: 16px; line-height: 1.6;">
+            Hi${userName ? ` ${userName}` : ''},
+          </p>
+          <p style="margin-bottom: 24px; font-size: 16px; line-height: 1.6;">
+            Unfortunately, your fine-tuning job encountered an error.
+          </p>
+          <div style="background-color: #1a1a2e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Model Name</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">${modelName}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Error</p>
+            <p style="margin: 0; font-size: 14px; color: #ef4444;">${error || 'Unknown error'}</p>
+          </div>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
+              View Dashboard
+            </a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `Your fine-tuning job "${modelName}" has failed.\n\nError: ${error || 'Unknown error'}\n\nView your dashboard: ${dashboardUrl}`;
+
+    return this.sendEmail({ to: email, subject, html, text });
+  }
 }
 
 module.exports = new EmailService();

@@ -1,0 +1,253 @@
+# Voice AI API Documentation
+
+paths:
+  /api/voice/config:
+    get:
+      tags:
+        - Voice
+      summary: Get voice configuration
+      description: Get voice AI configuration for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Voice configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/VoiceConfig'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    put:
+      tags:
+        - Voice
+      summary: Update voice configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+                stt_provider:
+                  type: string
+                  enum: [google, azure, whisper]
+                tts_provider:
+                  type: string
+                  enum: [google, azure, elevenlabs]
+                voice_id:
+                  type: string
+                language:
+                  type: string
+                  example: en-US
+      responses:
+        '200':
+          description: Configuration updated
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/voice/transcribe:
+    post:
+      tags:
+        - Voice
+      summary: Transcribe audio
+      description: Convert audio to text (Speech-to-Text)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: Audio file (wav, mp3, webm)
+                language:
+                  type: string
+                  example: en-US
+      responses:
+        '200':
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  text:
+                    type: string
+                  confidence:
+                    type: number
+        '400':
+          description: Invalid audio format
+
+  /api/voice/synthesize:
+    post:
+      tags:
+        - Voice
+      summary: Synthesize speech
+      description: Convert text to audio (Text-to-Speech)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  example: Hello, how can I help you today?
+                voice_id:
+                  type: string
+                language:
+                  type: string
+                  example: en-US
+                speed:
+                  type: number
+                  minimum: 0.5
+                  maximum: 2
+                  default: 1
+      responses:
+        '200':
+          description: Audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/voice/voices:
+    get:
+      tags:
+        - Voice
+      summary: List available voices
+      description: Get all available TTS voices
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: provider
+          in: query
+          schema:
+            type: string
+            enum: [google, azure, elevenlabs]
+        - name: language
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available voices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  voices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        language:
+                          type: string
+                        gender:
+                          type: string
+                          enum: [male, female, neutral]
+                        preview_url:
+                          type: string
+
+  /api/voice/call:
+    post:
+      tags:
+        - Voice
+      summary: Initiate voice call
+      description: Start an outbound voice call (Twilio)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - phone_number
+              properties:
+                bot_id:
+                  type: integer
+                phone_number:
+                  type: string
+                  example: "+15551234567"
+      responses:
+        '200':
+          description: Call initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  call_sid:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    VoiceConfig:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        stt_provider:
+          type: string
+        tts_provider:
+          type: string
+        voice_id:
+          type: string
+        language:
+          type: string
+        is_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time

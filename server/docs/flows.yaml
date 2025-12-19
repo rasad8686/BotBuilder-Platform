@@ -1,0 +1,222 @@
+# Bot Flows API Documentation
+
+paths:
+  /api/bots/{botId}/flows:
+    get:
+      tags:
+        - Flows
+      summary: Get bot flow
+      description: Get the conversation flow for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot flow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  flow:
+                    $ref: '#/components/schemas/Flow'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Flows
+      summary: Update bot flow
+      description: Update the conversation flow for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nodes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FlowNode'
+                edges:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FlowEdge'
+      responses:
+        '200':
+          description: Flow updated
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/bots/{botId}/flows/validate:
+    post:
+      tags:
+        - Flows
+      summary: Validate flow
+      description: Validate a bot flow configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nodes:
+                  type: array
+                edges:
+                  type: array
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        node_id:
+                          type: string
+                        message:
+                          type: string
+
+  /api/bots/{botId}/flows/export:
+    get:
+      tags:
+        - Flows
+      summary: Export flow
+      description: Export bot flow as JSON
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Exported flow
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/bots/{botId}/flows/import:
+    post:
+      tags:
+        - Flows
+      summary: Import flow
+      description: Import a flow from JSON
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Flow imported
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    Flow:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlowNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlowEdge'
+        version:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    FlowNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [start, message, condition, action, ai, end]
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        data:
+          type: object
+          properties:
+            label:
+              type: string
+            content:
+              type: string
+
+    FlowEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        label:
+          type: string
+        condition:
+          type: string

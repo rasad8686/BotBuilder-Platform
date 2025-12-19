@@ -1,0 +1,234 @@
+# Tools API Documentation (Function Calling)
+
+paths:
+  /api/tools:
+    get:
+      tags:
+        - Tools
+      summary: List tools
+      description: Get all available tools for function calling
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tools list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tools:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tool'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Tools
+      summary: Create tool
+      description: Create a new custom tool
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                  example: get_weather
+                type:
+                  type: string
+                  enum: [function, api, webhook]
+                description:
+                  type: string
+                  example: Get current weather for a location
+                parameters:
+                  type: object
+                  description: JSON Schema for tool parameters
+                  example:
+                    type: object
+                    properties:
+                      location:
+                        type: string
+                        description: City name
+                    required:
+                      - location
+                endpoint:
+                  type: string
+                  format: uri
+                  description: API endpoint (for api/webhook types)
+      responses:
+        '201':
+          description: Tool created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/tools/{id}:
+    get:
+      tags:
+        - Tools
+      summary: Get tool by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tool details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Tools
+      summary: Update tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Tool updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Tools
+      summary: Delete tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tool deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/tools/{id}/test:
+    post:
+      tags:
+        - Tools
+      summary: Test tool
+      description: Test a tool with sample parameters
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  description: Test parameters
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: object
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/tools/builtin:
+    get:
+      tags:
+        - Tools
+      summary: List built-in tools
+      description: Get all built-in tools provided by the platform
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Built-in tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tools:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        category:
+                          type: string
+
+components:
+  schemas:
+    Tool:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [function, api, webhook]
+        description:
+          type: string
+        parameters:
+          type: object
+          description: JSON Schema
+        endpoint:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

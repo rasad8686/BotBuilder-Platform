@@ -1,0 +1,307 @@
+# Workflows API Documentation (Multi-Agent Orchestration)
+
+paths:
+  /api/workflows:
+    get:
+      tags:
+        - Workflows
+      summary: List workflows
+      description: Get all workflows for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Workflows list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  workflows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workflow'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Workflows
+      summary: Create workflow
+      description: Create a new multi-agent workflow
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Customer Onboarding
+                description:
+                  type: string
+                agents:
+                  type: array
+                  items:
+                    type: integer
+                  description: Agent IDs in execution order
+                config:
+                  type: object
+      responses:
+        '201':
+          description: Workflow created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/workflows/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get workflow by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Workflow details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Workflows
+      summary: Update workflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Workflow updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Workflows
+      summary: Delete workflow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Workflow deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/workflows/{id}/execute:
+    post:
+      tags:
+        - Workflows
+      summary: Execute workflow
+      description: Start a workflow execution
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: string
+                  description: Initial input for the workflow
+                context:
+                  type: object
+                  description: Additional context data
+      responses:
+        '200':
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  execution_id:
+                    type: integer
+                  status:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/executions:
+    get:
+      tags:
+        - Workflows
+      summary: List executions
+      description: Get all workflow executions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workflow_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, completed, failed]
+      responses:
+        '200':
+          description: Executions list
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/executions/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get execution details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  execution:
+                    $ref: '#/components/schemas/Execution'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/executions/{id}/cancel:
+    post:
+      tags:
+        - Workflows
+      summary: Cancel execution
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Execution cancelled
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        agents:
+          type: array
+          items:
+            type: integer
+        config:
+          type: object
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Execution:
+      type: object
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        input:
+          type: string
+        output:
+          type: string
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              agent_id:
+                type: integer
+              status:
+                type: string
+              input:
+                type: string
+              output:
+                type: string
+              started_at:
+                type: string
+                format: date-time
+              completed_at:
+                type: string
+                format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error:
+          type: string

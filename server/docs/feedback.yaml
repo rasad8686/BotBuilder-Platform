@@ -1,0 +1,212 @@
+# Feedback API Documentation
+
+paths:
+  /api/feedback:
+    get:
+      tags:
+        - Feedback
+      summary: List feedback
+      description: Get all feedback for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          schema:
+            type: integer
+        - name: rating
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Feedback list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  feedback:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feedback'
+                  pagination:
+                    type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Feedback
+      summary: Submit feedback
+      description: Submit feedback for a conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+                - rating
+              properties:
+                bot_id:
+                  type: integer
+                session_id:
+                  type: string
+                message_id:
+                  type: integer
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: [helpful, accurate, fast]
+      responses:
+        '201':
+          description: Feedback submitted
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/feedback/{id}:
+    get:
+      tags:
+        - Feedback
+      summary: Get feedback by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Feedback details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Feedback
+      summary: Delete feedback
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Feedback deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/feedback/stats:
+    get:
+      tags:
+        - Feedback
+      summary: Get feedback statistics
+      description: Get feedback statistics for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bot_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: month
+      responses:
+        '200':
+          description: Feedback statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+                    properties:
+                      total_feedback:
+                        type: integer
+                      average_rating:
+                        type: number
+                      rating_distribution:
+                        type: object
+                        properties:
+                          1:
+                            type: integer
+                          2:
+                            type: integer
+                          3:
+                            type: integer
+                          4:
+                            type: integer
+                          5:
+                            type: integer
+                      top_tags:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            tag:
+                              type: string
+                            count:
+                              type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  schemas:
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        session_id:
+          type: string
+        message_id:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time

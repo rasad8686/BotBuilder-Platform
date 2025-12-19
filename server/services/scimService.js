@@ -15,7 +15,7 @@ class SCIMService {
     try {
       const token = `scim_${crypto.randomBytes(32).toString('hex')}`;
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const tokenPrefix = token.substring(0, 13);
+      const tokenPrefix = token.substring(0, 8); // Match DB column size (8 chars)
 
       const expiresAt = expiresInDays
         ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)

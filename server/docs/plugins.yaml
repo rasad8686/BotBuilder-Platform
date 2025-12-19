@@ -1,0 +1,221 @@
+# Plugins API Documentation
+
+paths:
+  /api/plugins:
+    get:
+      tags:
+        - Plugins
+      summary: List available plugins
+      description: Get all available plugins from marketplace
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search plugins by name
+      responses:
+        '200':
+          description: Plugins list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  plugins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plugin'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Plugins
+      summary: Create plugin
+      description: Create a new plugin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [ai, integration, utility, analytics]
+                description:
+                  type: string
+                config_schema:
+                  type: object
+                code:
+                  type: string
+      responses:
+        '201':
+          description: Plugin created
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/plugins/{id}:
+    get:
+      tags:
+        - Plugins
+      summary: Get plugin by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Plugin details
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Plugins
+      summary: Update plugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Plugin updated
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Plugins
+      summary: Delete plugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Plugin deleted
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/plugins/{id}/install:
+    post:
+      tags:
+        - Plugins
+      summary: Install plugin
+      description: Install a plugin for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+                config:
+                  type: object
+      responses:
+        '200':
+          description: Plugin installed
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/plugins/{id}/uninstall:
+    post:
+      tags:
+        - Plugins
+      summary: Uninstall plugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bot_id
+              properties:
+                bot_id:
+                  type: integer
+      responses:
+        '200':
+          description: Plugin uninstalled
+
+components:
+  schemas:
+    Plugin:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        author:
+          type: string
+        config_schema:
+          type: object
+        is_active:
+          type: boolean
+        install_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time

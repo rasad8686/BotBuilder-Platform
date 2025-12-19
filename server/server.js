@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const path = require('path');
 const http = require('http');
 const cookieParser = require('cookie-parser');
+const hpp = require('hpp'); // HTTP Parameter Pollution protection
 const db = require('./db');
 const { logRegister, logLogin } = require('./middleware/audit');
 const log = require('./utils/logger');
@@ -21,6 +22,9 @@ const crypto = require('crypto');
 const emailService = require('./services/emailService');
 const { setAuthCookie, clearAuthCookie } = require('./utils/cookieHelper');
 const { createSession } = require('./routes/sessions');
+const fineTuningPoller = require('./jobs/fineTuningPoller');
+const { setupSwagger } = require('./config/swagger');
+const refreshTokenService = require('./services/refreshTokenService');
 
 // Load .env from parent directory (BotBuilder root)
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -39,6 +43,20 @@ log.info('Email configuration check', {
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// ========================================
+// 🔐 SECURITY: Trust Proxy Configuration
+// ========================================
+// Required for accurate IP detection behind reverse proxies (Vercel, Nginx, etc.)
+app.set('trust proxy', 1);
+
+// ========================================
+// 🔐 SECURITY: Request Timeout (Slow-loris Protection)
+// ========================================
+// Prevent slow-loris DoS attacks by setting request timeout
+server.timeout = 30000; // 30 seconds
+server.headersTimeout = 35000; // 35 seconds (must be > timeout)
+server.keepAliveTimeout = 20000; // 20 seconds
 
 // Initialize WebSocket
 const { io, executionSocket } = initializeWebSocket(server);
@@ -183,13 +201,31 @@ app.use(cors({
 // Must be BEFORE express.json() to capture raw body
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 
-app.use(express.json());
+// ✅ SECURITY: Request body size limit (DoS protection)
+// Prevents large payload attacks - 10KB for JSON, 50KB for URL-encoded
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '50kb' }));
+
+// ✅ SECURITY: HTTP Parameter Pollution protection
+// Prevents attackers from bypassing input validation via duplicate parameters
+app.use(hpp({
+  whitelist: [] // Add parameter names here if needed (e.g., ['filter', 'sort'])
+}));
 
 // ✅ XSS Input sanitization - clean all request bodies
 app.use(sanitizeInput);
 
 // ✅ Cookie parser for CSRF and JWT cookies
 app.use(cookieParser());
+
+// ✅ SECURITY: Request ID tracking for audit trails
+// Adds unique X-Request-ID header to every request/response
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
+  req.requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  next();
+});
 
 // ✅ CSRF token generation (sets csrf_token cookie)
 app.use(csrfTokenMiddleware);
@@ -231,6 +267,9 @@ app.use('/api/', csrfValidationMiddleware);
 
 // ✅ CSRF token endpoint (for SPA to get token)
 app.get('/api/csrf-token', csrfTokenEndpoint);
+
+// ✅ Swagger API Documentation
+setupSwagger(app);
 
 // ✅ Serve uploaded files (logos, favicons, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -609,17 +648,16 @@ app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async
       }
     }
 
-    // Generate JWT token with REAL database user ID and organization ID
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        username: user.name, // Map 'name' from DB to 'username' in JWT
-        current_organization_id: organizationId
-      },
-      getSecureEnv('JWT_SECRET'),
-      { expiresIn: '24h' }
-    );
+    // Generate Access Token (15 minutes)
+    const accessToken = refreshTokenService.generateAccessToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      organizationId
+    });
+
+    // Generate Refresh Token (7 days)
+    const refreshTokenData = await refreshTokenService.createRefreshToken(user.id, req);
 
     // Log successful login to audit trail
     await logLogin(req, user.id, true);
@@ -631,13 +669,16 @@ app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async
       log.error('Session creation failed', { error: sessionError.message, userId: user.id });
     }
 
-    // Set JWT as httpOnly cookie
-    setAuthCookie(res, token);
+    // Set access token as httpOnly cookie
+    setAuthCookie(res, accessToken);
 
     res.json({
       success: true,
       message: 'Login successful!',
-      token: token, // Still send token for backward compatibility
+      token: accessToken, // Access token (15 min)
+      refreshToken: refreshTokenData.token, // Refresh token (7 days)
+      expiresIn: 900, // 15 minutes in seconds
+      refreshExpiresAt: refreshTokenData.expiresAt,
       user: {
         id: user.id,
         username: user.name,
@@ -658,13 +699,107 @@ app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async
   }
 });
 
-// ✅ Logout endpoint - Clear auth cookie
-app.post('/api/auth/logout', (req, res) => {
-  clearAuthCookie(res);
-  res.json({
-    success: true,
-    message: 'Logged out successfully'
-  });
+// ✅ Logout endpoint - Clear auth cookie and revoke refresh token
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    // Revoke refresh token if provided
+    if (refreshToken) {
+      await refreshTokenService.revokeRefreshToken(refreshToken);
+    }
+
+    clearAuthCookie(res);
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    log.error('Logout error', { message: error.message });
+    clearAuthCookie(res);
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  }
+});
+
+// ✅ Refresh Token endpoint - Get new access token
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required'
+      });
+    }
+
+    // Rotate refresh token and get new tokens
+    const result = await refreshTokenService.rotateRefreshToken(refreshToken, req);
+
+    if (!result) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    // Set new access token as httpOnly cookie
+    setAuthCookie(res, result.accessToken);
+
+    res.json({
+      success: true,
+      message: 'Token refreshed successfully',
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+      refreshExpiresAt: result.refreshExpiresAt,
+      user: result.user
+    });
+
+  } catch (error) {
+    log.error('Token refresh error', { message: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh token'
+    });
+  }
+});
+
+// ✅ Logout from all devices - Revoke all refresh tokens
+app.post('/api/auth/logout-all', async (req, res) => {
+  try {
+    // Get user from current token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, getSecureEnv('JWT_SECRET'));
+
+    // Revoke all refresh tokens for this user
+    const revokedCount = await refreshTokenService.revokeAllUserTokens(decoded.id);
+
+    clearAuthCookie(res);
+    res.json({
+      success: true,
+      message: `Logged out from all devices. ${revokedCount} session(s) terminated.`,
+      revokedSessions: revokedCount
+    });
+
+  } catch (error) {
+    log.error('Logout all error', { message: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to logout from all devices'
+    });
+  }
 });
 
 // ✅ Demo Login Endpoint - Auto-login for demo account
@@ -901,4 +1036,7 @@ server.listen(PORT, async () => {
 
   // 🔐 Create admin account automatically
   await ensureAdminExists();
+
+  // 🔄 Start fine-tuning status poller (checks OpenAI every 30s)
+  fineTuningPoller.start();
 });

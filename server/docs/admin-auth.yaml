@@ -1,0 +1,198 @@
+# Admin Authentication API Documentation
+
+paths:
+  /api/admin-auth/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: |
+        Login for admin users with enhanced security.
+        - Rate limited (5 attempts per 15 minutes)
+        - IP whitelist (optional)
+        - 2FA is mandatory for admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  format: password
+                twoFactorCode:
+                  type: string
+                  pattern: '^\d{6}$'
+                  description: Required if 2FA is enabled
+      responses:
+        '200':
+          description: Login successful or 2FA required
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                      token:
+                        type: string
+                        description: JWT token
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                          email:
+                            type: string
+                          isSuperAdmin:
+                            type: boolean
+                          isAdmin:
+                            type: boolean
+                      expiresAt:
+                        type: string
+                        format: date-time
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      require2FA:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+        '401':
+          description: Invalid credentials or 2FA code
+        '403':
+          description: Admin access required or 2FA not setup
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  require2FASetup:
+                    type: boolean
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /api/admin-auth/logout:
+    post:
+      tags:
+        - Admin
+      summary: Admin logout
+      description: Invalidate admin session
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/admin-auth/session:
+    get:
+      tags:
+        - Admin
+      summary: Verify admin session
+      description: Check if the current admin session is still valid
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                          email:
+                            type: string
+                          isSuperAdmin:
+                            type: boolean
+                          isAdmin:
+                            type: boolean
+                      session:
+                        type: object
+                        properties:
+                          expiresAt:
+                            type: string
+                            format: date-time
+                          createdAt:
+                            type: string
+                            format: date-time
+        '401':
+          description: Session expired or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+
+  /api/admin-auth/check-2fa/{email}:
+    get:
+      tags:
+        - Admin
+      summary: Check 2FA status
+      description: Check if a user has 2FA enabled (for login flow)
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: 2FA status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  has2FA:
+                    type: boolean
