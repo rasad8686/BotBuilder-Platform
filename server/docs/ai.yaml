@@ -1,0 +1,382 @@
+# AI API Documentation
+
+paths:
+  /api/ai/providers:
+    get:
+      tags:
+        - AI
+      summary: List AI providers
+      description: Get available AI providers (OpenAI, Claude)
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: openai
+                        name:
+                          type: string
+                          example: OpenAI
+                        models:
+                          type: array
+                          items:
+                            type: string
+
+  /api/ai/models/{provider}:
+    get:
+      tags:
+        - AI
+      summary: Get provider models
+      description: Get available models for a specific provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [openai, claude]
+      responses:
+        '200':
+          description: List of models
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  models:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        contextWindow:
+                          type: integer
+                        pricing:
+                          type: object
+
+  /api/bots/{botId}/ai/configure:
+    get:
+      tags:
+        - AI
+      summary: Get AI configuration
+      description: Get AI settings for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: AI configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/AIConfiguration'
+
+    post:
+      tags:
+        - AI
+      summary: Configure AI
+      description: Create or update AI configuration for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - model
+              properties:
+                provider:
+                  type: string
+                  enum: [openai, claude]
+                model:
+                  type: string
+                  example: gpt-4o-mini
+                api_key:
+                  type: string
+                  description: Custom API key (optional, uses platform key if not provided)
+                temperature:
+                  type: number
+                  minimum: 0
+                  maximum: 2
+                  default: 0.7
+                max_tokens:
+                  type: integer
+                  default: 1024
+                system_prompt:
+                  type: string
+                context_window:
+                  type: integer
+                  default: 10
+                is_enabled:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: AI configured
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - AI
+      summary: Delete AI configuration
+      description: Remove AI configuration from a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Configuration deleted
+
+  /api/bots/{botId}/ai/test:
+    post:
+      tags:
+        - AI
+      summary: Test AI connection
+      description: Test AI provider connection and configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  responseTime:
+                    type: integer
+                    description: Response time in ms
+
+  /api/bots/{botId}/ai/chat:
+    post:
+      tags:
+        - AI
+      summary: Send chat message
+      description: Send a message to the AI and get a response
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /api/bots/{botId}/ai/chat/stream:
+    post:
+      tags:
+        - AI
+      summary: Stream chat message
+      description: Send a message and receive streaming response via SSE
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Server-Sent Events stream with events:
+                  - type: chunk (partial response)
+                  - type: done (final response with usage)
+                  - type: error (error message)
+
+  /api/bots/{botId}/ai/usage:
+    get:
+      tags:
+        - AI
+      summary: Get AI usage
+      description: Get AI usage statistics for a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  usage:
+                    type: object
+                    properties:
+                      total_requests:
+                        type: integer
+                      total_tokens:
+                        type: integer
+                      total_cost:
+                        type: number
+                      daily:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                            requests:
+                              type: integer
+                            tokens:
+                              type: integer
+                            cost:
+                              type: number
+
+  /api/bots/{botId}/ai/conversations/{sessionId}:
+    get:
+      tags:
+        - AI
+      summary: Get conversation history
+      description: Get chat history for a session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                          enum: [user, assistant]
+                        content:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+
+    delete:
+      tags:
+        - AI
+      summary: Clear conversation
+      description: Delete conversation history for a session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation cleared

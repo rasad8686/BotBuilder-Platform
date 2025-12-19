@@ -1,0 +1,403 @@
+# SSO & SCIM API Documentation
+
+paths:
+  # SSO Configuration
+  /api/sso/config:
+    get:
+      tags:
+        - SSO
+      summary: Get SSO configuration
+      description: Get current SSO configuration for the organization
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SSO configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/SSOConfig'
+
+    post:
+      tags:
+        - SSO
+      summary: Create SSO configuration
+      description: Configure SAML or OIDC SSO
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+              properties:
+                provider:
+                  type: string
+                  enum: [saml, oidc]
+                # SAML fields
+                idp_entity_id:
+                  type: string
+                  description: Identity Provider Entity ID
+                idp_sso_url:
+                  type: string
+                  description: SSO URL
+                idp_certificate:
+                  type: string
+                  description: X.509 certificate
+                # OIDC fields
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                issuer_url:
+                  type: string
+                # Common
+                auto_provision:
+                  type: boolean
+                  default: true
+                default_role:
+                  type: string
+                  enum: [admin, member, viewer]
+                  default: member
+      responses:
+        '201':
+          description: SSO configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/SSOConfig'
+                  sp_metadata:
+                    type: object
+                    description: Service Provider metadata for IdP setup
+
+    put:
+      tags:
+        - SSO
+      summary: Update SSO configuration
+      description: Update SSO settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_enabled:
+                  type: boolean
+                auto_provision:
+                  type: boolean
+                default_role:
+                  type: string
+      responses:
+        '200':
+          description: SSO updated
+
+    delete:
+      tags:
+        - SSO
+      summary: Delete SSO configuration
+      description: Remove SSO configuration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SSO configuration deleted
+
+  /api/sso/metadata:
+    get:
+      tags:
+        - SSO
+      summary: Get SP metadata
+      description: Get SAML Service Provider metadata XML
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SP metadata
+          content:
+            application/xml:
+              schema:
+                type: string
+
+  /api/sso/saml/login:
+    get:
+      tags:
+        - SSO
+      summary: SAML login
+      description: Initiate SAML SSO login
+      parameters:
+        - name: org
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Organization slug
+      responses:
+        '302':
+          description: Redirect to IdP
+
+  /api/sso/saml/acs:
+    post:
+      tags:
+        - SSO
+      summary: SAML ACS
+      description: SAML Assertion Consumer Service endpoint
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                SAMLResponse:
+                  type: string
+      responses:
+        '302':
+          description: Redirect to app with token
+
+  /api/sso/oidc/login:
+    get:
+      tags:
+        - SSO
+      summary: OIDC login
+      description: Initiate OIDC SSO login
+      parameters:
+        - name: org
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Organization slug
+      responses:
+        '302':
+          description: Redirect to IdP
+
+  /api/sso/oidc/callback:
+    get:
+      tags:
+        - SSO
+      summary: OIDC callback
+      description: OIDC authorization callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to app with token
+
+  # SCIM Endpoints
+  /api/scim/v2/Users:
+    get:
+      tags:
+        - SCIM
+      summary: List users
+      description: SCIM 2.0 List Users
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: SCIM filter expression
+        - name: startIndex
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/scim+json:
+              schema:
+                type: object
+                properties:
+                  schemas:
+                    type: array
+                    items:
+                      type: string
+                  totalResults:
+                    type: integer
+                  Resources:
+                    type: array
+
+    post:
+      tags:
+        - SCIM
+      summary: Create user
+      description: SCIM 2.0 Create User
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        content:
+          application/scim+json:
+            schema:
+              type: object
+              required:
+                - userName
+              properties:
+                userName:
+                  type: string
+                name:
+                  type: object
+                  properties:
+                    givenName:
+                      type: string
+                    familyName:
+                      type: string
+                emails:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      value:
+                        type: string
+                      primary:
+                        type: boolean
+      responses:
+        '201':
+          description: User created
+
+  /api/scim/v2/Users/{id}:
+    get:
+      tags:
+        - SCIM
+      summary: Get user
+      description: SCIM 2.0 Get User
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+
+    put:
+      tags:
+        - SCIM
+      summary: Replace user
+      description: SCIM 2.0 Replace User
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/scim+json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: User updated
+
+    patch:
+      tags:
+        - SCIM
+      summary: Patch user
+      description: SCIM 2.0 Patch User
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/scim+json:
+            schema:
+              type: object
+              properties:
+                Operations:
+                  type: array
+      responses:
+        '200':
+          description: User patched
+
+    delete:
+      tags:
+        - SCIM
+      summary: Delete user
+      description: SCIM 2.0 Delete User
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+
+  /api/scim/v2/Groups:
+    get:
+      tags:
+        - SCIM
+      summary: List groups
+      description: SCIM 2.0 List Groups
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of groups
+
+    post:
+      tags:
+        - SCIM
+      summary: Create group
+      description: SCIM 2.0 Create Group
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        content:
+          application/scim+json:
+            schema:
+              type: object
+              required:
+                - displayName
+              properties:
+                displayName:
+                  type: string
+                members:
+                  type: array
+      responses:
+        '201':
+          description: Group created

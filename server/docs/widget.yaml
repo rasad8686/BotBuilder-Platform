@@ -1,0 +1,375 @@
+# Widget & Analytics API Documentation
+
+paths:
+  # Widget endpoints
+  /api/widget/{botId}/public-config:
+    get:
+      tags:
+        - Widget
+      summary: Get widget config
+      description: Get public widget configuration (no auth required)
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Widget configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  botId:
+                    type: integer
+                  botName:
+                    type: string
+                  config:
+                    type: object
+                    properties:
+                      theme:
+                        type: string
+                        enum: [light, dark]
+                      primaryColor:
+                        type: string
+                      position:
+                        type: string
+                        enum: [bottom-right, bottom-left]
+                      greeting:
+                        type: string
+                      placeholder:
+                        type: string
+
+  /api/widget/{botId}/config:
+    get:
+      tags:
+        - Widget
+      summary: Get widget config (authenticated)
+      description: Get full widget configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Widget configuration
+
+    put:
+      tags:
+        - Widget
+      summary: Update widget config
+      description: Update widget appearance and behavior
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme:
+                  type: string
+                primaryColor:
+                  type: string
+                position:
+                  type: string
+                greeting:
+                  type: string
+                avatar:
+                  type: string
+                showBranding:
+                  type: boolean
+      responses:
+        '200':
+          description: Config updated
+
+  /api/widget/{botId}/message:
+    post:
+      tags:
+        - Widget
+      summary: Send widget message
+      description: Send a message through the widget
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+                - message
+              properties:
+                sessionId:
+                  type: string
+                  description: Unique session identifier
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Bot response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/widget/{botId}/history/{sessionId}:
+    get:
+      tags:
+        - Widget
+      summary: Get widget history
+      description: Get conversation history for a session
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        role:
+                          type: string
+                        content:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+
+  /api/widget/{botId}/analytics:
+    get:
+      tags:
+        - Widget
+      summary: Get widget analytics
+      description: Get widget usage analytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Widget analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totals:
+                    type: object
+                    properties:
+                      user_messages:
+                        type: integer
+                      bot_messages:
+                        type: integer
+                      sessions:
+                        type: integer
+                  daily:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        count:
+                          type: integer
+
+  # Analytics endpoints
+  /api/analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics overview
+      description: Get organization-wide analytics overview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  overview:
+                    $ref: '#/components/schemas/AnalyticsOverview'
+
+  /api/analytics/bots/{botId}:
+    get:
+      tags:
+        - Analytics
+      summary: Get bot analytics
+      description: Get analytics for a specific bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+      responses:
+        '200':
+          description: Bot analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  analytics:
+                    type: object
+                    properties:
+                      messages:
+                        type: integer
+                      sessions:
+                        type: integer
+                      unique_users:
+                        type: integer
+                      avg_response_time:
+                        type: number
+                      satisfaction_rate:
+                        type: number
+                      daily:
+                        type: array
+
+  /api/analytics/conversations:
+    get:
+      tags:
+        - Analytics
+      summary: Get conversation analytics
+      description: Get conversation insights
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Conversation analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        session_id:
+                          type: string
+                        message_count:
+                          type: integer
+                        duration_seconds:
+                          type: integer
+                        started_at:
+                          type: string
+                          format: date-time
+                        channel:
+                          type: string
+
+  /api/analytics/export:
+    get:
+      tags:
+        - Analytics
+      summary: Export analytics
+      description: Export analytics data as CSV
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [messages, sessions, usage]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
