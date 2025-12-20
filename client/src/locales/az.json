@@ -1996,5 +1996,20 @@
       "errorBreakdown": "Xəta Təhlili",
       "noAnalytics": "Hələ analitika məlumatı mövcud deyil"
     }
+  },
+  "cookies": {
+    "message": "Bu veb sayt təcrübənizi yaxşılaşdırmaq üçün çərəzlərdən istifadə edir. Bu saytdan istifadə etməyə davam etməklə çərəz istifadəmizi qəbul etmiş olursunuz.",
+    "accept": "Qəbul et",
+    "learnMore": "Ətraflı məlumat"
+  },
+  "notFound": {
+    "title": "Səhifə Tapılmadı",
+    "message": "Axtardığınız səhifə mövcud deyil.",
+    "button": "Ana Səhifəyə Qayıt"
+  },
+  "serverError": {
+    "title": "Server Xətası",
+    "message": "Bir xəta baş verdi. Zəhmət olmasa sonra yenidən cəhd edin.",
+    "button": "Yenidən Cəhd Et"
   }
 }

@@ -12,6 +12,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const authenticateToken = require('../middleware/auth');
 const log = require('../utils/logger');
+const EncryptionHelper = require('../services/ai/encryptionHelper');
 const { auditLog, getIpAddress, getUserAgent } = require('../middleware/audit');
 
 /**
@@ -69,10 +70,11 @@ router.post('/setup', authenticateToken, async (req, res) => {
       length: 32
     });
 
-    // Store secret temporarily (not enabled yet)
+    // Store secret temporarily (not enabled yet) - encrypted
+    const encryptedSecret = EncryptionHelper.encrypt(secret.base32);
     await db.query(
       'UPDATE users SET two_factor_secret = $1 WHERE id = $2',
-      [secret.base32, req.user.id]
+      [encryptedSecret, req.user.id]
     );
 
     // Generate QR code
@@ -137,9 +139,10 @@ router.post('/verify', authenticateToken, async (req, res) => {
       });
     }
 
-    // Verify the code
+    // Decrypt and verify the code
+    const decryptedSecret = EncryptionHelper.decrypt(user.rows[0].two_factor_secret);
     const verified = speakeasy.totp.verify({
-      secret: user.rows[0].two_factor_secret,
+      secret: decryptedSecret,
       encoding: 'base32',
       token: code,
       window: 1 // Allow 1 step tolerance (30 seconds before/after)
@@ -204,9 +207,10 @@ router.post('/validate', async (req, res) => {
       return res.status(400).json({ success: false, message: '2FA is not enabled' });
     }
 
-    // Try TOTP code first
+    // Decrypt and try TOTP code first
+    const decryptedSecret = EncryptionHelper.decrypt(user.rows[0].two_factor_secret);
     let verified = speakeasy.totp.verify({
-      secret: user.rows[0].two_factor_secret,
+      secret: decryptedSecret,
       encoding: 'base32',
       token: code,
       window: 1
@@ -276,8 +280,9 @@ router.post('/disable', authenticateToken, async (req, res) => {
 
     // Verify 2FA code if provided
     if (code) {
+      const decryptedSecret = EncryptionHelper.decrypt(user.rows[0].two_factor_secret);
       const verified = speakeasy.totp.verify({
-        secret: user.rows[0].two_factor_secret,
+        secret: decryptedSecret,
         encoding: 'base32',
         token: code,
         window: 1
@@ -344,8 +349,9 @@ router.post('/backup-codes/regenerate', authenticateToken, async (req, res) => {
       return res.status(400).json({ success: false, message: '2FA is not enabled' });
     }
 
+    const decryptedSecret = EncryptionHelper.decrypt(user.rows[0].two_factor_secret);
     const verified = speakeasy.totp.verify({
-      secret: user.rows[0].two_factor_secret,
+      secret: decryptedSecret,
       encoding: 'base32',
       token: code,
       window: 1

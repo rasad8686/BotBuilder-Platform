@@ -33,12 +33,14 @@ router.get('/', async (req, res) => {
 
     res.json(executions);
   } catch (error) {
-    log.error('Error fetching executions:', { error: error.message });
-    // Return empty array if table doesn't exist or other DB error
     if (error.code === '42P01') {
-      return res.json([]);
+      // Table doesn't exist yet - return empty array
+      return res.json({ data: [], message: 'No executions found' });
     }
-    res.json([]);
+    res.status(500).json({
+      error: 'Failed to fetch executions',
+      code: error.code
+    });
   }
 });
 

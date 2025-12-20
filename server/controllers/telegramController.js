@@ -6,6 +6,7 @@
 const telegramService = require('../services/channels/telegramService');
 const TelegramChannel = require('../models/TelegramChannel');
 const crypto = require('crypto');
+const db = require('../db');
 
 /**
  * Connect a new Telegram bot
@@ -190,26 +191,34 @@ exports.getChannelStats = async (req, res) => {
       });
     }
 
-    // Get aggregated stats for all channels
-    const allStats = await Promise.all(
-      channels.map(async (channel) => {
-        const stats = await TelegramChannel.getStats(channel.id, {
-          start: startDate ? new Date(startDate) : undefined,
-          end: endDate ? new Date(endDate) : undefined
-        });
-        return {
-          channelId: channel.id,
-          botUsername: channel.botUsername,
-          isActive: channel.isActive,
-          ...stats
-        };
-      })
-    );
+    // Get aggregated stats for all channels with single JOIN query (optimized - no N+1)
+    const statsResult = await db.query(`
+      SELECT
+        tc.id as channel_id,
+        tc.bot_username,
+        tc.is_active,
+        COUNT(tm.id) as total_messages,
+        COUNT(DISTINCT tm.user_id) as unique_users
+      FROM telegram_channels tc
+      LEFT JOIN telegram_messages tm ON tc.id = tm.channel_id
+        AND tm.created_at >= NOW() - INTERVAL '30 days'
+      WHERE tc.organization_id = $1
+      GROUP BY tc.id, tc.bot_username, tc.is_active
+      ORDER BY total_messages DESC
+    `, [organizationId]);
+
+    const allStats = statsResult.rows.map(row => ({
+      channelId: row.channel_id,
+      botUsername: row.bot_username,
+      isActive: row.is_active,
+      totalMessages: parseInt(row.total_messages) || 0,
+      uniqueUsers: parseInt(row.unique_users) || 0
+    }));
 
     // Calculate totals
     const totals = {
-      totalChannels: channels.length,
-      activeChannels: channels.filter(c => c.isActive).length,
+      totalChannels: allStats.length,
+      activeChannels: allStats.filter(c => c.isActive).length,
       totalMessages: allStats.reduce((sum, s) => sum + s.totalMessages, 0),
       totalUniqueUsers: allStats.reduce((sum, s) => sum + s.uniqueUsers, 0)
     };

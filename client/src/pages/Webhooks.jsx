@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-import { FiPlus, FiTrash2, FiEdit2, FiCopy, FiRefreshCw, FiSend, FiCheck, FiX, FiEye } from 'react-icons/fi';
+import { Plus, Trash2, Pencil, Copy, RefreshCw, Send, Check, X, Eye } from 'lucide-react';
 import { API_URL } from '../config/api';
 
 const API_BASE_URL = API_URL;
@@ -187,7 +187,7 @@ export default function Webhooks() {
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
           >
-            <FiPlus className="w-5 h-5" />
+            <Plus className="w-5 h-5" />
             {t('webhooks.addNew')}
           </button>
         </div>
@@ -225,7 +225,7 @@ export default function Webhooks() {
         {webhooks.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
             <div className="text-gray-400 mb-4">
-              <FiSend className="w-16 h-16 mx-auto" />
+              <Send className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">{t('webhooks.noWebhooks')}</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-6">{t('webhooks.noWebhooksDesc')}</p>
@@ -233,7 +233,7 @@ export default function Webhooks() {
               onClick={() => setShowCreateModal(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors"
             >
-              <FiPlus className="w-5 h-5" />
+              <Plus className="w-5 h-5" />
               {t('webhooks.addFirst')}
             </button>
           </div>
@@ -272,21 +272,21 @@ export default function Webhooks() {
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="View Logs"
                     >
-                      <FiEye className="w-5 h-5" />
+                      <Eye className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleTestWebhook(webhook.id)}
                       className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                       title="Test Webhook"
                     >
-                      <FiSend className="w-5 h-5" />
+                      <Send className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteWebhook(webhook.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <FiTrash2 className="w-5 h-5" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -424,7 +424,7 @@ export default function Webhooks() {
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <FiX className="w-6 h-6" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
@@ -445,9 +445,9 @@ export default function Webhooks() {
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-3">
                             {log.status === 'success' ? (
-                              <FiCheck className="w-5 h-5 text-green-600" />
+                              <Check className="w-5 h-5 text-green-600" />
                             ) : (
-                              <FiX className="w-5 h-5 text-red-600" />
+                              <X className="w-5 h-5 text-red-600" />
                             )}
                             <span className="font-semibold text-gray-800">{log.event_type}</span>
                             {log.status_code && (

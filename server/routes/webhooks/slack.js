@@ -322,7 +322,6 @@ async function processSlashCommand(channel, commandData) {
         };
     }
   } catch (error) {
-    console.error('Error processing slash command:', error);
     return {
       response_type: 'ephemeral',
       text: 'An error occurred processing your command. Please try again.'

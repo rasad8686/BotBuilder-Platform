@@ -22,6 +22,7 @@ const crypto = require('crypto');
 const emailService = require('./services/emailService');
 const { setAuthCookie, clearAuthCookie } = require('./utils/cookieHelper');
 const { createSession } = require('./routes/sessions');
+const { validatePassword } = require('./utils/passwordValidator');
 const fineTuningPoller = require('./jobs/fineTuningPoller');
 const { setupSwagger } = require('./config/swagger');
 const refreshTokenService = require('./services/refreshTokenService');
@@ -170,23 +171,40 @@ async function ensureAdminExists() {
 }
 
 // ✅ CORS - Vercel frontend + localhost
+const allowedVercelDomains = [
+  'https://bot-builder-platform.vercel.app',
+  'https://botbuilder.vercel.app'
+];
+
+// Parse additional origins from environment
+const envOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin) {
+      // Development-da icazə ver, production-da yalnız server-to-server
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      // Production-da health check və internal requests üçün
+      return callback(null, true);
+    }
 
     // Allow localhost
     if (origin.startsWith('http://localhost:')) {
       return callback(null, true);
     }
 
-    // Allow production domain
-    if (origin === 'https://bot-builder-platform.vercel.app') {
+    // Allow specific Vercel domains (no wildcard)
+    if (allowedVercelDomains.includes(origin)) {
       return callback(null, true);
     }
 
-    // Allow all Vercel deployments (production + previews)
-    if (origin.includes('vercel.app')) {
+    // Allow origins from environment variable
+    if (envOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -320,11 +338,12 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       });
     }
 
-    // Password length check
-    if (password.length < 6) {
-      log.debug('Registration validation failed: Password too short');
+    // Password strength validation
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      log.debug('Registration validation failed: ' + passwordValidation.message);
       return res.status(400).json({
-        message: 'Password must be at least 6 characters'
+        message: passwordValidation.message
       });
     }
 

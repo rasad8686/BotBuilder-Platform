@@ -1994,5 +1994,20 @@
       "errorBreakdown": "Error Breakdown",
       "noAnalytics": "No analytics data available yet"
     }
+  },
+  "cookies": {
+    "message": "This website uses cookies to enhance your experience. By continuing to use this site, you agree to our use of cookies.",
+    "accept": "Accept",
+    "learnMore": "Learn more"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "message": "The page you are looking for does not exist.",
+    "button": "Go to Home"
+  },
+  "serverError": {
+    "title": "Server Error",
+    "message": "An error occurred. Please try again later.",
+    "button": "Try Again"
   }
 }

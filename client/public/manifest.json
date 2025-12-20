@@ -1,0 +1,23 @@
+{
+  "name": "BotBuilder - AI Chatbot Platform",
+  "short_name": "BotBuilder",
+  "description": "Build powerful AI chatbots for WhatsApp, Telegram, Instagram",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    }
+  ]
+}

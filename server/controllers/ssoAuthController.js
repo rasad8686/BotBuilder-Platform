@@ -12,6 +12,7 @@ const SSOService = require('../services/ssoService');
 const SSOAnalyticsService = require('../services/ssoAnalyticsService');
 const EncryptionHelper = require('../services/ai/encryptionHelper');
 const log = require('../utils/logger');
+const { getSecureEnv } = require('../utils/envValidator');
 
 // Session state store (in production, use Redis)
 const ssoStateStore = new Map();
@@ -538,7 +539,7 @@ class SSOAuthController {
       }
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET || 'your-secret-key', {
+    return jwt.sign(payload, getSecureEnv('JWT_SECRET'), {
       expiresIn: '24h',
       issuer: 'botbuilder'
     });

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /superadmin/
+Disallow: /dashboard/
+Sitemap: https://botbuilder.com/sitemap.xml

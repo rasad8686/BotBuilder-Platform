@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FaRobot, FaSpinner } from 'react-icons/fa';
+import { Bot, Loader2 } from 'lucide-react';
 
 /**
  * Demo Page - Auto-login to demo account
@@ -72,7 +72,7 @@ function Demo() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4">
-              <FaRobot className="text-3xl text-white" />
+              <Bot className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
               {t('demo.title')}
@@ -86,7 +86,7 @@ function Demo() {
           <div className="text-center">
             {status === 'loading' && (
               <div>
-                <FaSpinner className="animate-spin text-4xl text-purple-600 mx-auto mb-4" />
+                <Loader2 className="animate-spin w-10 h-10 text-purple-600 mx-auto mb-4" />
                 <p className="text-gray-700 font-medium">{message}</p>
                 <p className="text-sm text-gray-500 mt-2">
                   This may take a few seconds...

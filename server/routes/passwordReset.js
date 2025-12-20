@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const emailService = require('../services/emailService');
 const log = require('../utils/logger');
+const { validatePassword } = require('../utils/passwordValidator');
 
 /**
  * POST /api/auth/forgot-password
@@ -162,8 +163,9 @@ router.post('/reset-password', async (req, res) => {
     }
 
     // Validate password strength
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.message });
     }
 
     // Find valid token

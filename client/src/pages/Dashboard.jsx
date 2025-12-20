@@ -1,7 +1,8 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import botApi from "../api/bots";
+import { SkeletonDashboard } from "../components/SkeletonLoader";
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -75,8 +76,8 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center transition-colors duration-300">
-        <div className="text-2xl dark:text-white">{t('dashboard.loading')}</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+        <SkeletonDashboard />
       </div>
     );
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import { validateEmail, validateRequired } from "../utils/formValidation";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://botbuilder-platform.onrender.com";
 
@@ -11,6 +12,7 @@ function Login() {
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -125,8 +127,23 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setFieldErrors({});
+
+    // Validate fields
+    const errors = {};
+    const emailError = validateEmail(formData.email);
+    const passwordError = validateRequired(formData.password, 'Password');
+
+    if (emailError) errors.email = emailError;
+    if (passwordError) errors.password = passwordError;
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const loginData = {
@@ -188,32 +205,39 @@ function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="form" aria-label="Login form">
           {!requires2FA ? (
             <>
               <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
+                <label htmlFor="login-email" className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
                 <input
+                  id="login-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                  aria-invalid={fieldErrors.email ? 'true' : 'false'}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.email ? 'border-red-500' : ''}`}
                 />
+                {fieldErrors.email && <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.email}</p>}
               </div>
 
               {/* Show password field only if SSO is not enforced */}
               {(!ssoInfo?.requiresSSO) && (
                 <>
                   <div className="mb-4">
-                    <label className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
+                    <label htmlFor="login-password" className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
                     <div className="relative">
                       <input
+                        id="login-password"
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required={!ssoInfo?.ssoAvailable}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                        aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+                        aria-invalid={fieldErrors.password ? 'true' : 'false'}
+                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${fieldErrors.password ? 'border-red-500' : ''}`}
                       />
                       <button
                         type="button"
@@ -232,6 +256,7 @@ function Login() {
                         )}
                       </button>
                     </div>
+                    {fieldErrors.password && <p id="password-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.password}</p>}
                   </div>
 
                   <div className="mb-6 text-right">

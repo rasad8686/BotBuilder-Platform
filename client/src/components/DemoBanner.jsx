@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaInfoCircle, FaTimes } from 'react-icons/fa';
+import { Info, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -33,7 +33,7 @@ function DemoBanner() {
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <FaInfoCircle className="text-2xl flex-shrink-0" />
+            <Info className="w-6 h-6 flex-shrink-0" />
             <div>
               <p className="font-bold text-sm md:text-base">
                 You are viewing a demo account
@@ -55,7 +55,7 @@ function DemoBanner() {
               className="p-2 hover:bg-orange-600 rounded transition"
               aria-label="Close banner"
             >
-              <FaTimes />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>

@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BarChart3, Users, Building2, ClipboardList, Bot, Crown, HelpCircle } from 'lucide-react';
 import api from '../../api/axios';
+
+// Helper function to get icon component safely (prevents XSS)
+const getIconComponent = (iconCode) => {
+  const iconMap = {
+    '&#128202;': BarChart3,      // 📊 Chart
+    '&#128101;': Users,          // 👥 Users
+    '&#127970;': Building2,      // 🏢 Building
+    '&#128203;': ClipboardList,  // 📋 Clipboard
+    '&#129302;': Bot,            // 🤖 Robot
+    '&#128081;': Crown,          // 👑 Crown
+  };
+  const IconComponent = iconMap[iconCode] || HelpCircle;
+  return <IconComponent className="w-5 h-5" />;
+};
 
 export default function SuperadminDashboard() {
   const { t } = useTranslation();
@@ -176,7 +191,7 @@ export default function SuperadminDashboard() {
                 : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-purple-600'
             }`}
           >
-            <span dangerouslySetInnerHTML={{ __html: tab.icon }} className="mr-2"></span>
+            <span className="mr-2">{getIconComponent(tab.icon)}</span>
             {tab.label}
           </button>
         ))}
@@ -589,7 +604,7 @@ function StatCard({ title, value, icon, color }) {
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${colorClasses[color]} flex items-center justify-center text-white text-2xl`}>
-          <span dangerouslySetInnerHTML={{ __html: icon }}></span>
+          {getIconComponent(icon)}
         </div>
       </div>
       <p className="text-gray-600 dark:text-gray-400 text-sm">{title}</p>

@@ -147,6 +147,8 @@ export default function Sidebar() {
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 bg-purple-600 text-white p-3 rounded-lg shadow-lg hover:bg-purple-700"
+        aria-label="Toggle menu"
+        aria-expanded={isMobileMenuOpen}
       >
         {isMobileMenuOpen ? '✕' : '☰'}
       </button>
@@ -201,13 +203,15 @@ export default function Sidebar() {
         <OrganizationSwitcher />
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto p-4">
+        <nav className="flex-1 overflow-y-auto p-4" role="navigation" aria-label="Main navigation">
           <ul className="space-y-2">
             {navLinks.map((link) => (
               <li key={link.path}>
                 <Link
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg
                     transition-all duration-200
@@ -218,7 +222,7 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl">{link.icon}</span>
+                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -239,6 +243,8 @@ export default function Sidebar() {
                 <Link
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg
                     transition-all duration-200
@@ -249,7 +255,7 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl">{link.icon}</span>
+                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -270,6 +276,8 @@ export default function Sidebar() {
                 <Link
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg
                     transition-all duration-200
@@ -280,7 +288,7 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl">{link.icon}</span>
+                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -363,6 +371,8 @@ export default function Sidebar() {
                     <Link
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      aria-label={link.label}
+                      aria-current={isActive(link.path) ? 'page' : undefined}
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-lg
                         transition-all duration-200
@@ -373,7 +383,7 @@ export default function Sidebar() {
                         }
                       `}
                     >
-                      <span className="text-xl">{link.icon}</span>
+                      <span className="text-xl" aria-hidden="true">{link.icon}</span>
                       <span className="font-medium">{link.label}</span>
                     </Link>
                   </li>
@@ -398,6 +408,8 @@ export default function Sidebar() {
                     <Link
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      aria-label={link.label}
+                      aria-current={isActive(link.path) ? 'page' : undefined}
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-lg
                         transition-all duration-200
@@ -408,7 +420,7 @@ export default function Sidebar() {
                         }
                       `}
                     >
-                      <span className="text-xl">{link.icon}</span>
+                      <span className="text-xl" aria-hidden="true">{link.icon}</span>
                       <span className="font-medium">{link.label}</span>
                     </Link>
                   </li>

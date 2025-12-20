@@ -7,13 +7,17 @@
 
 const log = require('./logger');
 
+// Weak/dictionary words that should not appear in secrets
+const WEAK_WORDS = ['your', 'secret', 'key', 'password', 'test', 'demo', 'example', 'change', 'default'];
+
 // Required environment variables for production
 const REQUIRED_ENV_VARS = {
   // Critical Security
   JWT_SECRET: {
     required: true,
-    minLength: 32,
-    description: 'JWT signing secret (min 32 characters)'
+    minLength: 64,
+    description: 'JWT signing secret (min 64 characters)',
+    checkWeakWords: true
   },
   AI_ENCRYPTION_SECRET: {
     required: true,
@@ -75,24 +79,38 @@ const RECOMMENDED_ENV_VARS = {
 };
 
 /**
+ * Check if value contains weak/dictionary words
+ */
+function containsWeakWords(value) {
+  const lowerValue = value.toLowerCase();
+  return WEAK_WORDS.filter(word => lowerValue.includes(word));
+}
+
+/**
  * Validate a single environment variable
  */
 function validateVar(name, config, value) {
   const errors = [];
+  const warnings = [];
 
   if (config.required && !value) {
     errors.push(`${name} is required but not set`);
-    return errors;
+    return { errors, warnings };
   }
 
   if (value && config.minLength && value.length < config.minLength) {
     errors.push(`${name} must be at least ${config.minLength} characters (current: ${value.length})`);
   }
 
-  // Only validate length - no insecure default checks
-  // Real production values should pass as long as they meet minimum length
+  // Check for weak/dictionary words in secrets
+  if (value && config.checkWeakWords) {
+    const foundWeakWords = containsWeakWords(value);
+    if (foundWeakWords.length > 0) {
+      warnings.push(`${name} contains weak words: [${foundWeakWords.join(', ')}]. Use a randomly generated secret.`);
+    }
+  }
 
-  return errors;
+  return { errors, warnings };
 }
 
 /**
@@ -114,8 +132,9 @@ function validateEnv() {
     }
 
     const value = process.env[name];
-    const varErrors = validateVar(name, config, value);
-    errors.push(...varErrors);
+    const result = validateVar(name, config, value);
+    errors.push(...result.errors);
+    warnings.push(...result.warnings);
   }
 
   // Check recommended variables (warnings only)
@@ -124,10 +143,11 @@ function validateEnv() {
     if (!value) {
       warnings.push(`${name} is not set - ${config.description}`);
     } else {
-      const varErrors = validateVar(name, config, value);
-      if (varErrors.length > 0) {
-        warnings.push(...varErrors);
+      const result = validateVar(name, config, value);
+      if (result.errors.length > 0) {
+        warnings.push(...result.errors);
       }
+      warnings.push(...result.warnings);
     }
   }
 
