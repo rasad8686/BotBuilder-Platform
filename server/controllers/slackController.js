@@ -43,14 +43,11 @@ exports.startOAuth = async (req, res) => {
     const state = crypto.randomBytes(32).toString('hex');
 
     // Store state for verification
-    await db('slack_oauth_states').insert({
-      organization_id: organizationId,
-      user_id: userId,
-      state: state,
-      bot_id: botId || null,
-      expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-      created_at: new Date()
-    });
+    await db.query(
+      `INSERT INTO slack_oauth_states (organization_id, user_id, state, bot_id, expires_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [organizationId, userId, state, botId || null, new Date(Date.now() + 10 * 60 * 1000), new Date()]
+    );
 
     // Build OAuth URL
     const clientId = process.env.SLACK_CLIENT_ID;

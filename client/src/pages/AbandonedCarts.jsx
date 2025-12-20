@@ -66,10 +66,10 @@ const AbandonedCarts = () => {
       await api.post(`/api/recovery/carts/${cart.id}/recover`, {
         customer_id: cart.customer_id
       });
-      alert('Recovery process started successfully');
+      alert(t('recovery.recoveryStarted'));
       fetchCarts();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to start recovery');
+      alert(err.response?.data?.message || t('recovery.recoveryError'));
     } finally {
       setRecovering(null);
     }

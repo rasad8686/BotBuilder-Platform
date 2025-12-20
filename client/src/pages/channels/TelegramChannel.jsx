@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 
 export default function TelegramChannel() {
+  const { t } = useTranslation();
   const [channels, setChannels] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ export default function TelegramChannel() {
       const response = await api.get('/api/channels/telegram');
       setChannels(response.data.data || []);
     } catch (err) {
-      setError('Failed to load Telegram channels');
+      setError(t('errors.loadTelegramChannels'));
       // Error loading Telegram channels - silent fail
     } finally {
       setLoading(false);
@@ -105,7 +107,7 @@ export default function TelegramChannel() {
         c.id === channel.id ? { ...c, isActive: !c.isActive } : c
       ));
     } catch (err) {
-      setError('Failed to update channel');
+      setError(t('errors.updateChannel'));
     }
   };
 
@@ -114,7 +116,7 @@ export default function TelegramChannel() {
       await api.post(`/api/channels/telegram/${channelId}/refresh-webhook`);
       fetchChannels();
     } catch (err) {
-      setError('Failed to refresh webhook');
+      setError(t('errors.refreshWebhook'));
     }
   };
 

@@ -61,12 +61,12 @@ const CustomerHealth = () => {
       // Build health distribution for chart
       const dist = distributionRes.data.health_distribution || {};
       setHealthDistribution([
-        { name: 'Healthy (A-B)', value: (dist.A || 0) + (dist.B || 0), color: '#10b981' },
-        { name: 'At Risk (C)', value: dist.C || 0, color: '#f59e0b' },
-        { name: 'Critical (D-F)', value: (dist.D || 0) + (dist.F || 0), color: '#ef4444' }
+        { name: t('recovery.healthyAB'), value: (dist.A || 0) + (dist.B || 0), color: '#10b981' },
+        { name: t('recovery.atRiskC'), value: dist.C || 0, color: '#f59e0b' },
+        { name: t('recovery.criticalDF'), value: (dist.D || 0) + (dist.F || 0), color: '#ef4444' }
       ]);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load customer health data');
+      setError(err.response?.data?.message || t('recovery.failedToLoadHealth'));
     } finally {
       setLoading(false);
     }
@@ -79,9 +79,9 @@ const CustomerHealth = () => {
       await api.post(`/api/recovery/customers/${customer.customer_id}/health`, {
         action: 'proactive_contact'
       });
-      alert('Proactive contact initiated successfully');
+      alert(t('recovery.contactInitiated'));
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to initiate contact');
+      alert(err.response?.data?.message || t('recovery.contactError'));
     } finally {
       setContactingCustomer(null);
     }
@@ -111,25 +111,25 @@ const CustomerHealth = () => {
       case 'critical':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">
-            <AlertTriangle className="w-3 h-3" /> Critical
+            <AlertTriangle className="w-3 h-3" /> {t('recovery.critical')}
           </span>
         );
       case 'high':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700">
-            <TrendingDown className="w-3 h-3" /> High
+            <TrendingDown className="w-3 h-3" /> {t('recovery.high')}
           </span>
         );
       case 'medium':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">
-            <Activity className="w-3 h-3" /> Medium
+            <Activity className="w-3 h-3" /> {t('recovery.medium')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">
-            <TrendingUp className="w-3 h-3" /> Low
+            <TrendingUp className="w-3 h-3" /> {t('recovery.low')}
           </span>
         );
     }

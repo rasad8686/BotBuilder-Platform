@@ -10,7 +10,7 @@ import { getStats } from '../api/admin';
  * Main admin dashboard with statistics and activity overview
  */
 const AdminDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600">{t('admin.created')}</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {stats?.organizationCreatedAt
-                    ? new Date(stats.organizationCreatedAt).toLocaleDateString('en-US', {
+                    ? new Date(stats.organizationCreatedAt).toLocaleDateString(i18n.language, {
                         month: 'long',
                         day: 'numeric',
                         year: 'numeric'

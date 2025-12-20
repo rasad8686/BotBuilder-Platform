@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 
 export default function SlackChannel() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [workspaces, setWorkspaces] = useState([]);
   const [stats, setStats] = useState(null);
@@ -47,7 +49,7 @@ export default function SlackChannel() {
       const response = await api.get('/api/channels/slack');
       setWorkspaces(response.data.data || []);
     } catch (err) {
-      setError('Failed to load Slack workspaces');
+      setError(t('errors.loadSlackWorkspaces'));
       // Error loading Slack workspaces - silent fail
     } finally {
       setLoading(false);
@@ -69,7 +71,7 @@ export default function SlackChannel() {
       // Redirect to Slack OAuth
       window.location.href = response.data.data.authUrl;
     } catch (err) {
-      setError('Failed to start OAuth flow');
+      setError(t('errors.startOAuth'));
     }
   };
 
@@ -95,7 +97,7 @@ export default function SlackChannel() {
         w.id === workspace.id ? { ...w, isActive: !w.isActive } : w
       ));
     } catch (err) {
-      setError('Failed to update workspace');
+      setError(t('errors.updateWorkspace'));
     }
   };
 
@@ -115,7 +117,7 @@ export default function SlackChannel() {
       const response = await api.get(`/api/channels/slack/${workspace.id}/channels`);
       setSlackChannels(response.data.data || []);
     } catch (err) {
-      setError('Failed to load Slack channels');
+      setError(t('errors.loadSlackChannels'));
     } finally {
       setLoadingChannels(false);
     }

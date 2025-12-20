@@ -30,7 +30,7 @@ const MESSAGE_TYPE_COLORS = {
 };
 
 function Analytics() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   // State
@@ -132,7 +132,7 @@ function Analytics() {
   // Format date for display
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
   };
 
   // Format hour for display

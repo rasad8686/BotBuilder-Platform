@@ -265,60 +265,68 @@ async function routeMessageToBotEngine(channel, eventData) {
  * Process slash command
  */
 async function processSlashCommand(channel, commandData) {
-  const command = commandData.command.toLowerCase();
-  const args = commandData.text?.trim();
+  try {
+    const command = commandData.command.toLowerCase();
+    const args = commandData.text?.trim();
 
-  switch (command) {
-    case '/botbuilder':
-    case '/bb':
-      if (!args) {
+    switch (command) {
+      case '/botbuilder':
+      case '/bb':
+        if (!args) {
+          return {
+            response_type: 'ephemeral',
+            blocks: [
+              slackService.buildTextBlock('*BotBuilder Commands*'),
+              slackService.buildTextBlock(
+                '`/bb help` - Show help\n' +
+                '`/bb status` - Bot status\n' +
+                '`/bb ask <question>` - Ask the bot'
+              )
+            ]
+          };
+        }
+
+        if (args === 'help') {
+          return {
+            response_type: 'ephemeral',
+            text: 'BotBuilder Help: Use `/bb ask <question>` to ask the bot a question.'
+          };
+        }
+
+        if (args === 'status') {
+          const bot = await db('bots').where({ id: channel.bot_id }).first();
+          return {
+            response_type: 'ephemeral',
+            text: `Bot Status: ${bot?.status || 'Unknown'}\nBot Name: ${bot?.name || 'Not configured'}`
+          };
+        }
+
+        if (args.startsWith('ask ')) {
+          const question = args.substring(4);
+          // Process through bot
+          return {
+            response_type: 'in_channel',
+            text: `Processing: "${question}"\n\n_AI response will appear shortly..._`
+          };
+        }
+
         return {
           response_type: 'ephemeral',
-          blocks: [
-            slackService.buildTextBlock('*BotBuilder Commands*'),
-            slackService.buildTextBlock(
-              '`/bb help` - Show help\n' +
-              '`/bb status` - Bot status\n' +
-              '`/bb ask <question>` - Ask the bot'
-            )
-          ]
+          text: `Unknown command. Use \`/bb help\` for available commands.`
         };
-      }
 
-      if (args === 'help') {
+      default:
         return {
           response_type: 'ephemeral',
-          text: 'BotBuilder Help: Use `/bb ask <question>` to ask the bot a question.'
+          text: 'Unknown command'
         };
-      }
-
-      if (args === 'status') {
-        const bot = await db('bots').where({ id: channel.bot_id }).first();
-        return {
-          response_type: 'ephemeral',
-          text: `Bot Status: ${bot?.status || 'Unknown'}\nBot Name: ${bot?.name || 'Not configured'}`
-        };
-      }
-
-      if (args.startsWith('ask ')) {
-        const question = args.substring(4);
-        // Process through bot
-        return {
-          response_type: 'in_channel',
-          text: `Processing: "${question}"\n\n_AI response will appear shortly..._`
-        };
-      }
-
-      return {
-        response_type: 'ephemeral',
-        text: `Unknown command. Use \`/bb help\` for available commands.`
-      };
-
-    default:
-      return {
-        response_type: 'ephemeral',
-        text: 'Unknown command'
-      };
+    }
+  } catch (error) {
+    console.error('Error processing slash command:', error);
+    return {
+      response_type: 'ephemeral',
+      text: 'An error occurred processing your command. Please try again.'
+    };
   }
 }
 

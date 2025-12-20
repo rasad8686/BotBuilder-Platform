@@ -235,8 +235,11 @@ async function processBotMessage(bot, messageData) {
     };
 
   } catch (error) {
-    // Telegram Error processing bot message - silent fail
-    throw error;
+    console.error('Error processing bot message:', error);
+    return {
+      text: 'An error occurred processing your message. Please try again.',
+      keyboard: null
+    };
   }
 }
 

@@ -153,7 +153,7 @@ function Login() {
         }
         navigate("/dashboard");
       } else {
-        setError("Login failed - no token received");
+        setError(t('errors.loginNoToken'));
       }
     } catch (err) {
       // Check if user is blocked (rate limited)
