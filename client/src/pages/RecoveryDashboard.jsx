@@ -27,7 +27,7 @@ import api from '../utils/api';
  * AI Revenue Recovery Engine dashboard with statistics and analytics
  */
 const RecoveryDashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [recentCarts, setRecentCarts] = useState([]);
@@ -151,14 +151,14 @@ const RecoveryDashboard = () => {
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
                 />
                 <YAxis
                   tick={{ fontSize: 12 }}
                   tickFormatter={(value) => `$${value / 1000}k`}
                 />
                 <Tooltip
-                  formatter={(value) => [formatCurrency(value), 'Recovered']}
+                  formatter={(value) => [formatCurrency(value), t('recovery.recovered')]}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
                 <Line

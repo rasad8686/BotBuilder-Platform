@@ -71,7 +71,7 @@ const RecoveryCampaigns = () => {
       resetForm();
       fetchCampaigns();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save campaign');
+      alert(err.response?.data?.message || t('recovery.saveCampaignError'));
     }
   };
 
@@ -81,17 +81,17 @@ const RecoveryCampaigns = () => {
       await api.put(`/api/recovery/campaigns/${campaign.id}`, { status: newStatus });
       fetchCampaigns();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update status');
+      alert(err.response?.data?.message || t('recovery.updateStatusError'));
     }
   };
 
   const handleDeleteCampaign = async (id) => {
-    if (!confirm('Are you sure you want to delete this campaign?')) return;
+    if (!confirm(t('recovery.deleteCampaignConfirm'))) return;
     try {
       await api.delete(`/api/recovery/campaigns/${id}`);
       fetchCampaigns();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete campaign');
+      alert(err.response?.data?.message || t('recovery.deleteCampaignError'));
     }
   };
 
@@ -276,14 +276,14 @@ const RecoveryCampaigns = () => {
                         <button
                           onClick={() => openEditModal(campaign)}
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Edit"
+                          title={t('common.edit')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteCampaign(campaign.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

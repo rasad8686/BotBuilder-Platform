@@ -36,14 +36,14 @@ export default function OrganizationSettings() {
 
     // If no organization, redirect to dashboard
     if (!currentOrganization) {
-      setError('No organization found. Please select an organization.');
+      setError(t('errors.noOrganization'));
       setTimeout(() => navigate('/dashboard'), 2000);
       return;
     }
 
     // Check permissions
     if (!hasPermission('admin')) {
-      setError('You do not have permission to view organization settings');
+      setError(t('errors.noPermissionOrg'));
       setTimeout(() => navigate('/dashboard'), 2000);
       return;
     }
@@ -67,10 +67,10 @@ export default function OrganizationSettings() {
 
       // Handle specific error codes
       if (err.response?.status === 401) {
-        setError('Authentication required. Redirecting to login...');
+        setError(t('errors.authRequired'));
         setTimeout(() => navigate('/login'), 1500);
       } else if (err.response?.status === 403) {
-        setError('You do not have permission to view members');
+        setError(t('errors.noPermissionMembers'));
         setTimeout(() => navigate('/dashboard'), 2000);
       } else {
         setError(err.response?.data?.message || 'Failed to load members');

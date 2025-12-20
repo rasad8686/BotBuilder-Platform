@@ -57,7 +57,11 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const message = error.response?.data?.message || '';
+
+    // Handle 401 (no token) and 403 (invalid/expired token)
+    if (status === 401 || (status === 403 && message.includes('Invalid or expired token'))) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

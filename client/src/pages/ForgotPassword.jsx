@@ -56,12 +56,12 @@ export default function ForgotPassword() {
     setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('errors.passwordsMismatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('errors.passwordTooShort'));
       return;
     }
 
@@ -82,7 +82,7 @@ export default function ForgotPassword() {
         setError(data.error || 'Failed to reset password');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError(t('errors.networkError'));
     } finally {
       setResetLoading(false);
     }

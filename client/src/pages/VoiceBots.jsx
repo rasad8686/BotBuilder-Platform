@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axiosInstance from '../api/axios';
 
 const statusColors = {
   active: '#48bb78',
@@ -34,8 +35,6 @@ const VoiceBots = () => {
     language: 'en-US'
   });
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     fetchBots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -44,14 +43,10 @@ const VoiceBots = () => {
   const fetchBots = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/voice/bots', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to fetch voice bots');
-      const data = await res.json();
-      setBots(data.bots || []);
+      const response = await axiosInstance.get('/api/voice/bots');
+      setBots(response.data.bots || []);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message);
     } finally {
       setIsLoading(false);
     }
@@ -98,14 +93,10 @@ const VoiceBots = () => {
   const handleDelete = async (bot) => {
     if (!window.confirm(t('voice.deleteConfirm', { name: bot.name }))) return;
     try {
-      const res = await fetch(`/api/voice/bots/${bot.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to delete');
+      await axiosInstance.delete(`/api/voice/bots/${bot.id}`);
       setBots(prev => prev.filter(b => b.id !== bot.id));
     } catch (err) {
-      alert(err.message);
+      alert(err.response?.data?.error || err.message);
     }
   };
 
@@ -114,20 +105,10 @@ const VoiceBots = () => {
     setIsSaving(true);
     try {
       const url = editingBot ? `/api/voice/bots/${editingBot.id}` : '/api/voice/bots';
-      const method = editingBot ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to save');
-      }
-      const result = await res.json();
+      const response = editingBot
+        ? await axiosInstance.put(url, formData)
+        : await axiosInstance.post(url, formData);
+      const result = response.data;
       if (editingBot) {
         setBots(prev => prev.map(b => b.id === result.bot.id ? result.bot : b));
       } else {
@@ -135,7 +116,7 @@ const VoiceBots = () => {
       }
       setShowForm(false);
     } catch (err) {
-      alert(err.message);
+      alert(err.response?.data?.error || err.message);
     } finally {
       setIsSaving(false);
     }

@@ -5,7 +5,7 @@ import axiosInstance from '../api/axios';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function Usage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [dashboardData, setDashboardData] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -346,11 +346,11 @@ export default function Usage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="date"
-                        tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        tickFormatter={(date) => new Date(date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
                       />
                       <YAxis />
                       <Tooltip
-                        labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        labelFormatter={(date) => new Date(date).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })}
                       />
                       <Legend />
                       <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} name="Messages" />

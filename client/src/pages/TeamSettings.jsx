@@ -24,7 +24,7 @@ export default function TeamSettings() {
   const fetchData = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setError('Not authenticated');
+      setError(t('errors.notAuthenticated'));
       setLoading(false);
       return;
     }
@@ -47,7 +47,7 @@ export default function TeamSettings() {
       if (rolesRes.ok) setRoles(await rolesRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (err) {
-      setError('Failed to load team data');
+      setError(t('errors.loadTeamData'));
     } finally {
       setLoading(false);
     }

@@ -33,7 +33,7 @@ export default function Register() {
         }
         navigate('/dashboard');
       } else {
-        setError('Registration failed - no token received');
+        setError(t('errors.registerNoToken'));
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
