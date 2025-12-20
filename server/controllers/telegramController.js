@@ -71,7 +71,7 @@ exports.connectTelegram = async (req, res) => {
         allowedUpdates: ['message', 'callback_query', 'inline_query']
       });
     } catch (webhookError) {
-      console.error('Failed to set webhook:', webhookError);
+      // Failed to set webhook - silent fail
       // Continue anyway - webhook can be set manually
     }
 
@@ -89,7 +89,7 @@ exports.connectTelegram = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error connecting Telegram:', error);
+    // Error connecting Telegram - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to connect Telegram bot'
@@ -127,7 +127,7 @@ exports.disconnectTelegram = async (req, res) => {
     try {
       await telegramService.deleteWebhook(channel.botToken, true);
     } catch (webhookError) {
-      console.error('Failed to delete webhook:', webhookError);
+      // Failed to delete webhook - silent fail
     }
 
     // Remove bot instance
@@ -142,7 +142,7 @@ exports.disconnectTelegram = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error disconnecting Telegram:', error);
+    // Error disconnecting Telegram - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to disconnect Telegram bot'
@@ -223,7 +223,7 @@ exports.getChannelStats = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channel stats:', error);
+    // Error getting channel stats - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channel statistics'
@@ -306,7 +306,7 @@ exports.testConnection = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error testing connection:', error);
+    // Error testing connection - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to test connection'
@@ -341,7 +341,7 @@ exports.getChannels = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channels:', error);
+    // Error getting channels - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channels'
@@ -389,7 +389,7 @@ exports.getChannel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channel:', error);
+    // Error getting channel - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channel'
@@ -443,7 +443,7 @@ exports.updateChannel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating channel:', error);
+    // Error updating channel - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to update channel'
@@ -503,7 +503,7 @@ exports.sendTestMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error sending test message:', error);
+    // Error sending test message - silent fail
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to send test message'
@@ -562,7 +562,7 @@ exports.refreshWebhook = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error refreshing webhook:', error);
+    // Error refreshing webhook - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to refresh webhook'

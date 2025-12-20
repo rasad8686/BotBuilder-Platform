@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import api from '../api/axios';
 
-const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
+const SCIMSettings = ({ configId, scimEnabled }) => {
   const { t } = useTranslation();
 
   // State
@@ -49,6 +49,7 @@ const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
     if (configId && scimEnabled) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configId, scimEnabled]);
 
   const fetchData = async () => {
@@ -67,7 +68,7 @@ const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
       setTotalLogs(logsRes.data.total || 0);
       setProvisionedUsers(usersRes.data.users || []);
     } catch (error) {
-      console.error('Error fetching SCIM data:', error);
+      // Error fetching SCIM data - silent fail
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
       setNewTokenName('');
       fetchData();
     } catch (error) {
-      console.error('Error generating token:', error);
+      // Error generating token - silent fail
       alert(t('sso.scim.tokenError', 'Failed to generate token'));
     } finally {
       setTokenLoading(false);
@@ -100,7 +101,7 @@ const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
       await api.delete(`/sso/config/${configId}/scim/tokens/${tokenId}`);
       fetchData();
     } catch (error) {
-      console.error('Error revoking token:', error);
+      // Error revoking token - silent fail
     }
   };
 
@@ -129,11 +130,6 @@ const SCIMSettings = ({ configId, scimEnabled, onEnableChange }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString();
-  };
-
-  const maskToken = (token) => {
-    if (!token) return '';
-    return token.substring(0, 13) + '...' + token.substring(token.length - 4);
   };
 
   if (!scimEnabled) {

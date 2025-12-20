@@ -16,7 +16,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState('credentials'); // credentials | 2fa | setup2fa
-  const [attempts, setAttempts] = useState(0);
+  const [, setAttempts] = useState(0);
 
   // Check if already logged in as admin
   useEffect(() => {

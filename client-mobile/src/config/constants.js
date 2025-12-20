@@ -9,10 +9,10 @@ export const IS_PROD = !__DEV__;
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: IS_DEV
-    ? 'http://localhost:5000'
+    ? 'http://192.168.0.105:5000'
     : 'https://botbuilder-platform.onrender.com',
   WS_URL: IS_DEV
-    ? 'ws://localhost:5000'
+    ? 'ws://192.168.0.105:5000'
     : 'wss://botbuilder-platform.onrender.com',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,

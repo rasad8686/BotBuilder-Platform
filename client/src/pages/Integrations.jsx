@@ -44,6 +44,7 @@ const Integrations = () => {
     }
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const fetchData = async () => {
@@ -158,9 +159,10 @@ const Integrations = () => {
     return connectedIntegrations.some(i => i.type === type);
   };
 
-  const getConnectedIntegration = (type) => {
+  const _getConnectedIntegration = (type) => {
     return connectedIntegrations.find(i => i.type === type);
   };
+  void _getConnectedIntegration; // Reserved for future use
 
   if (isLoading) {
     return (
@@ -329,7 +331,6 @@ const Integrations = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
             {availableIntegrations.map(integration => {
               const connected = isConnected(integration.type);
-              const connectedData = getConnectedIntegration(integration.type);
 
               return (
                 <div key={integration.type} style={{

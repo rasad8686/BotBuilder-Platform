@@ -181,7 +181,7 @@ router.post('/login', adminIpWhitelist, adminLoginRateLimit, async (req, res) =>
     });
 
   } catch (error) {
-    console.error('Admin login error:', error);
+    // Admin login error - silent fail
     res.status(500).json({
       success: false,
       message: 'Login failed. Please try again.'
@@ -237,7 +237,7 @@ router.post('/logout', async (req, res) => {
       message: 'Admin session ended'
     });
   } catch (error) {
-    console.error('Admin logout error:', error);
+    // Admin logout error - silent fail
     res.json({ success: true, message: 'Logged out' });
   }
 });
@@ -313,7 +313,7 @@ router.get('/session', async (req, res) => {
         message: 'Invalid or expired token'
       });
     }
-    console.error('Session check error:', error);
+    // Session check error - silent fail
     res.status(500).json({
       success: false,
       message: 'Session verification failed'
@@ -346,7 +346,7 @@ router.get('/check-2fa/:email', async (req, res) => {
       has2FA: result.rows[0].two_factor_enabled === true
     });
   } catch (error) {
-    console.error('Check 2FA error:', error);
+    // Check 2FA error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to check 2FA status'

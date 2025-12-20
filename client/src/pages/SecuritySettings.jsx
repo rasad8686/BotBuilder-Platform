@@ -44,7 +44,7 @@ export default function SecuritySettings() {
         const user = JSON.parse(userData);
         setUserEmail(user.email || '');
       } catch (e) {
-        console.error('Error parsing user data:', e);
+        // Error parsing user data - silent fail
       }
     }
   }, []);
@@ -55,7 +55,7 @@ export default function SecuritySettings() {
       const response = await api.get('/api/auth/2fa/status');
       setTwoFAEnabled(response.data.enabled);
     } catch (error) {
-      console.error('Error checking 2FA status:', error);
+      // Error checking 2FA status - silent fail
     } finally {
       setTwoFALoading(false);
     }
@@ -67,7 +67,7 @@ export default function SecuritySettings() {
       const response = await api.get('/api/sessions');
       setSessions(response.data.sessions || []);
     } catch (error) {
-      console.error('Error loading sessions:', error);
+      // Error loading sessions - silent fail
     } finally {
       setSessionsLoading(false);
     }
@@ -138,7 +138,7 @@ export default function SecuritySettings() {
       await api.delete(`/api/sessions/${sessionId}`);
       setSessions(sessions.filter(s => s.id !== sessionId));
     } catch (error) {
-      console.error('Error logging out session:', error);
+      // Error logging out session - silent fail
       alert('Failed to logout session');
     } finally {
       setLogoutLoading(null);
@@ -156,7 +156,7 @@ export default function SecuritySettings() {
       loadSessions();
       alert(t('security.sessions.logoutSuccess', { count: response.data.terminatedCount }));
     } catch (error) {
-      console.error('Error logging out all sessions:', error);
+      // Error logging out all sessions - silent fail
       alert('Failed to logout from other devices');
     } finally {
       setLogoutLoading(null);

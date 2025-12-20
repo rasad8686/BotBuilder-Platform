@@ -472,7 +472,6 @@ function setupSwagger(app) {
     res.send(specs);
   });
 
-  console.log('Swagger documentation available at /api-docs');
 }
 
 module.exports = { setupSwagger, specs };

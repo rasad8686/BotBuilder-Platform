@@ -4,6 +4,7 @@
  */
 
 const log = require('../../utils/logger');
+const { safeMathEval } = require('../../utils/codeSandbox');
 
 class ToolRegistry {
   constructor() {
@@ -89,6 +90,7 @@ class ToolRegistry {
     });
 
     // Calculator Tool
+    // SECURITY: Uses sandboxed math evaluation instead of Function()
     this.register({
       name: 'calculate',
       description: 'Perform mathematical calculations',
@@ -96,14 +98,8 @@ class ToolRegistry {
         expression: { type: 'string', required: true, description: 'Mathematical expression' }
       },
       execute: async (params) => {
-        try {
-          // Safe math evaluation (only numbers and basic operators)
-          const sanitized = params.expression.replace(/[^0-9+\-*/().%\s]/g, '');
-          const result = Function(`"use strict"; return (${sanitized})`)();
-          return { success: true, result };
-        } catch (error) {
-          return { success: false, error: 'Invalid expression' };
-        }
+        // SECURITY: Use safe math evaluator (no Function constructor!)
+        return safeMathEval(params.expression);
       }
     });
 

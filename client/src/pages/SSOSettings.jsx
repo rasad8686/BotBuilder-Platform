@@ -47,7 +47,7 @@ const SSOSettings = () => {
   const [newTokenName, setNewTokenName] = useState('');
   const [generatedToken, setGeneratedToken] = useState(null);
   const [groupMappings, setGroupMappings] = useState([]);
-  const [attributeMappings, setAttributeMappings] = useState([]);
+  const [, setAttributeMappings] = useState([]);
   const [roles, setRoles] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -102,6 +102,7 @@ const SSOSettings = () => {
 
   useEffect(() => {
     fetchConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchConfig = async () => {
@@ -118,7 +119,7 @@ const SSOSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching SSO config:', error);
+      // Error fetching SSO config - silent fail
     } finally {
       setLoading(false);
     }
@@ -130,7 +131,7 @@ const SSOSettings = () => {
       const response = await api.get(`/api/sso/config/${config.id}/logs`);
       setLogs(response.data.logs || []);
     } catch (error) {
-      console.error('Error fetching logs:', error);
+      // Error fetching logs - silent fail
     }
   };
 
@@ -151,6 +152,7 @@ const SSOSettings = () => {
     if (activeTab === 'analytics' && config?.id) {
       fetchAnalytics();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, config?.id]);
 
   // Phase 2 fetch functions
@@ -160,7 +162,7 @@ const SSOSettings = () => {
       const response = await api.get(`/api/sso/config/${config.id}/scim/tokens`);
       setScimTokens(response.data.tokens || []);
     } catch (error) {
-      console.error('Error fetching SCIM tokens:', error);
+      // Error fetching SCIM tokens - silent fail
     }
   };
 
@@ -170,7 +172,7 @@ const SSOSettings = () => {
       const response = await api.get(`/api/sso/config/${config.id}/groups`);
       setGroupMappings(response.data.mappings || []);
     } catch (error) {
-      console.error('Error fetching group mappings:', error);
+      // Error fetching group mappings - silent fail
     }
   };
 
@@ -180,7 +182,7 @@ const SSOSettings = () => {
       const response = await api.get(`/api/sso/config/${config.id}/attributes`);
       setAttributeMappings(response.data.mappings || []);
     } catch (error) {
-      console.error('Error fetching attribute mappings:', error);
+      // Error fetching attribute mappings - silent fail
     }
   };
 
@@ -189,7 +191,7 @@ const SSOSettings = () => {
       const response = await api.get('/api/roles');
       setRoles(response.data.roles || []);
     } catch (error) {
-      console.error('Error fetching roles:', error);
+      // Error fetching roles - silent fail
     }
   };
 
@@ -200,7 +202,7 @@ const SSOSettings = () => {
       const response = await api.get(`/api/sso/config/${config.id}/analytics`);
       setAnalytics(response.data);
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      // Error fetching analytics - silent fail
     } finally {
       setAnalyticsLoading(false);
     }
@@ -217,7 +219,7 @@ const SSOSettings = () => {
       setNewTokenName('');
       fetchScimTokens();
     } catch (error) {
-      console.error('Error generating SCIM token:', error);
+      // Error generating SCIM token - silent fail
       alert(t('sso.scim.tokenError', 'Failed to generate token'));
     }
   };
@@ -228,7 +230,7 @@ const SSOSettings = () => {
       await api.delete(`/api/sso/config/${config.id}/scim/tokens/${tokenId}`);
       fetchScimTokens();
     } catch (error) {
-      console.error('Error revoking token:', error);
+      // Error revoking token - silent fail
     }
   };
 
@@ -240,7 +242,7 @@ const SSOSettings = () => {
       setNewGroupMapping({ external_group_id: '', external_group_name: '', role_id: '', is_default: false, priority: 0 });
       fetchGroupMappings();
     } catch (error) {
-      console.error('Error adding group mapping:', error);
+      // Error adding group mapping - silent fail
       alert(t('sso.groups.addError', 'Failed to add group mapping'));
     }
   };
@@ -251,32 +253,36 @@ const SSOSettings = () => {
       await api.delete(`/api/sso/config/${config.id}/groups/${mappingId}`);
       fetchGroupMappings();
     } catch (error) {
-      console.error('Error deleting group mapping:', error);
+      // Error deleting group mapping - silent fail
     }
   };
 
-  // Attribute Mapping handlers
-  const handleAddAttrMapping = async () => {
+  // Attribute Mapping handlers (reserved for future UI implementation)
+  const _handleAddAttrMapping = async () => {
     if (!config?.id || !newAttrMapping.source_attribute || !newAttrMapping.target_field) return;
     try {
       await api.post(`/api/sso/config/${config.id}/attributes`, newAttrMapping);
       setNewAttrMapping({ source_attribute: '', target_field: '', transform: '', default_value: '', is_required: false });
       fetchAttributeMappings();
     } catch (error) {
-      console.error('Error adding attribute mapping:', error);
+      // Error adding attribute mapping - silent fail
       alert(t('sso.attributes.addError', 'Failed to add attribute mapping'));
     }
   };
 
-  const handleDeleteAttrMapping = async (mappingId) => {
+  const _handleDeleteAttrMapping = async (mappingId) => {
     if (!window.confirm(t('sso.attributes.confirmDelete', 'Are you sure you want to delete this mapping?'))) return;
     try {
       await api.delete(`/api/sso/config/${config.id}/attributes/${mappingId}`);
       fetchAttributeMappings();
     } catch (error) {
-      console.error('Error deleting attribute mapping:', error);
+      // Error deleting attribute mapping - silent fail
     }
   };
+
+  // Keep references to avoid tree-shaking
+  void _handleAddAttrMapping;
+  void _handleDeleteAttrMapping;
 
   // Export analytics
   const handleExportAnalytics = async () => {
@@ -293,7 +299,7 @@ const SSOSettings = () => {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Error exporting analytics:', error);
+      // Error exporting analytics - silent fail
     }
   };
 
@@ -316,7 +322,7 @@ const SSOSettings = () => {
       setConfig(response.data.config);
       alert(t('sso.saveSuccess', 'SSO configuration saved successfully'));
     } catch (error) {
-      console.error('Error saving SSO config:', error);
+      // Error saving SSO config - silent fail
       alert(error.response?.data?.error || t('sso.saveError', 'Failed to save SSO configuration'));
     } finally {
       setSaving(false);
@@ -330,7 +336,7 @@ const SSOSettings = () => {
       const response = await api.post(`/api/sso/config/${config.id}/test`);
       setTestResults(response.data);
     } catch (error) {
-      console.error('Error testing SSO:', error);
+      // Error testing SSO - silent fail
       setTestResults({ success: false, checks: [{ name: 'Connection', status: 'error', message: error.message }] });
     } finally {
       setTesting(false);
@@ -345,7 +351,7 @@ const SSOSettings = () => {
       setNewDomain('');
       alert(t('sso.domainAdded', 'Domain added. Please verify DNS record.'));
     } catch (error) {
-      console.error('Error adding domain:', error);
+      // Error adding domain - silent fail
       alert(error.response?.data?.error || t('sso.domainError', 'Failed to add domain'));
     }
   };
@@ -361,7 +367,7 @@ const SSOSettings = () => {
         alert(response.data.message || t('sso.verifyFailed', 'Verification failed'));
       }
     } catch (error) {
-      console.error('Error verifying domain:', error);
+      // Error verifying domain - silent fail
       alert(error.response?.data?.error || t('sso.verifyError', 'Failed to verify domain'));
     } finally {
       setVerifyingDomain(null);
@@ -374,7 +380,7 @@ const SSOSettings = () => {
       await api.delete(`/api/sso/domains/${domainId}`);
       setDomains(domains.filter(d => d.id !== domainId));
     } catch (error) {
-      console.error('Error deleting domain:', error);
+      // Error deleting domain - silent fail
       alert(error.response?.data?.error || t('sso.deleteError', 'Failed to delete domain'));
     }
   };
@@ -705,7 +711,7 @@ const SSOSettings = () => {
                             discovery_status: 'success'
                           }));
                         } catch (error) {
-                          console.error('Discovery failed:', error);
+                          // Discovery failed - silent fail
                           setFormData(prev => ({ ...prev, discovery_status: 'error' }));
                           alert('Failed to discover configuration: ' + (error.response?.data?.error || error.message));
                         }

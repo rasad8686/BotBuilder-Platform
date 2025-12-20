@@ -41,7 +41,7 @@ export default function AdminRateLimiting() {
         setSettings(response.data.settings);
       }
     } catch (error) {
-      console.error('Error loading rate limit settings:', error);
+      // Error loading rate limit settings - silent fail
     } finally {
       setSettingsLoading(false);
     }
@@ -58,7 +58,7 @@ export default function AdminRateLimiting() {
         setBlockedError(response.data.message || 'Failed to load blocked users');
       }
     } catch (error) {
-      console.error('Error loading blocked users:', error);
+      // Error loading blocked users - silent fail
       setBlockedError(error.response?.data?.message || 'Failed to load blocked users');
     } finally {
       setBlockedLoading(false);
@@ -77,7 +77,7 @@ export default function AdminRateLimiting() {
         setSaveMessage({ type: 'success', text: t('rateLimiting.saveSuccess') });
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
+      // Error saving settings - silent fail
       setSaveMessage({
         type: 'error',
         text: error.response?.data?.message || t('rateLimiting.saveError')
@@ -97,7 +97,7 @@ export default function AdminRateLimiting() {
         setBlockedUsers(blockedUsers.filter(u => u.id !== id));
       }
     } catch (error) {
-      console.error('Error unblocking user:', error);
+      // Error unblocking user - silent fail
       alert(t('rateLimiting.saveError'));
     } finally {
       setUnblockingId(null);
@@ -117,7 +117,7 @@ export default function AdminRateLimiting() {
         setBlockedUsers([]);
       }
     } catch (error) {
-      console.error('Error unblocking all users:', error);
+      // Error unblocking all users - silent fail
       alert(t('rateLimiting.saveError'));
     } finally {
       setUnblockingAll(false);

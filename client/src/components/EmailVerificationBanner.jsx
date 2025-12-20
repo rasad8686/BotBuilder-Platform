@@ -54,7 +54,7 @@ export default function EmailVerificationBanner({ user, onDismiss }) {
         setTimeout(() => setResendSuccess(false), 5000);
       }
     } catch (err) {
-      console.error('Failed to resend verification email:', err);
+      // Failed to resend verification email - silent fail
     } finally {
       setResending(false);
     }

@@ -32,7 +32,7 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   log.error('Unexpected error on idle client', { error: err.message });
-  process.exit(-1);
+  // Don't exit - let the pool recover automatically
 });
 
 // Export query helper

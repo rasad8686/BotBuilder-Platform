@@ -4,6 +4,7 @@
 
 const db = require('../../db');
 const Ajv = require('ajv');
+const { executeInSandbox } = require('../../utils/codeSandbox');
 
 class ToolExecutor {
   constructor() {
@@ -201,6 +202,7 @@ class ToolExecutor {
 
   /**
    * Execute code tool (sandboxed)
+   * SECURITY: Uses vm-based sandbox instead of Function() constructor
    * @param {Object} tool - Tool configuration
    * @param {Object} input - Input parameters
    * @param {Object} context - Execution context
@@ -209,20 +211,21 @@ class ToolExecutor {
   async executeCode(tool, input, context) {
     const config = tool.configuration;
     const code = config.code;
+    const timeoutMs = Math.min(config.timeout || 5000, 30000); // Max 30 seconds
 
-    // Create a sandboxed function
-    const fn = new Function('input', 'context', code);
+    // SECURITY: Execute in isolated sandbox (no new Function!)
+    const sandboxResult = await executeInSandbox(code, {
+      input: Object.freeze({ ...input }),
+      context: Object.freeze({ ...context })
+    }, {
+      timeout: timeoutMs
+    });
 
-    // Execute with timeout
-    const timeoutMs = config.timeout || 5000;
-    const result = await Promise.race([
-      Promise.resolve(fn(input, context)),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Code execution timeout')), timeoutMs)
-      )
-    ]);
+    if (!sandboxResult.success) {
+      throw new Error(sandboxResult.error || 'Code execution failed');
+    }
 
-    return result;
+    return sandboxResult.result;
   }
 
   /**

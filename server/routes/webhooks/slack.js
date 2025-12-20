@@ -46,7 +46,6 @@ const verifySlackSignature = async (req, res, next) => {
   }
 
   if (!signingSecret) {
-    console.warn('[Slack Webhook] No signing secret available');
     return res.status(401).json({ error: 'Configuration error' });
   }
 
@@ -58,7 +57,6 @@ const verifySlackSignature = async (req, res, next) => {
   );
 
   if (!isValid) {
-    console.warn('[Slack Webhook] Invalid signature');
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
@@ -78,15 +76,12 @@ router.post('/events', verifySlackSignature, async (req, res) => {
       return res.json({ challenge: eventData.challenge });
     }
 
-    console.log(`[Slack Events] Received ${eventData.type} from team ${eventData.teamId}`);
-
     // Find the Slack channel
     const channel = await db('slack_channels')
       .where({ team_id: eventData.teamId, is_active: true })
       .first();
 
     if (!channel) {
-      console.warn(`[Slack Events] Unknown team: ${eventData.teamId}`);
       return res.status(200).json({ ok: true }); // Still acknowledge
     }
 
@@ -117,7 +112,7 @@ router.post('/events', verifySlackSignature, async (req, res) => {
     res.status(200).json({ ok: true });
 
   } catch (error) {
-    console.error('[Slack Events] Error:', error);
+    // Slack Events Error - silent fail
     res.status(200).json({ ok: true }); // Still acknowledge
   }
 });
@@ -131,8 +126,6 @@ router.post('/commands', verifySlackSignature, async (req, res) => {
     // Parse URL-encoded body
     const payload = req.body;
     const commandData = slackService.handleSlashCommand(payload);
-
-    console.log(`[Slack Commands] Received ${commandData.command} from @${commandData.userName}`);
 
     // Find the Slack channel
     const channel = await db('slack_channels')
@@ -165,7 +158,7 @@ router.post('/commands', verifySlackSignature, async (req, res) => {
     res.json(response);
 
   } catch (error) {
-    console.error('[Slack Commands] Error:', error);
+    // Slack Commands Error - silent fail
     res.json({
       response_type: 'ephemeral',
       text: 'An error occurred processing your command.'
@@ -183,8 +176,6 @@ router.post('/interactive', verifySlackSignature, async (req, res) => {
     const payloadString = req.body.payload;
     const payload = JSON.parse(payloadString);
     const interactionData = slackService.handleInteractiveMessage(payload);
-
-    console.log(`[Slack Interactive] Received ${interactionData.type} from @${interactionData.userName}`);
 
     // Find the Slack channel
     const channel = await db('slack_channels')
@@ -223,7 +214,7 @@ router.post('/interactive', verifySlackSignature, async (req, res) => {
     res.status(200).json(response || { ok: true });
 
   } catch (error) {
-    console.error('[Slack Interactive] Error:', error);
+    // Slack Interactive Error - silent fail
     res.status(200).json({ ok: true });
   }
 });
@@ -266,7 +257,7 @@ async function routeMessageToBotEngine(channel, eventData) {
     }
 
   } catch (error) {
-    console.error('[Slack] Error routing message:', error);
+    // Slack Error routing message - silent fail
   }
 }
 
@@ -338,13 +329,11 @@ async function processInteraction(channel, interactionData) {
   switch (interactionData.type) {
     case 'block_actions':
       for (const action of interactionData.actions || []) {
-        console.log(`[Slack] Button clicked: ${action.actionId} = ${action.value}`);
         // Handle specific actions based on action_id
       }
       break;
 
     case 'view_submission':
-      console.log('[Slack] Modal submitted:', interactionData.values);
       break;
   }
 
@@ -377,7 +366,7 @@ async function processBotMessage(bot, channel, eventData) {
     };
 
   } catch (error) {
-    console.error('[Slack] Error processing message:', error);
+    // Slack Error processing message - silent fail
     return {
       text: 'Sorry, I encountered an error processing your message.'
     };

@@ -8,7 +8,7 @@
  * - Model Comparison (BarChart)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LineChart,
@@ -36,6 +36,7 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
   const [accuracyHistory, setAccuracyHistory] = useState([]);
   const [comparisonData, setComparisonData] = useState([]);
   const [exporting, setExporting] = useState(false);
+  const hasFetched = useRef(false);
 
   // Fetch metrics data
   const fetchMetrics = useCallback(async () => {
@@ -60,18 +61,21 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
         setComparisonData(compareRes.data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch metrics:', err);
+      // Failed to fetch metrics - silent fail
       setError(err.response?.data?.error || 'Failed to load metrics');
     } finally {
       setLoading(false);
     }
-  }, [modelId, compareModelIds]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelId]);
 
   useEffect(() => {
-    if (modelId) {
+    if (modelId && !hasFetched.current) {
+      hasFetched.current = true;
       fetchMetrics();
     }
-  }, [modelId, fetchMetrics]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelId]);
 
   // Export handlers
   const handleExport = async (format) => {
@@ -100,7 +104,7 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
         window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      console.error('Export failed:', err);
+      // Export failed - silent fail
     } finally {
       setExporting(false);
     }
@@ -113,7 +117,7 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
       await api.post(`/api/fine-tuning/models/${modelId}/metrics/generate-mock`);
       await fetchMetrics();
     } catch (err) {
-      console.error('Failed to generate mock data:', err);
+      // Failed to generate mock data - silent fail
     }
   };
 

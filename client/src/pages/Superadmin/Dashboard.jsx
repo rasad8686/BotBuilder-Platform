@@ -37,6 +37,7 @@ export default function SuperadminDashboard() {
     } else if (activeTab === 'audit') {
       loadAuditLogs();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, usersPage, orgsPage, logsPage, usersSearch]);
 
   const loadDashboard = async () => {
@@ -63,7 +64,7 @@ export default function SuperadminDashboard() {
         setUsersTotal(response.data.data.pagination.total);
       }
     } catch (err) {
-      console.error('Failed to load users:', err);
+      // Failed to load users - silent fail
     }
   };
 
@@ -77,7 +78,7 @@ export default function SuperadminDashboard() {
         setOrgsTotal(response.data.data.pagination.total);
       }
     } catch (err) {
-      console.error('Failed to load organizations:', err);
+      // Failed to load organizations - silent fail
     }
   };
 
@@ -91,7 +92,7 @@ export default function SuperadminDashboard() {
         setLogsTotal(response.data.data.pagination.total);
       }
     } catch (err) {
-      console.error('Failed to load audit logs:', err);
+      // Failed to load audit logs - silent fail
     }
   };
 

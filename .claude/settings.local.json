@@ -46,7 +46,18 @@
       "WebFetch(domain:docs.gladia.io)",
       "Bash(npm run dev:*)",
       "Bash(timeout:*)",
-      "Bash(timeout /t 10 /nobreak)"
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(npx eslint:*)",
+      "Bash(tree:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsIm9yZ2FuaXphdGlvbklkIjo0MywiaWF0IjoxNzY2MDU0MDg4LCJleHAiOjE3NjYwNTc2ODh9.MuAP_YURKwsxItCrVFt-SyIljhYDks37PsDck5YKKwI\")",
+      "Bash(__NEW_LINE__ echo \"=== 1. GET /api/sso/config ===\")",
+      "Bash(__NEW_LINE__ echo -e \"\\\\n\\\\n=== 2. POST /api/sso/config \\(Create SAML\\) ===\")",
+      "Bash(__NEW_LINE__ echo -e \"\\\\n\\\\n=== 3. GET /api/sso/config \\(after create\\) ===\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc2NjA1NDM5MiwiZXhwIjoxNzY2MDU3OTkyfQ.H1dUgN4Cq4nF0mWaGDabGYFoZCmA6iiLBbs-ICtba7k\")",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

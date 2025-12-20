@@ -35,7 +35,7 @@ export default function SuperadminRouteGuard({ children }) {
             return;
           }
         } catch (e) {
-          console.error('Error parsing adminUser:', e);
+          // Error parsing adminUser - silent fail
         }
       }
 
@@ -48,7 +48,7 @@ export default function SuperadminRouteGuard({ children }) {
             return;
           }
         } catch (e) {
-          console.error('Error parsing user:', e);
+          // Error parsing user - silent fail
         }
       }
 
@@ -70,7 +70,7 @@ export default function SuperadminRouteGuard({ children }) {
         setIsSuperAdmin(true);
       }
     } catch (err) {
-      console.error('Superadmin check failed:', err);
+      // Superadmin check failed - silent fail
       // Don't clear token - localStorage check already passed if we got here
     } finally {
       setLoading(false);

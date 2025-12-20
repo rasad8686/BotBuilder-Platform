@@ -41,6 +41,7 @@ const AgentTasks = () => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ const AgentTasks = () => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTask?.id, selectedTask?.status]);
 
   const fetchAgentAndTasks = async () => {
@@ -107,7 +109,7 @@ const AgentTasks = () => {
         setTaskSteps(data.steps || []);
       }
     } catch (err) {
-      console.error('Failed to fetch steps', err);
+      // Failed to fetch steps - silent fail
     }
   };
 
@@ -128,7 +130,7 @@ const AgentTasks = () => {
         }
       }
     } catch (err) {
-      console.error('Failed to refresh task', err);
+      // Failed to refresh task - silent fail
     }
   };
 
@@ -391,7 +393,7 @@ const AgentTasks = () => {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {taskSteps.map((step, index) => (
+                      {taskSteps.map((step) => (
                         <div key={step.id} style={{
                           padding: '16px',
                           background: '#f8f9fa',

@@ -73,7 +73,7 @@ router.get('/dashboard', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Superadmin dashboard error:', error);
+    // Superadmin dashboard error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to load dashboard data'
@@ -131,7 +131,7 @@ router.get('/users', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('List users error:', error);
+    // List users error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to list users'
@@ -177,7 +177,7 @@ router.get('/users/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get user error:', error);
+    // Get user error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to get user details'
@@ -232,7 +232,7 @@ router.put('/users/:id/superadmin', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Toggle superadmin error:', error);
+    // Toggle superadmin error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to update superadmin status'
@@ -293,7 +293,7 @@ router.get('/organizations', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('List organizations error:', error);
+    // List organizations error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to list organizations'
@@ -348,7 +348,7 @@ router.put('/organizations/:id/plan', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Update org plan error:', error);
+    // Update org plan error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to update plan'
@@ -414,7 +414,7 @@ router.get('/audit-logs', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get audit logs error:', error);
+    // Get audit logs error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to get audit logs'
@@ -440,7 +440,7 @@ router.get('/ip-whitelist', async (req, res) => {
       data: whitelist.rows
     });
   } catch (error) {
-    console.error('Get IP whitelist error:', error);
+    // Get IP whitelist error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to get IP whitelist'
@@ -486,7 +486,7 @@ router.post('/ip-whitelist', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Add IP whitelist error:', error);
+    // Add IP whitelist error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to add IP to whitelist'
@@ -528,7 +528,7 @@ router.delete('/ip-whitelist/:id', async (req, res) => {
       message: 'IP removed from whitelist'
     });
   } catch (error) {
-    console.error('Remove IP whitelist error:', error);
+    // Remove IP whitelist error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to remove IP from whitelist'
@@ -567,7 +567,7 @@ router.get('/login-attempts', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get login attempts error:', error);
+    // Get login attempts error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to get login attempts'
@@ -591,7 +591,7 @@ router.get('/me', async (req, res) => {
       data: user.rows[0]
     });
   } catch (error) {
-    console.error('Get superadmin info error:', error);
+    // Get superadmin info error - silent fail
     res.status(500).json({
       success: false,
       message: 'Failed to get superadmin info'

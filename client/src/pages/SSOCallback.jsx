@@ -27,7 +27,7 @@ const SSOCallback = () => {
           localStorage.setItem('currentOrganizationId', payload.organization_id);
         }
       } catch (e) {
-        console.error('Error decoding token:', e);
+        // Error decoding token - silent fail
       }
 
       // Redirect to return URL

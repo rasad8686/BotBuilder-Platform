@@ -124,7 +124,7 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
         }
       }
     } catch (err) {
-      console.error('Failed to fetch status:', err);
+      // Failed to fetch status - silent fail
     }
   }, [model.id, model.status, token, onStatusChange]);
 
@@ -141,7 +141,7 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
         setEvents(data.events || []);
       }
     } catch (err) {
-      console.error('Failed to fetch events:', err);
+      // Failed to fetch events - silent fail
     }
   }, [model.id, token]);
 

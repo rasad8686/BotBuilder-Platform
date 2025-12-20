@@ -26,7 +26,7 @@ async function logAdminAction(userId, userEmail, action, resourceType, resourceI
       ]
     );
   } catch (error) {
-    console.error('Failed to log admin action:', error.message);
+    // Failed to log admin action - silent fail
   }
 }
 
@@ -41,7 +41,7 @@ async function isSuperAdmin(userId) {
     );
     return result.rows.length > 0 && result.rows[0].is_superadmin === true;
   } catch (error) {
-    console.error('Error checking superadmin status:', error.message);
+    // Error checking superadmin status - silent fail
     return false;
   }
 }
@@ -98,7 +98,7 @@ function requireSuperAdmin(req, res, next) {
       next();
     })
     .catch(error => {
-      console.error('Superadmin check error:', error.message);
+      // Superadmin check error - silent fail
       return res.status(500).json({
         success: false,
         message: 'Authorization check failed'
@@ -161,7 +161,7 @@ function requireAdmin(req, res, next) {
       next();
     })
     .catch(error => {
-      console.error('Admin check error:', error.message);
+      // Admin check error - silent fail
       return res.status(500).json({
         success: false,
         message: 'Authorization check failed'
@@ -231,13 +231,13 @@ async function adminLoginRateLimit(req, res, next) {
           [email.toLowerCase(), ip, success]
         );
       } catch (error) {
-        console.error('Failed to log login attempt:', error.message);
+        // Failed to log login attempt - silent fail
       }
     };
 
     next();
   } catch (error) {
-    console.error('Rate limit check error:', error.message);
+    // Rate limit check error - silent fail
     // Allow through on error to prevent lockout
     next();
   }
@@ -272,7 +272,7 @@ async function adminIpWhitelist(req, res, next) {
       }
     });
   } catch (error) {
-    console.error('IP whitelist DB check error:', error.message);
+    // IP whitelist DB check error - silent fail
   }
 
   // Check if IP is allowed

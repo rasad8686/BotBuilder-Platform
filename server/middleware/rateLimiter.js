@@ -32,7 +32,6 @@ async function getRateLimitSettings() {
     }
   } catch (error) {
     // If table doesn't exist yet, use defaults
-    console.log('Rate limit settings table not ready, using defaults');
   }
 
   return settingsCache;
@@ -91,7 +90,7 @@ async function recordFailedAttempt(ip, email, settings) {
       return 1 >= settings.max_attempts;
     }
   } catch (error) {
-    console.error('Error recording failed attempt:', error);
+    // Error recording failed attempt - silent fail
     return false;
   }
 }
@@ -104,7 +103,7 @@ async function clearAttempts(ip, email) {
       [ip, email || '']
     );
   } catch (error) {
-    console.error('Error clearing attempts:', error);
+    // Error clearing attempts - silent fail
   }
 }
 
@@ -178,7 +177,6 @@ const recordFailedLogin = (req, res, next) => {
           if (settings.enabled) {
             const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
             const email = req.body?.email || '';
-            console.log(`[RateLimiter] Recording failed attempt for IP: ${ip}, Email: ${email}`);
             await recordFailedAttempt(ip, email, settings);
           }
         }
@@ -189,7 +187,7 @@ const recordFailedLogin = (req, res, next) => {
           await clearAttempts(ip, email);
         }
       } catch (error) {
-        console.error('[RateLimiter] Error processing attempt:', error);
+        // RateLimiter Error processing attempt - silent fail
       }
     };
 

@@ -1016,6 +1016,9 @@ app.use('/api/sso', require('./routes/sso'));
 // ✅ SCIM 2.0 Provisioning routes (User provisioning from IdP)
 app.use('/scim/v2', require('./routes/scim'));
 
+// ✅ AI Revenue Recovery Engine routes
+app.use('/api/recovery', require('./routes/recovery'));
+
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
