@@ -47,7 +47,6 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
-      "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan"
     },
     "notification": {
@@ -76,7 +75,7 @@
             "buildToolsVersion": "34.0.0"
           },
           "ios": {
-            "deploymentTarget": "13.4"
+            "deploymentTarget": "15.1"
           }
         }
       ]
@@ -86,14 +85,14 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-project-id"
+      "url": "https://u.expo.dev/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
       },
       "apiUrl": "https://api.botbuilder.com",
       "environment": "production"

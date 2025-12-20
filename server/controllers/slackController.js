@@ -72,7 +72,7 @@ exports.startOAuth = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error starting OAuth:', error);
+    // Error starting OAuth - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to start OAuth flow'
@@ -164,7 +164,7 @@ exports.oauthCallback = async (req, res) => {
     res.redirect(`/channels/slack?success=connected&team=${encodeURIComponent(tokenResponse.team.name)}`);
 
   } catch (error) {
-    console.error('Error in OAuth callback:', error);
+    // Error in OAuth callback - silent fail
     res.redirect('/channels/slack?error=callback_failed');
   }
 };
@@ -199,7 +199,7 @@ exports.disconnectSlack = async (req, res) => {
     try {
       await slackService.revokeToken(channel.botToken);
     } catch (revokeError) {
-      console.error('Failed to revoke token:', revokeError);
+      // Failed to revoke token - silent fail
     }
 
     // Remove client instance
@@ -214,7 +214,7 @@ exports.disconnectSlack = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error disconnecting Slack:', error);
+    // Error disconnecting Slack - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to disconnect Slack workspace'
@@ -269,7 +269,7 @@ exports.getWorkspaceInfo = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting workspace info:', error);
+    // Error getting workspace info - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get workspace info'
@@ -350,7 +350,7 @@ exports.getChannelStats = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channel stats:', error);
+    // Error getting channel stats - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channel statistics'
@@ -400,7 +400,7 @@ exports.testConnection = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error testing connection:', error);
+    // Error testing connection - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to test connection'
@@ -438,7 +438,7 @@ exports.getChannels = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channels:', error);
+    // Error getting channels - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channels'
@@ -488,7 +488,7 @@ exports.getChannel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting channel:', error);
+    // Error getting channel - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to get channel'
@@ -541,7 +541,7 @@ exports.updateChannel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating channel:', error);
+    // Error updating channel - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to update channel'
@@ -588,7 +588,7 @@ exports.listSlackChannels = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error listing channels:', error);
+    // Error listing channels - silent fail
     res.status(500).json({
       success: false,
       error: 'Failed to list channels'
@@ -647,7 +647,7 @@ exports.sendTestMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error sending test message:', error);
+    // Error sending test message - silent fail
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to send test message'

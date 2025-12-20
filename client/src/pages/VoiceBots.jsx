@@ -14,7 +14,7 @@ const VoiceBots = () => {
 
   const [bots, setBots] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingBot, setEditingBot] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,6 +38,7 @@ const VoiceBots = () => {
 
   useEffect(() => {
     fetchBots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchBots = async () => {

@@ -113,7 +113,7 @@ export default function ABTestManager({ models }) {
           })));
         }
       } catch (err) {
-        console.error('Error fetching versions for model', model.id, err);
+        // Error fetching versions - silent fail
       }
     }
 
@@ -133,7 +133,7 @@ export default function ABTestManager({ models }) {
         setTestResults(data);
       }
     } catch (err) {
-      console.error('Error fetching test results', err);
+      // Error fetching test results - silent fail
     } finally {
       setLoadingResults(false);
     }
@@ -289,11 +289,6 @@ export default function ABTestManager({ models }) {
     );
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -341,13 +336,17 @@ export default function ABTestManager({ models }) {
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <FlaskConical className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>{t('abTest.noTests', 'No A/B tests yet')}</p>
-                {versions.length >= 2 && (
+                {versions.length >= 2 ? (
                   <button
                     onClick={() => setShowCreateModal(true)}
                     className="mt-3 text-purple-600 dark:text-purple-400 hover:underline"
                   >
                     {t('abTest.createFirst', 'Create your first test')}
                   </button>
+                ) : (
+                  <p className="mt-3 text-sm text-yellow-600 dark:text-yellow-400">
+                    {t('abTest.needVersions', 'You need at least 2 model versions to create an A/B test. Train and complete your models first.')}
+                  </p>
                 )}
               </div>
             ) : (

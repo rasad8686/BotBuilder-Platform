@@ -12,6 +12,7 @@ const db = require('../db');
 const log = require('../utils/logger');
 const fineTuningController = require('../controllers/fineTuningController');
 const openaiFineTuning = require('../services/openaiFineTuning');
+const emailService = require('../services/emailService');
 
 // Polling interval (30 seconds)
 const POLL_INTERVAL = 30000;
@@ -112,8 +113,7 @@ async function handleTrainingComplete(job, status) {
     );
   }
 
-  // TODO: Send notification to user
-  // This could be email, WebSocket, or push notification
+  // Send notification to user via email
   try {
     await sendCompletionNotification(job, status);
   } catch (err) {
@@ -133,7 +133,7 @@ async function handleTrainingFailed(job, status) {
     error: status.error
   });
 
-  // TODO: Send failure notification
+  // Send failure notification to user via email
   try {
     await sendFailureNotification(job, status);
   } catch (err) {
@@ -176,12 +176,13 @@ async function sendCompletionNotification(job, status) {
     fineTunedModel: status.fine_tuned_model
   });
 
-  // TODO: Implement actual notification
-  // emailService.sendTrainingComplete(user.email, {
-  //   modelName: job.model_name,
-  //   fineTunedModel: status.fine_tuned_model,
-  //   trainedTokens: status.trained_tokens
-  // });
+  // Send email notification
+  await emailService.sendTrainingCompleteEmail(user.email, {
+    modelName: job.model_name,
+    fineTunedModel: status.fine_tuned_model,
+    trainedTokens: status.trained_tokens,
+    userName: user.name
+  });
 }
 
 /**
@@ -208,7 +209,12 @@ async function sendFailureNotification(job, status) {
     error: status.error
   });
 
-  // TODO: Implement actual notification
+  // Send email notification
+  await emailService.sendTrainingFailedEmail(user.email, {
+    modelName: job.model_name,
+    error: status.error?.message || status.error || 'Unknown error',
+    userName: user.name
+  });
 }
 
 /**

@@ -1,25 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { useBrand } from '../contexts/BrandContext';
 import { useTheme } from '../contexts/ThemeContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 import FeedbackModal from './FeedbackModal';
 import ThemeToggle from './ThemeToggle';
-import api from '../api/axios';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { currentLanguage, changeLanguage, languages } = useLanguage();
   const { userRole } = useOrganization();
   const { brand } = useBrand();
   const { isDark } = useTheme();
@@ -112,6 +108,14 @@ export default function Sidebar() {
     { path: '/fine-tuning', icon: '🧠', label: t('sidebar.fineTuning', 'AI Fine-tuning') },
   ];
 
+  // Recovery Engine links
+  const recoveryLinks = [
+    { path: '/recovery', icon: '📈', label: t('recovery.dashboard') },
+    { path: '/recovery/campaigns', icon: '🎯', label: t('recovery.campaigns') },
+    { path: '/recovery/carts', icon: '🛒', label: t('recovery.abandonedCarts') },
+    { path: '/recovery/customers', icon: '❤️', label: t('recovery.customerHealth') },
+  ];
+
   // Get botId from URL if on a bot-specific page
   const botIdMatch = location.pathname.match(/\/bots\/(\d+)/);
   const currentBotId = botIdMatch ? botIdMatch[1] : null;
@@ -132,8 +136,6 @@ export default function Sidebar() {
   ];
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
-
-  const currentLang = languages.find(lang => lang.code === currentLanguage);
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -244,6 +246,37 @@ export default function Sidebar() {
                       isActive(link.path)
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400'
+                    }
+                  `}
+                >
+                  <span className="text-xl">{link.icon}</span>
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </li>
+            ))}
+
+            {/* Revenue Recovery Section */}
+            <li className="pt-4 pb-2">
+              <div className="flex items-center gap-2 px-4">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                <span className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider">
+                  {t('recovery.sidebarTitle')}
+                </span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+              </div>
+            </li>
+            {recoveryLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActive(link.path)
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-slate-800 hover:text-green-600 dark:hover:text-green-400'
                     }
                   `}
                 >

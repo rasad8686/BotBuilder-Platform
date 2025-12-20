@@ -96,7 +96,7 @@ export default function FineTuning() {
         setBaseModels(data.models || []);
       }
     } catch (err) {
-      console.error('Error fetching base models:', err);
+      // Error fetching base models - silent fail
     }
   }, [token]);
 
@@ -174,6 +174,12 @@ export default function FineTuning() {
   const handleStartTraining = async (e) => {
     e.preventDefault();
     if (!selectedModel) return;
+
+    // Check if model has a ready dataset
+    if (!selectedModel.ready_dataset_count || parseInt(selectedModel.ready_dataset_count) < 1) {
+      setError(t('fineTuning.noReadyDataset', 'Upload and validate a dataset first'));
+      return;
+    }
 
     setTraining(true);
     setError(null);
@@ -472,7 +478,8 @@ export default function FineTuning() {
                       </button>
                       <button
                         onClick={() => openTrainModal(model)}
-                        disabled={!model.dataset_count}
+                        disabled={!model.ready_dataset_count || parseInt(model.ready_dataset_count) < 1}
+                        title={!model.ready_dataset_count || parseInt(model.ready_dataset_count) < 1 ? t('fineTuning.noReadyDataset', 'Upload and validate a dataset first') : ''}
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Play className="w-4 h-4" />

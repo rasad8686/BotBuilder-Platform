@@ -15,9 +15,6 @@ class GladiaProcessor {
     this._apiKey = config.apiKey || null;
     this.supportedLanguages = ['az', 'tr', 'ru', 'en', 'de', 'fr', 'es'];
 
-    // Debug: Check API key on init
-    const key = this._apiKey || process.env.GLADIA_API_KEY;
-    console.log('[GladiaProcessor] API Key loaded:', key ? `${key.substring(0, 8)}...` : 'NOT FOUND');
   }
 
   // Lazy getter for API key

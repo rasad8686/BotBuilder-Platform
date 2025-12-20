@@ -18,7 +18,7 @@ function Login() {
 
   // SSO state
   const [ssoInfo, setSsoInfo] = useState(null);
-  const [checkingSSO, setCheckingSSO] = useState(false);
+  const [, setCheckingSSO] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const ssoCheckTimeout = useRef(null);
 

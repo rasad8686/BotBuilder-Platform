@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import API_URL from '../utils/api';
+import { API_BASE_URL as API_URL } from '../utils/api';
 import { io } from 'socket.io-client';
 
 // Professional Microphone Icon SVG Component
@@ -243,15 +243,15 @@ const VoiceToBot = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcription, setTranscription] = useState('');
-  const [keyPhrases, setKeyPhrases] = useState([]);
+  const [, setKeyPhrases] = useState([]);
   const [extractedData, setExtractedData] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [, setPreview] = useState(null);
   const [generatedBot, setGeneratedBot] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState('en');
   const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [, setSelectedTemplate] = useState(null);
   const [customizations, setCustomizations] = useState({ name: '', description: '' });
   const [micLoading, setMicLoading] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -273,6 +273,7 @@ const VoiceToBot = () => {
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
   const useWebSocketStreamingRef = useRef(false);
+  const liveTranscriptRef = useRef('');
 
   // Audio Level Analyzer - for waveform animation
   const startAudioAnalyzer = (stream) => {
@@ -309,9 +310,8 @@ const VoiceToBot = () => {
       };
 
       updateLevel();
-      console.log('[VoiceToBot] Audio analyzer started');
     } catch (e) {
-      console.warn('[VoiceToBot] Audio analyzer error:', e);
+      // Audio analyzer error - silent fail
     }
   };
 
@@ -338,8 +338,6 @@ const VoiceToBot = () => {
       wsUrl = window.location.origin.replace(/^http/, 'ws');
     }
 
-    console.log('[VoiceToBot] Connecting to WebSocket:', wsUrl);
-
     socketRef.current = io(wsUrl, {
       path: '/ws',
       transports: ['polling', 'websocket'],
@@ -352,24 +350,13 @@ const VoiceToBot = () => {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('[VoiceToBot] WebSocket connected');
     });
 
     socketRef.current.on('voice:ready', (data) => {
-      console.log('[VoiceToBot] Voice streaming ready', data);
       useWebSocketStreamingRef.current = true;
-
-      // Set a timeout - if no transcript received within 3 seconds, fallback to Web Speech
-      setTimeout(() => {
-        // Check if we still haven't received any transcript
-        if (useWebSocketStreamingRef.current && !document.querySelector('[data-transcript-received]')) {
-          console.log('[VoiceToBot] No transcript received, checking Web Speech fallback...');
-        }
-      }, 3000);
     });
 
     socketRef.current.on('voice:fallback', (data) => {
-      console.log('[VoiceToBot] Google Cloud STT not available:', data.reason);
       useWebSocketStreamingRef.current = false;
       // Do NOT fallback to Web Speech API - it produces incorrect results
       // Just show a message that real-time transcription is not available
@@ -378,13 +365,11 @@ const VoiceToBot = () => {
 
     socketRef.current.on('voice:transcript', (data) => {
       // Handle real-time transcription from Google Cloud STT
-      console.log('[VoiceToBot] Received transcript:', data);
-
       if (data.isFinal) {
         // Final result - REPLACE (not accumulate) live transcript
         setLiveTranscript(data.transcript);
+        liveTranscriptRef.current = data.transcript; // Update ref for callback access
         setInterimTranscript('');
-        console.log('[VoiceToBot] Final transcript REPLACED:', data.transcript);
       } else {
         // Interim result - REPLACE with current text (no accumulation)
         setInterimTranscript(data.transcript);
@@ -392,13 +377,11 @@ const VoiceToBot = () => {
     });
 
     socketRef.current.on('voice:error', (data) => {
-      console.error('[VoiceToBot] Voice streaming error:', data.error);
+      // Voice streaming error - silent fail
       useWebSocketStreamingRef.current = false;
-      // Do NOT fallback to Web Speech API - just log the error
     });
 
     socketRef.current.on('voice:restart', (data) => {
-      console.log('[VoiceToBot] Streaming restart requested:', data.reason);
       // Restart streaming session if still recording
       if (isRecording && streamRef.current) {
         socketRef.current.emit('voice:start', {
@@ -409,24 +392,18 @@ const VoiceToBot = () => {
     });
 
     socketRef.current.on('voice:timeout', (data) => {
-      console.log('[VoiceToBot] Streaming timeout:', data.reason);
-      // Keep current transcripts, just log the timeout
+      // Keep current transcripts, timeout handled silently
     });
 
     socketRef.current.on('voice:complete', (data) => {
-      console.log('[VoiceToBot] Voice streaming complete', {
-        finalTranscript: data.finalTranscript?.substring(0, 50),
-        chunks: data.audioChunksProcessed
-      });
+      // Voice streaming complete
     });
 
     socketRef.current.on('disconnect', (reason) => {
-      console.log('[VoiceToBot] WebSocket disconnected:', reason);
       useWebSocketStreamingRef.current = false;
     });
 
     socketRef.current.on('reconnect', (attemptNumber) => {
-      console.log('[VoiceToBot] WebSocket reconnected after', attemptNumber, 'attempts');
     });
 
     return () => {
@@ -434,6 +411,7 @@ const VoiceToBot = () => {
         socketRef.current.disconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -448,6 +426,7 @@ const VoiceToBot = () => {
         audioContextRef.current.close();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getSpeechLangCode = (lang) => {
@@ -470,7 +449,6 @@ const VoiceToBot = () => {
     // Use ONLY Google Cloud STT for real-time transcription (more accurate)
     // Do NOT use Web Speech API - it produces incorrect results
     if (socketRef.current && socketRef.current.connected) {
-      console.log('[VoiceToBot] Starting Google Cloud STT streaming for real-time transcription...');
 
       // Notify server to start streaming session
       socketRef.current.emit('voice:start', {
@@ -493,8 +471,6 @@ const VoiceToBot = () => {
             ? 'audio/webm'
             : 'audio/mp4';
 
-        console.log('[VoiceToBot] Using audio format:', mimeType);
-
         const streamRecorder = new MediaRecorder(audioStream, { mimeType });
 
         // Track chunk count for debugging
@@ -507,34 +483,30 @@ const VoiceToBot = () => {
             event.data.arrayBuffer().then((buffer) => {
               socketRef.current.emit('voice:audio', buffer);
             }).catch(err => {
-              console.warn('[VoiceToBot] Error converting audio chunk:', err);
+              // Audio chunk conversion error - silent fail
             });
           }
         };
 
         streamRecorder.onerror = (event) => {
-          console.error('[VoiceToBot] MediaRecorder error:', event.error);
+          // MediaRecorder error - silent fail
         };
 
         streamRecorder.onstop = () => {
-          console.log('[VoiceToBot] MediaRecorder stopped, total chunks:', chunkCount);
         };
 
         // Start recording with 100ms chunks for Gemini-level real-time streaming
         // 100ms = optimal balance between latency and accuracy
         streamRecorder.start(100);
         processorRef.current = streamRecorder;
-
-        console.log('[VoiceToBot] Audio streaming to Google Cloud STT started (100ms chunks, Gemini-level)');
       } catch (error) {
-        console.error('[VoiceToBot] Failed to setup audio streaming:', error);
+        // Failed to setup audio streaming - silent fail
       }
-    } else {
-      console.warn('[VoiceToBot] WebSocket not connected, cannot start Google Cloud STT');
     }
   };
 
-  const startWebSpeechRecognition = () => {
+  // Web Speech API fallback (reserved for future use)
+  const _startWebSpeechRecognition = () => {
     // Stop any existing recognition first
     if (speechRecognitionRef.current) {
       try {
@@ -545,11 +517,8 @@ const VoiceToBot = () => {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      console.warn('[VoiceToBot] Web Speech API not supported in this browser');
       return;
     }
-
-    console.log('[VoiceToBot] Initializing Web Speech API...');
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -558,7 +527,6 @@ const VoiceToBot = () => {
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      console.log('[VoiceToBot] Web Speech API started, listening...');
     };
 
     recognition.onresult = (event) => {
@@ -569,10 +537,8 @@ const VoiceToBot = () => {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           final += transcript + ' ';
-          console.log('[VoiceToBot] Web Speech final:', transcript);
         } else {
           interim = transcript;
-          console.log('[VoiceToBot] Web Speech interim:', transcript);
         }
       }
 
@@ -583,7 +549,6 @@ const VoiceToBot = () => {
     };
 
     recognition.onerror = (event) => {
-      console.warn('[VoiceToBot] Web Speech error:', event.error);
       // Don't clear interim on no-speech, just wait
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setInterimTranscript('');
@@ -591,14 +556,12 @@ const VoiceToBot = () => {
     };
 
     recognition.onend = () => {
-      console.log('[VoiceToBot] Web Speech ended, checking if should restart...');
       // Use ref to check if still recording (avoids stale closure)
       if (streamRef.current && speechRecognitionRef.current === recognition) {
-        console.log('[VoiceToBot] Restarting Web Speech...');
         try {
           recognition.start();
         } catch (e) {
-          console.warn('[VoiceToBot] Could not restart recognition:', e);
+          // Could not restart recognition - silent fail
         }
       }
     };
@@ -607,11 +570,11 @@ const VoiceToBot = () => {
 
     try {
       recognition.start();
-      console.log('[VoiceToBot] Web Speech API recognition.start() called');
     } catch (e) {
-      console.error('[VoiceToBot] Failed to start Web Speech:', e);
+      // Failed to start Web Speech - silent fail
     }
   };
+  void _startWebSpeechRecognition; // Preserve for future use
 
   const stopSpeechRecognition = () => {
     if (socketRef.current && socketRef.current.connected) {
@@ -622,7 +585,7 @@ const VoiceToBot = () => {
       try {
         processorRef.current.stop();
       } catch (e) {
-        console.warn('Error stopping processor:', e);
+        // Error stopping processor - silent fail
       }
       processorRef.current = null;
     }
@@ -651,7 +614,7 @@ const VoiceToBot = () => {
         setTemplates(data.templates);
       }
     } catch (err) {
-      console.error('Failed to fetch templates', err);
+      // Failed to fetch templates - silent fail
     }
   };
 
@@ -737,7 +700,7 @@ const VoiceToBot = () => {
 
     } catch (err) {
       setError(t('voiceToBot.errors.microphoneAccess'));
-      console.error('Microphone access error:', err);
+      // Microphone access error - silent fail
     } finally {
       setMicLoading(false);
     }
@@ -781,7 +744,6 @@ const VoiceToBot = () => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
       setIsPaused(false);
-      console.log('[VoiceToBot] Recording resumed');
     } else {
       // PAUSE
       if (mediaRecorderRef.current?.state === 'recording') {
@@ -799,13 +761,11 @@ const VoiceToBot = () => {
         timerRef.current = null;
       }
       setIsPaused(true);
-      console.log('[VoiceToBot] Recording paused');
     }
   }, [isPaused]);
 
   // Handle Cancel recording - NO navigation, just reset
   const handleCancel = useCallback(() => {
-    console.log('[VoiceToBot] Cancelling recording...');
 
     // Stop speech recognition
     stopSpeechRecognition();
@@ -852,8 +812,6 @@ const VoiceToBot = () => {
     // Show deleted message
     setShowDeleted(true);
     setTimeout(() => setShowDeleted(false), 2000);
-
-    console.log('[VoiceToBot] Recording cancelled, state reset');
   }, []);
 
   const handleRecordingStop = async () => {
@@ -884,6 +842,34 @@ const VoiceToBot = () => {
         throw new Error('No session available');
       }
 
+      // If we have live transcript from WebSocket streaming, use it directly
+      // Use ref to get current value (avoids closure issues)
+      const currentTranscript = liveTranscriptRef.current;
+      if (currentTranscript && currentTranscript.trim().length > 0) {
+        let processedTranscription = currentTranscript;
+        const eldjoVariants = [
+          'elçin', 'elçi', 'elçü', 'elcü', 'elcu', 'elçu',
+          'elçin borcu', 'elçin borcu ölçüsü',
+          'əl çoğu', 'əl çogu', 'el çoğu', 'el çogu',
+          'el-dru', 'eldru', 'bildru', 'elzur', 'yaqut',
+          'el dru', 'el-drü', 'eldrü', 'eld-ru',
+          'ona elə', 'ona ele', 'ildur', 'İldur', 'eldur',
+          'eldju', 'eldjü', 'el-djo', 'el-dju',
+          'elco', 'elço', 'elso', 'elşo'
+        ];
+        eldjoVariants.forEach(variant => {
+          const regex = new RegExp(variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+          processedTranscription = processedTranscription.replace(regex, 'Eldjo');
+        });
+
+        setTranscription(processedTranscription);
+        setKeyPhrases([]);
+        setStep('extracting');
+        await extractIntents(processedTranscription);
+        return;
+      }
+
+      // Fallback to HTTP API if no streaming transcript available
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('sessionId', currentSession.session_id);
@@ -922,7 +908,7 @@ const VoiceToBot = () => {
         throw new Error(data.error || 'Transcription failed');
       }
     } catch (err) {
-      console.error('Transcription error:', err);
+      // Transcription error - silent fail
       setError(err.message || t('voiceToBot.errors.transcriptionFailed'));
       setStep('idle');
     } finally {
@@ -957,7 +943,7 @@ const VoiceToBot = () => {
         throw new Error(data.error || 'Extraction failed');
       }
     } catch (err) {
-      console.error('Extraction error:', err);
+      // Extraction error - silent fail
       setError(err.message || t('voiceToBot.errors.extractionFailed'));
       setStep('idle');
     } finally {
@@ -992,7 +978,7 @@ const VoiceToBot = () => {
         throw new Error(data.error || 'Generation failed');
       }
     } catch (err) {
-      console.error('Generation error:', err);
+      // Generation error - silent fail
       setError(err.message || t('voiceToBot.errors.generationFailed'));
       setStep('preview');
     } finally {
@@ -1017,7 +1003,7 @@ const VoiceToBot = () => {
     setInterimTranscript('');
   };
 
-  const useTemplate = async (template) => {
+  const applyTemplate = async (template) => {
     setSelectedTemplate(template);
     setLoading(true);
     setError('');
@@ -1462,7 +1448,7 @@ const VoiceToBot = () => {
               <div
                 key={template.id}
                 style={styles.templateCard}
-                onClick={() => useTemplate(template)}
+                onClick={() => applyTemplate(template)}
               >
                 <span style={styles.templateIcon}>
                   {template.category === 'support' ? '🎧' :

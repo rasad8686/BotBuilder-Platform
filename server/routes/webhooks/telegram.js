@@ -23,21 +23,17 @@ router.post('/:botId', async (req, res) => {
       .first();
 
     if (!channel) {
-      console.warn(`[Telegram Webhook] Unknown bot ID: ${botId}`);
       return res.status(404).json({ error: 'Bot not found' });
     }
 
     // Verify webhook signature
     if (channel.webhook_secret && channel.webhook_secret !== secretToken) {
-      console.warn(`[Telegram Webhook] Invalid secret token for bot: ${botId}`);
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
     // Parse the incoming update
     const update = req.body;
     const messageData = telegramService.handleIncomingMessage(update);
-
-    console.log(`[Telegram Webhook] Received ${messageData.type} from ${messageData.username || messageData.userId}`);
 
     // Store update for processing
     await db('telegram_messages').insert({
@@ -69,7 +65,7 @@ router.post('/:botId', async (req, res) => {
     res.status(200).json({ ok: true });
 
   } catch (error) {
-    console.error('[Telegram Webhook] Error processing update:', error);
+    // Telegram Webhook Error - silent fail
     // Still return 200 to prevent Telegram from retrying
     res.status(200).json({ ok: true, error: 'Processing error' });
   }
@@ -88,7 +84,6 @@ async function routeMessageToBotEngine(channel, messageData) {
       .first();
 
     if (!bot || bot.status !== 'active') {
-      console.log(`[Telegram] Bot ${channel.bot_id} is not active`);
       return;
     }
 
@@ -128,7 +123,7 @@ async function routeMessageToBotEngine(channel, messageData) {
     }
 
   } catch (error) {
-    console.error('[Telegram] Error routing message:', error);
+    // Telegram Error routing message - silent fail
 
     // Send error message to user
     try {
@@ -139,7 +134,7 @@ async function routeMessageToBotEngine(channel, messageData) {
         { parseMode: 'HTML' }
       );
     } catch (sendError) {
-      console.error('[Telegram] Error sending error message:', sendError);
+      // Telegram Error sending error message - silent fail
     }
   }
 }
@@ -240,7 +235,7 @@ async function processBotMessage(bot, messageData) {
     };
 
   } catch (error) {
-    console.error('[Telegram] Error processing bot message:', error);
+    // Telegram Error processing bot message - silent fail
     throw error;
   }
 }

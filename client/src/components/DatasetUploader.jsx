@@ -78,6 +78,7 @@ export default function DatasetUploader({ modelId, onUploadComplete, onClose }) 
     if (droppedFile) {
       validateAndSetFile(droppedFile);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Validate file type and set

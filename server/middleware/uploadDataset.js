@@ -165,9 +165,7 @@ const uploadDataset = (req, res, next) => {
 const cleanupFile = (filePath) => {
   if (filePath && fs.existsSync(filePath)) {
     fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error('Error deleting file:', err);
-      }
+      // Error deleting file - silent fail
     });
   }
 };

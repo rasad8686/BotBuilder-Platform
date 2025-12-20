@@ -333,7 +333,6 @@ function initializeWebSocket(server) {
               };
               const langName = languageNames[bot.language] || bot.language;
               systemPrompt = `[LANGUAGE REQUIREMENT: ${langName.toUpperCase()}]\n\n${systemPrompt}\n\n---\nCRITICAL LANGUAGE RULE: You MUST respond ONLY in ${langName}. Do NOT use any other language. Every single word of your response must be in ${langName}.`;
-              console.log('[WS] Language instruction added:', langName);
             }
 
             // Get conversation history

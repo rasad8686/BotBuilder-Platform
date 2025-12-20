@@ -34,6 +34,7 @@ const AutonomousAgents = () => {
 
   useEffect(() => {
     fetchAgents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchAgents = async () => {

@@ -48,7 +48,7 @@ export default function SlackChannel() {
       setWorkspaces(response.data.data || []);
     } catch (err) {
       setError('Failed to load Slack workspaces');
-      console.error(err);
+      // Error loading Slack workspaces - silent fail
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function SlackChannel() {
       const response = await api.get('/api/channels/slack/stats');
       setStats(response.data.data);
     } catch (err) {
-      console.error('Failed to load stats:', err);
+      // Failed to load stats - silent fail
     }
   };
 

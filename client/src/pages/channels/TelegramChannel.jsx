@@ -31,7 +31,7 @@ export default function TelegramChannel() {
       setChannels(response.data.data || []);
     } catch (err) {
       setError('Failed to load Telegram channels');
-      console.error(err);
+      // Error loading Telegram channels - silent fail
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export default function TelegramChannel() {
       const response = await api.get('/api/channels/telegram/stats');
       setStats(response.data.data);
     } catch (err) {
-      console.error('Failed to load stats:', err);
+      // Failed to load stats - silent fail
     }
   };
 

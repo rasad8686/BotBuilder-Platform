@@ -227,12 +227,26 @@ export default function VersionManager({ models }) {
           className="w-full max-w-md px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
         >
           <option value="">{t('versions.chooseModel', 'Choose a model...')}</option>
-          {completedModels.map(model => (
-            <option key={model.id} value={model.id}>
-              {model.name} ({model.base_model})
+          {models.map(model => (
+            <option
+              key={model.id}
+              value={model.id}
+              disabled={model.status !== 'completed'}
+            >
+              {model.name} ({model.base_model}) {model.status !== 'completed' ? `- ${model.status}` : ''}
             </option>
           ))}
         </select>
+        {models.length > 0 && completedModels.length === 0 && (
+          <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
+            {t('versions.noCompletedModels', 'No completed models yet. Train a model first to manage versions.')}
+          </p>
+        )}
+        {models.length === 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {t('versions.noModels', 'No models found. Create a model first.')}
+          </p>
+        )}
       </div>
 
       {/* Error Alert */}

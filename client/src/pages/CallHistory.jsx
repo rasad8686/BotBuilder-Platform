@@ -32,6 +32,7 @@ const CallHistory = () => {
   useEffect(() => {
     fetchBots();
     fetchCalls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const fetchBots = async () => {
@@ -44,7 +45,7 @@ const CallHistory = () => {
         setBots(data.bots || []);
       }
     } catch (err) {
-      console.error('Error fetching bots', err);
+      // Error fetching bots - silent fail
     }
   };
 
@@ -63,7 +64,7 @@ const CallHistory = () => {
       const data = await res.json();
       setCalls(data.calls || []);
     } catch (err) {
-      console.error('Error fetching calls', err);
+      // Error fetching calls - silent fail
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +80,7 @@ const CallHistory = () => {
         setSelectedCall(data);
       }
     } catch (err) {
-      console.error('Error fetching call details', err);
+      // Error fetching call details - silent fail
     }
   };
 

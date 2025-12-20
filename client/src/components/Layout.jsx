@@ -27,8 +27,6 @@ export default function Layout({ children }) {
     { code: 'az', flag: '🇦🇿', name: 'Azərbaycan' }
   ];
 
-  const currentLang = languages.find(l => l.code === currentLanguage) || languages[0];
-
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
