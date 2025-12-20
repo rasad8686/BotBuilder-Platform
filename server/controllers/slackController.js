@@ -313,25 +313,37 @@ exports.getChannelStats = async (req, res) => {
       });
     }
 
-    // Get aggregated stats
-    const allStats = await Promise.all(
-      channels.map(async (channel) => {
-        const stats = await SlackChannel.getStats(channel.id, {
-          start: startDate ? new Date(startDate) : undefined,
-          end: endDate ? new Date(endDate) : undefined
-        });
-        return {
-          channelId: channel.id,
-          teamName: channel.teamName,
-          isActive: channel.isActive,
-          ...stats
-        };
-      })
-    );
+    // Get aggregated stats with single JOIN query (optimized - no N+1)
+    const statsResult = await db.query(`
+      SELECT
+        sc.id as channel_id,
+        sc.team_name,
+        sc.is_active,
+        COUNT(sm.id) as total_messages,
+        COUNT(DISTINCT sm.user_id) as unique_users,
+        COUNT(CASE WHEN sm.message_type = 'command' THEN 1 END) as total_commands,
+        COUNT(CASE WHEN sm.message_type = 'interaction' THEN 1 END) as total_interactions
+      FROM slack_channels sc
+      LEFT JOIN slack_messages sm ON sc.id = sm.channel_id
+        AND sm.created_at >= NOW() - INTERVAL '30 days'
+      WHERE sc.organization_id = $1
+      GROUP BY sc.id, sc.team_name, sc.is_active
+      ORDER BY total_messages DESC
+    `, [organizationId]);
+
+    const allStats = statsResult.rows.map(row => ({
+      channelId: row.channel_id,
+      teamName: row.team_name,
+      isActive: row.is_active,
+      totalMessages: parseInt(row.total_messages) || 0,
+      uniqueUsers: parseInt(row.unique_users) || 0,
+      totalCommands: parseInt(row.total_commands) || 0,
+      totalInteractions: parseInt(row.total_interactions) || 0
+    }));
 
     const totals = {
-      totalWorkspaces: channels.length,
-      activeWorkspaces: channels.filter(c => c.isActive).length,
+      totalWorkspaces: allStats.length,
+      activeWorkspaces: allStats.filter(c => c.isActive).length,
       totalMessages: allStats.reduce((sum, s) => sum + s.totalMessages, 0),
       totalCommands: allStats.reduce((sum, s) => sum + s.totalCommands, 0),
       totalInteractions: allStats.reduce((sum, s) => sum + s.totalInteractions, 0),

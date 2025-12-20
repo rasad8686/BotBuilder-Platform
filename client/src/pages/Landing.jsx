@@ -1,16 +1,7 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  FaRobot,
-  FaBrain,
-  FaChartLine,
-  FaTelegram,
-  FaKey,
-  FaLink,
-  FaCheck,
-  FaArrowRight
-} from 'react-icons/fa';
+import { Bot, Brain, TrendingUp, Send, Key, Link2, Check, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
 
 function Landing() {
@@ -19,32 +10,32 @@ function Landing() {
 
   const features = [
     {
-      icon: <FaBrain className="text-4xl text-purple-600" />,
+      icon: <Brain className="w-10 h-10 text-purple-600" />,
       title: 'Multi-AI Provider Support',
       description: 'Integrate with OpenAI GPT-4, Claude, and other leading AI models seamlessly.'
     },
     {
-      icon: <FaTelegram className="text-4xl text-blue-500" />,
+      icon: <Send className="w-10 h-10 text-blue-500" />,
       title: 'Telegram Integration',
       description: 'Deploy your bots directly to Telegram with one-click integration.'
     },
     {
-      icon: <FaChartLine className="text-4xl text-green-500" />,
+      icon: <TrendingUp className="w-10 h-10 text-green-500" />,
       title: 'Advanced Analytics',
       description: 'Track usage, monitor conversations, and optimize bot performance with detailed insights.'
     },
     {
-      icon: <FaLink className="text-4xl text-orange-500" />,
+      icon: <Link2 className="w-10 h-10 text-orange-500" />,
       title: 'Webhook Management',
       description: 'Connect your bots to external services with powerful webhook capabilities.'
     },
     {
-      icon: <FaKey className="text-4xl text-indigo-500" />,
+      icon: <Key className="w-10 h-10 text-indigo-500" />,
       title: 'API Token Management',
       description: 'Secure API tokens for programmatic access and integrations.'
     },
     {
-      icon: <FaRobot className="text-4xl text-pink-500" />,
+      icon: <Bot className="w-10 h-10 text-pink-500" />,
       title: 'White-Label Ready',
       description: 'Customize branding, colors, and domain to match your business identity.'
     }
@@ -127,7 +118,7 @@ function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <FaRobot className="text-3xl text-purple-600" />
+              <Bot className="w-8 h-8 text-purple-600" />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 BotBuilder
               </span>
@@ -177,7 +168,7 @@ function Landing() {
                 className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex items-center justify-center space-x-2"
               >
                 <span>{t('landing.startFreeTrial')}</span>
-                <FaArrowRight />
+                <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => navigate('/demo')}
@@ -188,11 +179,11 @@ function Landing() {
             </div>
             <div className="mt-12 flex items-center justify-center space-x-8 text-sm text-gray-600">
               <div className="flex items-center space-x-2">
-                <FaCheck className="text-green-500" />
+                <Check className="w-4 h-4 text-green-500" />
                 <span>{t('landing.noCreditCard')}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <FaCheck className="text-green-500" />
+                <Check className="w-4 h-4 text-green-500" />
                 <span>{t('landing.freeTrial')}</span>
               </div>
             </div>
@@ -210,7 +201,7 @@ function Landing() {
                 <div className="space-y-4">
                   <div className="bg-gray-100 h-8 rounded w-1/3"></div>
                   <div className="bg-gradient-to-r from-blue-100 to-purple-100 h-32 rounded-lg flex items-center justify-center">
-                    <FaRobot className="text-6xl text-purple-600" />
+                    <Bot className="w-16 h-16 text-purple-600" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-gray-100 h-20 rounded"></div>
@@ -273,7 +264,7 @@ function Landing() {
                 </div>
                 {index < steps.length - 1 && (
                   <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                    <FaArrowRight className="text-3xl text-purple-300" />
+                    <ArrowRight className="w-8 h-8 text-purple-300" />
                   </div>
                 )}
               </div>
@@ -325,7 +316,7 @@ function Landing() {
                 <ul className="space-y-3 mb-8">
                   {tier.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center space-x-3">
-                      <FaCheck className={tier.highlighted ? 'text-white' : 'text-green-500'} />
+                      <Check className={`w-4 h-4 ${tier.highlighted ? 'text-white' : 'text-green-500'}`} />
                       <span className={tier.highlighted ? 'text-white' : 'text-gray-700'}>{feature}</span>
                     </li>
                   ))}

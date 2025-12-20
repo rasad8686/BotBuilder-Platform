@@ -1,22 +1,44 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { validateEmail, validatePassword, validateRequired } from '../utils/formValidation';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
 
 export default function Register() {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setFieldErrors({});
+
+    // Validate fields
+    const errors = {};
+    const nameError = validateRequired(formData.name, 'Name');
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+
+    if (nameError) errors.name = nameError;
+    if (emailError) errors.email = emailError;
+    if (passwordError) errors.password = passwordError;
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
@@ -54,38 +76,49 @@ export default function Register() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} role="form" aria-label="Registration form">
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">{t('auth.name')}</label>
+            <label htmlFor="register-name" className="block text-gray-700 font-semibold mb-2">{t('auth.name')}</label>
             <input
+              id="register-name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-describedby={fieldErrors.name ? 'name-error' : undefined}
+              aria-invalid={fieldErrors.name ? 'true' : 'false'}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${fieldErrors.name ? 'border-red-500' : ''}`}
             />
+            {fieldErrors.name && <p id="name-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.name}</p>}
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
+            <label htmlFor="register-email" className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
             <input
+              id="register-email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              aria-describedby={fieldErrors.email ? 'reg-email-error' : undefined}
+              aria-invalid={fieldErrors.email ? 'true' : 'false'}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${fieldErrors.email ? 'border-red-500' : ''}`}
             />
+            {fieldErrors.email && <p id="reg-email-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.email}</p>}
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
+          <div className="mb-4">
+            <label htmlFor="register-password" className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
             <div className="relative">
               <input
+                id="register-password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-10"
+                aria-describedby={fieldErrors.password ? 'reg-password-error' : undefined}
+                aria-invalid={fieldErrors.password ? 'true' : 'false'}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-10 ${fieldErrors.password ? 'border-red-500' : ''}`}
               />
               <button
                 type="button"
@@ -104,6 +137,22 @@ export default function Register() {
                 )}
               </button>
             </div>
+            {fieldErrors.password && <p id="reg-password-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.password}</p>}
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="register-confirm-password" className="block text-gray-700 font-semibold mb-2">{t('auth.confirmPassword', 'Confirm Password')}</label>
+            <input
+              id="register-confirm-password"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              required
+              aria-describedby={fieldErrors.confirmPassword ? 'confirm-password-error' : undefined}
+              aria-invalid={fieldErrors.confirmPassword ? 'true' : 'false'}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${fieldErrors.confirmPassword ? 'border-red-500' : ''}`}
+            />
+            {fieldErrors.confirmPassword && <p id="confirm-password-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.confirmPassword}</p>}
           </div>
 
           <button

@@ -24,20 +24,32 @@ router.get('/', async (req, res) => {
     const tenantId = req.user.current_organization_id || req.user.id;
     const { type } = req.query;
 
-    const channels = await Channel.findByTenant(tenantId, type);
+    // Optimized: Single query with JOIN instead of N+1 queries
+    let query = `
+      SELECT c.*,
+        COUNT(cm.id) as "messageCount",
+        COUNT(cm.id) FILTER (WHERE cm.direction = 'inbound') as "inboundCount",
+        COUNT(cm.id) FILTER (WHERE cm.direction = 'outbound') as "outboundCount"
+      FROM channels c
+      LEFT JOIN channel_messages cm ON c.id = cm.channel_id
+      WHERE c.tenant_id = $1
+    `;
+    const params = [tenantId];
 
-    // Add message counts
-    const channelsWithStats = await Promise.all(
-      channels.map(async (channel) => {
-        const stats = await ChannelMessage.countByChannel(channel.id);
-        return {
-          ...channel,
-          messageCount: stats.total,
-          inboundCount: stats.inbound,
-          outboundCount: stats.outbound
-        };
-      })
-    );
+    if (type) {
+      query += ` AND c.type = $2`;
+      params.push(type);
+    }
+
+    query += ` GROUP BY c.id ORDER BY c.created_at DESC`;
+
+    const result = await pool.query(query, params);
+    const channelsWithStats = result.rows.map(row => ({
+      ...row,
+      messageCount: parseInt(row.messageCount) || 0,
+      inboundCount: parseInt(row.inboundCount) || 0,
+      outboundCount: parseInt(row.outboundCount) || 0
+    }));
 
     res.json(channelsWithStats);
   } catch (error) {

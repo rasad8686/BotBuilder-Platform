@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FaRobot } from 'react-icons/fa';
+import { Bot } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <FaRobot className="text-3xl text-purple-500" />
+              <Bot className="w-8 h-8 text-purple-500" />
               <span className="text-2xl font-bold">BotBuilder</span>
             </div>
             <p className="text-gray-400">

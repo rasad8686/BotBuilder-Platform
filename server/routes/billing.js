@@ -29,7 +29,6 @@ if (!stripeSecretKey) {
 } else {
   log.info('Stripe Secret Key validated successfully', {
     keyType: stripeSecretKey.startsWith('sk_test_') ? 'TEST MODE' : 'LIVE MODE',
-    keyPrefix: stripeSecretKey.substring(0, 20),
     keyLength: stripeSecretKey.length
   });
 }

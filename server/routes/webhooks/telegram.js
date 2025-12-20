@@ -235,7 +235,6 @@ async function processBotMessage(bot, messageData) {
     };
 
   } catch (error) {
-    console.error('Error processing bot message:', error);
     return {
       text: 'An error occurred processing your message. Please try again.',
       keyboard: null

@@ -7,7 +7,7 @@ const statusColors = {
   paused: { bg: '#fff3cd', color: '#856404' }
 };
 
-const AgentCard = ({ agent, onEdit, onDelete }) => {
+const AutonomousAgentCard = ({ agent, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const status = agent.status || 'active';
   const statusStyle = statusColors[status] || statusColors.active;
@@ -308,4 +308,4 @@ const AgentCard = ({ agent, onEdit, onDelete }) => {
   );
 };
 
-export default AgentCard;
+export default AutonomousAgentCard;

@@ -115,12 +115,13 @@ router.get('/overview', async (req, res) => {
     const orgId = req.organization.id;
     const userId = req.user.id;
 
-    // Get total messages count (from bot_messages)
+    // Get total messages count (from bot_messages) - last 30 days
     const messagesResult = await db.query(
       `SELECT COUNT(*) as total
        FROM bot_messages bm
        JOIN bots b ON b.id = bm.bot_id
-       WHERE b.organization_id = $1`,
+       WHERE b.organization_id = $1
+         AND bm.created_at >= NOW() - INTERVAL '30 days'`,
       [orgId]
     );
 
@@ -132,12 +133,14 @@ router.get('/overview', async (req, res) => {
       [orgId]
     );
 
-    // Get API calls count from usage_tracking
+    // Get API calls count from usage_tracking - last 30 days
     const apiCallsResult = await db.query(
       `SELECT COUNT(*) as total
        FROM usage_tracking ut
        JOIN bots b ON b.id = ut.bot_id
-       WHERE b.organization_id = $1 AND ut.metric_type = 'api_call'`,
+       WHERE b.organization_id = $1
+         AND ut.metric_type = 'api_call'
+         AND ut.created_at >= NOW() - INTERVAL '30 days'`,
       [orgId]
     );
 
@@ -215,7 +218,7 @@ router.get('/by-bot', async (req, res) => {
   try {
     const orgId = req.organization.id;
 
-    // Get message count per bot
+    // Get message count per bot - last 30 days
     const result = await db.query(
       `SELECT
          b.id,
@@ -223,9 +226,11 @@ router.get('/by-bot', async (req, res) => {
          COUNT(bm.id) as message_count
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
+         AND bm.created_at >= NOW() - INTERVAL '30 days'
        WHERE b.organization_id = $1
        GROUP BY b.id, b.name
-       ORDER BY message_count DESC`,
+       ORDER BY message_count DESC
+       LIMIT 50`,
       [orgId]
     );
 
@@ -345,6 +350,7 @@ router.get('/top-questions', async (req, res) => {
     const orgId = req.organization.id;
     const limit = parseInt(req.query.limit) || 10;
 
+    // Last 30 days filter for performance
     const result = await db.query(
       `SELECT
          bm.content,
@@ -355,6 +361,7 @@ router.get('/top-questions', async (req, res) => {
        WHERE b.organization_id = $1
          AND bm.message_type = 'user_message'
          AND LENGTH(bm.content) > 5
+         AND bm.created_at >= NOW() - INTERVAL '30 days'
        GROUP BY bm.content
        ORDER BY count DESC
        LIMIT $2`,
@@ -386,7 +393,7 @@ router.get('/response-metrics', async (req, res) => {
   try {
     const orgId = req.organization.id;
 
-    // Get message type breakdown for success/fallback rate
+    // Get message type breakdown for success/fallback rate - last 30 days
     const typeResult = await db.query(
       `SELECT
          message_type,
@@ -395,6 +402,7 @@ router.get('/response-metrics', async (req, res) => {
        JOIN bots b ON b.id = bm.bot_id
        WHERE b.organization_id = $1
          AND bm.message_type IN ('response', 'fallback', 'greeting', 'user_message')
+         AND bm.created_at >= NOW() - INTERVAL '30 days'
        GROUP BY message_type`,
       [orgId]
     );
@@ -409,13 +417,14 @@ router.get('/response-metrics', async (req, res) => {
       ? ((typeCounts.response || 0) + (typeCounts.greeting || 0)) / totalBotResponses * 100
       : 100;
 
-    // Get unique sessions count
+    // Get unique sessions count - last 30 days
     const sessionsResult = await db.query(
       `SELECT COUNT(DISTINCT session_id) as sessions
        FROM bot_messages bm
        JOIN bots b ON b.id = bm.bot_id
        WHERE b.organization_id = $1
-         AND bm.session_id IS NOT NULL`,
+         AND bm.session_id IS NOT NULL
+         AND bm.created_at >= NOW() - INTERVAL '30 days'`,
       [orgId]
     );
 
@@ -448,6 +457,7 @@ router.get('/user-sessions', async (req, res) => {
     const orgId = req.organization.id;
     const limit = parseInt(req.query.limit) || 20;
 
+    // Last 30 days filter for performance
     const result = await db.query(
       `SELECT
          bm.session_id,
@@ -459,6 +469,7 @@ router.get('/user-sessions', async (req, res) => {
        JOIN bots b ON b.id = bm.bot_id
        WHERE b.organization_id = $1
          AND bm.session_id IS NOT NULL
+         AND bm.created_at >= NOW() - INTERVAL '30 days'
        GROUP BY bm.session_id, b.name
        ORDER BY last_activity DESC
        LIMIT $2`,

@@ -1993,5 +1993,20 @@
       "errorBreakdown": "Hata Analizi",
       "noAnalytics": "Henüz analitik verisi mevcut değil"
     }
+  },
+  "cookies": {
+    "message": "Bu web sitesi deneyiminizi geliştirmek için çerezler kullanmaktadır. Bu siteyi kullanmaya devam ederek çerez kullanımımızı kabul etmiş olursunuz.",
+    "accept": "Kabul Et",
+    "learnMore": "Daha fazla bilgi"
+  },
+  "notFound": {
+    "title": "Sayfa Bulunamadı",
+    "message": "Aradığınız sayfa mevcut değil.",
+    "button": "Ana Sayfaya Git"
+  },
+  "serverError": {
+    "title": "Sunucu Hatası",
+    "message": "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+    "button": "Tekrar Dene"
   }
 }

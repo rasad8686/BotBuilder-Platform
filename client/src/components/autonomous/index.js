@@ -1,2 +1,2 @@
-export { default as AgentCard } from './AgentCard';
+export { default as AutonomousAgentCard } from './AutonomousAgentCard';
 export { default as TaskList } from './TaskList';

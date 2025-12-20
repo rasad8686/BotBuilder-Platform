@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#1E40AF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Robot Icon (centered) -->
+  <g transform="translate(500, 140)">
+    <rect width="200" height="200" rx="40" fill="white" opacity="0.15"/>
+    <g fill="white" transform="translate(50, 50)">
+      <!-- Robot head -->
+      <rect x="0" y="30" width="100" height="80" rx="16"/>
+      <!-- Eyes -->
+      <circle cx="26" cy="66" r="12" fill="#3B82F6"/>
+      <circle cx="74" cy="66" r="12" fill="#3B82F6"/>
+      <!-- Eye highlights -->
+      <circle cx="30" cy="62" r="4" fill="white"/>
+      <circle cx="78" cy="62" r="4" fill="white"/>
+      <!-- Mouth -->
+      <rect x="20" y="86" width="60" height="8" rx="4" fill="#3B82F6"/>
+      <!-- Antenna -->
+      <rect x="44" y="6" width="12" height="24" rx="6"/>
+      <circle cx="50" cy="0" r="10"/>
+      <!-- Ears -->
+      <rect x="-20" y="54" width="20" height="32" rx="6"/>
+      <rect x="100" y="54" width="20" height="32" rx="6"/>
+    </g>
+  </g>
+
+  <!-- BotBuilder Text -->
+  <text x="600" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">
+    BotBuilder
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="480" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="white" opacity="0.9" text-anchor="middle">
+    AI Chatbot Platform
+  </text>
+
+  <!-- Decorative dots -->
+  <circle cx="100" cy="100" r="8" fill="white" opacity="0.2"/>
+  <circle cx="1100" cy="530" r="12" fill="white" opacity="0.2"/>
+  <circle cx="150" cy="500" r="6" fill="white" opacity="0.15"/>
+  <circle cx="1050" cy="150" r="10" fill="white" opacity="0.15"/>
+</svg>

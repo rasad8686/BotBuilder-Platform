@@ -73,7 +73,6 @@ router.get('/campaigns', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery campaigns list error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -100,7 +99,6 @@ router.post('/campaigns', async (req, res) => {
       campaign
     });
   } catch (error) {
-    console.error('Recovery campaign create error:', error);
     res.status(400).json({
       success: false,
       message: error.message
@@ -134,7 +132,6 @@ router.get('/campaigns/:id', async (req, res) => {
       campaign: result.rows[0]
     });
   } catch (error) {
-    console.error('Recovery campaign get error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -171,7 +168,6 @@ router.put('/campaigns/:id', async (req, res) => {
       campaign
     });
   } catch (error) {
-    console.error('Recovery campaign update error:', error);
     res.status(400).json({
       success: false,
       message: error.message
@@ -208,7 +204,6 @@ router.delete('/campaigns/:id', async (req, res) => {
       message: 'Campaign deleted successfully'
     });
   } catch (error) {
-    console.error('Recovery campaign delete error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -262,7 +257,6 @@ router.get('/carts', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery carts list error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -289,7 +283,6 @@ router.post('/carts/detect', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery cart detect error:', error);
     res.status(400).json({
       success: false,
       message: error.message
@@ -326,7 +319,6 @@ router.post('/carts/:id/recover', async (req, res) => {
       scheduled
     });
   } catch (error) {
-    console.error('Recovery cart recover error:', error);
     res.status(400).json({
       success: false,
       message: error.message
@@ -395,7 +387,6 @@ router.get('/customers/health', async (req, res) => {
       offset: parseInt(offset) || 0
     });
   } catch (error) {
-    console.error('Recovery customers health list error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -437,7 +428,6 @@ router.get('/customers/:id/health', async (req, res) => {
       health: healthScore
     });
   } catch (error) {
-    console.error('Recovery customer health get error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -464,7 +454,6 @@ router.get('/customers/at-risk', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery at-risk customers error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -511,7 +500,6 @@ router.get('/analytics/dashboard', async (req, res) => {
       ...stats
     });
   } catch (error) {
-    console.error('Recovery dashboard error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -538,7 +526,6 @@ router.get('/analytics/revenue', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery revenue analytics error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -565,7 +552,6 @@ router.get('/analytics/channels', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Recovery channels analytics error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -602,7 +588,6 @@ router.get('/analytics/report', async (req, res) => {
       report
     });
   } catch (error) {
-    console.error('Recovery report error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -674,7 +659,6 @@ router.get('/messages', async (req, res) => {
       offset: parseInt(offset) || 0
     });
   } catch (error) {
-    console.error('Recovery messages list error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -718,7 +702,6 @@ router.get('/messages/:id/stats', async (req, res) => {
       campaign_stats: campaignStats
     });
   } catch (error) {
-    console.error('Recovery message stats error:', error);
     res.status(500).json({
       success: false,
       message: error.message

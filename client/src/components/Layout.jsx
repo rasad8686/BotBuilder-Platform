@@ -5,7 +5,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Sidebar from './Sidebar';
 import DemoBanner from './DemoBanner';
 import EmailVerificationBanner from './EmailVerificationBanner';
-import Footer from './Footer';
 import { NotificationCenter } from './notifications';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -141,6 +140,9 @@ export default function Layout({ children }) {
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                aria-label="User menu"
+                aria-expanded={showUserMenu}
+                aria-haspopup="true"
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   (user?.isSuperAdmin || user?.is_superadmin)
@@ -168,7 +170,11 @@ export default function Layout({ children }) {
 
               {/* User Dropdown Menu */}
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50">
+                <div
+                  className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50"
+                  role="menu"
+                  aria-label="User menu options"
+                >
                   <button
                     onClick={() => { navigate('/settings'); setShowUserMenu(false); }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
@@ -203,7 +209,6 @@ export default function Layout({ children }) {
         </div>
 
         {children}
-        <Footer />
       </main>
     </div>
   );

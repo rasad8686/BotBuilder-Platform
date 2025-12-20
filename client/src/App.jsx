@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // Layout & Contexts (loaded immediately - needed for app structure)
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
+import CookieConsent from './components/CookieConsent';
 import { OrganizationProvider } from './contexts/OrganizationContext';
 import { BrandProvider } from './contexts/BrandContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -105,6 +107,9 @@ const RecoveryCampaigns = lazy(() => import('./pages/RecoveryCampaigns'));
 const AbandonedCarts = lazy(() => import('./pages/AbandonedCarts'));
 const CustomerHealth = lazy(() => import('./pages/CustomerHealth'));
 
+// Error Pages
+const NotFound = lazy(() => import('./pages/NotFound'));
+
 // Wrapper component for authenticated routes
 function AuthenticatedApp({ children }) {
   return <OrganizationProvider>{children}</OrganizationProvider>;
@@ -124,6 +129,7 @@ function App() {
     <ThemeProvider>
       <BrandProvider>
         <NotificationProvider>
+        <ErrorBoundary>
         <Router>
         <Routes>
           {/* Public Routes */}
@@ -232,9 +238,14 @@ function App() {
         <Route path="/recovery/campaigns" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><RecoveryCampaigns /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/recovery/carts" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><AbandonedCarts /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/recovery/customers" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><CustomerHealth /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+
+        {/* 404 Catch-all Route */}
+        <Route path="*" element={<SuspenseWrapper><NotFound /></SuspenseWrapper>} />
       </Routes>
         <ToastContainer />
         </Router>
+        <CookieConsent />
+        </ErrorBoundary>
         </NotificationProvider>
       </BrandProvider>
     </ThemeProvider>
