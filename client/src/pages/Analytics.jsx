@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axios';
+import { SkeletonDashboard } from '../components/SkeletonLoader';
 import {
   LineChart,
   Line,
@@ -143,19 +144,7 @@ function Analytics() {
   };
 
   if (loading) {
-    return (
-      <div className="p-4 sm:p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded-xl"></div>
-            ))}
-          </div>
-          <div className="h-80 bg-gray-200 rounded-xl"></div>
-        </div>
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   return (

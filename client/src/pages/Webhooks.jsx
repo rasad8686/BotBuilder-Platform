@@ -165,10 +165,25 @@ export default function Webhooks() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center transition-colors duration-300">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-4 sm:p-8 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto animate-pulse">
+          <div className="mb-8">
+            <div className="h-10 bg-gray-300 dark:bg-slate-700 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-1/2"></div>
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="h-5 bg-gray-300 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
+                    <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-2/3"></div>
+                  </div>
+                  <div className="h-8 w-20 bg-gray-300 dark:bg-slate-700 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

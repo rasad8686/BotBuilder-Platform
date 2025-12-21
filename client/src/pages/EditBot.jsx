@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import botApi from '../api/bots';
+import { SkeletonCard } from '../components/SkeletonLoader';
 
 export default function EditBot() {
   useTranslation();
@@ -205,13 +206,16 @@ export default function EditBot() {
     }
   };
 
-  // Loading state
+  // Loading state with skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center transition-colors duration-300">
-        <div className="text-center">
-          <div className="text-4xl mb-4 animate-pulse">⏳</div>
-          <div className="text-xl text-gray-600 dark:text-gray-400">Loading bot details...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 transition-colors duration-300">
+        <div className="max-w-2xl mx-auto">
+          <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded w-24 mb-6 animate-pulse" />
+          <div className="h-10 bg-gray-200 dark:bg-slate-700 rounded w-48 mb-2 animate-pulse" />
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-64 mb-8 animate-pulse" />
+          <SkeletonCard className="mb-6" />
+          <SkeletonCard />
         </div>
       </div>
     );
@@ -220,13 +224,13 @@ export default function EditBot() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 px-4 transition-colors duration-300">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <Link
-          to="/mybots"
-          className="inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium mb-4"
+        {/* Header - Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium mb-4 bg-transparent border-none cursor-pointer"
         >
-          ← Back to My Bots
-        </Link>
+          ← Back
+        </button>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">

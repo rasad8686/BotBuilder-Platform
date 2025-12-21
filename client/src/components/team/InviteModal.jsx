@@ -1,20 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function InviteModal({ roles, onClose, onInviteSent }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const modalRef = useRef(null);
+  const firstInputRef = useRef(null);
 
   const getToken = () => localStorage.getItem('token');
+
+  // Focus trap and keyboard handling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Focus first input on mount
+    if (firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !roleId) {
-      setError('Please fill in all fields');
+      setError(t('team.fillAllFields', 'Please fill in all fields'));
       return;
     }
 
@@ -42,126 +64,82 @@ export default function InviteModal({ roles, onClose, onInviteSent }) {
           onInviteSent();
         }, 1500);
       } else {
-        setError(data.error || 'Failed to send invitation');
+        setError(data.error || t('team.inviteFailed', 'Failed to send invitation'));
       }
     } catch (err) {
-      setError('Network error. Please try again.');
-      // Silent fail
+      setError(t('team.networkError', 'Network error. Please try again.'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        padding: '32px',
-        width: '100%',
-        maxWidth: '480px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-      }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white dark:bg-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="team-invite-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px'
-        }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>
-            Invite Team Member
+        <div className="flex justify-between items-center mb-6">
+          <h2 id="team-invite-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
+            {t('team.inviteTeamMember', 'Invite Team Member')}
           </h2>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#6b7280'
-            }}
+            className="text-2xl text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label={t('common.close', 'Close modal')}
           >
             &times;
           </button>
         </div>
 
         {success ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px 20px',
-            backgroundColor: '#f0fdf4',
-            borderRadius: '12px'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>✉️</div>
-            <h3 style={{ color: '#15803d', marginBottom: '8px' }}>Invitation Sent!</h3>
-            <p style={{ color: '#166534' }}>
-              An invitation has been sent to {email}
+          <div className="text-center py-10 px-5 bg-green-50 dark:bg-green-900/30 rounded-xl" role="status">
+            <div className="text-5xl mb-4">✉️</div>
+            <h3 className="text-green-700 dark:text-green-300 font-semibold mb-2">
+              {t('team.invitationSent', 'Invitation Sent!')}
+            </h3>
+            <p className="text-green-600 dark:text-green-400">
+              {t('team.invitationSentTo', 'An invitation has been sent to')} {email}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             {/* Email Input */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
-                Email Address
+            <div className="mb-5">
+              <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">
+                {t('team.emailAddress', 'Email Address')}
               </label>
               <input
+                ref={firstInputRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid #d1d5db',
-                  fontSize: '16px',
-                  boxSizing: 'border-box'
-                }}
+                className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all"
+                aria-required="true"
               />
             </div>
 
             {/* Role Select */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
-                Role
+            <div className="mb-6">
+              <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">
+                {t('team.role', 'Role')}
               </label>
               <select
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid #d1d5db',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  backgroundColor: 'white'
-                }}
+                className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 outline-none transition-all"
+                aria-required="true"
               >
-                <option value="">Select a role</option>
+                <option value="">{t('team.selectRole', 'Select a role')}</option>
                 {roles.map(role => (
                   <option key={role.id} value={role.id}>
                     {role.name}
@@ -172,54 +150,26 @@ export default function InviteModal({ roles, onClose, onInviteSent }) {
 
             {/* Error Message */}
             {error && (
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#fee2e2',
-                color: '#dc2626',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '14px'
-              }}>
+              <div className="px-4 py-3 mb-5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm" role="alert">
                 {error}
               </div>
             )}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                style={{
-                  flex: 1,
-                  padding: '12px 20px',
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  fontSize: '16px'
-                }}
+                className="flex-1 px-5 py-3 min-h-[44px] bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                style={{
-                  flex: 1,
-                  padding: '12px 20px',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  fontSize: '16px',
-                  opacity: loading ? 0.7 : 1
-                }}
+                className="flex-1 px-5 py-3 min-h-[44px] bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {loading ? 'Sending...' : 'Send Invite'}
+                {loading ? t('team.sending', 'Sending...') : t('team.sendInvite', 'Send Invite')}
               </button>
             </div>
           </form>
