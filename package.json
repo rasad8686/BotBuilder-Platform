@@ -9,7 +9,14 @@
     "migrate": "node runMigrations.js",
     "test": "jest server/__tests__ --verbose",
     "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:load": "k6 run server/load-tests/api.test.js",
+    "test:security": "snyk test && npm audit",
+    "test:mutation": "stryker run",
+    "test:contract": "jest --testPathPattern=contract",
+    "test:visual": "playwright test e2e/visual/",
+    "test:chaos": "node server/chaos/runner.js",
+    "test:all": "npm test && npm run test:contract && npm run test:visual"
   },
   "keywords": [
     "telegram",
@@ -68,6 +75,10 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "^13.1.0",
+    "@playwright/test": "^1.40.0",
+    "@stryker-mutator/core": "^8.0.0",
+    "@stryker-mutator/jest-runner": "^8.0.0",
     "jest": "^29.7.0",
     "supertest": "^7.1.4"
   }
