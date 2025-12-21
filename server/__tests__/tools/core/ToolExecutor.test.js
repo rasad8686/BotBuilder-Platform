@@ -7,7 +7,16 @@ jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
+// Mock codeSandbox for executeCode tests
+jest.mock('../../../utils/codeSandbox', () => ({
+  executeInSandbox: jest.fn().mockResolvedValue({
+    success: true,
+    result: 42
+  })
+}));
+
 const ToolExecutor = require('../../../tools/core/ToolExecutor');
+const { executeInSandbox } = require('../../../utils/codeSandbox');
 const db = require('../../../db');
 
 describe('ToolExecutor', () => {
@@ -498,7 +507,13 @@ describe('ToolExecutor', () => {
   });
 
   describe('executeCode', () => {
+    beforeEach(() => {
+      executeInSandbox.mockClear();
+    });
+
     it('should execute code and return result', async () => {
+      executeInSandbox.mockResolvedValueOnce({ success: true, result: 5 });
+
       const tool = {
         configuration: {
           code: 'return input.a + input.b;',
@@ -509,9 +524,12 @@ describe('ToolExecutor', () => {
       const result = await executor.executeCode(tool, { a: 2, b: 3 }, {});
 
       expect(result).toBe(5);
+      expect(executeInSandbox).toHaveBeenCalled();
     });
 
     it('should have access to context', async () => {
+      executeInSandbox.mockResolvedValueOnce({ success: true, result: 123 });
+
       const tool = {
         configuration: {
           code: 'return context.userId;',
@@ -525,8 +543,8 @@ describe('ToolExecutor', () => {
     });
 
     it('should handle timeout scenario', async () => {
-      // Note: Testing actual timeout with infinite loop is problematic
-      // We test the timeout mechanism exists by verifying the code path
+      executeInSandbox.mockResolvedValueOnce({ success: true, result: 'quick execution' });
+
       const tool = {
         configuration: {
           code: 'return "quick execution";',
@@ -540,6 +558,8 @@ describe('ToolExecutor', () => {
     });
 
     it('should use default timeout of 5000ms', async () => {
+      executeInSandbox.mockResolvedValueOnce({ success: true, result: 42 });
+
       const tool = {
         configuration: {
           code: 'return 42;'

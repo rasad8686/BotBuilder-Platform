@@ -3,11 +3,10 @@
  * Tests for server/routes/voice.js
  */
 
-// Mock database
-const mockDb = {
+// Mock database - must be defined before jest.mock calls
+jest.mock('../../db', () => ({
   query: jest.fn()
-};
-jest.mock('../../db', () => mockDb);
+}));
 
 // Mock logger
 jest.mock('../../utils/logger', () => ({
@@ -17,97 +16,104 @@ jest.mock('../../utils/logger', () => ({
   warn: jest.fn()
 }));
 
-// Mock voice services
-const mockLanguageSupport = {
-  getSupportedLanguages: jest.fn().mockReturnValue([
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'az', name: 'Azerbaijani', nativeName: 'Azərbaycan dili' },
-    { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
-    { code: 'ru', name: 'Russian', nativeName: 'Русский' }
-  ]),
-  getLanguageInfo: jest.fn().mockReturnValue({ code: 'en', name: 'English' }),
-  getSTTCode: jest.fn().mockReturnValue('en-US'),
-  detectLanguage: jest.fn().mockReturnValue({ language: 'en', confidence: 0.9 })
-};
+// Mock auth middleware
+jest.mock('../../middleware/auth', () => jest.fn((req, res, next) => next()));
 
-const mockVoiceAnalytics = {
-  getStats: jest.fn().mockResolvedValue({
-    summary: { totalTranscriptions: 100 },
-    byProvider: [],
-    byLanguage: [],
-    dailyTrend: []
-  }),
-  getRealTimeMetrics: jest.fn().mockReturnValue({
-    totalTranscriptions: 100,
-    successRate: '95%'
-  })
-};
+// Mock voice services - define mocks inside the factory function
+jest.mock('../../services/voice', () => {
+  const mockLanguageSupport = {
+    getSupportedLanguages: jest.fn().mockReturnValue([
+      { code: 'en', name: 'English', nativeName: 'English' },
+      { code: 'az', name: 'Azerbaijani', nativeName: 'Azərbaycan dili' },
+      { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
+      { code: 'ru', name: 'Russian', nativeName: 'Русский' }
+    ]),
+    getLanguageInfo: jest.fn().mockReturnValue({ code: 'en', name: 'English' }),
+    getSTTCode: jest.fn().mockReturnValue('en-US'),
+    detectLanguage: jest.fn().mockReturnValue({ language: 'en', confidence: 0.9 })
+  };
 
-const mockVoiceStorage = {
-  store: jest.fn().mockResolvedValue({ success: true, filename: 'test.wav', size: 1024 }),
-  retrieve: jest.fn().mockResolvedValue({ buffer: Buffer.from('audio'), contentType: 'audio/wav' }),
-  delete: jest.fn().mockResolvedValue(true),
-  list: jest.fn().mockResolvedValue([]),
-  getSignedUrl: jest.fn().mockResolvedValue('http://example.com/file'),
-  getStorageStats: jest.fn().mockResolvedValue({ totalFiles: 10, totalSize: 10240 })
-};
+  const mockVoiceAnalytics = {
+    getStats: jest.fn().mockResolvedValue({
+      summary: { totalTranscriptions: 100 },
+      byProvider: [],
+      byLanguage: [],
+      dailyTrend: []
+    }),
+    getRealTimeMetrics: jest.fn().mockReturnValue({
+      totalTranscriptions: 100,
+      successRate: '95%'
+    })
+  };
 
-const mockFormatConverter = {
-  convert: jest.fn().mockResolvedValue({ success: true, buffer: Buffer.from('converted'), format: 'wav' }),
-  getSupportedFormats: jest.fn().mockReturnValue({ input: ['mp3', 'wav'], output: ['mp3', 'wav'] }),
-  getPresets: jest.fn().mockReturnValue([{ name: 'speech', sampleRate: 16000 }]),
-  isAvailable: jest.fn().mockResolvedValue(true)
-};
+  const mockVoiceStorage = {
+    store: jest.fn().mockResolvedValue({ success: true, filename: 'test.wav', size: 1024 }),
+    retrieve: jest.fn().mockResolvedValue({ buffer: Buffer.from('audio'), contentType: 'audio/wav' }),
+    delete: jest.fn().mockResolvedValue(true),
+    list: jest.fn().mockResolvedValue([]),
+    getSignedUrl: jest.fn().mockResolvedValue('http://example.com/file'),
+    getStorageStats: jest.fn().mockResolvedValue({ totalFiles: 10, totalSize: 10240 })
+  };
 
-const mockVoiceQueue = {
-  addJob: jest.fn().mockResolvedValue({ id: 'job-1', status: 'pending', provider: 'whisper', priority: 2, createdAt: new Date() }),
-  getJob: jest.fn(),
-  getStats: jest.fn().mockReturnValue({ queueLength: 0, processing: false })
-};
+  const mockFormatConverter = {
+    convert: jest.fn().mockResolvedValue({ success: true, buffer: Buffer.from('converted'), format: 'wav' }),
+    getSupportedFormats: jest.fn().mockReturnValue({ input: ['mp3', 'wav'], output: ['mp3', 'wav'] }),
+    getPresets: jest.fn().mockReturnValue([{ name: 'speech', sampleRate: 16000 }]),
+    isAvailable: jest.fn().mockResolvedValue(true)
+  };
 
-const mockStreamingTranscription = {
-  createSession: jest.fn().mockReturnValue({ sessionId: 'session-1', provider: 'deepgram' }),
-  startSession: jest.fn().mockResolvedValue({ sessionId: 'session-1', status: 'connected' }),
-  sendAudio: jest.fn(),
-  endSession: jest.fn().mockResolvedValue({ sessionId: 'session-1', transcript: 'Test', duration: 10 }),
-  getSessionStatus: jest.fn().mockReturnValue({ status: 'connected' }),
-  getActiveSessions: jest.fn().mockReturnValue([])
-};
+  const mockVoiceQueue = {
+    addJob: jest.fn().mockResolvedValue({ id: 'job-1', status: 'pending', provider: 'whisper', priority: 2, createdAt: new Date() }),
+    getJob: jest.fn(),
+    getStats: jest.fn().mockReturnValue({ queueLength: 0, processing: false })
+  };
 
-jest.mock('../../services/voice', () => ({
-  TwilioService: jest.fn().mockImplementation(() => ({
-    isConfigured: jest.fn().mockReturnValue(true),
-    searchAvailableNumbers: jest.fn().mockResolvedValue({ success: true, numbers: [] }),
-    purchaseNumber: jest.fn().mockResolvedValue({ success: true, number: { sid: 'PN123', phoneNumber: '+1234567890' } }),
-    releaseNumber: jest.fn().mockResolvedValue(true),
-    makeCall: jest.fn().mockResolvedValue({ success: true, call: { sid: 'CA123' } }),
-    generateTwiML: jest.fn().mockReturnValue('<Response></Response>')
-  })),
-  SpeechToText: jest.fn().mockImplementation(() => ({
-    transcribe: jest.fn().mockResolvedValue({ success: true, text: 'Test transcription' })
-  })),
-  TextToSpeech: jest.fn().mockImplementation(() => ({
-    getVoices: jest.fn().mockResolvedValue({ success: true, voices: [] }),
-    synthesize: jest.fn().mockResolvedValue({ success: true, audio: Buffer.from('audio'), contentType: 'audio/mpeg' })
-  })),
-  VoiceQueue: mockVoiceQueue,
-  LanguageSupport: mockLanguageSupport,
-  VoiceAnalytics: mockVoiceAnalytics,
-  VoiceStorage: mockVoiceStorage,
-  FormatConverter: mockFormatConverter,
-  StreamingTranscription: mockStreamingTranscription
-}));
+  const mockStreamingTranscription = {
+    createSession: jest.fn().mockReturnValue({ sessionId: 'session-1', provider: 'deepgram' }),
+    startSession: jest.fn().mockResolvedValue({ sessionId: 'session-1', status: 'connected' }),
+    sendAudio: jest.fn(),
+    endSession: jest.fn().mockResolvedValue({ sessionId: 'session-1', transcript: 'Test', duration: 10 }),
+    getSessionStatus: jest.fn().mockReturnValue({ status: 'connected' }),
+    getActiveSessions: jest.fn().mockReturnValue([])
+  };
+
+  return {
+    TwilioService: jest.fn().mockImplementation(() => ({
+      isConfigured: jest.fn().mockReturnValue(true),
+      searchAvailableNumbers: jest.fn().mockResolvedValue({ success: true, numbers: [] }),
+      purchaseNumber: jest.fn().mockResolvedValue({ success: true, number: { sid: 'PN123', phoneNumber: '+1234567890' } }),
+      releaseNumber: jest.fn().mockResolvedValue(true),
+      makeCall: jest.fn().mockResolvedValue({ success: true, call: { sid: 'CA123' } }),
+      generateTwiML: jest.fn().mockReturnValue('<Response></Response>')
+    })),
+    SpeechToText: jest.fn().mockImplementation(() => ({
+      transcribe: jest.fn().mockResolvedValue({ success: true, text: 'Test transcription' })
+    })),
+    TextToSpeech: jest.fn().mockImplementation(() => ({
+      getVoices: jest.fn().mockResolvedValue({ success: true, voices: [] }),
+      synthesize: jest.fn().mockResolvedValue({ success: true, audio: Buffer.from('audio'), contentType: 'audio/mpeg' })
+    })),
+    VoiceQueue: mockVoiceQueue,
+    LanguageSupport: mockLanguageSupport,
+    VoiceAnalytics: mockVoiceAnalytics,
+    VoiceStorage: mockVoiceStorage,
+    FormatConverter: mockFormatConverter,
+    StreamingTranscription: mockStreamingTranscription
+  };
+});
 
 const express = require('express');
 const request = require('supertest');
 const voiceRoutes = require('../../routes/voice');
-const db = mockDb;
-const LanguageSupport = mockLanguageSupport;
-const VoiceAnalytics = mockVoiceAnalytics;
-const VoiceStorage = mockVoiceStorage;
-const FormatConverter = mockFormatConverter;
-const VoiceQueue = mockVoiceQueue;
-const StreamingTranscription = mockStreamingTranscription;
+const db = require('../../db');
+const {
+  LanguageSupport,
+  VoiceAnalytics,
+  VoiceStorage,
+  FormatConverter,
+  VoiceQueue,
+  StreamingTranscription
+} = require('../../services/voice');
 
 // Create test app
 const app = express();

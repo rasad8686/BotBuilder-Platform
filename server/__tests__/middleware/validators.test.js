@@ -51,7 +51,8 @@ describe('Validators Middleware', () => {
         mockReq.body = {
           username: 'testuser',
           email: 'test@example.com',
-          password: 'password123'
+          // Password must have: min 8 chars, 1 uppercase, 1 lowercase, 1 number
+          password: 'Password123'
         };
 
         const middleware = validate('register');

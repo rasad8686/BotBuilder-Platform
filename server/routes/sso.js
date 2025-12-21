@@ -19,15 +19,27 @@ const jwt = require('jsonwebtoken');
 // Store for SSO session state (in production, use Redis)
 const ssoStateStore = new Map();
 
-// Cleanup old states every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of ssoStateStore.entries()) {
-    if (now - value.timestamp > 10 * 60 * 1000) {
-      ssoStateStore.delete(key);
+// Cleanup old states every 10 minutes (skip in test environment)
+let cleanupInterval = null;
+if (process.env.NODE_ENV !== 'test') {
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of ssoStateStore.entries()) {
+      if (now - value.timestamp > 10 * 60 * 1000) {
+        ssoStateStore.delete(key);
+      }
     }
+  }, 10 * 60 * 1000);
+}
+
+// Cleanup function for tests
+const cleanup = () => {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
   }
-}, 10 * 60 * 1000);
+  ssoStateStore.clear();
+};
 
 // Helper function to verify config ownership
 async function verifyConfigOwnership(configId, orgId) {
@@ -1105,4 +1117,6 @@ function generateUserToken(user) {
   });
 }
 
+// Export router and cleanup function
+router.cleanup = cleanup;
 module.exports = router;

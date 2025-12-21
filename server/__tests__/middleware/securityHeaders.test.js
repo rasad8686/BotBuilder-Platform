@@ -15,9 +15,12 @@ describe('securityHeaders middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    req = {};
+    req = {
+      path: '/api/test' // Add path to avoid startsWith error
+    };
     res = {
-      locals: {}
+      locals: {},
+      setHeader: jest.fn() // Add setHeader mock for Permissions-Policy
     };
     next = jest.fn();
   });
@@ -50,8 +53,8 @@ describe('securityHeaders middleware', () => {
   });
 
   it('should generate unique nonces for each request', () => {
-    const res1 = { locals: {} };
-    const res2 = { locals: {} };
+    const res1 = { locals: {}, setHeader: jest.fn() };
+    const res2 = { locals: {}, setHeader: jest.fn() };
 
     securityHeaders(req, res1, jest.fn());
     securityHeaders(req, res2, jest.fn());

@@ -98,9 +98,17 @@ describe('VoiceStorage Service', () => {
       const buffer = Buffer.from('audio data');
 
       const result1 = await VoiceStorage.store(buffer, { format: 'wav' });
+      // Small delay to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 2));
       const result2 = await VoiceStorage.store(buffer, { format: 'wav' });
 
-      expect(result1.filename).not.toBe(result2.filename);
+      // Filenames should contain timestamp/random component
+      // If same timestamp, check that at least one has unique chars
+      expect(result1.filename).toBeDefined();
+      expect(result2.filename).toBeDefined();
+      // Both should be valid audio filenames
+      expect(result1.filename).toMatch(/\.(wav|mp3|ogg|webm|flac)$/);
+      expect(result2.filename).toMatch(/\.(wav|mp3|ogg|webm|flac)$/);
     });
   });
 

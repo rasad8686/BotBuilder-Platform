@@ -10,8 +10,12 @@ jest.mock('../../utils/logger', () => ({
   warn: jest.fn(),
   debug: jest.fn()
 }));
+jest.mock('../../utils/cookieHelper', () => ({
+  getAuthToken: jest.fn(() => null)
+}));
 
 const jwt = require('jsonwebtoken');
+const { getAuthToken } = require('../../utils/cookieHelper');
 const authenticateToken = require('../../middleware/auth');
 
 describe('Auth Middleware', () => {

@@ -19,7 +19,13 @@ describe('HttpTool', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     httpTool = new HttpTool();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   describe('constructor', () => {
@@ -289,7 +295,12 @@ describe('HttpTool', () => {
           json: jest.fn().mockResolvedValue({ data: 'success' })
         });
 
-      const result = await tool.executeWithRetry('https://api.example.com', {});
+      const resultPromise = tool.executeWithRetry('https://api.example.com', {});
+
+      // Flush all pending timers
+      await jest.runAllTimersAsync();
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(true);
       expect(result.attempt).toBe(3);
@@ -301,19 +312,41 @@ describe('HttpTool', () => {
 
       global.fetch.mockRejectedValue(new Error('Network error'));
 
-      await expect(
-        tool.executeWithRetry('https://api.example.com', {})
-      ).rejects.toThrow('HTTP request failed after 2 attempts');
+      // Create a wrapper that handles the async flow with timers
+      let caughtError = null;
+
+      const executeAndCatch = async () => {
+        try {
+          await tool.executeWithRetry('https://api.example.com', {});
+        } catch (err) {
+          caughtError = err;
+        }
+      };
+
+      // Start execution
+      const execPromise = executeAndCatch();
+
+      // Advance all timers
+      await jest.runAllTimersAsync();
+
+      // Wait for execution to complete
+      await execPromise;
+
+      // Verify error was caught
+      expect(caughtError).not.toBeNull();
+      expect(caughtError.message).toContain('HTTP request failed after 2 attempts');
     });
   });
 
   describe('delay', () => {
     it('should delay for specified time', async () => {
-      const start = Date.now();
-      await httpTool.delay(50);
-      const elapsed = Date.now() - start;
+      const delayPromise = httpTool.delay(50);
 
-      expect(elapsed).toBeGreaterThanOrEqual(45);
+      // Advance timers by 50ms
+      jest.advanceTimersByTime(50);
+
+      // Delay should resolve
+      await expect(delayPromise).resolves.toBeUndefined();
     });
   });
 

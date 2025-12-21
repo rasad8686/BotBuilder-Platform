@@ -269,7 +269,8 @@ describe('Billing Controller', () => {
       db.query
         .mockResolvedValueOnce({ rows: [{ plan_tier: 'pro' }] }) // Plan
         .mockResolvedValueOnce({ rows: [{ count: '5' }] }) // Bots
-        .mockResolvedValueOnce({ rows: [{ count: '1000' }] }); // Messages
+        .mockResolvedValueOnce({ rows: [{ count: '1000' }] }) // Messages
+        .mockResolvedValueOnce({ rows: [{ count: '100' }] }); // API calls
 
       await getUsage(mockReq, mockRes);
 
@@ -393,7 +394,8 @@ describe('Billing Controller', () => {
       db.query
         .mockResolvedValueOnce({ rows: [{ plan_tier: 'enterprise' }] })
         .mockResolvedValueOnce({ rows: [{ count: '100' }] })
-        .mockResolvedValueOnce({ rows: [{ count: '50000' }] });
+        .mockResolvedValueOnce({ rows: [{ count: '50000' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '1000' }] }); // API calls
 
       await getUsage(mockReq, mockRes);
 
@@ -410,7 +412,8 @@ describe('Billing Controller', () => {
       db.query
         .mockResolvedValueOnce({ rows: [{ plan_tier: 'free' }] })
         .mockResolvedValueOnce({ rows: [{ count: '1' }] })
-        .mockResolvedValueOnce({ rows: [{ count: '500' }] });
+        .mockResolvedValueOnce({ rows: [{ count: '500' }] })
+        .mockResolvedValueOnce({ rows: [{ count: '10' }] }); // API calls
 
       await getUsage(mockReq, mockRes);
 

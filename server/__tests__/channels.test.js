@@ -93,11 +93,13 @@ describe('Channels API - Real Routes', () => {
   // ========================================
   describe('GET /api/channels', () => {
     it('should return all channels for tenant', async () => {
-      const mockChannels = [
-        { id: 1, type: 'whatsapp', name: 'WhatsApp 1' },
-        { id: 2, type: 'instagram', name: 'Instagram 1' }
-      ];
-      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
+      // Route uses db.query directly with JOIN
+      db.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, type: 'whatsapp', name: 'WhatsApp 1', messageCount: '100', inboundCount: '60', outboundCount: '40' },
+          { id: 2, type: 'instagram', name: 'Instagram 1', messageCount: '50', inboundCount: '30', outboundCount: '20' }
+        ]
+      });
 
       const res = await request(app).get('/api/channels');
 
@@ -107,17 +109,18 @@ describe('Channels API - Real Routes', () => {
     });
 
     it('should filter by type', async () => {
-      const mockChannels = [{ id: 1, type: 'whatsapp', name: 'WhatsApp 1' }];
-      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, type: 'whatsapp', name: 'WhatsApp 1', messageCount: '100', inboundCount: '60', outboundCount: '40' }]
+      });
 
       const res = await request(app).get('/api/channels?type=whatsapp');
 
       expect(res.status).toBe(200);
-      expect(Channel.findByTenant).toHaveBeenCalledWith(1, 'whatsapp');
+      expect(db.query).toHaveBeenCalled();
     });
 
     it('should return empty array if no channels', async () => {
-      Channel.findByTenant.mockResolvedValueOnce([]);
+      db.query.mockResolvedValueOnce({ rows: [] });
 
       const res = await request(app).get('/api/channels');
 
@@ -126,7 +129,7 @@ describe('Channels API - Real Routes', () => {
     });
 
     it('should handle database error', async () => {
-      Channel.findByTenant.mockRejectedValueOnce(new Error('Database error'));
+      db.query.mockRejectedValueOnce(new Error('Database error'));
 
       const res = await request(app).get('/api/channels');
 
@@ -433,9 +436,10 @@ describe('Channels Edge Cases', () => {
 
   describe('Message Stats', () => {
     it('should include message stats in channel list', async () => {
-      const mockChannels = [{ id: 1, type: 'whatsapp', name: 'WhatsApp' }];
-      Channel.findByTenant.mockResolvedValueOnce(mockChannels);
-      ChannelMessage.countByChannel.mockResolvedValueOnce({ total: 50, inbound: 30, outbound: 20 });
+      // Route uses db.query directly with JOIN
+      db.query.mockResolvedValueOnce({
+        rows: [{ id: 1, type: 'whatsapp', name: 'WhatsApp', messageCount: '50', inboundCount: '30', outboundCount: '20' }]
+      });
 
       const res = await request(app).get('/api/channels');
 
