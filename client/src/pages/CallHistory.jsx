@@ -123,7 +123,7 @@ const CallHistory = () => {
             </p>
           </div>
           <button
-            onClick={() => navigate('/voice-bots')}
+            onClick={() => navigate(-1)}
             style={{
               padding: '12px 24px',
               background: '#e3f2fd',
@@ -135,7 +135,7 @@ const CallHistory = () => {
               cursor: 'pointer'
             }}
           >
-            ← {t('voice.backToBots', 'Back to Voice Bots')}
+            ← {t('voice.back', 'Back')}
           </button>
         </div>
 

@@ -361,11 +361,20 @@ router.get('/:id/members', organizationContext, requireOrganization, async (req,
 
     const result = await db.query(query, [orgId]);
 
-    log.debug('Fetched organization members', { orgId, count: result.rows.length });
+    // Mark owner with 'owner' role
+    const orgResult = await db.query('SELECT owner_id FROM organizations WHERE id = $1', [orgId]);
+    const ownerId = orgResult.rows[0]?.owner_id;
+
+    const members = result.rows.map(member => ({
+      ...member,
+      role: member.user_id === ownerId ? 'owner' : member.role
+    }));
+
+    log.debug('Fetched organization members', { orgId, count: members.length });
 
     return res.status(200).json({
       success: true,
-      members: result.rows  // Changed from 'data' to 'members' to match frontend expectation
+      members: members
     });
   } catch (error) {
     log.error('List members error', { error: error.message });
@@ -388,6 +397,15 @@ router.post('/:id/members', organizationContext, requireOrganization, checkPermi
     const { email, role } = req.body;
     const inviterId = req.user.id;
 
+    log.info('POST /organizations/:id/members called', {
+      orgId,
+      email,
+      role,
+      body: JSON.stringify(req.body),
+      contentType: req.headers['content-type'],
+      userId: req.user?.id
+    });
+
     // Verify access
     if (req.organization.id != orgId) {
       return res.status(403).json({
@@ -398,6 +416,7 @@ router.post('/:id/members', organizationContext, requireOrganization, checkPermi
 
     // Validation
     if (!email || !role) {
+      log.info('VALIDATION FAILED: Missing email or role', { email, role, body: JSON.stringify(req.body) });
       return res.status(400).json({
         success: false,
         message: 'Email and role are required'

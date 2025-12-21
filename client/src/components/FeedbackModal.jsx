@@ -142,13 +142,16 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
       {/* Modal */}
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scaleIn"
+        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="feedback-modal-title"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 id="feedback-modal-title" className="text-2xl font-bold text-white flex items-center gap-2">
               <span>💬</span>
               <span>{t('feedback.title', 'Send Feedback')}</span>
             </h2>
@@ -169,14 +172,14 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
         {/* Success Message */}
         {success && (
-          <div className="m-6 p-4 bg-green-50 border border-green-200 rounded-lg animate-slideDown">
+          <div className="m-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg animate-slideDown" role="status">
             <div className="flex items-center gap-3">
               <span className="text-2xl">✅</span>
               <div>
-                <h3 className="font-semibold text-green-800">
+                <h3 className="font-semibold text-green-800 dark:text-green-300">
                   {t('feedback.success.title', 'Thank you!')}
                 </h3>
-                <p className="text-green-700 text-sm">
+                <p className="text-green-700 dark:text-green-400 text-sm">
                   {t('feedback.success.message', 'Your feedback has been submitted successfully.')}
                 </p>
               </div>
@@ -188,12 +191,12 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         {!success && (
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             {/* User Info Display */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <span className="font-semibold">From:</span>
                 <span>{userName}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <span className="font-semibold">Email:</span>
                 <span>{userEmail}</span>
               </div>
@@ -201,7 +204,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
             {/* Category Selection */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 {t('feedback.fields.category', 'Category')} <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -210,11 +213,12 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
                     key={cat.value}
                     type="button"
                     onClick={() => setCategory(cat.value)}
-                    className={`p-3 rounded-lg border-2 text-left font-medium transition-all ${
+                    className={`p-3 rounded-lg border-2 text-left font-medium transition-all min-h-[44px] ${
                       category === cat.value
-                        ? 'border-purple-600 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-300 text-gray-700'
+                        ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                        : 'border-gray-200 dark:border-slate-600 hover:border-purple-300 text-gray-700 dark:text-gray-300'
                     }`}
+                    aria-pressed={category === cat.value}
                   >
                     <span className="mr-2">{cat.emoji}</span>
                     <span className="text-sm">{cat.label.replace(/^[^\s]+\s/, '')}</span>
@@ -225,7 +229,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
             {/* Message */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 {t('feedback.fields.message', 'Message')} <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -233,14 +237,15 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={t('feedback.fields.messagePlaceholder', 'Tell us what\'s on your mind...')}
                 rows={6}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none transition-all resize-none"
+                className="w-full px-4 py-3 border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:border-purple-600 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 outline-none transition-all resize-none"
                 maxLength={5000}
+                aria-describedby="message-hint"
               />
-              <div className="flex justify-between items-center mt-1">
-                <p className="text-xs text-gray-500">
+              <div id="message-hint" className="flex justify-between items-center mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {t('feedback.fields.minChars', 'Minimum 10 characters')}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {message.length} / 5000
                 </p>
               </div>
@@ -248,7 +253,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm flex items-start gap-2" role="alert">
                 <span className="text-lg">⚠️</span>
                 <span>{error}</span>
               </div>
@@ -259,7 +264,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-colors"
+                className="flex-1 px-6 py-3 min-h-[44px] border-2 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 font-semibold transition-colors"
                 disabled={loading}
               >
                 {t('feedback.buttons.cancel', 'Cancel')}
@@ -267,7 +272,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
               <button
                 type="submit"
                 disabled={loading || !category || !message.trim()}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 min-h-[44px] bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

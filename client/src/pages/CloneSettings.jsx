@@ -152,7 +152,7 @@ const CloneSettings = () => {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => navigate('/work-clone')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#667eea' }}>
+          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#667eea' }}>
             ←
           </button>
           <div>

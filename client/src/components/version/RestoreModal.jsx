@@ -1,13 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function RestoreModal({ entityType, entityId, version, onClose, onRestored }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [commitMessage, setCommitMessage] = useState(`Restored to version ${version.version_number}`);
+  const inputRef = useRef(null);
 
   const token = localStorage.getItem('token');
+
+  // Focus and keyboard handling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -41,101 +61,61 @@ export default function RestoreModal({ entityType, entityId, version, onClose, o
         onRestored();
       } else {
         const data = await res.json();
-        setError(data.error || 'Failed to restore version');
+        setError(data.error || t('version.restoreFailed', 'Failed to restore version'));
       }
     } catch (err) {
-      setError('Network error. Please try again.');
-      // Silent fail
+      setError(t('common.networkError', 'Network error. Please try again.'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        padding: '32px',
-        width: '100%',
-        maxWidth: '500px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-      }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-800 rounded-2xl p-8 w-full max-w-lg shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="restore-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '24px'
-        }}>
+        <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
-              Restore Version
+            <h2 id="restore-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
+              {t('version.restoreVersion', 'Restore Version')}
             </h2>
-            <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>
-              This will create a new version with the content from version {version.version_number}
+            <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">
+              {t('version.restoreDescription', 'This will create a new version with the content from version')} {version.version_number}
             </p>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: '#6b7280'
-            }}
+            className="text-2xl text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label={t('common.close', 'Close modal')}
           >
             &times;
           </button>
         </div>
 
         {/* Version Preview */}
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#f9fafb',
-          borderRadius: '12px',
-          marginBottom: '24px'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '12px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <div style={{ fontSize: '10px', opacity: 0.8 }}>v</div>
-              <div style={{ fontSize: '20px', fontWeight: '700' }}>{version.version_number}</div>
+        <div className="p-5 bg-gray-50 dark:bg-slate-700 rounded-xl mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-xl bg-amber-500 text-white flex flex-col items-center justify-center flex-shrink-0">
+              <div className="text-xs opacity-80">v</div>
+              <div className="text-xl font-bold">{version.version_number}</div>
             </div>
             <div>
-              <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+              <div className="font-semibold text-gray-900 dark:text-white mb-1">
                 {version.commit_message || `Version ${version.version_number}`}
               </div>
-              <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                by <strong>{version.created_by_name || 'Unknown'}</strong>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {t('version.by', 'by')} <strong>{version.created_by_name || 'Unknown'}</strong>
               </div>
-              <div style={{ fontSize: '13px', color: '#9ca3af' }}>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {formatDate(version.created_at)}
               </div>
             </div>
@@ -144,26 +124,11 @@ export default function RestoreModal({ entityType, entityId, version, onClose, o
 
         {/* Data Preview */}
         {version.data && (
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#374151',
-              fontSize: '14px'
-            }}>
-              Version Data Preview
+          <div className="mb-6">
+            <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200 text-sm">
+              {t('version.dataPreview', 'Version Data Preview')}
             </label>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#f3f4f6',
-              borderRadius: '8px',
-              maxHeight: '150px',
-              overflow: 'auto',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              color: '#4b5563'
-            }}>
+            <div className="p-3 bg-gray-100 dark:bg-slate-900 rounded-lg max-h-36 overflow-auto font-mono text-xs text-gray-600 dark:text-gray-300">
               {JSON.stringify(version.data, null, 2).slice(0, 500)}
               {JSON.stringify(version.data).length > 500 && '...'}
             </div>
@@ -171,96 +136,48 @@ export default function RestoreModal({ entityType, entityId, version, onClose, o
         )}
 
         {/* Commit Message */}
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#374151'
-          }}>
-            Commit Message
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-gray-700 dark:text-gray-200">
+            {t('version.commitMessage', 'Commit Message')}
           </label>
           <input
+            ref={inputRef}
             type="text"
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid #d1d5db',
-              fontSize: '14px',
-              boxSizing: 'border-box'
-            }}
+            className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800 outline-none transition-all text-sm"
           />
         </div>
 
         {/* Warning */}
-        <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#fef3c7',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px'
-        }}>
-          <span style={{ fontSize: '20px' }}>⚠️</span>
-          <div style={{ fontSize: '14px', color: '#92400e' }}>
-            <strong>Important:</strong> Restoring will not delete any versions.
-            A new version will be created with the restored content.
+        <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg mb-6 flex items-start gap-3">
+          <span className="text-xl">⚠️</span>
+          <div className="text-sm text-amber-800 dark:text-amber-200">
+            <strong>{t('common.important', 'Important')}:</strong> {t('version.restoreWarning', 'Restoring will not delete any versions. A new version will be created with the restored content.')}
           </div>
         </div>
 
         {/* Error */}
         {error && (
-          <div style={{
-            padding: '12px 16px',
-            backgroundColor: '#fee2e2',
-            color: '#dc2626',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px'
-          }}>
+          <div className="px-4 py-3 mb-5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-lg text-sm" role="alert">
             {error}
           </div>
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="flex gap-3">
           <button
             onClick={onClose}
-            style={{
-              flex: 1,
-              padding: '12px 20px',
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              fontSize: '16px'
-            }}
+            className="flex-1 px-5 py-3 min-h-[44px] bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleRestore}
             disabled={loading}
-            style={{
-              flex: 1,
-              padding: '12px 20px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontWeight: '500',
-              fontSize: '16px',
-              opacity: loading ? 0.7 : 1
-            }}
+            className="flex-1 px-5 py-3 min-h-[44px] bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? 'Restoring...' : 'Restore Version'}
+            {loading ? t('version.restoring', 'Restoring...') : t('version.restoreVersion', 'Restore Version')}
           </button>
         </div>
       </div>

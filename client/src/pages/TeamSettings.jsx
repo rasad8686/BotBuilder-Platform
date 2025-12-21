@@ -4,6 +4,7 @@ import MemberList from '../components/team/MemberList';
 import InviteModal from '../components/team/InviteModal';
 import RoleEditor from '../components/team/RoleEditor';
 import ActivityLog from '../components/team/ActivityLog';
+import { SkeletonCard, SkeletonTable } from '../components/SkeletonLoader';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -71,6 +72,23 @@ export default function TeamSettings() {
     { id: 'roles', label: t('team.roles'), icon: '🔐' },
     { id: 'activity', label: t('team.activity'), icon: '📋' }
   ];
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 dark:bg-slate-700 rounded w-48 mb-2 animate-pulse" />
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-64 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[1, 2, 3, 4].map(i => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <SkeletonTable rows={5} cols={4} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">

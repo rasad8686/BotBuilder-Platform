@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,17 @@ export default function OrganizationSwitcher() {
   } = useOrganization();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+
+  // ESC key handler to close dropdown
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isOpen]);
 
   // Don't render if not authenticated
   if (!isAuthenticated) {
@@ -68,16 +79,19 @@ export default function OrganizationSwitcher() {
       {/* Current Organization Display */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label={`Current organization: ${currentOrganization.name}. Click to switch organizations`}
         className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg hover:from-purple-100 hover:to-blue-100 transition-all duration-200 border border-purple-200"
       >
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-2">
             <span className="text-lg">🏢</span>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-gray-900 truncate">
+              <div className="text-sm font-bold text-gray-900 truncate" title={currentOrganization.name}>
                 {currentOrganization.name}
               </div>
-              <div className="text-xs text-gray-600 truncate">
+              <div className="text-xs text-gray-600 truncate" title={currentOrganization.slug}>
                 {currentOrganization.slug}
               </div>
             </div>
@@ -105,10 +119,10 @@ export default function OrganizationSwitcher() {
           />
 
           {/* Dropdown */}
-          <div className="absolute left-4 right-4 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-20 max-h-96 overflow-y-auto">
+          <div className="absolute left-4 right-4 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 py-2 z-20 max-h-96 overflow-y-auto" role="menu">
             {/* Organizations List */}
             <div className="px-2 py-1">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 py-2">
                 Your Organizations
               </div>
               {organizations.map((org) => (
@@ -120,20 +134,21 @@ export default function OrganizationSwitcher() {
                     }
                     setIsOpen(false);
                   }}
+                  role="menuitem"
                   className={`
                     w-full px-3 py-2 rounded-lg text-left flex items-center justify-between
                     transition-colors duration-150
                     ${org.id === currentOrganization.id
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'hover:bg-gray-100 text-gray-700'
+                      ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                      : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300'
                     }
                   `}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="text-base">🏢</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{org.name}</div>
-                      <div className="text-xs text-gray-500 truncate">{org.slug}</div>
+                      <div className="font-medium text-sm truncate dark:text-gray-200" title={org.name}>{org.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={org.slug}>{org.slug}</div>
                     </div>
                   </div>
                   <span
@@ -146,7 +161,7 @@ export default function OrganizationSwitcher() {
             </div>
 
             {/* Divider */}
-            <div className="border-t border-gray-200 my-2"></div>
+            <div className="border-t border-gray-200 dark:border-slate-700 my-2"></div>
 
             {/* Settings Link */}
             {(userRole === 'owner' || userRole === 'admin') && (
@@ -155,7 +170,8 @@ export default function OrganizationSwitcher() {
                   navigate('/organizations/settings');
                   setIsOpen(false);
                 }}
-                className="w-full px-5 py-2 text-left flex items-center gap-2 hover:bg-purple-50 text-purple-700 transition-colors"
+                className="w-full px-5 py-2 text-left flex items-center gap-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-400 transition-colors"
+                role="menuitem"
               >
                 <span>⚙️</span>
                 <span className="font-medium text-sm">Organization Settings</span>
@@ -165,11 +181,11 @@ export default function OrganizationSwitcher() {
             {/* Create Organization */}
             <button
               onClick={() => {
-                // TODO: Add create organization modal
-                alert('Create organization feature coming soon!');
+                navigate('/organizations');
                 setIsOpen(false);
               }}
-              className="w-full px-5 py-2 text-left flex items-center gap-2 hover:bg-green-50 text-green-700 transition-colors"
+              className="w-full px-5 py-2 text-left flex items-center gap-2 hover:bg-green-50 dark:hover:bg-green-900/30 text-green-700 dark:text-green-400 transition-colors"
+              role="menuitem"
             >
               <span>➕</span>
               <span className="font-medium text-sm">Create New Organization</span>

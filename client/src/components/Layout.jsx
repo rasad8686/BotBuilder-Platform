@@ -6,6 +6,9 @@ import Sidebar from './Sidebar';
 import DemoBanner from './DemoBanner';
 import EmailVerificationBanner from './EmailVerificationBanner';
 import { NotificationCenter } from './notifications';
+import Breadcrumb from './Breadcrumb';
+import GlobalSearch from './GlobalSearch';
+import BottomNavBar from './BottomNavBar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -92,12 +95,22 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+      {/* Skip to Content - Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-purple-600 focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+      >
+        {t('accessibility.skipToContent', 'Skip to main content')}
+      </a>
       <Sidebar />
       {/* Main Content Area - offset for sidebar on desktop */}
       <main className="flex-1 lg:ml-64 transition-all duration-300">
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-3 sm:px-6 py-2 sm:py-3 transition-colors duration-300">
           <div className="flex items-center justify-end gap-2 sm:gap-4 ml-12 lg:ml-0">
+            {/* Global Search */}
+            <GlobalSearch />
+
             {/* Language Selector */}
             <div className="relative" ref={langMenuRef}>
               <button
@@ -208,8 +221,19 @@ export default function Layout({ children }) {
           <EmailVerificationBanner user={user} />
         </div>
 
-        {children}
+        {/* Breadcrumb Navigation */}
+        <div className="px-6 pt-4">
+          <Breadcrumb />
+        </div>
+
+        {/* Main Content with bottom padding for mobile navbar */}
+        <div id="main-content" className="pb-20 md:pb-0" tabIndex="-1">
+          {children}
+        </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNavBar />
     </div>
   );
 }

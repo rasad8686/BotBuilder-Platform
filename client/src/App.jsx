@@ -83,6 +83,7 @@ const Usage = lazy(() => import('./pages/Usage'));
 const Settings = lazy(() => import('./pages/Settings'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
 const OrganizationSettings = lazy(() => import('./pages/OrganizationSettings'));
+const Organizations = lazy(() => import('./pages/Organizations'));
 const TeamSettings = lazy(() => import('./pages/TeamSettings'));
 const SSOSettings = lazy(() => import('./pages/SSOSettings'));
 const SSOCallback = lazy(() => import('./pages/SSOCallback'));
@@ -154,6 +155,7 @@ function App() {
         {/* Authenticated Routes - With Sidebar and Organization Context */}
         <Route path="/dashboard" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Dashboard /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/create-bot" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><CreateBot /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/bots" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><MyBots /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/mybots" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><MyBots /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/my-bots" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><MyBots /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/bot/:botId/messages" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><BotMessages /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
@@ -216,12 +218,14 @@ function App() {
         <Route path="/settings/sso" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><SSOSettings /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Organization Routes */}
+        <Route path="/organizations" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Organizations /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/organizations/settings" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><OrganizationSettings /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Team Routes */}
         <Route path="/team" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><TeamSettings /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
 
         {/* Admin Routes - Protected by AdminRouteGuard */}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/admin/dashboard" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><SuspenseWrapper><AdminDashboard /></SuspenseWrapper></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
         <Route path="/admin/audit-logs" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><SuspenseWrapper><AdminAuditLogs /></SuspenseWrapper></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />
         <Route path="/admin/health" element={<PrivateRoute><AuthenticatedApp><AdminRouteGuard><Layout><SuspenseWrapper><AdminHealth /></SuspenseWrapper></Layout></AdminRouteGuard></AuthenticatedApp></PrivateRoute>} />

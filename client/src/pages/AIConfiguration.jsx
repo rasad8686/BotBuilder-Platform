@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import aiApi from '../api/ai';
 
@@ -10,6 +10,7 @@ import aiApi from '../api/ai';
 export default function AIConfiguration() {
   const { t } = useTranslation();
   const { botId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('setup');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -337,13 +338,13 @@ export default function AIConfiguration() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <Link
-          to="/mybots"
-          className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium mb-4"
+        {/* Header - Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium mb-4 bg-transparent border-none cursor-pointer"
         >
-          ← Back to My Bots
-        </Link>
+          ← Back
+        </button>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

@@ -131,9 +131,23 @@ const KnowledgeBase = () => {
 
   if (loading) {
     return (
-      <div className="kb-page loading">
-        <div className="spinner"></div>
-        <p>{t('knowledgeBase.loading')}</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-6 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto animate-pulse">
+          <div className="h-8 bg-gray-300 dark:bg-slate-700 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-1/2 mb-6"></div>
+          <div className="flex gap-6">
+            <div className="w-64 space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-20 bg-gray-300 dark:bg-slate-700 rounded-xl"></div>
+              ))}
+            </div>
+            <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl p-6 h-96">
+              <div className="h-6 bg-gray-300 dark:bg-slate-700 rounded w-1/4 mb-4"></div>
+              <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
