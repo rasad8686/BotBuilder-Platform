@@ -1491,7 +1491,7 @@ INSERT INTO plugins (
     'Connect your bots to WhatsApp Business API. Send and receive messages, media, and templates. Supports multi-device, webhooks, and real-time notifications. Perfect for customer support and marketing automation.',
     3, -- Communication
     '2.1.0',
-    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/whatsapp/whatsapp-original.svg',
+    'https://cdn.simpleicons.org/whatsapp/25D366',
     NULL,
     0,
     true,

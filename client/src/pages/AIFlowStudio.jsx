@@ -80,7 +80,7 @@ export default function AIFlowStudio() {
       <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-8 py-4 flex justify-between items-center transition-colors duration-300">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(-1)}
             className="bg-transparent border-none cursor-pointer text-xl text-gray-500 dark:text-gray-400 flex items-center hover:text-gray-700 dark:hover:text-gray-200"
           >
             ←

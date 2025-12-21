@@ -135,10 +135,19 @@ export default function Sidebar() {
     { path: '/superadmin/dashboard', icon: '👑', label: t('sidebar.superadminDashboard', 'Superadmin Panel') },
   ];
 
-  const isAdmin = userRole === 'admin' || userRole === 'owner';
+  // Admin menu visibility - organization role OR superadmin OR on admin page
+  const isOnAdminPage = location.pathname.startsWith('/admin');
+  const isAdmin = userRole === 'admin' || userRole === 'owner' || isSuperAdmin || isOnAdminPage;
 
+  // Simple and reliable isActive check
   const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    const pathname = location.pathname;
+    // Exact match or child route match
+    if (pathname === path) return true;
+    if (pathname.startsWith(path + '/')) return true;
+    // Special: /admin matches /admin/dashboard
+    if (path === '/admin/dashboard' && pathname === '/admin') return true;
+    return false;
   };
 
   return (
