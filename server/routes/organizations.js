@@ -327,6 +327,11 @@ router.delete('/:id', organizationContext, requireOrganization, checkPermission(
 router.get('/:id/members', organizationContext, requireOrganization, async (req, res) => {
   try {
     const orgId = req.params.id;
+    log.debug('GET /organizations/:id/members called', {
+      orgId,
+      userId: req.user?.id,
+      organizationId: req.organization?.id
+    });
 
     // Verify access
     if (req.organization.id != orgId) {

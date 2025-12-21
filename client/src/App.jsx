@@ -176,7 +176,7 @@ function App() {
         <Route path="/knowledge" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><KnowledgeBase /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/channels" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Channels /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/marketplace" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Marketplace /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
-        <Route path="/ai-flow" element={<PrivateRoute><AuthenticatedApp><SuspenseWrapper><AIFlowStudio /></SuspenseWrapper></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/ai-flow" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><AIFlowStudio /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/orchestrations" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Orchestrations /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/bots/:botId/orchestrations" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Orchestrations /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/bots/:botId/orchestrations/:orchestrationId" element={<PrivateRoute><AuthenticatedApp><SuspenseWrapper><OrchestrationBuilder /></SuspenseWrapper></AuthenticatedApp></PrivateRoute>} />

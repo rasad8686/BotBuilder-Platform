@@ -15,8 +15,15 @@ async function organizationContext(req, res, next) {
   try {
     // Skip if no user (will be handled by auth middleware)
     if (!req.user || !req.user.id) {
+      log.debug('organizationContext: No user, skipping', { path: req.path });
       return next();
     }
+
+    log.debug('organizationContext: Processing', {
+      path: req.path,
+      userId: req.user.id,
+      headerOrgId: req.headers['x-organization-id']
+    });
 
     const userId = req.user.id;
 

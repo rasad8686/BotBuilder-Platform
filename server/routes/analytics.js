@@ -140,7 +140,7 @@ router.get('/overview', async (req, res) => {
        JOIN bots b ON b.id = ut.bot_id
        WHERE b.organization_id = $1
          AND ut.metric_type = 'api_call'
-         AND ut.created_at >= NOW() - INTERVAL '30 days'`,
+         AND ut.tracked_at >= NOW() - INTERVAL '30 days'`,
       [orgId]
     );
 
