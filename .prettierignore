@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Coverage
+coverage/
+**/coverage/
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+
+# Environment files
+.env*
+!.env.example
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.min.js
+*.min.css
+*.bundle.js
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Test artifacts
+cypress/screenshots/
+cypress/videos/
+test-results/
+
+# Uploads
+uploads/
+server/uploads/
+
+# Database
+*.sql
+*.sqlite
+*.db
+
+# Documentation build
+docs/_build/
