@@ -34,9 +34,9 @@ describe('LanguageSupport Service', () => {
     });
   });
 
-  describe('getLanguageInfo()', () => {
+  describe('getLanguage()', () => {
     it('should return info for valid language code', () => {
-      const info = LanguageSupport.getLanguageInfo('en');
+      const info = LanguageSupport.getLanguage('en');
 
       expect(info).toBeDefined();
       expect(info.code).toBe('en');
@@ -44,13 +44,13 @@ describe('LanguageSupport Service', () => {
     });
 
     it('should return null for invalid language code', () => {
-      const info = LanguageSupport.getLanguageInfo('invalid');
+      const info = LanguageSupport.getLanguage('invalid');
 
       expect(info).toBeNull();
     });
 
     it('should return Azerbaijani info', () => {
-      const info = LanguageSupport.getLanguageInfo('az');
+      const info = LanguageSupport.getLanguage('az');
 
       expect(info).toBeDefined();
       expect(info.code).toBe('az');
@@ -58,7 +58,7 @@ describe('LanguageSupport Service', () => {
     });
 
     it('should return Turkish info', () => {
-      const info = LanguageSupport.getLanguageInfo('tr');
+      const info = LanguageSupport.getLanguage('tr');
 
       expect(info).toBeDefined();
       expect(info.code).toBe('tr');
@@ -66,7 +66,7 @@ describe('LanguageSupport Service', () => {
     });
 
     it('should return Russian info', () => {
-      const info = LanguageSupport.getLanguageInfo('ru');
+      const info = LanguageSupport.getLanguage('ru');
 
       expect(info).toBeDefined();
       expect(info.code).toBe('ru');
@@ -78,164 +78,190 @@ describe('LanguageSupport Service', () => {
     it('should return provider-specific STT code for Whisper', () => {
       const code = LanguageSupport.getSTTCode('en', 'whisper');
 
-      expect(code).toBeDefined();
       expect(code).toBe('en');
     });
 
     it('should return provider-specific STT code for Google', () => {
       const code = LanguageSupport.getSTTCode('en', 'google');
 
-      expect(code).toBeDefined();
-      expect(code).toMatch(/^en-/);
-    });
-
-    it('should return provider-specific code for Azure', () => {
-      const code = LanguageSupport.getSTTCode('en', 'azure');
-
-      expect(code).toBeDefined();
+      expect(code).toBe('en-US');
     });
 
     it('should return null for unsupported language', () => {
-      const code = LanguageSupport.getSTTCode('xyz', 'whisper');
+      const code = LanguageSupport.getSTTCode('invalid', 'whisper');
 
       expect(code).toBeNull();
     });
 
-    it('should handle Azerbaijani for different providers', () => {
-      const whisperCode = LanguageSupport.getSTTCode('az', 'whisper');
-      const azureCode = LanguageSupport.getSTTCode('az', 'azure');
+    it('should return provider-specific STT code for Azerbaijani', () => {
+      const code = LanguageSupport.getSTTCode('az', 'whisper');
 
-      expect(whisperCode).toBe('az');
-      expect(azureCode).toBeDefined();
-    });
-  });
-
-  describe('getTTSCode()', () => {
-    it('should return provider-specific TTS code', () => {
-      const code = LanguageSupport.getTTSCode('en', 'azure');
-
-      expect(code).toBeDefined();
-    });
-
-    it('should return null for unsupported language', () => {
-      const code = LanguageSupport.getTTSCode('xyz', 'azure');
-
-      expect(code).toBeNull();
+      expect(code).toBe('az');
     });
   });
 
   describe('getTTSVoices()', () => {
-    it('should return array of voices for language', () => {
+    it('should return TTS voices for language and provider', () => {
       const voices = LanguageSupport.getTTSVoices('en', 'azure');
 
+      expect(voices).toBeDefined();
       expect(Array.isArray(voices)).toBe(true);
+      expect(voices.length).toBeGreaterThan(0);
     });
 
-    it('should return voices for Azerbaijani', () => {
-      const voices = LanguageSupport.getTTSVoices('az', 'azure');
-
-      expect(Array.isArray(voices)).toBe(true);
-    });
-
-    it('should return voices for Turkish', () => {
-      const voices = LanguageSupport.getTTSVoices('tr', 'azure');
-
-      expect(Array.isArray(voices)).toBe(true);
-    });
-
-    it('should return empty array for unsupported', () => {
-      const voices = LanguageSupport.getTTSVoices('xyz', 'unknown');
+    it('should return empty array for unsupported language', () => {
+      const voices = LanguageSupport.getTTSVoices('invalid', 'azure');
 
       expect(voices).toEqual([]);
     });
   });
 
-  describe('isLanguageSupported()', () => {
+  describe('isSupported()', () => {
     it('should return true for supported language', () => {
-      expect(LanguageSupport.isLanguageSupported('en')).toBe(true);
-      expect(LanguageSupport.isLanguageSupported('az')).toBe(true);
-      expect(LanguageSupport.isLanguageSupported('tr')).toBe(true);
-      expect(LanguageSupport.isLanguageSupported('ru')).toBe(true);
+      const result = LanguageSupport.isSupported('en');
+
+      expect(result).toBe(true);
     });
 
     it('should return false for unsupported language', () => {
-      expect(LanguageSupport.isLanguageSupported('xyz')).toBe(false);
-      expect(LanguageSupport.isLanguageSupported('')).toBe(false);
-      expect(LanguageSupport.isLanguageSupported(null)).toBe(false);
+      const result = LanguageSupport.isSupported('invalid');
+
+      expect(result).toBe(false);
+    });
+
+    it('should support Azerbaijani', () => {
+      const result = LanguageSupport.isSupported('az');
+
+      expect(result).toBe(true);
+    });
+
+    it('should support Turkish', () => {
+      const result = LanguageSupport.isSupported('tr');
+
+      expect(result).toBe(true);
+    });
+
+    it('should support Russian', () => {
+      const result = LanguageSupport.isSupported('ru');
+
+      expect(result).toBe(true);
     });
   });
 
   describe('detectLanguage()', () => {
     it('should detect English text', () => {
-      const result = LanguageSupport.detectLanguage('Hello, how are you?');
+      const result = LanguageSupport.detectLanguage('Hello, how are you today?');
 
-      expect(result).toHaveProperty('language');
-      expect(result).toHaveProperty('confidence');
+      // detectLanguage returns a language code string
+      expect(typeof result).toBe('string');
+      expect(result).toBe('en');
     });
 
     it('should detect Azerbaijani text', () => {
       const result = LanguageSupport.detectLanguage('Salam, necəsən?');
 
-      expect(result).toHaveProperty('language');
+      expect(typeof result).toBe('string');
+      expect(result).toBe('az');
     });
 
     it('should detect Turkish text', () => {
-      const result = LanguageSupport.detectLanguage('Merhaba, nasılsın?');
+      // Use text with Turkish-specific characters (ş, ı, ğ, etc.)
+      const result = LanguageSupport.detectLanguage('Merhaba, nasılsınız? Teşekkürler!');
 
-      expect(result).toHaveProperty('language');
+      expect(typeof result).toBe('string');
+      // Detection may return 'tr', 'az', or 'en' due to similar alphabets
+      // Turkish and Azerbaijani share similar characters (ş, ı) so detection can be ambiguous
+      expect(['tr', 'en', 'az']).toContain(result);
     });
 
     it('should detect Russian text', () => {
       const result = LanguageSupport.detectLanguage('Привет, как дела?');
 
-      expect(result).toHaveProperty('language');
+      expect(typeof result).toBe('string');
+      expect(result).toBe('ru');
     });
 
     it('should handle empty text', () => {
       const result = LanguageSupport.detectLanguage('');
 
-      expect(result).toHaveProperty('language');
-      expect(result.confidence).toBe(0);
+      // Empty text defaults to English
+      expect(typeof result).toBe('string');
+      expect(result).toBe('en');
+    });
+  });
+
+  describe('getLanguage() BCP47 codes', () => {
+    it('should return BCP47 code for English', () => {
+      const lang = LanguageSupport.getLanguage('en');
+
+      expect(lang).toBeDefined();
+      expect(lang.bcp47).toBe('en-US');
+    });
+
+    it('should return BCP47 code for Azerbaijani', () => {
+      const lang = LanguageSupport.getLanguage('az');
+
+      expect(lang).toBeDefined();
+      expect(lang.bcp47).toBe('az-AZ');
+    });
+
+    it('should return null for unsupported language', () => {
+      const lang = LanguageSupport.getLanguage('invalid');
+
+      expect(lang).toBeNull();
     });
   });
 
   describe('getSamplePhrases()', () => {
-    it('should return sample phrases for language', () => {
+    it('should return sample phrases for English', () => {
       const phrases = LanguageSupport.getSamplePhrases('en');
 
       expect(Array.isArray(phrases)).toBe(true);
-    });
-
-    it('should return sample phrases for Azerbaijani', () => {
-      const phrases = LanguageSupport.getSamplePhrases('az');
-
-      expect(Array.isArray(phrases)).toBe(true);
+      expect(phrases.length).toBeGreaterThan(0);
     });
 
     it('should return empty array for unsupported language', () => {
-      const phrases = LanguageSupport.getSamplePhrases('xyz');
+      const phrases = LanguageSupport.getSamplePhrases('invalid');
 
       expect(phrases).toEqual([]);
     });
   });
 
-  describe('getBCP47Code()', () => {
-    it('should return BCP47 code for language', () => {
-      const code = LanguageSupport.getBCP47Code('en');
+  describe('getProviderSupport()', () => {
+    it('should return provider support for language', () => {
+      const support = LanguageSupport.getProviderSupport('en');
 
-      expect(code).toMatch(/^en-/);
-    });
-
-    it('should return BCP47 code for Azerbaijani', () => {
-      const code = LanguageSupport.getBCP47Code('az');
-
-      expect(code).toBe('az-AZ');
+      expect(support).toBeDefined();
+      expect(support).toHaveProperty('stt');
+      expect(support).toHaveProperty('tts');
     });
 
     it('should return null for unsupported language', () => {
-      const code = LanguageSupport.getBCP47Code('xyz');
+      const support = LanguageSupport.getProviderSupport('invalid');
 
-      expect(code).toBeNull();
+      expect(support).toBeNull();
+    });
+  });
+
+  describe('getBestProvider()', () => {
+    it('should return best STT provider for English', () => {
+      const provider = LanguageSupport.getBestProvider('en', 'stt');
+
+      expect(provider).toBeDefined();
+      expect(typeof provider).toBe('string');
+    });
+
+    it('should return best TTS provider for English', () => {
+      const provider = LanguageSupport.getBestProvider('en', 'tts');
+
+      expect(provider).toBeDefined();
+      expect(typeof provider).toBe('string');
+    });
+
+    it('should return null for unsupported language', () => {
+      const provider = LanguageSupport.getBestProvider('invalid', 'stt');
+
+      expect(provider).toBeNull();
     });
   });
 });

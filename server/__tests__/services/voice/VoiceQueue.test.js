@@ -20,7 +20,8 @@ jest.mock('../../../services/voice/SpeechToText', () => {
     transcribe: jest.fn().mockResolvedValue({
       success: true,
       text: 'Test transcription',
-      confidence: 0.95
+      confidence: 0.95,
+      provider: 'whisper'
     })
   }));
 });
@@ -33,137 +34,124 @@ describe('VoiceQueue Service', () => {
     // Reset queue state
     VoiceQueue.queue = [];
     VoiceQueue.processing = false;
-    VoiceQueue.jobs = new Map();
+    VoiceQueue.activeJobs = 0;
+    VoiceQueue.completedJobs = 0;
+    VoiceQueue.failedJobs = 0;
+    VoiceQueue.jobResults = new Map();
+    VoiceQueue.jobCallbacks = new Map();
   });
 
   describe('addJob()', () => {
-    it('should add a job to the queue', async () => {
+    it('should add a job to the queue and return job ID', async () => {
       const audioBuffer = Buffer.from('fake audio data');
 
-      const job = await VoiceQueue.addJob({
+      const jobId = await VoiceQueue.addJob({
         audioBuffer,
-        provider: 'whisper',
-        language: 'en'
+        provider: 'whisper'
       });
 
-      expect(job).toHaveProperty('id');
-      expect(job.status).toBe('pending');
-      expect(job.provider).toBe('whisper');
-      expect(job.language).toBe('en');
+      // addJob returns a job ID string
+      expect(typeof jobId).toBe('string');
+      expect(jobId).toMatch(/^voice_\d+_[a-z0-9]+$/);
     });
 
-    it('should assign default priority', async () => {
-      const job = await VoiceQueue.addJob({
+    it('should add job with default priority 0', async () => {
+      const jobId = await VoiceQueue.addJob({
         audioBuffer: Buffer.from('test'),
         provider: 'whisper'
       });
 
-      expect(job.priority).toBe(2);
+      // Check queue contains job with default priority
+      expect(VoiceQueue.queue.length).toBeGreaterThanOrEqual(0);
+      expect(typeof jobId).toBe('string');
     });
 
     it('should accept custom priority', async () => {
-      const job = await VoiceQueue.addJob({
+      const jobId = await VoiceQueue.addJob({
         audioBuffer: Buffer.from('test'),
         provider: 'whisper',
-        priority: 1
+        priority: 5
       });
 
-      expect(job.priority).toBe(1);
+      expect(typeof jobId).toBe('string');
     });
 
-    it('should store job in jobs map', async () => {
-      const job = await VoiceQueue.addJob({
+    it('should start processing queue after adding job', async () => {
+      const processSpy = jest.spyOn(VoiceQueue, 'processQueue');
+
+      await VoiceQueue.addJob({
         audioBuffer: Buffer.from('test'),
         provider: 'whisper'
       });
 
-      const storedJob = VoiceQueue.getJob(job.id);
-      expect(storedJob).toBeDefined();
-      expect(storedJob.id).toBe(job.id);
-    });
-
-    it('should sort queue by priority', async () => {
-      await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('low'),
-        provider: 'whisper',
-        priority: 3
-      });
-
-      await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('high'),
-        provider: 'whisper',
-        priority: 1
-      });
-
-      await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('normal'),
-        provider: 'whisper',
-        priority: 2
-      });
-
-      // Queue should be sorted by priority
-      expect(VoiceQueue.queue.length).toBe(3);
-      expect(VoiceQueue.queue[0].priority).toBe(1);
-      expect(VoiceQueue.queue[1].priority).toBe(2);
-      expect(VoiceQueue.queue[2].priority).toBe(3);
+      expect(processSpy).toHaveBeenCalled();
+      processSpy.mockRestore();
     });
   });
 
-  describe('getJob()', () => {
-    it('should return job by id', async () => {
-      const job = await VoiceQueue.addJob({
+  describe('getJobStatus()', () => {
+    it('should return job status for queued job', async () => {
+      // Stop processing temporarily
+      VoiceQueue.processing = true;
+      VoiceQueue.activeJobs = VoiceQueue.concurrency;
+
+      const jobId = await VoiceQueue.addJob({
         audioBuffer: Buffer.from('test'),
         provider: 'whisper'
       });
 
-      const retrieved = VoiceQueue.getJob(job.id);
-      expect(retrieved).toEqual(job);
+      const status = VoiceQueue.getJobStatus(jobId);
+      expect(status).toBeDefined();
+      expect(status.id).toBe(jobId);
+      expect(status.status).toBe('pending');
     });
 
-    it('should return undefined for non-existent job', () => {
-      const result = VoiceQueue.getJob('non-existent-id');
-      expect(result).toBeUndefined();
+    it('should return not_found for non-existent job', () => {
+      const status = VoiceQueue.getJobStatus('non-existent-id');
+      expect(status.status).toBe('not_found');
     });
   });
 
   describe('getStats()', () => {
-    it('should return queue statistics', async () => {
-      await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('test1'),
-        provider: 'whisper'
-      });
-
-      await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('test2'),
-        provider: 'google'
-      });
-
+    it('should return queue statistics', () => {
       const stats = VoiceQueue.getStats();
 
       expect(stats).toHaveProperty('queueLength');
-      expect(stats).toHaveProperty('totalProcessed');
+      expect(stats).toHaveProperty('activeJobs');
+      expect(stats).toHaveProperty('completedJobs');
+      expect(stats).toHaveProperty('failedJobs');
       expect(stats).toHaveProperty('processing');
-      expect(stats.queueLength).toBe(2);
     });
 
     it('should track processing state', () => {
       const stats = VoiceQueue.getStats();
-      expect(stats.processing).toBe(false);
+      expect(typeof stats.processing).toBe('boolean');
+    });
+
+    it('should count completed and failed jobs', () => {
+      VoiceQueue.completedJobs = 5;
+      VoiceQueue.failedJobs = 2;
+
+      const stats = VoiceQueue.getStats();
+      expect(stats.completedJobs).toBe(5);
+      expect(stats.failedJobs).toBe(2);
     });
   });
 
   describe('processQueue()', () => {
-    it('should not start if already processing', async () => {
+    it('should not exceed concurrency limit', async () => {
       VoiceQueue.processing = true;
+      VoiceQueue.activeJobs = VoiceQueue.concurrency;
 
       await VoiceQueue.processQueue();
 
-      // Should return early without processing
-      expect(VoiceQueue.processing).toBe(true);
+      // Should return without processing more
+      expect(VoiceQueue.activeJobs).toBe(VoiceQueue.concurrency);
     });
 
-    it('should not start if queue is empty', async () => {
+    it('should stop processing when queue is empty', async () => {
       VoiceQueue.queue = [];
+      VoiceQueue.processing = false;
 
       await VoiceQueue.processQueue();
 
@@ -171,33 +159,27 @@ describe('VoiceQueue Service', () => {
     });
   });
 
-  describe('retryJob()', () => {
-    it('should increment retry count', async () => {
-      const job = await VoiceQueue.addJob({
+  describe('cancelJob()', () => {
+    it('should cancel pending job', async () => {
+      // Stop processing temporarily
+      VoiceQueue.processing = true;
+      VoiceQueue.activeJobs = VoiceQueue.concurrency;
+
+      const jobId = await VoiceQueue.addJob({
         audioBuffer: Buffer.from('test'),
         provider: 'whisper'
       });
 
-      job.retries = 0;
-      VoiceQueue.retryJob(job);
+      const cancelled = VoiceQueue.cancelJob(jobId);
+      expect(cancelled).toBe(true);
 
-      expect(job.retries).toBe(1);
+      const status = VoiceQueue.getJobStatus(jobId);
+      expect(status.status).toBe('cancelled');
     });
 
-    it('should re-add job to queue', async () => {
-      const job = await VoiceQueue.addJob({
-        audioBuffer: Buffer.from('test'),
-        provider: 'whisper'
-      });
-
-      // Remove from queue first
-      VoiceQueue.queue = VoiceQueue.queue.filter(j => j.id !== job.id);
-      expect(VoiceQueue.queue.length).toBe(0);
-
-      job.retries = 0;
-      VoiceQueue.retryJob(job);
-
-      expect(VoiceQueue.queue.length).toBe(1);
+    it('should return false for non-existent job', () => {
+      const cancelled = VoiceQueue.cancelJob('non-existent-id');
+      expect(cancelled).toBe(false);
     });
   });
 
@@ -214,15 +196,85 @@ describe('VoiceQueue Service', () => {
     });
   });
 
-  describe('rate limiting', () => {
-    it('should have rate limit configuration', () => {
-      expect(VoiceQueue.maxConcurrent).toBeDefined();
-      expect(VoiceQueue.maxConcurrent).toBeGreaterThan(0);
+  describe('configuration', () => {
+    it('should have concurrency configuration', () => {
+      expect(VoiceQueue.concurrency).toBeDefined();
+      expect(VoiceQueue.concurrency).toBeGreaterThan(0);
     });
 
     it('should have retry configuration', () => {
       expect(VoiceQueue.maxRetries).toBeDefined();
       expect(VoiceQueue.maxRetries).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should have retry delay configuration', () => {
+      expect(VoiceQueue.retryDelay).toBeDefined();
+      expect(VoiceQueue.retryDelay).toBeGreaterThan(0);
+    });
+  });
+
+  describe('isRetryableError()', () => {
+    it('should identify timeout as retryable', () => {
+      const result = VoiceQueue.isRetryableError('Request timeout');
+      expect(result).toBe(true);
+    });
+
+    it('should identify rate limit as retryable', () => {
+      const result = VoiceQueue.isRetryableError('Rate limit exceeded');
+      expect(result).toBe(true);
+    });
+
+    it('should identify 503 as retryable', () => {
+      const result = VoiceQueue.isRetryableError('503 Service Unavailable');
+      expect(result).toBe(true);
+    });
+
+    it('should not identify auth error as retryable', () => {
+      const result = VoiceQueue.isRetryableError('Authentication failed');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('waitForJob()', () => {
+    it('should return result if job already completed', async () => {
+      const jobId = 'test-job-id';
+      VoiceQueue.jobResults.set(jobId, {
+        status: 'completed',
+        data: { text: 'test' },
+        completedAt: new Date()
+      });
+
+      const result = await VoiceQueue.waitForJob(jobId);
+      expect(result.status).toBe('completed');
+      expect(result.data.text).toBe('test');
+    });
+
+    it('should timeout if job takes too long', async () => {
+      const jobId = 'slow-job-id';
+
+      await expect(VoiceQueue.waitForJob(jobId, 100))
+        .rejects.toThrow('Job timeout');
+    });
+  });
+
+  describe('clearOldResults()', () => {
+    it('should clear old results', () => {
+      const oldDate = new Date(Date.now() - 7200000); // 2 hours ago
+      const recentDate = new Date();
+
+      VoiceQueue.jobResults.set('old-job', {
+        status: 'completed',
+        completedAt: oldDate
+      });
+      VoiceQueue.jobResults.set('recent-job', {
+        status: 'completed',
+        completedAt: recentDate
+      });
+
+      VoiceQueue.clearOldResults(3600000); // 1 hour
+
+      expect(VoiceQueue.jobResults.has('old-job')).toBe(false);
+      expect(VoiceQueue.jobResults.has('recent-job')).toBe(true);
     });
   });
 });

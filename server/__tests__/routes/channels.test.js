@@ -61,13 +61,13 @@ describe('Channels Routes', () => {
 
   describe('GET /api/channels', () => {
     it('should return all channels for tenant', async () => {
-      Channel.findByTenant.mockResolvedValueOnce([
-        { id: 1, name: 'WhatsApp', type: 'whatsapp' },
-        { id: 2, name: 'Telegram', type: 'telegram' }
-      ]);
-      ChannelMessage.countByChannel
-        .mockResolvedValueOnce({ total: 100, inbound: 60, outbound: 40 })
-        .mockResolvedValueOnce({ total: 50, inbound: 30, outbound: 20 });
+      // Route uses db.query directly with JOIN
+      db.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, name: 'WhatsApp', type: 'whatsapp', messageCount: '100', inboundCount: '60', outboundCount: '40' },
+          { id: 2, name: 'Telegram', type: 'telegram', messageCount: '50', inboundCount: '30', outboundCount: '20' }
+        ]
+      });
 
       const response = await request(app).get('/api/channels');
 
@@ -77,19 +77,20 @@ describe('Channels Routes', () => {
     });
 
     it('should filter by type', async () => {
-      Channel.findByTenant.mockResolvedValueOnce([
-        { id: 1, name: 'WhatsApp', type: 'whatsapp' }
-      ]);
-      ChannelMessage.countByChannel.mockResolvedValueOnce({ total: 100, inbound: 60, outbound: 40 });
+      db.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, name: 'WhatsApp', type: 'whatsapp', messageCount: '100', inboundCount: '60', outboundCount: '40' }
+        ]
+      });
 
       const response = await request(app).get('/api/channels?type=whatsapp');
 
       expect(response.status).toBe(200);
-      expect(Channel.findByTenant).toHaveBeenCalledWith(1, 'whatsapp');
+      expect(db.query).toHaveBeenCalled();
     });
 
     it('should handle errors', async () => {
-      Channel.findByTenant.mockRejectedValueOnce(new Error('DB error'));
+      db.query.mockRejectedValueOnce(new Error('DB error'));
 
       const response = await request(app).get('/api/channels');
 

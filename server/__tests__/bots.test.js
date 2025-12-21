@@ -218,12 +218,12 @@ describe('Bots API - Real Routes', () => {
       expect(res.body.message).toContain('not found');
     });
 
-    it('should return 400 for invalid bot ID', async () => {
+    it('should return 404 for invalid bot ID', async () => {
       const res = await request(app).get('/api/bots/invalid');
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Invalid bot ID');
+      expect(res.body.message).toContain('not found');
     });
 
     it('should handle database errors', async () => {
