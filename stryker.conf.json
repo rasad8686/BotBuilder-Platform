@@ -1,0 +1,48 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "reporters": ["html", "clear-text", "progress", "dashboard"],
+  "testRunner": "jest",
+  "jest": {
+    "projectType": "custom",
+    "configFile": "server/jest.config.js",
+    "enableFindRelatedTests": true
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "server/services/**/*.js",
+    "server/middleware/**/*.js",
+    "server/utils/**/*.js",
+    "!server/**/*.test.js",
+    "!server/**/__tests__/**",
+    "!server/**/__mocks__/**"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "coverage",
+    ".stryker-tmp",
+    "client"
+  ],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 50
+  },
+  "concurrency": 4,
+  "timeoutMS": 60000,
+  "timeoutFactor": 2.5,
+  "disableTypeChecks": true,
+  "htmlReporter": {
+    "fileName": "reports/mutation/mutation.html"
+  },
+  "dashboard": {
+    "project": "github.com/your-org/botbuilder",
+    "version": "main",
+    "reportType": "full"
+  },
+  "logLevel": "info",
+  "plugins": [
+    "@stryker-mutator/jest-runner"
+  ]
+}

@@ -1,0 +1,209 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  # ═══════════════════════════════════════════
+  # NPM Audit - Check for known vulnerabilities
+  # ═══════════════════════════════════════════
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (server)
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run npm audit (server)
+        working-directory: ./server
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Install dependencies (client)
+        working-directory: ./client
+        run: npm ci
+
+      - name: Run npm audit (client)
+        working-directory: ./client
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════
+  # Snyk Security Scan
+  # ═══════════════════════════════════════════
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+
+      - name: Snyk test (server)
+        working-directory: ./server
+        run: |
+          npm ci
+          snyk test --severity-threshold=high
+        continue-on-error: true
+
+      - name: Snyk test (client)
+        working-directory: ./client
+        run: |
+          npm ci
+          snyk test --severity-threshold=high
+        continue-on-error: true
+
+      - name: Snyk monitor
+        run: snyk monitor
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════
+  # OWASP Dependency Check
+  # ═══════════════════════════════════════════
+  owasp:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'BotBuilder'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+        continue-on-error: true
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-report
+          path: reports/
+          retention-days: 30
+
+  # ═══════════════════════════════════════════
+  # CodeQL Analysis
+  # ═══════════════════════════════════════════
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ═══════════════════════════════════════════
+  # Secret Scanning
+  # ═══════════════════════════════════════════
+  secrets-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════
+  # License Compliance Check
+  # ═══════════════════════════════════════════
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install license-checker
+        run: npm install -g license-checker
+
+      - name: Check licenses (server)
+        working-directory: ./server
+        run: |
+          npm ci
+          license-checker --summary --failOn "GPL;AGPL"
+        continue-on-error: true
+
+      - name: Check licenses (client)
+        working-directory: ./client
+        run: |
+          npm ci
+          license-checker --summary --failOn "GPL;AGPL"
+        continue-on-error: true
+
+  # ═══════════════════════════════════════════
+  # Security Summary
+  # ═══════════════════════════════════════════
+  summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [npm-audit, snyk, owasp, codeql, secrets-scan, license-check]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| NPM Audit | ${{ needs.npm-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snyk | ${{ needs.snyk.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OWASP | ${{ needs.owasp.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets | ${{ needs.secrets-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Licenses | ${{ needs.license-check.result }} |" >> $GITHUB_STEP_SUMMARY
