@@ -74,7 +74,7 @@ export default function Breadcrumb({ items = [], className = '' }) {
     };
 
     let currentPath = '';
-    pathnames.forEach((segment, index) => {
+    pathnames.forEach((segment) => {
       currentPath += `/${segment}`;
 
       // Skip numeric IDs but keep them in the path
