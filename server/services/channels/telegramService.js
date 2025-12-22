@@ -1,9 +1,10 @@
 /**
  * Telegram Bot API Integration Service
  * Full-featured Telegram channel integration for BotBuilder
+ * Using Grammy (https://grammy.dev) - secure Telegram Bot framework
  */
 
-const TelegramBot = require('node-telegram-bot-api');
+const { Bot, InputFile } = require('grammy');
 const crypto = require('crypto');
 
 class TelegramService {
@@ -16,17 +17,17 @@ class TelegramService {
    * Initialize a Telegram bot instance
    * @param {string} botToken - Telegram bot token
    * @param {Object} options - Configuration options
-   * @returns {TelegramBot} Bot instance
+   * @returns {Bot} Bot instance
    */
   initBot(botToken, options = {}) {
     if (this.bots.has(botToken)) {
       return this.bots.get(botToken);
     }
 
-    const bot = new TelegramBot(botToken, {
-      polling: options.polling || false,
-      ...options
-    });
+    const bot = new Bot(botToken);
+
+    // Store options for later use
+    bot._options = options;
 
     this.bots.set(botToken, bot);
     return bot;
@@ -35,7 +36,7 @@ class TelegramService {
   /**
    * Get or create bot instance
    * @param {string} botToken - Telegram bot token
-   * @returns {TelegramBot} Bot instance
+   * @returns {Bot} Bot instance
    */
   getBot(botToken) {
     if (!this.bots.has(botToken)) {
@@ -51,7 +52,7 @@ class TelegramService {
   removeBot(botToken) {
     const bot = this.bots.get(botToken);
     if (bot) {
-      bot.stopPolling();
+      bot.stop();
       this.bots.delete(botToken);
     }
   }
@@ -71,8 +72,7 @@ class TelegramService {
     const messageOptions = {
       parse_mode: options.parseMode || 'HTML',
       disable_web_page_preview: options.disablePreview || false,
-      disable_notification: options.silent || false,
-      ...options
+      disable_notification: options.silent || false
     };
 
     if (options.replyToMessageId) {
@@ -83,7 +83,7 @@ class TelegramService {
       messageOptions.reply_markup = this.buildKeyboard(options.keyboard);
     }
 
-    return await bot.sendMessage(chatId, text, messageOptions);
+    return await bot.api.sendMessage(chatId, text, messageOptions);
   }
 
   /**
@@ -98,15 +98,16 @@ class TelegramService {
 
     const photoOptions = {
       caption: options.caption || '',
-      parse_mode: options.parseMode || 'HTML',
-      ...options
+      parse_mode: options.parseMode || 'HTML'
     };
 
     if (options.keyboard) {
       photoOptions.reply_markup = this.buildKeyboard(options.keyboard);
     }
 
-    return await bot.sendPhoto(chatId, photo, photoOptions);
+    // Handle different photo types
+    const photoInput = this._prepareFileInput(photo);
+    return await bot.api.sendPhoto(chatId, photoInput, photoOptions);
   }
 
   /**
@@ -121,15 +122,15 @@ class TelegramService {
 
     const docOptions = {
       caption: options.caption || '',
-      parse_mode: options.parseMode || 'HTML',
-      ...options
+      parse_mode: options.parseMode || 'HTML'
     };
 
     if (options.keyboard) {
       docOptions.reply_markup = this.buildKeyboard(options.keyboard);
     }
 
-    return await bot.sendDocument(chatId, document, docOptions);
+    const docInput = this._prepareFileInput(document);
+    return await bot.api.sendDocument(chatId, docInput, docOptions);
   }
 
   /**
@@ -145,15 +146,15 @@ class TelegramService {
     const videoOptions = {
       caption: options.caption || '',
       parse_mode: options.parseMode || 'HTML',
-      supports_streaming: true,
-      ...options
+      supports_streaming: true
     };
 
     if (options.keyboard) {
       videoOptions.reply_markup = this.buildKeyboard(options.keyboard);
     }
 
-    return await bot.sendVideo(chatId, video, videoOptions);
+    const videoInput = this._prepareFileInput(video);
+    return await bot.api.sendVideo(chatId, videoInput, videoOptions);
   }
 
   /**
@@ -166,11 +167,13 @@ class TelegramService {
   async sendAudio(botToken, chatId, audio, options = {}) {
     const bot = this.getBot(botToken);
 
-    return await bot.sendAudio(chatId, audio, {
+    const audioOptions = {
       caption: options.caption || '',
-      parse_mode: options.parseMode || 'HTML',
-      ...options
-    });
+      parse_mode: options.parseMode || 'HTML'
+    };
+
+    const audioInput = this._prepareFileInput(audio);
+    return await bot.api.sendAudio(chatId, audioInput, audioOptions);
   }
 
   /**
@@ -182,7 +185,8 @@ class TelegramService {
    */
   async sendVoice(botToken, chatId, voice, options = {}) {
     const bot = this.getBot(botToken);
-    return await bot.sendVoice(chatId, voice, options);
+    const voiceInput = this._prepareFileInput(voice);
+    return await bot.api.sendVoice(chatId, voiceInput, options);
   }
 
   /**
@@ -195,7 +199,7 @@ class TelegramService {
    */
   async sendLocation(botToken, chatId, latitude, longitude, options = {}) {
     const bot = this.getBot(botToken);
-    return await bot.sendLocation(chatId, latitude, longitude, options);
+    return await bot.api.sendLocation(chatId, latitude, longitude, options);
   }
 
   /**
@@ -206,7 +210,26 @@ class TelegramService {
    */
   async sendChatAction(botToken, chatId, action = 'typing') {
     const bot = this.getBot(botToken);
-    return await bot.sendChatAction(chatId, action);
+    return await bot.api.sendChatAction(chatId, action);
+  }
+
+  /**
+   * Prepare file input for Grammy
+   * @private
+   */
+  _prepareFileInput(file) {
+    if (Buffer.isBuffer(file)) {
+      return new InputFile(file);
+    }
+    if (typeof file === 'string') {
+      // URL or file_id
+      return file;
+    }
+    if (file && typeof file.pipe === 'function') {
+      // Stream
+      return new InputFile(file);
+    }
+    return file;
   }
 
   // ==================== KEYBOARD BUILDERS ====================
@@ -315,7 +338,7 @@ class TelegramService {
       webhookOptions.certificate = options.certificate;
     }
 
-    await bot.setWebHook(webhookUrl, webhookOptions);
+    await bot.api.setWebhook(webhookUrl, webhookOptions);
 
     return { secretToken, webhookUrl };
   }
@@ -327,7 +350,7 @@ class TelegramService {
    */
   async deleteWebhook(botToken, dropPendingUpdates = false) {
     const bot = this.getBot(botToken);
-    await bot.deleteWebHook({ drop_pending_updates: dropPendingUpdates });
+    await bot.api.deleteWebhook({ drop_pending_updates: dropPendingUpdates });
     this.webhookSecrets.delete(botToken);
     return true;
   }
@@ -338,7 +361,7 @@ class TelegramService {
    */
   async getWebhookInfo(botToken) {
     const bot = this.getBot(botToken);
-    return await bot.getWebHookInfo();
+    return await bot.api.getWebhookInfo();
   }
 
   /**
@@ -361,7 +384,7 @@ class TelegramService {
   async getUpdates(botToken, options = {}) {
     const bot = this.getBot(botToken);
 
-    return await bot.getUpdates({
+    return await bot.api.getUpdates({
       offset: options.offset,
       limit: options.limit || 100,
       timeout: options.timeout || 30,
@@ -377,14 +400,15 @@ class TelegramService {
   startPolling(botToken, messageHandler) {
     const bot = this.initBot(botToken, { polling: true });
 
-    bot.on('message', (msg) => {
-      messageHandler(msg, 'message');
+    bot.on('message', (ctx) => {
+      messageHandler(ctx.message, 'message');
     });
 
-    bot.on('callback_query', (query) => {
-      messageHandler(query, 'callback_query');
+    bot.on('callback_query', (ctx) => {
+      messageHandler(ctx.callbackQuery, 'callback_query');
     });
 
+    bot.start();
     return bot;
   }
 
@@ -395,7 +419,7 @@ class TelegramService {
   stopPolling(botToken) {
     const bot = this.bots.get(botToken);
     if (bot) {
-      bot.stopPolling();
+      bot.stop();
     }
   }
 
@@ -511,7 +535,7 @@ class TelegramService {
    */
   async answerCallbackQuery(botToken, callbackQueryId, options = {}) {
     const bot = this.getBot(botToken);
-    return await bot.answerCallbackQuery(callbackQueryId, {
+    return await bot.api.answerCallbackQuery(callbackQueryId, {
       text: options.text,
       show_alert: options.showAlert || false,
       url: options.url,
@@ -605,7 +629,7 @@ class TelegramService {
    */
   async getBotInfo(botToken) {
     const bot = this.getBot(botToken);
-    return await bot.getMe();
+    return await bot.api.getMe();
   }
 
   /**
@@ -643,9 +667,7 @@ class TelegramService {
    */
   async editMessageText(botToken, chatId, messageId, text, options = {}) {
     const bot = this.getBot(botToken);
-    return await bot.editMessageText(text, {
-      chat_id: chatId,
-      message_id: messageId,
+    return await bot.api.editMessageText(chatId, messageId, text, {
       parse_mode: options.parseMode || 'HTML',
       disable_web_page_preview: options.disablePreview || false,
       reply_markup: options.keyboard ? this.buildKeyboard(options.keyboard) : undefined
@@ -660,7 +682,7 @@ class TelegramService {
    */
   async deleteMessage(botToken, chatId, messageId) {
     const bot = this.getBot(botToken);
-    return await bot.deleteMessage(chatId, messageId);
+    return await bot.api.deleteMessage(chatId, messageId);
   }
 }
 
