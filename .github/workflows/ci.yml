@@ -49,16 +49,16 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: cd server && npm ci
+        run: npm ci
 
       - name: Lint check
-        run: cd server && npm run lint --if-present
+        run: npm run lint --if-present
 
       - name: Run Jest unit tests
-        run: cd server && npm test -- --ci --coverage --maxWorkers=2
+        run: npm test -- --ci --coverage --maxWorkers=2
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/botbuilder_test
           REDIS_URL: redis://localhost:6379
@@ -68,12 +68,12 @@ jobs:
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
-          file: ./server/coverage/lcov.info
+          file: ./coverage/lcov.info
           flags: backend
           fail_ci_if_error: false
 
       - name: Build check
-        run: cd server && npm run build --if-present
+        run: npm run build --if-present
 
   # 2. Frontend test and build
   frontend:
@@ -140,13 +140,13 @@ jobs:
           node-version: '20'
 
       - name: Install server dependencies
-        run: cd server && npm ci
+        run: npm ci
 
       - name: Install client dependencies
         run: cd client && npm ci
 
       - name: Start backend server
-        run: cd server && npm start &
+        run: npm start &
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/botbuilder_test
           JWT_SECRET: test-secret-key
@@ -199,11 +199,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd server && npm ci
-          cd ../client && npm ci
+          npm ci
+          cd client && npm ci
 
       - name: Run npm audit (server)
-        run: cd server && npm audit --audit-level=high
+        run: npm audit --audit-level=high
         continue-on-error: true
 
       - name: Run npm audit (client)
