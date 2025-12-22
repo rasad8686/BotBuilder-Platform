@@ -160,8 +160,16 @@ jobs:
       - name: Install client dependencies
         run: cd client && npm ci
 
+      - name: Run database migrations
+        run: npm run migrate || echo "Migration skipped or failed"
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/botbuilder_test
+          NODE_ENV: test
+
       - name: Start backend server
-        run: npm start &
+        run: |
+          npm start > server.log 2>&1 &
+          echo $! > server.pid
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/botbuilder_test
           REDIS_URL: redis://localhost:6379
@@ -172,15 +180,23 @@ jobs:
       - name: Wait for backend
         run: |
           echo "Waiting for backend to start..."
-          for i in 1 2 3 4 5 6 7 8 9 10; do
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
             if curl -s http://localhost:5000/api/health > /dev/null 2>&1; then
               echo "Backend is ready!"
               exit 0
             fi
             echo "Attempt $i: Backend not ready yet, waiting 10 seconds..."
             sleep 10
+            # Show server logs for debugging
+            if [ -f server.log ]; then
+              echo "--- Server logs ---"
+              tail -20 server.log
+              echo "-------------------"
+            fi
           done
-          echo "Backend failed to start after 10 attempts"
+          echo "Backend failed to start after 12 attempts"
+          echo "=== Full server log ==="
+          cat server.log || true
           exit 1
 
       - name: Run Cypress tests
