@@ -15,7 +15,7 @@ class ErrorBoundary extends Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(_error) {
     // Update state so the next render shows the fallback UI
     return { hasError: true };
   }
@@ -32,7 +32,7 @@ class ErrorBoundary extends Component {
     });
 
     // Send to Sentry in production (if configured)
-    if (process.env.NODE_ENV === 'production' && window.Sentry) {
+    if (import.meta.env.PROD && window.Sentry) {
       window.Sentry.captureException(error, {
         extra: {
           componentStack: errorInfo?.componentStack
@@ -122,7 +122,7 @@ class ErrorBoundary extends Component {
             </button>
 
             {/* Development Error Details */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div className="mt-6 text-left">
                 <details className="bg-gray-100 rounded-lg p-4">
                   <summary className="text-sm font-medium text-gray-700 cursor-pointer">

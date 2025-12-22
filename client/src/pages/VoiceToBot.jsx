@@ -352,11 +352,11 @@ const VoiceToBot = () => {
     socketRef.current.on('connect', () => {
     });
 
-    socketRef.current.on('voice:ready', (data) => {
+    socketRef.current.on('voice:ready', () => {
       useWebSocketStreamingRef.current = true;
     });
 
-    socketRef.current.on('voice:fallback', (data) => {
+    socketRef.current.on('voice:fallback', () => {
       useWebSocketStreamingRef.current = false;
       // Do NOT fallback to Web Speech API - it produces incorrect results
       // Just show a message that real-time transcription is not available
@@ -376,12 +376,12 @@ const VoiceToBot = () => {
       }
     });
 
-    socketRef.current.on('voice:error', (data) => {
+    socketRef.current.on('voice:error', () => {
       // Voice streaming error - silent fail
       useWebSocketStreamingRef.current = false;
     });
 
-    socketRef.current.on('voice:restart', (data) => {
+    socketRef.current.on('voice:restart', () => {
       // Restart streaming session if still recording
       if (isRecording && streamRef.current) {
         socketRef.current.emit('voice:start', {
@@ -391,19 +391,19 @@ const VoiceToBot = () => {
       }
     });
 
-    socketRef.current.on('voice:timeout', (data) => {
+    socketRef.current.on('voice:timeout', () => {
       // Keep current transcripts, timeout handled silently
     });
 
-    socketRef.current.on('voice:complete', (data) => {
+    socketRef.current.on('voice:complete', () => {
       // Voice streaming complete
     });
 
-    socketRef.current.on('disconnect', (reason) => {
+    socketRef.current.on('disconnect', () => {
       useWebSocketStreamingRef.current = false;
     });
 
-    socketRef.current.on('reconnect', (attemptNumber) => {
+    socketRef.current.on('reconnect', () => {
     });
 
     return () => {
@@ -473,22 +473,18 @@ const VoiceToBot = () => {
 
         const streamRecorder = new MediaRecorder(audioStream, { mimeType });
 
-        // Track chunk count for debugging
-        let chunkCount = 0;
-
         streamRecorder.ondataavailable = (event) => {
           if (event.data.size > 0 && socketRef.current && socketRef.current.connected) {
-            chunkCount++;
             // Convert blob to ArrayBuffer and send to server
             event.data.arrayBuffer().then((buffer) => {
               socketRef.current.emit('voice:audio', buffer);
-            }).catch(err => {
+            }).catch(() => {
               // Audio chunk conversion error - silent fail
             });
           }
         };
 
-        streamRecorder.onerror = (event) => {
+        streamRecorder.onerror = () => {
           // MediaRecorder error - silent fail
         };
 
