@@ -33,4 +33,27 @@ export default defineConfig([
       'react-refresh/only-export-components': 'warn',
     },
   },
+  // Cypress test files configuration
+  {
+    files: ['cypress/**/*.{js,jsx}', 'e2e/**/*.{js,jsx}', '**/*.cy.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        cy: 'readonly',
+        Cypress: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        before: 'readonly',
+        beforeEach: 'readonly',
+        after: 'readonly',
+        afterEach: 'readonly',
+        expect: 'readonly',
+        context: 'readonly',
+      },
+    },
+    rules: {
+      'no-unused-vars': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
