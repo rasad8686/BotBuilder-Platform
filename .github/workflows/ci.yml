@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 env:
   NODE_ENV: test
 
@@ -154,7 +159,18 @@ jobs:
           PORT: 5000
 
       - name: Wait for backend
-        run: npx wait-on http://localhost:5000/api/health --timeout 60000
+        run: |
+          echo "Waiting for backend to start..."
+          for i in 1 2 3 4 5; do
+            if curl -s http://localhost:5000/api/health > /dev/null 2>&1; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Attempt $i: Backend not ready yet, waiting 15 seconds..."
+            sleep 15
+          done
+          echo "Backend failed to start after 5 attempts"
+          exit 1
 
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
