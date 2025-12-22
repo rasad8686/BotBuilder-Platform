@@ -394,40 +394,66 @@ class DocumentProcessor {
     if (!filePath) throw new Error('File path is required for Excel extraction');
 
     try {
-      const XLSX = require('xlsx');
-      const workbook = XLSX.readFile(filePath);
+      const ExcelJS = require('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile(filePath);
 
+      const sheetNames = workbook.worksheets.map(ws => ws.name);
       log.debug(`[Excel Parser] Reading Excel: ${filePath}`);
-      log.debug(`[Excel Parser] Sheets found: ${workbook.SheetNames.join(', ')}`);
+      log.debug(`[Excel Parser] Sheets found: ${sheetNames.join(', ')}`);
 
       const allRows = [];
       let totalRows = 0;
 
-      for (const sheetName of workbook.SheetNames) {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      for (const worksheet of workbook.worksheets) {
+        const sheetName = worksheet.name;
+        const rowCount = worksheet.rowCount;
 
-        if (jsonData.length === 0) continue;
+        if (rowCount === 0) continue;
 
-        // First row is usually headers
-        const headers = jsonData[0].map((h, i) => h ? String(h).trim() : `Column${i + 1}`);
+        // Get headers from first row
+        const headerRow = worksheet.getRow(1);
+        const headers = [];
+        headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          const value = cell.value;
+          headers[colNumber - 1] = value ? String(value).trim() : `Column${colNumber}`;
+        });
 
-        log.debug(`[Excel Parser] Sheet "${sheetName}": ${jsonData.length} rows, headers: ${headers.slice(0, 5).join(', ')}...`);
+        // Ensure we have at least some headers
+        if (headers.length === 0) continue;
+
+        log.debug(`[Excel Parser] Sheet "${sheetName}": ${rowCount} rows, headers: ${headers.slice(0, 5).join(', ')}...`);
 
         // Process each row (skip header row)
-        for (let rowIndex = 1; rowIndex < jsonData.length; rowIndex++) {
-          const row = jsonData[rowIndex];
+        for (let rowIndex = 2; rowIndex <= rowCount; rowIndex++) {
+          const row = worksheet.getRow(rowIndex);
+          const rowValues = [];
+          let hasContent = false;
+
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            let value = cell.value;
+            // Handle rich text objects
+            if (value && typeof value === 'object') {
+              if (value.richText) {
+                value = value.richText.map(rt => rt.text).join('');
+              } else if (value.text) {
+                value = value.text;
+              } else if (value.result !== undefined) {
+                value = value.result;
+              }
+            }
+            rowValues[colNumber - 1] = value !== undefined && value !== null ? String(value).trim() : '';
+            if (rowValues[colNumber - 1]) hasContent = true;
+          });
 
           // Skip empty rows
-          if (!row || row.every(cell => cell === '' || cell === null || cell === undefined)) {
-            continue;
-          }
+          if (!hasContent) continue;
 
           // Create formatted row: "ROW: [col1: val1] | [col2: val2] | ..."
           const rowParts = [];
           for (let colIndex = 0; colIndex < headers.length; colIndex++) {
             const header = headers[colIndex];
-            const value = row[colIndex] !== undefined ? String(row[colIndex]).trim() : '';
+            const value = rowValues[colIndex] || '';
             if (value) {
               rowParts.push(`[${header}: ${value}]`);
             }
@@ -441,7 +467,7 @@ class DocumentProcessor {
         }
 
         // Add sheet separator
-        if (workbook.SheetNames.length > 1) {
+        if (workbook.worksheets.length > 1) {
           allRows.push(`\n--- End of Sheet: ${sheetName} ---\n`);
         }
       }
@@ -456,7 +482,7 @@ class DocumentProcessor {
     } catch (error) {
       log.error(`[Excel Parser] Error:`, error.message);
       if (error.code === 'MODULE_NOT_FOUND') {
-        throw new Error('Excel parsing requires xlsx package. Install with: npm install xlsx');
+        throw new Error('Excel parsing requires exceljs package. Install with: npm install exceljs');
       }
       throw new Error(`Excel parsing failed: ${error.message}`);
     }
