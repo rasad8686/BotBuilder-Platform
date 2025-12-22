@@ -112,7 +112,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -149,7 +149,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -181,7 +181,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -221,7 +221,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 404,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: false,
@@ -260,7 +260,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 201,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -306,7 +306,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -345,7 +345,7 @@ describeIfPact('Bots API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,

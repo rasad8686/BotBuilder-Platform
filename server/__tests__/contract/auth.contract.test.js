@@ -95,7 +95,7 @@ describeIfPact('Auth API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -135,7 +135,7 @@ describeIfPact('Auth API Contract', () => {
         willRespondWith: {
           status: 401,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: false,
@@ -172,7 +172,7 @@ describeIfPact('Auth API Contract', () => {
         willRespondWith: {
           status: 201,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
@@ -213,7 +213,7 @@ describeIfPact('Auth API Contract', () => {
         willRespondWith: {
           status: 200,
           headers: {
-            'Content-Type': regex({ generate: 'application/json', matcher: 'application/json.*' }),
+            'Content-Type': 'application/json',
           },
           body: {
             success: true,
