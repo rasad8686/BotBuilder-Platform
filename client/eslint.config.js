@@ -23,10 +23,11 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', {
+      'no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^(_|err|error|e)$'
+        varsIgnorePattern: '^_|^React$',
+        caughtErrorsIgnorePattern: '^(_|err|error|e)$',
+        ignoreRestSiblings: true
       }],
       'no-useless-catch': 'warn',
       'no-empty': ['error', { allowEmptyCatch: true }],
