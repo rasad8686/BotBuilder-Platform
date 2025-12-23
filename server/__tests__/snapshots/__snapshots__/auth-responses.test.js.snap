@@ -1,0 +1,164 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Auth Response Snapshots GET /api/auth/me - Current User should match snapshot for authenticated user 1`] = `
+{
+  "data": {
+    "user": {
+      "created_at": "2024-01-15T10:00:00.000Z",
+      "email": "test@example.com",
+      "id": 1,
+      "name": "Test User",
+      "organization": {
+        "id": 1,
+        "name": "Test Organization",
+        "role": "admin",
+      },
+    },
+  },
+  "success": true,
+}
+`;
+
+exports[`Auth Response Snapshots GET /api/auth/me - Current User should match snapshot for unauthenticated request 1`] = `
+{
+  "message": "Authentication required",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/login - Login should match snapshot for missing credentials 1`] = `
+{
+  "errors": {
+    "email": "Email is required",
+    "password": "Password is required",
+  },
+  "message": "Email and password are required",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/login - Login should match snapshot for successful login 1`] = `
+{
+  "data": {
+    "token": "mock-jwt-token-xyz123",
+    "user": {
+      "created_at": "2024-01-15T10:00:00.000Z",
+      "email": "john@example.com",
+      "id": 1,
+      "name": "John Doe",
+    },
+  },
+  "message": "Login successful",
+  "success": true,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/login - Login should match snapshot for user not found 1`] = `
+{
+  "errors": {
+    "email": "No account found with this email",
+  },
+  "message": "Invalid credentials",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/login - Login should match snapshot for wrong password 1`] = `
+{
+  "errors": {
+    "password": "Incorrect password",
+  },
+  "message": "Invalid credentials",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/logout - Logout should match snapshot for successful logout 1`] = `
+{
+  "message": "Logged out successfully",
+  "success": true,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/refresh - Token Refresh should match snapshot for invalid refresh token 1`] = `
+{
+  "message": "Invalid refresh token",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/refresh - Token Refresh should match snapshot for missing refresh token 1`] = `
+{
+  "message": "Refresh token is required",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/refresh - Token Refresh should match snapshot for successful token refresh 1`] = `
+{
+  "data": {
+    "expiresIn": 3600,
+    "token": "mock-jwt-token-xyz123",
+  },
+  "message": "Token refreshed successfully",
+  "success": true,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/register - Registration should match snapshot for existing user 1`] = `
+{
+  "errors": {
+    "email": "This email is already registered",
+  },
+  "message": "User already exists",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/register - Registration should match snapshot for missing email 1`] = `
+{
+  "errors": {
+    "email": "Email is required",
+    "password": null,
+  },
+  "message": "Email and password are required",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/register - Registration should match snapshot for missing password 1`] = `
+{
+  "errors": {
+    "email": null,
+    "password": "Password is required",
+  },
+  "message": "Email and password are required",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/register - Registration should match snapshot for short password 1`] = `
+{
+  "errors": {
+    "password": "Password must be at least 6 characters",
+  },
+  "message": "Password must be at least 6 characters",
+  "success": false,
+}
+`;
+
+exports[`Auth Response Snapshots POST /api/auth/register - Registration should match snapshot for successful registration 1`] = `
+{
+  "data": {
+    "token": "mock-jwt-token-xyz123",
+    "user": {
+      "created_at": "2024-01-15T10:00:00.000Z",
+      "email": "john@example.com",
+      "id": 1,
+      "name": "John Doe",
+    },
+  },
+  "message": "Registration successful",
+  "success": true,
+}
+`;

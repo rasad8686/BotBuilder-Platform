@@ -1,0 +1,554 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for callback query 1`] = `
+{
+  "callback_query": {
+    "chat_instance": "chat-instance-123",
+    "data": "option_a",
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "id": "callback-123",
+    "message": {
+      "chat": {
+        "first_name": "John",
+        "id": 987654321,
+        "last_name": "Doe",
+        "type": "private",
+        "username": "johndoe",
+      },
+      "date": 1705312700,
+      "from": {
+        "first_name": "Test Bot",
+        "id": 123456789,
+        "is_bot": true,
+        "username": "testbot",
+      },
+      "message_id": 1000,
+      "reply_markup": {
+        "inline_keyboard": [
+          [
+            {
+              "callback_data": "option_a",
+              "text": "Option A",
+            },
+            {
+              "callback_data": "option_b",
+              "text": "Option B",
+            },
+          ],
+        ],
+      },
+      "text": "Please select an option:",
+    },
+  },
+  "update_id": 123456792,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for contact message 1`] = `
+{
+  "message": {
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "contact": {
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "phone_number": "+1234567890",
+      "user_id": 111222333,
+    },
+    "date": 1705312805,
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "message_id": 1006,
+  },
+  "update_id": 123456795,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for document message 1`] = `
+{
+  "message": {
+    "caption": "Here is the report",
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "date": 1705312802,
+    "document": {
+      "file_id": "BQACAgIAAxkBAA-doc",
+      "file_name": "report.pdf",
+      "file_size": 102400,
+      "file_unique_id": "DOC123",
+      "mime_type": "application/pdf",
+    },
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "message_id": 1003,
+  },
+  "update_id": 123456791,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for location message 1`] = `
+{
+  "message": {
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "date": 1705312804,
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "location": {
+      "latitude": 40.7128,
+      "longitude": -74.006,
+    },
+    "message_id": 1005,
+  },
+  "update_id": 123456794,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for photo message 1`] = `
+{
+  "message": {
+    "caption": "Check out this image!",
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "date": 1705312801,
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "message_id": 1002,
+    "photo": [
+      {
+        "file_id": "AgACAgIAA-small",
+        "file_size": 1024,
+        "file_unique_id": "ABC123",
+        "height": 90,
+        "width": 90,
+      },
+      {
+        "file_id": "AgACAgIAA-medium",
+        "file_size": 5120,
+        "file_unique_id": "ABC124",
+        "height": 320,
+        "width": 320,
+      },
+      {
+        "file_id": "AgACAgIAA-large",
+        "file_size": 20480,
+        "file_unique_id": "ABC125",
+        "height": 800,
+        "width": 800,
+      },
+    ],
+  },
+  "update_id": 123456790,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for text message 1`] = `
+{
+  "message": {
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "date": 1705312800,
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "message_id": 1001,
+    "text": "Hello, bot!",
+  },
+  "update_id": 123456789,
+}
+`;
+
+exports[`Webhook Payload Snapshots Telegram Webhook Payloads should match snapshot for voice message 1`] = `
+{
+  "message": {
+    "chat": {
+      "first_name": "John",
+      "id": 987654321,
+      "last_name": "Doe",
+      "type": "private",
+      "username": "johndoe",
+    },
+    "date": 1705312803,
+    "from": {
+      "first_name": "John",
+      "id": 987654321,
+      "is_bot": false,
+      "language_code": "en",
+      "last_name": "Doe",
+      "username": "johndoe",
+    },
+    "message_id": 1004,
+    "voice": {
+      "duration": 5,
+      "file_id": "AwACAgIAAxkBAA-voice",
+      "file_size": 15360,
+      "file_unique_id": "VOICE123",
+      "mime_type": "audio/ogg",
+    },
+  },
+  "update_id": 123456793,
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for document message 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "document": {
+                  "caption": "Here is the report",
+                  "filename": "report.pdf",
+                  "id": "DOC_ID_123",
+                  "mime_type": "application/pdf",
+                  "sha256": "xyz789abc012",
+                },
+                "from": "987654321",
+                "id": "wamid.123456791",
+                "timestamp": "1705312802",
+                "type": "document",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for image message 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "from": "987654321",
+                "id": "wamid.123456790",
+                "image": {
+                  "caption": "Check out this image!",
+                  "id": "IMAGE_ID_123",
+                  "mime_type": "image/jpeg",
+                  "sha256": "abc123def456",
+                },
+                "timestamp": "1705312801",
+                "type": "image",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for interactive button reply 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "from": "987654321",
+                "id": "wamid.123456792",
+                "interactive": {
+                  "button_reply": {
+                    "id": "option_a",
+                    "title": "Option A",
+                  },
+                  "type": "button_reply",
+                },
+                "timestamp": "1705312803",
+                "type": "interactive",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for interactive list reply 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "from": "987654321",
+                "id": "wamid.123456793",
+                "interactive": {
+                  "list_reply": {
+                    "description": "First product in the list",
+                    "id": "product_1",
+                    "title": "Product One",
+                  },
+                  "type": "list_reply",
+                },
+                "timestamp": "1705312804",
+                "type": "interactive",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for location message 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "from": "987654321",
+                "id": "wamid.123456794",
+                "location": {
+                  "address": "New York, NY, USA",
+                  "latitude": 40.7128,
+                  "longitude": -74.006,
+                  "name": "New York City",
+                },
+                "timestamp": "1705312805",
+                "type": "location",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for status update 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+            "statuses": [
+              {
+                "id": "wamid.123456789",
+                "recipient_id": "987654321",
+                "status": "delivered",
+                "timestamp": "1705312806",
+              },
+            ],
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;
+
+exports[`Webhook Payload Snapshots WhatsApp Webhook Payloads should match snapshot for text message 1`] = `
+{
+  "entry": [
+    {
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "contacts": [
+              {
+                "profile": {
+                  "name": "John Doe",
+                },
+                "wa_id": "987654321",
+              },
+            ],
+            "messages": [
+              {
+                "from": "987654321",
+                "id": "wamid.123456789",
+                "text": {
+                  "body": "Hello, bot!",
+                },
+                "timestamp": "1705312800",
+                "type": "text",
+              },
+            ],
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "+1234567890",
+              "phone_number_id": "PHONE_NUMBER_ID",
+            },
+          },
+        },
+      ],
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    },
+  ],
+  "object": "whatsapp_business_account",
+}
+`;

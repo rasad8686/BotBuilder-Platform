@@ -1,0 +1,150 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`API Response Snapshots - Bots DELETE /api/bots/:id - Delete Bot should match snapshot for delete on non-existent bot 1`] = `
+{
+  "message": "Bot not found",
+  "success": false,
+}
+`;
+
+exports[`API Response Snapshots - Bots DELETE /api/bots/:id - Delete Bot should match snapshot for successful bot deletion 1`] = `
+{
+  "message": "Bot deleted successfully",
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots GET /api/bots - List Bots should match snapshot for bot list with items 1`] = `
+{
+  "data": [
+    {
+      "created_at": "2024-01-15T10:00:00.000Z",
+      "description": "Handles customer inquiries",
+      "id": 1,
+      "is_active": true,
+      "name": "Customer Support Bot",
+      "organization_id": 1,
+      "updated_at": "2024-01-15T10:00:00.000Z",
+      "user_id": 1,
+      "welcome_message": "Hello! How can I help you today?",
+    },
+    {
+      "created_at": "2024-01-16T10:00:00.000Z",
+      "description": "Assists with product information",
+      "id": 2,
+      "is_active": false,
+      "name": "Sales Bot",
+      "organization_id": 1,
+      "updated_at": "2024-01-16T10:00:00.000Z",
+      "user_id": 1,
+      "welcome_message": "Welcome! Looking for something specific?",
+    },
+  ],
+  "pagination": {
+    "limit": 10,
+    "page": 1,
+    "total": 2,
+    "totalPages": 1,
+  },
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots GET /api/bots - List Bots should match snapshot for empty bot list 1`] = `
+{
+  "data": [],
+  "pagination": {
+    "limit": 10,
+    "page": 1,
+    "total": 0,
+    "totalPages": 1,
+  },
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots GET /api/bots/:id - Get Single Bot should match snapshot for bot not found 1`] = `
+{
+  "message": "Bot not found",
+  "success": false,
+}
+`;
+
+exports[`API Response Snapshots - Bots GET /api/bots/:id - Get Single Bot should match snapshot for successful bot retrieval 1`] = `
+{
+  "data": {
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "description": "Handles customer inquiries",
+    "id": 1,
+    "is_active": true,
+    "name": "Customer Support Bot",
+    "organization_id": 1,
+    "settings": {
+      "language": "en",
+      "max_response_length": 500,
+      "tone": "professional",
+    },
+    "updated_at": "2024-01-15T10:00:00.000Z",
+    "user_id": 1,
+    "welcome_message": "Hello! How can I help you today?",
+  },
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots POST /api/bots - Create Bot should match snapshot for missing name validation error 1`] = `
+{
+  "message": "Name is required",
+  "success": false,
+}
+`;
+
+exports[`API Response Snapshots - Bots POST /api/bots - Create Bot should match snapshot for successful bot creation 1`] = `
+{
+  "data": {
+    "created_at": "2024-01-17T10:00:00.000Z",
+    "description": "A test bot for snapshot testing",
+    "id": 3,
+    "is_active": true,
+    "name": "New Test Bot",
+    "organization_id": 1,
+    "updated_at": "2024-01-17T10:00:00.000Z",
+    "user_id": 1,
+    "welcome_message": "Hello from the test bot!",
+  },
+  "message": "Bot created successfully",
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots PUT /api/bots/:id - Update Bot should match snapshot for successful bot update 1`] = `
+{
+  "data": {
+    "created_at": "2024-01-15T10:00:00.000Z",
+    "description": "Updated description",
+    "id": 1,
+    "is_active": false,
+    "name": "Updated Bot Name",
+    "organization_id": 1,
+    "updated_at": "2024-01-18T10:00:00.000Z",
+    "user_id": 1,
+    "welcome_message": "Updated welcome message!",
+  },
+  "message": "Bot updated successfully",
+  "success": true,
+}
+`;
+
+exports[`API Response Snapshots - Bots PUT /api/bots/:id - Update Bot should match snapshot for update on non-existent bot 1`] = `
+{
+  "message": "Bot not found",
+  "success": false,
+}
+`;
+
+exports[`API Response Snapshots - Bots Server Error Responses should match snapshot for server error on list 1`] = `
+{
+  "message": "Server error",
+  "success": false,
+}
+`;
