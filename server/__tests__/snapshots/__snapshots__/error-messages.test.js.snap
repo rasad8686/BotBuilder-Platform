@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Error Message Snapshots 400 Bad Request should match snapshot for invalid JSON 1`] = `
+{
+  "code": "PARSE_ERROR",
+  "message": "Invalid JSON payload",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 400 Bad Request should match snapshot for invalid format 1`] = `
+{
+  "code": "INVALID_FORMAT",
+  "errors": {
+    "email": "Invalid email format",
+    "phone": "Phone number must be 10 digits",
+  },
+  "message": "Invalid request format",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 400 Bad Request should match snapshot for missing required fields 1`] = `
+{
+  "code": "VALIDATION_ERROR",
+  "errors": {
+    "email": "Email is required",
+    "name": "Name is required",
+  },
+  "message": "Validation failed",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 401 Unauthorized should match snapshot for expired token 1`] = `
+{
+  "code": "TOKEN_EXPIRED",
+  "expiredAt": "2024-01-15T10:00:00.000Z",
+  "message": "Token has expired",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 401 Unauthorized should match snapshot for invalid token 1`] = `
+{
+  "code": "INVALID_TOKEN",
+  "message": "Invalid or expired token",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 401 Unauthorized should match snapshot for no token provided 1`] = `
+{
+  "code": "NO_TOKEN",
+  "message": "Authentication required",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 403 Forbidden should match snapshot for insufficient permissions 1`] = `
+{
+  "code": "FORBIDDEN",
+  "currentRole": "member",
+  "message": "Insufficient permissions",
+  "requiredRole": "admin",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 403 Forbidden should match snapshot for organization context required 1`] = `
+{
+  "code": "ORG_CONTEXT_REQUIRED",
+  "message": "Organization context required",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 403 Forbidden should match snapshot for resource access denied 1`] = `
+{
+  "code": "ACCESS_DENIED",
+  "message": "Access to this resource is denied",
+  "resource": "bot",
+  "resourceId": 123,
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 404 Not Found should match snapshot for endpoint not found 1`] = `
+{
+  "code": "ENDPOINT_NOT_FOUND",
+  "message": "Endpoint not found",
+  "path": "/api/nonexistent",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 404 Not Found should match snapshot for resource not found 1`] = `
+{
+  "code": "NOT_FOUND",
+  "message": "Bot not found",
+  "resource": "bot",
+  "resourceId": 999,
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 404 Not Found should match snapshot for user not found 1`] = `
+{
+  "code": "USER_NOT_FOUND",
+  "message": "User not found",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 409 Conflict should match snapshot for duplicate resource 1`] = `
+{
+  "code": "DUPLICATE_RESOURCE",
+  "field": "email",
+  "message": "Resource already exists",
+  "success": false,
+  "value": "existing@example.com",
+}
+`;
+
+exports[`Error Message Snapshots 422 Unprocessable Entity should match snapshot for unprocessable entity 1`] = `
+{
+  "code": "UNPROCESSABLE_ENTITY",
+  "details": "The provided configuration is invalid",
+  "message": "Unable to process request",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 429 Too Many Requests should match snapshot for rate limit exceeded 1`] = `
+{
+  "code": "RATE_LIMIT_EXCEEDED",
+  "limit": 100,
+  "message": "Too many requests",
+  "remaining": 0,
+  "resetAt": "2024-01-15T10:01:00.000Z",
+  "retryAfter": 60,
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 500 Internal Server Error should match snapshot for database error 1`] = `
+{
+  "code": "DATABASE_ERROR",
+  "message": "Database error occurred",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 500 Internal Server Error should match snapshot for generic server error 1`] = `
+{
+  "code": "INTERNAL_ERROR",
+  "message": "Internal server error",
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 502 Bad Gateway should match snapshot for bad gateway 1`] = `
+{
+  "code": "BAD_GATEWAY",
+  "message": "Bad gateway",
+  "success": false,
+  "upstream": "openai-api",
+}
+`;
+
+exports[`Error Message Snapshots 503 Service Unavailable should match snapshot for service unavailable 1`] = `
+{
+  "code": "SERVICE_UNAVAILABLE",
+  "message": "Service temporarily unavailable",
+  "retryAfter": 300,
+  "success": false,
+}
+`;
+
+exports[`Error Message Snapshots 504 Gateway Timeout should match snapshot for gateway timeout 1`] = `
+{
+  "code": "GATEWAY_TIMEOUT",
+  "message": "Gateway timeout",
+  "success": false,
+  "timeout": 30000,
+}
+`;
