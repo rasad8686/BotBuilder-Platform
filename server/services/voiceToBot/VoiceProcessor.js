@@ -1034,7 +1034,7 @@ Important: "Eldjo" is a brand name - spell it exactly as "Eldjo".`;
         end: () => {
           if (!isEnded && !stream.destroyed) {
             isEnded = true;
-            try { stream.end(); } catch (e) {}
+            try { stream.end(); } catch (e) { /* Stream already ended, ignore */ }
           }
         },
         isEnded: () => isEnded

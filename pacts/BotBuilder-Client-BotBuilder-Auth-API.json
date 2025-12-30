@@ -1,0 +1,179 @@
+{
+  "consumer": {
+    "name": "BotBuilder-Client"
+  },
+  "interactions": [
+    {
+      "description": "a login request with wrong password",
+      "providerState": "user exists with email test@example.com",
+      "request": {
+        "body": {
+          "email": "test@example.com",
+          "password": "wrongpassword"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/auth/login"
+      },
+      "response": {
+        "body": {
+          "message": "Invalid credentials",
+          "success": false
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.message": {
+            "match": "type"
+          }
+        },
+        "status": 401
+      }
+    },
+    {
+      "description": "a request for user profile",
+      "providerState": "user is authenticated",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "GET",
+        "path": "/api/auth/profile"
+      },
+      "response": {
+        "body": {
+          "success": true,
+          "user": {
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "email": "test@example.com",
+            "id": 1,
+            "username": "testuser"
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.user.created_at": {
+            "match": "type"
+          },
+          "$.body.user.email": {
+            "match": "type"
+          },
+          "$.body.user.id": {
+            "match": "type"
+          },
+          "$.body.user.username": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a valid login request",
+      "providerState": "user exists with email test@example.com",
+      "request": {
+        "body": {
+          "email": "test@example.com",
+          "password": "Password123!"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/auth/login"
+      },
+      "response": {
+        "body": {
+          "success": true,
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "user": {
+            "email": "test@example.com",
+            "id": 1,
+            "username": "testuser"
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.token": {
+            "match": "type"
+          },
+          "$.body.user.id": {
+            "match": "type"
+          },
+          "$.body.user.username": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a valid registration request",
+      "providerState": "no user exists with email new@example.com",
+      "request": {
+        "body": {
+          "email": "new@example.com",
+          "password": "NewPassword123!",
+          "username": "newuser"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/auth/register"
+      },
+      "response": {
+        "body": {
+          "message": "User registered successfully",
+          "success": true,
+          "user": {
+            "email": "new@example.com",
+            "id": 1,
+            "username": "newuser"
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.message": {
+            "match": "type"
+          },
+          "$.body.user.id": {
+            "match": "type"
+          }
+        },
+        "status": 201
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "13.2.0"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  },
+  "provider": {
+    "name": "BotBuilder-Auth-API"
+  }
+}

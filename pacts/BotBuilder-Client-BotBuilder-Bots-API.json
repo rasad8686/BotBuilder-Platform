@@ -1,0 +1,328 @@
+{
+  "consumer": {
+    "name": "BotBuilder-Client"
+  },
+  "interactions": [
+    {
+      "description": "a request for all bots",
+      "providerState": "user has bots",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "GET",
+        "path": "/api/bots"
+      },
+      "response": {
+        "body": {
+          "bots": [
+            {
+              "created_at": "2024-01-01T00:00:00.000Z",
+              "id": 1,
+              "name": "My Bot",
+              "platform": "telegram",
+              "status": "active"
+            }
+          ],
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.bots": {
+            "match": "type",
+            "min": 1
+          },
+          "$.body.bots[*].created_at": {
+            "match": "type"
+          },
+          "$.body.bots[*].id": {
+            "match": "type"
+          },
+          "$.body.bots[*].name": {
+            "match": "type"
+          },
+          "$.body.bots[*].platform": {
+            "match": "type"
+          },
+          "$.body.bots[*].status": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for all bots when none exist",
+      "providerState": "user has no bots",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "GET",
+        "path": "/api/bots"
+      },
+      "response": {
+        "body": {
+          "bots": [],
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for bot with id 1",
+      "providerState": "bot with id 1 exists",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "GET",
+        "path": "/api/bots/1"
+      },
+      "response": {
+        "body": {
+          "bot": {
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "description": "A test bot",
+            "id": 1,
+            "name": "My Bot",
+            "platform": "telegram",
+            "settings": {},
+            "status": "active",
+            "updated_at": "2024-01-01T00:00:00.000Z"
+          },
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.bot.created_at": {
+            "match": "type"
+          },
+          "$.body.bot.description": {
+            "match": "type"
+          },
+          "$.body.bot.name": {
+            "match": "type"
+          },
+          "$.body.bot.platform": {
+            "match": "type"
+          },
+          "$.body.bot.settings": {
+            "match": "type"
+          },
+          "$.body.bot.status": {
+            "match": "type"
+          },
+          "$.body.bot.updated_at": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request for non-existent bot",
+      "providerState": "no bot with id 999",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "GET",
+        "path": "/api/bots/999"
+      },
+      "response": {
+        "body": {
+          "message": "Bot not found",
+          "success": false
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.message": {
+            "match": "type"
+          }
+        },
+        "status": 404
+      }
+    },
+    {
+      "description": "a request to create a new bot",
+      "providerState": "user can create bots",
+      "request": {
+        "body": {
+          "description": "A new bot",
+          "name": "New Bot",
+          "platform": "telegram"
+        },
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "POST",
+        "path": "/api/bots"
+      },
+      "response": {
+        "body": {
+          "bot": {
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "description": "A new bot",
+            "id": 1,
+            "name": "New Bot",
+            "platform": "telegram",
+            "status": "active"
+          },
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.bot.created_at": {
+            "match": "type"
+          },
+          "$.body.bot.id": {
+            "match": "type"
+          },
+          "$.body.bot.status": {
+            "match": "type"
+          }
+        },
+        "status": 201
+      }
+    },
+    {
+      "description": "a request to delete bot with id 1",
+      "providerState": "bot with id 1 exists",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "DELETE",
+        "path": "/api/bots/1"
+      },
+      "response": {
+        "body": {
+          "message": "Bot deleted successfully",
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.message": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to update bot with id 1",
+      "providerState": "bot with id 1 exists",
+      "request": {
+        "body": {
+          "name": "Updated Bot Name"
+        },
+        "headers": {
+          "Authorization": "Bearer valid-token",
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.header.Authorization": {
+            "match": "regex",
+            "regex": "Bearer .*"
+          }
+        },
+        "method": "PUT",
+        "path": "/api/bots/1"
+      },
+      "response": {
+        "body": {
+          "bot": {
+            "id": 1,
+            "name": "Updated Bot Name",
+            "platform": "telegram",
+            "updated_at": "2024-01-01T00:00:00.000Z"
+          },
+          "success": true
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "$.body.bot.platform": {
+            "match": "type"
+          },
+          "$.body.bot.updated_at": {
+            "match": "type"
+          }
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "13.2.0"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  },
+  "provider": {
+    "name": "BotBuilder-Bots-API"
+  }
+}

@@ -72,7 +72,7 @@ function initializeWebSocket(server) {
       if (streamingSession) {
         try {
           streamingSession.end();
-        } catch (e) {}
+        } catch (e) { /* Session already ended, ignore */ }
         streamingSession = null;
       }
 

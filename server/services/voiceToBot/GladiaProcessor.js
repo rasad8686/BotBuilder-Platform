@@ -231,7 +231,7 @@ class GladiaProcessor {
             audioBuffer.forEach(chunk => {
               try {
                 ffmpeg.stdin.write(Buffer.from(chunk, 'base64'));
-              } catch (e) {}
+              } catch (e) { /* FFmpeg stdin closed, ignore */ }
             });
             audioBuffer = [];
           }
@@ -367,7 +367,7 @@ class GladiaProcessor {
               ffmpeg.stdin.end();
             }
             ffmpeg.kill('SIGTERM');
-          } catch (e) {}
+          } catch (e) { /* FFmpeg already terminated, ignore */ }
         }
 
         // Close WebSocket

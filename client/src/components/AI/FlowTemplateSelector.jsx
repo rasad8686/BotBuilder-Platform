@@ -23,7 +23,7 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const selectedTemplate = null; // TODO: implement selection UI
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [, setLoadingPreview] = useState(false);
 
@@ -386,7 +386,7 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
           {templates.map(template => (
             <div
               key={template.id}
-              onClick={() => handlePreview(template.id)}
+              onClick={() => { setSelectedTemplate(template.id); handlePreview(template.id); }}
               style={{
                 padding: '20px',
                 backgroundColor: 'white',

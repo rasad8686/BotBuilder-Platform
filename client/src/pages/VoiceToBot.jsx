@@ -507,7 +507,7 @@ const VoiceToBot = () => {
     if (speechRecognitionRef.current) {
       try {
         speechRecognitionRef.current.stop();
-      } catch (e) {}
+      } catch (e) { /* Recognition already stopped, ignore */ }
       speechRecognitionRef.current = null;
     }
 
@@ -773,7 +773,7 @@ const VoiceToBot = () => {
         // Remove onstop handler to prevent transcription
         mediaRecorderRef.current.onstop = null;
         mediaRecorderRef.current.stop();
-      } catch (e) {}
+      } catch (e) { /* MediaRecorder already stopped, ignore */ }
       mediaRecorderRef.current = null;
     }
 
