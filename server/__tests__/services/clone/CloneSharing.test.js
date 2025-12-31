@@ -5,7 +5,7 @@
 const CloneSharing = require('../../../services/clone/CloneSharing');
 
 // Mock dependencies
-jest.mock('../../../config/database', () => ({
+jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
@@ -19,7 +19,7 @@ jest.mock('crypto', () => ({
   }))
 }));
 
-const db = require('../../../config/database');
+const db = require('../../../db');
 
 describe('CloneSharing Service', () => {
   beforeEach(() => {

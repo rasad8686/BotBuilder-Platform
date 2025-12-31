@@ -5,11 +5,11 @@
 const CloneAnalytics = require('../../../services/clone/CloneAnalytics');
 
 // Mock dependencies
-jest.mock('../../../config/database', () => ({
+jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
-const db = require('../../../config/database');
+const db = require('../../../db');
 
 describe('CloneAnalytics Service', () => {
   beforeEach(() => {
