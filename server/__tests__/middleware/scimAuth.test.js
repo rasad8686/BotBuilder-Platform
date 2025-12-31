@@ -3,6 +3,9 @@
  * Tests for SCIM Bearer token authentication
  */
 
+// Use fake timers to handle setInterval in scimAuth module
+jest.useFakeTimers();
+
 jest.mock('../../services/scimService');
 jest.mock('../../utils/logger', () => ({
   info: jest.fn(),
@@ -26,6 +29,7 @@ describe('SCIM Auth Middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
 
     mockReq = {
       headers: {},
@@ -42,6 +46,14 @@ describe('SCIM Auth Middleware', () => {
     };
 
     mockNext = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   describe('scimAuth', () => {

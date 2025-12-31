@@ -4,8 +4,12 @@
  */
 
 exports.up = async function(knex) {
+  // Helper to check if table exists
+  const tableExists = async (tableName) => knex.schema.hasTable(tableName);
+
   // Plugin Categories
-  await knex.schema.createTable('plugin_categories', (table) => {
+  if (!(await tableExists('plugin_categories'))) {
+    await knex.schema.createTable('plugin_categories', (table) => {
     table.increments('id').primary();
     table.string('name', 100).notNullable();
     table.string('slug', 100).notNullable().unique();
@@ -15,10 +19,12 @@ exports.up = async function(knex) {
     table.boolean('is_active').defaultTo(true);
     table.timestamp('created_at').defaultTo(knex.fn.now());
     table.timestamp('updated_at').defaultTo(knex.fn.now());
-  });
+    });
+  }
 
   // Plugins
-  await knex.schema.createTable('plugins', (table) => {
+  if (!(await tableExists('plugins'))) {
+    await knex.schema.createTable('plugins', (table) => {
     table.increments('id').primary();
     table.integer('developer_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
     table.string('name', 100).notNullable();
@@ -51,10 +57,12 @@ exports.up = async function(knex) {
     table.index('status');
     table.index(['status', 'downloads']);
     table.index(['status', 'rating']);
-  });
+    });
+  }
 
   // Plugin Versions
-  await knex.schema.createTable('plugin_versions', (table) => {
+  if (!(await tableExists('plugin_versions'))) {
+    await knex.schema.createTable('plugin_versions', (table) => {
     table.increments('id').primary();
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('CASCADE');
     table.string('version', 20).notNullable();
@@ -72,10 +80,12 @@ exports.up = async function(knex) {
 
     table.unique(['plugin_id', 'version']);
     table.index(['plugin_id', 'status']);
-  });
+    });
+  }
 
   // Plugin Installations
-  await knex.schema.createTable('plugin_installations', (table) => {
+  if (!(await tableExists('plugin_installations'))) {
+    await knex.schema.createTable('plugin_installations', (table) => {
     table.increments('id').primary();
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('CASCADE');
     table.integer('tenant_id').unsigned().notNullable();
@@ -87,10 +97,12 @@ exports.up = async function(knex) {
 
     table.unique(['plugin_id', 'tenant_id']);
     table.index('tenant_id');
-  });
+    });
+  }
 
   // Plugin Reviews
-  await knex.schema.createTable('plugin_reviews', (table) => {
+  if (!(await tableExists('plugin_reviews'))) {
+    await knex.schema.createTable('plugin_reviews', (table) => {
     table.increments('id').primary();
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('CASCADE');
     table.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
@@ -102,10 +114,12 @@ exports.up = async function(knex) {
 
     table.unique(['plugin_id', 'user_id']);
     table.index(['plugin_id', 'rating']);
-  });
+    });
+  }
 
   // Plugin Purchases
-  await knex.schema.createTable('plugin_purchases', (table) => {
+  if (!(await tableExists('plugin_purchases'))) {
+    await knex.schema.createTable('plugin_purchases', (table) => {
     table.increments('id').primary();
     table.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('SET NULL');
@@ -123,10 +137,12 @@ exports.up = async function(knex) {
     table.index('plugin_id');
     table.index('developer_id');
     table.index('status');
-  });
+    });
+  }
 
   // Developer Earnings
-  await knex.schema.createTable('developer_earnings', (table) => {
+  if (!(await tableExists('developer_earnings'))) {
+    await knex.schema.createTable('developer_earnings', (table) => {
     table.increments('id').primary();
     table.integer('developer_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('SET NULL');
@@ -139,10 +155,12 @@ exports.up = async function(knex) {
 
     table.index('developer_id');
     table.index(['developer_id', 'status']);
-  });
+    });
+  }
 
   // Developer Payout Info
-  await knex.schema.createTable('developer_payout_info', (table) => {
+  if (!(await tableExists('developer_payout_info'))) {
+    await knex.schema.createTable('developer_payout_info', (table) => {
     table.increments('id').primary();
     table.integer('developer_id').unsigned().references('id').inTable('users').onDelete('CASCADE').unique();
     table.string('payout_method', 50); // paypal, bank, stripe
@@ -154,10 +172,12 @@ exports.up = async function(knex) {
     table.boolean('is_verified').defaultTo(false);
     table.timestamp('created_at').defaultTo(knex.fn.now());
     table.timestamp('updated_at').defaultTo(knex.fn.now());
-  });
+    });
+  }
 
   // Developer Payouts
-  await knex.schema.createTable('developer_payouts', (table) => {
+  if (!(await tableExists('developer_payouts'))) {
+    await knex.schema.createTable('developer_payouts', (table) => {
     table.increments('id').primary();
     table.integer('developer_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
     table.decimal('amount', 10, 2).notNullable();
@@ -170,10 +190,12 @@ exports.up = async function(knex) {
 
     table.index('developer_id');
     table.index('status');
-  });
+    });
+  }
 
   // Plugin Update History
-  await knex.schema.createTable('plugin_update_history', (table) => {
+  if (!(await tableExists('plugin_update_history'))) {
+    await knex.schema.createTable('plugin_update_history', (table) => {
     table.increments('id').primary();
     table.integer('plugin_id').unsigned().references('id').inTable('plugins').onDelete('CASCADE');
     table.integer('tenant_id').unsigned().notNullable();
@@ -184,10 +206,12 @@ exports.up = async function(knex) {
     table.timestamp('created_at').defaultTo(knex.fn.now());
 
     table.index(['plugin_id', 'tenant_id']);
-  });
+    });
+  }
 
   // Plugin Storage (for plugin data)
-  await knex.schema.createTable('plugin_storage', (table) => {
+  if (!(await tableExists('plugin_storage'))) {
+    await knex.schema.createTable('plugin_storage', (table) => {
     table.increments('id').primary();
     table.string('plugin_id', 100).notNullable();
     table.string('key', 255).notNullable();
@@ -198,10 +222,12 @@ exports.up = async function(knex) {
 
     table.unique(['plugin_id', 'key']);
     table.index('expires_at');
-  });
+    });
+  }
 
   // Plugin Analytics
-  await knex.schema.createTable('plugin_analytics', (table) => {
+  if (!(await tableExists('plugin_analytics'))) {
+    await knex.schema.createTable('plugin_analytics', (table) => {
     table.increments('id').primary();
     table.string('plugin_id', 100).notNullable();
     table.integer('tenant_id').unsigned();
@@ -212,15 +238,27 @@ exports.up = async function(knex) {
     table.index(['plugin_id', 'tenant_id']);
     table.index(['plugin_id', 'event_name']);
     table.index('created_at');
-  });
+    });
+  }
 
-  // Add foreign key for developer_earnings payout_id
-  await knex.schema.alterTable('developer_earnings', (table) => {
-    table.foreign('payout_id').references('id').inTable('developer_payouts').onDelete('SET NULL');
-  });
+  // Add foreign key for developer_earnings payout_id (only if not already added)
+  if (await tableExists('developer_earnings')) {
+    const hasColumn = await knex.schema.hasColumn('developer_earnings', 'payout_id');
+    if (hasColumn) {
+      try {
+        await knex.schema.alterTable('developer_earnings', (table) => {
+          table.foreign('payout_id').references('id').inTable('developer_payouts').onDelete('SET NULL');
+        });
+      } catch (e) {
+        // Foreign key might already exist, ignore error
+      }
+    }
+  }
 
-  // Insert default categories
-  await knex('plugin_categories').insert([
+  // Insert default categories (only if table is empty)
+  const existingCategories = await knex('plugin_categories').count('id as count').first();
+  if (existingCategories && existingCategories.count === '0') {
+    await knex('plugin_categories').insert([
     { name: 'Channels', slug: 'channels', description: 'Messaging platform integrations', icon: '&#128172;', sort_order: 1 },
     { name: 'AI & NLP', slug: 'ai-nlp', description: 'AI models and natural language processing', icon: '&#129302;', sort_order: 2 },
     { name: 'Integrations', slug: 'integrations', description: 'Third-party service connections', icon: '&#128279;', sort_order: 3 },
@@ -229,14 +267,19 @@ exports.up = async function(knex) {
     { name: 'E-commerce', slug: 'ecommerce', description: 'E-commerce and payment tools', icon: '&#128722;', sort_order: 6 },
     { name: 'CRM', slug: 'crm', description: 'Customer relationship management', icon: '&#128101;', sort_order: 7 },
     { name: 'Utilities', slug: 'utilities', description: 'General utility plugins', icon: '&#128295;', sort_order: 8 }
-  ]);
+    ]);
+  }
 };
 
 exports.down = async function(knex) {
-  // Drop foreign key first
-  await knex.schema.alterTable('developer_earnings', (table) => {
-    table.dropForeign('payout_id');
-  });
+  // Drop foreign key first (if exists)
+  try {
+    await knex.schema.alterTable('developer_earnings', (table) => {
+      table.dropForeign('payout_id');
+    });
+  } catch (e) {
+    // Foreign key might not exist, ignore error
+  }
 
   // Drop tables in reverse order
   await knex.schema.dropTableIfExists('plugin_analytics');

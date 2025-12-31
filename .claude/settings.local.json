@@ -30,7 +30,14 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nComplete Voice AI 100% with Call Center, IVR Builder, and WebRTC\n\n- Add CallCenterDashboard.jsx with real-time call monitoring metrics\n- Add IVRBuilder.jsx with visual drag-and-drop flow builder (10 node types)\n- Add PhoneNumberManagement.jsx for Twilio number management\n- Add RecordingService.js for call recording with transcription export\n- Add TranscriptionService.js with multi-provider support (Whisper, Google, Deepgram, AssemblyAI)\n- Add SentimentAnalysis.js for call sentiment and CSAT prediction\n- Add WebRTCService.js for browser-based calling with quality monitoring\n- Add callCenter.js API routes (25+ endpoints)\n- Add comprehensive test suites for all new voice services\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(timeout 90 bash -c 'while ! npm test -- --testPathPattern=\"\"channels/(FacebookProvider|TelegramProvider)\"\" --no-coverage 2>&1 | tail -30; do sleep 5; done')",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(git commit:*)",
+      "Bash(timeout 240 npm test -- --coverage --coverageReporters=text-summary)",
+      "Bash(git push)",
+      "Bash(npm run lint)",
+      "Bash(timeout 45 npm test:*)",
+      "Bash(timeout 30 npx jest:*)",
+      "Bash(npx knex:*)"
     ],
     "deny": [],
     "ask": []

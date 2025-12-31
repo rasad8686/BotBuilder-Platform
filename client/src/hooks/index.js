@@ -47,6 +47,19 @@ export { default as useExecutionSocket } from './useExecutionSocket';
 // Domain-specific
 export { default as useBots } from './useBots';
 
+// Import all hooks for default export object
+import useAuth from './useAuth';
+import useApi from './useApi';
+import useForm from './useForm';
+import useModal, { useModals } from './useModal';
+import useToast from './useToast';
+import useLocalStorage, { useLocalStorageState } from './useLocalStorage';
+import useDebounce, { useDebouncedCallback, useDebouncedState, useDebouncedEffect } from './useDebounce';
+import usePagination, { useArrayPagination } from './usePagination';
+import useWebSocket, { useWebSocketChannel } from './useWebSocket';
+import useExecutionSocket from './useExecutionSocket';
+import useBots from './useBots';
+
 /**
  * Default export with all hooks
  * @example
@@ -54,24 +67,24 @@ export { default as useBots } from './useBots';
  * const { useAuth, useApi } = hooks;
  */
 const hooks = {
-  useAuth: require('./useAuth').default,
-  useApi: require('./useApi').default,
-  useForm: require('./useForm').default,
-  useModal: require('./useModal').default,
-  useModals: require('./useModal').useModals,
-  useToast: require('./useToast').default,
-  useLocalStorage: require('./useLocalStorage').default,
-  useLocalStorageState: require('./useLocalStorage').useLocalStorageState,
-  useDebounce: require('./useDebounce').default,
-  useDebouncedCallback: require('./useDebounce').useDebouncedCallback,
-  useDebouncedState: require('./useDebounce').useDebouncedState,
-  useDebouncedEffect: require('./useDebounce').useDebouncedEffect,
-  usePagination: require('./usePagination').default,
-  useArrayPagination: require('./usePagination').useArrayPagination,
-  useWebSocket: require('./useWebSocket').default,
-  useWebSocketChannel: require('./useWebSocket').useWebSocketChannel,
-  useExecutionSocket: require('./useExecutionSocket').default,
-  useBots: require('./useBots').default
+  useAuth,
+  useApi,
+  useForm,
+  useModal,
+  useModals,
+  useToast,
+  useLocalStorage,
+  useLocalStorageState,
+  useDebounce,
+  useDebouncedCallback,
+  useDebouncedState,
+  useDebouncedEffect,
+  usePagination,
+  useArrayPagination,
+  useWebSocket,
+  useWebSocketChannel,
+  useExecutionSocket,
+  useBots
 };
 
 export default hooks;
