@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "guild_id": "123456789012345678",
+    "guild_name": "Test Server",
+    "guild_icon": "https://example.com/icon.png",
+    "member_count": 150,
+    "owner_id": "111222333444555666",
+    "is_active": true,
+    "settings": {},
+    "enabled_features": ["ai", "rag"],
+    "joined_at": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "guild_id": "234567890123456789",
+    "guild_name": "Support Server",
+    "guild_icon": "https://example.com/icon2.png",
+    "member_count": 500,
+    "owner_id": "222333444555666777",
+    "is_active": true,
+    "settings": {},
+    "enabled_features": ["ai"],
+    "joined_at": "2025-01-02T00:00:00.000Z"
+  }
+]

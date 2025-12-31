@@ -1,0 +1,24 @@
+{
+  "total_calls": 2500,
+  "avg_duration": 185,
+  "tts_usage": {
+    "total_characters": 500000,
+    "avg_per_day": 15000
+  },
+  "stt_usage": {
+    "total_minutes": 8500,
+    "avg_per_day": 280
+  },
+  "call_outcomes": {
+    "completed": 2100,
+    "missed": 200,
+    "failed": 50,
+    "voicemail": 150
+  },
+  "sentiment_analysis": {
+    "positive": 0.65,
+    "neutral": 0.28,
+    "negative": 0.07
+  },
+  "resolution_rate": 0.82
+}

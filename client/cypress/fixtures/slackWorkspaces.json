@@ -1,0 +1,9 @@
+[
+  {
+    "id": "T0123456789",
+    "name": "Test Workspace",
+    "domain": "testworkspace",
+    "icon": "https://example.com/icon.png",
+    "is_connected": true
+  }
+]

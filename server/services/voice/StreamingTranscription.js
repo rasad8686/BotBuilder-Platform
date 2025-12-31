@@ -198,12 +198,100 @@ class StreamingTranscription extends EventEmitter {
   }
 
   /**
-   * Connect to Google Cloud Speech (placeholder)
+   * Connect to Google Cloud Speech
    */
   async connectGoogle(session) {
-    // Google Cloud Speech streaming requires gRPC
-    // This is a placeholder - implement with @google-cloud/speech if needed
-    throw new Error('Google streaming not yet implemented. Use Deepgram instead.');
+    const credentials = this.config.googleCredentials || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!credentials) {
+      throw new Error('Google Cloud credentials not configured');
+    }
+
+    try {
+      // Dynamic import for Google Cloud Speech
+      const speech = require('@google-cloud/speech');
+      const client = new speech.SpeechClient();
+
+      const langCode = LanguageSupport.getSTTCode(session.language, 'google') || 'en-US';
+
+      const request = {
+        config: {
+          encoding: session.encoding === 'linear16' ? 'LINEAR16' : session.encoding.toUpperCase(),
+          sampleRateHertz: session.sampleRate,
+          languageCode: langCode,
+          enableAutomaticPunctuation: session.punctuate,
+          model: session.model === 'general' ? 'default' : session.model,
+          useEnhanced: true,
+          enableWordTimeOffsets: true
+        },
+        interimResults: session.interimResults
+      };
+
+      // Create streaming recognize stream
+      const recognizeStream = client.streamingRecognize(request);
+
+      session.googleClient = client;
+      session.recognizeStream = recognizeStream;
+      session.status = 'connected';
+
+      // Handle responses
+      recognizeStream.on('data', (data) => {
+        if (data.results && data.results[0]) {
+          const result = data.results[0];
+          const alternative = result.alternatives[0];
+          const isFinal = result.isFinal;
+          const transcript = alternative?.transcript || '';
+          const confidence = alternative?.confidence || 0;
+          const words = alternative?.words || [];
+
+          if (isFinal && transcript) {
+            session.transcript += (session.transcript ? ' ' : '') + transcript;
+            session.words = session.words.concat(words.map(w => ({
+              word: w.word,
+              startTime: w.startTime?.seconds || 0,
+              endTime: w.endTime?.seconds || 0
+            })));
+          }
+
+          this.emit('transcript', {
+            sessionId: session.id,
+            transcript,
+            isFinal,
+            confidence,
+            words,
+            fullTranscript: session.transcript
+          });
+        }
+      });
+
+      recognizeStream.on('error', (error) => {
+        log.error('Google Speech streaming error', { sessionId: session.id, error: error.message });
+        this.emit('session:error', { sessionId: session.id, error: error.message });
+      });
+
+      recognizeStream.on('end', () => {
+        session.status = 'closed';
+        this.emit('session:closed', { sessionId: session.id });
+      });
+
+      // Override sendAudio for Google
+      session.sendAudio = (chunk) => {
+        if (recognizeStream && !recognizeStream.destroyed) {
+          recognizeStream.write(chunk);
+        }
+      };
+
+      session.closeStream = () => {
+        if (recognizeStream && !recognizeStream.destroyed) {
+          recognizeStream.end();
+        }
+      };
+
+      log.info('Google Cloud Speech connected', { sessionId: session.id });
+
+    } catch (error) {
+      log.error('Google Cloud Speech connection failed', { error: error.message });
+      throw new Error(`Google Speech error: ${error.message}`);
+    }
   }
 
   /**

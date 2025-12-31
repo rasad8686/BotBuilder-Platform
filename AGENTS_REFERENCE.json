@@ -1,0 +1,159 @@
+{
+  "autonomous_agents_system": {
+    "overview": "Complete framework for creating and managing intelligent agents that can execute complex tasks, collaborate with other agents, and integrate with external services",
+    
+    "core_services": {
+      "AgentCore": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/AgentCore.js",
+      "TaskExecutor": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/TaskExecutor.js",
+      "ToolRegistry": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/ToolRegistry.js"
+    },
+    
+    "agent_types": {
+      "router": {
+        "temperature": 0.3,
+        "purpose": "Route messages to specialist agents",
+        "capabilities": ["routing", "classification"]
+      },
+      "researcher": {
+        "temperature": 0.5,
+        "purpose": "Gather and analyze information",
+        "capabilities": ["research", "analysis", "summarization"]
+      },
+      "writer": {
+        "temperature": 0.7,
+        "purpose": "Transform information into content",
+        "capabilities": ["writing", "formatting", "editing"]
+      },
+      "analyzer": {
+        "temperature": 0.3,
+        "purpose": "Extract insights from data",
+        "capabilities": ["analysis", "insights", "recommendations"]
+      },
+      "custom": {
+        "description": "Create with any role, prompt, model, capabilities"
+      }
+    },
+    
+    "task_execution": {
+      "phases": [
+        "THINK: Analyze task and plan approach",
+        "PLAN: Create step-by-step execution plan",
+        "EXECUTE: Run each step with tools and error recovery",
+        "VERIFY: Check intermediate results",
+        "COMPLETE: Compile final results and summary"
+      ],
+      "configuration": {
+        "AGENT_MAX_STEPS": 20,
+        "AGENT_MAX_RETRIES": 3,
+        "AGENT_RETRY_DELAY_MS": 1000,
+        "AGENT_CONTEXT_WINDOW": 10,
+        "AGENT_MEMORY_PERSISTENCE": true
+      }
+    },
+    
+    "tools": {
+      "built_in": [
+        "web_search",
+        "analyze_text",
+        "format_data",
+        "calculate",
+        "generate_list",
+        "save_note",
+        "get_note"
+      ],
+      "external": {
+        "BrowserTool": {
+          "file": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/tools/BrowserTool.js",
+          "actions": ["scrape", "click", "type", "screenshot", "navigate", "scroll", "wait", "evaluate", "form_fill"],
+          "features": ["dual_mode_fetch_and_puppeteer", "retry_with_backoff", "extract_multiple_formats", "security_blocking"]
+        },
+        "HttpTool": {
+          "file": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/tools/HttpTool.js",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          "features": ["auto_json_parsing", "timeout_handling", "custom_headers", "security_blocking"]
+        },
+        "FileTool": {
+          "file": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/tools/FileTool.js",
+          "operations": ["read", "write", "append", "list", "exists", "delete"],
+          "features": ["workspace_isolation", "blocked_extensions", "size_limits"]
+        },
+        "EmailTool": {
+          "file": "C:/Users/User/Desktop/BotBuilder/server/services/autonomous/tools/EmailTool.js",
+          "features": ["smtp_config", "html_support", "attachments", "cc_bcc"]
+        },
+        "integrations": {
+          "SlackIntegration": "send_message, send_threaded_message, list_channels, get_user_info, create_reminder",
+          "GoogleCalendarIntegration": "list_events, create_event, update_event, delete_event, get_availability",
+          "GmailIntegration": "list_messages, get_message, send_message, add_label, search_messages",
+          "CRMIntegration": "list_contacts, create_contact, update_contact, list_deals, create_deal, update_deal"
+        }
+      }
+    },
+    
+    "workflow_types": {
+      "sequential": "Agents run one after another, output N becomes input N+1",
+      "parallel": "Agents in same group run concurrently",
+      "conditional": "Route based on conditions to different agents",
+      "fan_out_fan_in": "Expand input, process each, aggregate results"
+    },
+    
+    "api_endpoints": {
+      "agents": {
+        "create": "POST /api/autonomous/agents",
+        "list": "GET /api/autonomous/agents",
+        "get": "GET /api/autonomous/agents/{id}",
+        "update": "PUT /api/autonomous/agents/{id}",
+        "delete": "DELETE /api/autonomous/agents/{id}"
+      },
+      "tasks": {
+        "create": "POST /api/autonomous/agents/{id}/tasks",
+        "list": "GET /api/autonomous/agents/{id}/tasks",
+        "get": "GET /api/autonomous/tasks/{id}",
+        "get_steps": "GET /api/autonomous/tasks/{id}/steps",
+        "execute": "POST /api/autonomous/tasks/{id}/execute"
+      },
+      "tools": {
+        "list": "GET /api/autonomous/tools"
+      },
+      "bot_agents": {
+        "create": "POST /api/agents",
+        "list": "GET /api/agents",
+        "test": "POST /api/agents/{id}/test"
+      }
+    },
+    
+    "error_recovery": {
+      "NETWORK_ERROR": { "action": "retry", "delay_ms": 2000 },
+      "RATE_LIMIT": { "action": "retry", "delay_ms": "extracted_from_header" },
+      "NOT_FOUND": { "action": "skip" },
+      "AUTH_ERROR": { "action": "abort" },
+      "GENERIC": { "action": "retry" }
+    },
+    
+    "memory_management": {
+      "short_term": "Recent interactions (auto-discarded after window)",
+      "long_term": "Persistent key-value store (searchable)",
+      "working": "Task-specific state (cleared per task)",
+      "tool_logs": "Execution logs (pruned periodically)"
+    },
+    
+    "models": {
+      "Agent": "C:/Users/User/Desktop/BotBuilder/server/models/Agent.js",
+      "AgentWorkflow": "C:/Users/User/Desktop/BotBuilder/server/models/AgentWorkflow.js",
+      "AgentExecutionStep": "C:/Users/User/Desktop/BotBuilder/server/models/AgentExecutionStep.js",
+      "AgentTool": "C:/Users/User/Desktop/BotBuilder/server/models/AgentTool.js",
+      "AgentMessage": "C:/Users/User/Desktop/BotBuilder/server/models/AgentMessage.js"
+    },
+    
+    "routes": {
+      "autonomous": "C:/Users/User/Desktop/BotBuilder/server/routes/autonomous.js",
+      "agents": "C:/Users/User/Desktop/BotBuilder/server/routes/agents.js"
+    },
+    
+    "security": {
+      "url_blocking": ["localhost", "127.0.0.1", "0.0.0.0", "::1", "10.x", "172.16-31.x", "192.168.x", "169.254.x"],
+      "blocked_extensions": [".exe", ".dll", ".so", ".dylib", ".sh", ".bat", ".cmd", ".ps1", ".env", ".pem", ".key", ".crt"],
+      "data_protection": ["password_redaction", "token_masking", "api_key_filtering"]
+    }
+  }
+}

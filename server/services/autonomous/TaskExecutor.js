@@ -1,6 +1,6 @@
 /**
  * Task Executor for Autonomous Agents
- * Handles multi-step task execution with AI reasoning
+ * Enhanced with multi-step task planning, error recovery, and memory management
  */
 
 const db = require('../../db');
@@ -8,13 +8,115 @@ const log = require('../../utils/logger');
 const AgentCore = require('./AgentCore');
 const toolRegistry = require('./ToolRegistry');
 
+// Task planner configuration
+const TASK_PLANNER_CONFIG = {
+  maxSteps: parseInt(process.env.AGENT_MAX_STEPS) || 20,
+  maxRetries: parseInt(process.env.AGENT_MAX_RETRIES) || 3,
+  retryDelayMs: parseInt(process.env.AGENT_RETRY_DELAY_MS) || 1000,
+  contextWindowSize: parseInt(process.env.AGENT_CONTEXT_WINDOW) || 10,
+  enableMemoryPersistence: process.env.AGENT_MEMORY_PERSISTENCE === 'true'
+};
+
 class TaskExecutor {
   constructor(agent) {
     this.agent = agent;
+
+    // Enhanced context with memory management
     this.context = {
       notes: {},
-      history: []
+      history: [],
+      shortTermMemory: [], // Recent interactions
+      longTermMemory: new Map(), // Persistent key-value store
+      workingMemory: {}, // Current task state
+      toolLogs: [] // Tool execution logs
     };
+
+    // Task planning state
+    this.currentPlan = null;
+    this.planRevisions = 0;
+    this.maxPlanRevisions = 3;
+
+    // Error recovery state
+    this.errorHistory = [];
+    this.recoveryStrategies = new Map();
+
+    // Initialize default recovery strategies
+    this.initializeRecoveryStrategies();
+  }
+
+  /**
+   * Initialize default error recovery strategies
+   */
+  initializeRecoveryStrategies() {
+    // Network error recovery
+    this.recoveryStrategies.set('NETWORK_ERROR', async (error, step) => {
+      log.info('Applying NETWORK_ERROR recovery strategy');
+      await this.delay(2000);
+      return { action: 'retry', message: 'Retrying after network delay' };
+    });
+
+    // Rate limit recovery
+    this.recoveryStrategies.set('RATE_LIMIT', async (error, step) => {
+      log.info('Applying RATE_LIMIT recovery strategy');
+      const waitTime = this.extractWaitTime(error) || 60000;
+      await this.delay(waitTime);
+      return { action: 'retry', message: `Waited ${waitTime}ms for rate limit` };
+    });
+
+    // Resource not found recovery
+    this.recoveryStrategies.set('NOT_FOUND', async (error, step) => {
+      log.info('Applying NOT_FOUND recovery strategy');
+      return { action: 'skip', message: 'Skipping step - resource not found' };
+    });
+
+    // Authentication error recovery
+    this.recoveryStrategies.set('AUTH_ERROR', async (error, step) => {
+      log.info('Applying AUTH_ERROR recovery strategy');
+      return { action: 'abort', message: 'Authentication required - aborting task' };
+    });
+
+    // Generic error recovery
+    this.recoveryStrategies.set('GENERIC', async (error, step) => {
+      log.info('Applying GENERIC recovery strategy');
+      return { action: 'retry', message: 'Retrying with generic recovery' };
+    });
+  }
+
+  /**
+   * Add custom recovery strategy
+   */
+  addRecoveryStrategy(errorType, handler) {
+    this.recoveryStrategies.set(errorType, handler);
+  }
+
+  /**
+   * Classify error type for recovery
+   */
+  classifyError(error) {
+    const message = error.message?.toLowerCase() || '';
+
+    if (message.includes('network') || message.includes('econnrefused') || message.includes('timeout')) {
+      return 'NETWORK_ERROR';
+    }
+    if (message.includes('rate limit') || message.includes('429') || message.includes('too many requests')) {
+      return 'RATE_LIMIT';
+    }
+    if (message.includes('not found') || message.includes('404')) {
+      return 'NOT_FOUND';
+    }
+    if (message.includes('unauthorized') || message.includes('401') || message.includes('403')) {
+      return 'AUTH_ERROR';
+    }
+
+    return 'GENERIC';
+  }
+
+  /**
+   * Extract wait time from rate limit error
+   */
+  extractWaitTime(error) {
+    const match = error.message?.match(/retry after (\d+)/i);
+    return match ? parseInt(match[1]) * 1000 : null;
   }
 
   /**
@@ -454,6 +556,453 @@ class TaskExecutor {
       ...row,
       input: typeof row.input === 'string' ? JSON.parse(row.input) : row.input,
       output: typeof row.output === 'string' ? JSON.parse(row.output) : row.output
+    };
+  }
+
+  // =============================================
+  // MEMORY MANAGEMENT METHODS
+  // =============================================
+
+  /**
+   * Add to short-term memory (recent interactions)
+   */
+  addToShortTermMemory(item) {
+    this.context.shortTermMemory.push({
+      ...item,
+      timestamp: new Date().toISOString()
+    });
+
+    // Keep only recent items
+    if (this.context.shortTermMemory.length > TASK_PLANNER_CONFIG.contextWindowSize) {
+      this.context.shortTermMemory.shift();
+    }
+  }
+
+  /**
+   * Store in long-term memory (persistent key-value)
+   */
+  storeLongTermMemory(key, value) {
+    this.context.longTermMemory.set(key, {
+      value,
+      storedAt: new Date().toISOString(),
+      accessCount: 0
+    });
+  }
+
+  /**
+   * Retrieve from long-term memory
+   */
+  retrieveLongTermMemory(key) {
+    const item = this.context.longTermMemory.get(key);
+    if (item) {
+      item.accessCount++;
+      item.lastAccessedAt = new Date().toISOString();
+      return item.value;
+    }
+    return null;
+  }
+
+  /**
+   * Update working memory for current task
+   */
+  updateWorkingMemory(key, value) {
+    this.context.workingMemory[key] = value;
+  }
+
+  /**
+   * Clear working memory (call between tasks)
+   */
+  clearWorkingMemory() {
+    this.context.workingMemory = {};
+  }
+
+  /**
+   * Get relevant context for decision making
+   */
+  getRelevantContext(query = '') {
+    // Combine short-term memory with relevant long-term memories
+    const recentHistory = this.context.shortTermMemory.slice(-5);
+
+    // Search long-term memory for relevant items
+    const relevantLongTerm = [];
+    for (const [key, item] of this.context.longTermMemory) {
+      if (query && key.toLowerCase().includes(query.toLowerCase())) {
+        relevantLongTerm.push({ key, ...item });
+      }
+    }
+
+    return {
+      recentHistory,
+      relevantLongTerm: relevantLongTerm.slice(0, 5),
+      workingMemory: { ...this.context.workingMemory }
+    };
+  }
+
+  /**
+   * Persist memory to database (if enabled)
+   */
+  async persistMemory() {
+    if (!TASK_PLANNER_CONFIG.enableMemoryPersistence) return;
+
+    try {
+      const memoryData = {
+        shortTermMemory: this.context.shortTermMemory,
+        longTermMemory: Array.from(this.context.longTermMemory.entries()),
+        savedAt: new Date().toISOString()
+      };
+
+      await db.query(
+        `INSERT INTO agent_memory (agent_id, memory_data, created_at)
+         VALUES ($1, $2, CURRENT_TIMESTAMP)
+         ON CONFLICT (agent_id) DO UPDATE SET memory_data = $2, updated_at = CURRENT_TIMESTAMP`,
+        [this.agent.id, JSON.stringify(memoryData)]
+      );
+
+      log.info('TaskExecutor: Memory persisted', { agentId: this.agent.id });
+    } catch (error) {
+      log.error('TaskExecutor: Failed to persist memory', { error: error.message });
+    }
+  }
+
+  /**
+   * Load memory from database
+   */
+  async loadMemory() {
+    if (!TASK_PLANNER_CONFIG.enableMemoryPersistence) return;
+
+    try {
+      const result = await db.query(
+        `SELECT memory_data FROM agent_memory WHERE agent_id = $1`,
+        [this.agent.id]
+      );
+
+      if (result.rows.length > 0) {
+        const memoryData = result.rows[0].memory_data;
+        const parsed = typeof memoryData === 'string' ? JSON.parse(memoryData) : memoryData;
+
+        this.context.shortTermMemory = parsed.shortTermMemory || [];
+        this.context.longTermMemory = new Map(parsed.longTermMemory || []);
+
+        log.info('TaskExecutor: Memory loaded', { agentId: this.agent.id });
+      }
+    } catch (error) {
+      log.error('TaskExecutor: Failed to load memory', { error: error.message });
+    }
+  }
+
+  // =============================================
+  // ERROR RECOVERY METHODS
+  // =============================================
+
+  /**
+   * Attempt to recover from error
+   */
+  async attemptRecovery(error, step, retryCount) {
+    const errorType = this.classifyError(error);
+    const strategy = this.recoveryStrategies.get(errorType);
+
+    if (!strategy) {
+      return { action: 'abort', message: 'No recovery strategy available' };
+    }
+
+    // Track error for analysis
+    this.errorHistory.push({
+      type: errorType,
+      message: error.message,
+      step: step.action,
+      timestamp: new Date().toISOString(),
+      retryCount
+    });
+
+    // Apply recovery strategy
+    return await strategy(error, step);
+  }
+
+  /**
+   * Execute step with error recovery
+   */
+  async executeStepWithRecovery(step, stepNumber) {
+    let retryCount = 0;
+    let lastError = null;
+
+    while (retryCount <= TASK_PLANNER_CONFIG.maxRetries) {
+      try {
+        const result = await this.executeStep(step);
+
+        // Success - add to memory
+        this.addToShortTermMemory({
+          type: 'step_success',
+          action: step.action,
+          result: result
+        });
+
+        return {
+          success: true,
+          output: result,
+          retryCount
+        };
+
+      } catch (error) {
+        lastError = error;
+        retryCount++;
+
+        log.warn('TaskExecutor: Step execution failed', {
+          step: step.action,
+          error: error.message,
+          retryCount
+        });
+
+        // Try recovery
+        const recovery = await this.attemptRecovery(error, step, retryCount);
+
+        switch (recovery.action) {
+          case 'retry':
+            log.info('TaskExecutor: Retrying step', { step: step.action, reason: recovery.message });
+            await this.delay(TASK_PLANNER_CONFIG.retryDelayMs * retryCount);
+            continue;
+
+          case 'skip':
+            log.info('TaskExecutor: Skipping step', { step: step.action, reason: recovery.message });
+            return {
+              success: true,
+              skipped: true,
+              output: { skipped: true, reason: recovery.message },
+              retryCount
+            };
+
+          case 'abort':
+            log.error('TaskExecutor: Aborting task', { step: step.action, reason: recovery.message });
+            throw new Error(`Task aborted: ${recovery.message}`);
+
+          default:
+            // Unknown action, continue with retry
+            break;
+        }
+      }
+    }
+
+    // All retries exhausted
+    this.addToShortTermMemory({
+      type: 'step_failure',
+      action: step.action,
+      error: lastError.message,
+      retryCount
+    });
+
+    throw lastError;
+  }
+
+  // =============================================
+  // TOOL EXECUTION LOGGING
+  // =============================================
+
+  /**
+   * Log tool execution
+   */
+  logToolExecution(toolName, input, output, duration, success) {
+    const logEntry = {
+      tool: toolName,
+      input: this.sanitizeForLog(input),
+      output: this.sanitizeForLog(output),
+      duration,
+      success,
+      timestamp: new Date().toISOString()
+    };
+
+    this.context.toolLogs.push(logEntry);
+
+    // Keep only recent logs
+    if (this.context.toolLogs.length > 100) {
+      this.context.toolLogs = this.context.toolLogs.slice(-50);
+    }
+
+    return logEntry;
+  }
+
+  /**
+   * Get tool execution logs
+   */
+  getToolLogs(limit = 50) {
+    return this.context.toolLogs.slice(-limit);
+  }
+
+  /**
+   * Sanitize data for logging (remove sensitive info)
+   */
+  sanitizeForLog(data) {
+    if (!data) return data;
+
+    const sensitiveKeys = ['password', 'token', 'api_key', 'secret', 'auth', 'credential'];
+    const sanitized = { ...data };
+
+    for (const key of Object.keys(sanitized)) {
+      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+        sanitized[key] = '[REDACTED]';
+      }
+    }
+
+    return sanitized;
+  }
+
+  // =============================================
+  // ADVANCED TASK PLANNING
+  // =============================================
+
+  /**
+   * Create adaptive execution plan
+   */
+  async createAdaptivePlan(taskDescription, inputData) {
+    const plan = {
+      id: `plan_${Date.now()}`,
+      taskDescription,
+      inputData,
+      steps: [],
+      dependencies: new Map(),
+      parallelGroups: [],
+      estimatedDuration: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    // Analyze task to generate steps
+    const analysis = await this.simulateThinking(taskDescription, inputData);
+    const planResult = await this.simulatePlanning(taskDescription, analysis);
+
+    plan.steps = planResult.steps.map((step, index) => ({
+      ...step,
+      id: `step_${index}`,
+      status: 'pending',
+      priority: step.priority || 'normal',
+      canRunInParallel: step.canRunInParallel || false,
+      dependencies: step.dependencies || [],
+      timeout: step.timeout || 30000
+    }));
+
+    // Group steps that can run in parallel
+    plan.parallelGroups = this.identifyParallelGroups(plan.steps);
+
+    // Estimate duration
+    plan.estimatedDuration = plan.steps.reduce((sum, s) => sum + (s.timeout / 2), 0);
+
+    this.currentPlan = plan;
+    return plan;
+  }
+
+  /**
+   * Identify groups of steps that can run in parallel
+   */
+  identifyParallelGroups(steps) {
+    const groups = [];
+    let currentGroup = [];
+
+    for (const step of steps) {
+      if (step.canRunInParallel && step.dependencies.length === 0) {
+        currentGroup.push(step.id);
+      } else {
+        if (currentGroup.length > 0) {
+          groups.push(currentGroup);
+          currentGroup = [];
+        }
+        groups.push([step.id]); // Single step group
+      }
+    }
+
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+
+    return groups;
+  }
+
+  /**
+   * Revise plan based on execution results
+   */
+  async revisePlan(failedStep, error) {
+    if (this.planRevisions >= this.maxPlanRevisions) {
+      log.warn('TaskExecutor: Max plan revisions reached');
+      return null;
+    }
+
+    this.planRevisions++;
+
+    log.info('TaskExecutor: Revising plan', {
+      failedStep: failedStep.action,
+      revision: this.planRevisions
+    });
+
+    // Create alternative steps
+    const alternativeSteps = this.generateAlternativeSteps(failedStep, error);
+
+    // Update current plan
+    if (this.currentPlan) {
+      const failedIndex = this.currentPlan.steps.findIndex(s => s.id === failedStep.id);
+      if (failedIndex !== -1) {
+        // Replace failed step with alternatives
+        this.currentPlan.steps.splice(failedIndex, 1, ...alternativeSteps);
+        this.currentPlan.revisedAt = new Date().toISOString();
+        this.currentPlan.revisionCount = this.planRevisions;
+      }
+    }
+
+    return alternativeSteps;
+  }
+
+  /**
+   * Generate alternative steps when one fails
+   */
+  generateAlternativeSteps(failedStep, error) {
+    // Simple heuristic-based alternatives
+    const alternatives = [];
+
+    // If it was a web scrape that failed, try different approach
+    if (failedStep.tool === 'browser' || failedStep.action === 'scrape') {
+      alternatives.push({
+        ...failedStep,
+        id: `${failedStep.id}_alt`,
+        action: 'research_fallback',
+        description: `Alternative approach for: ${failedStep.description}`,
+        usePuppeteer: !failedStep.usePuppeteer // Try opposite approach
+      });
+    }
+
+    // Add a delay step if it was a rate limit
+    if (error.message?.includes('rate limit')) {
+      alternatives.push({
+        id: `${failedStep.id}_wait`,
+        action: 'wait',
+        description: 'Wait for rate limit to reset',
+        waitTime: 60000
+      });
+      alternatives.push(failedStep); // Retry original step
+    }
+
+    // Default: just retry with modified parameters
+    if (alternatives.length === 0) {
+      alternatives.push({
+        ...failedStep,
+        id: `${failedStep.id}_retry`,
+        description: `Retry: ${failedStep.description}`,
+        timeout: (failedStep.timeout || 30000) * 2 // Double timeout
+      });
+    }
+
+    return alternatives;
+  }
+
+  /**
+   * Get task execution statistics
+   */
+  getExecutionStats() {
+    return {
+      shortTermMemorySize: this.context.shortTermMemory.length,
+      longTermMemorySize: this.context.longTermMemory.size,
+      toolLogCount: this.context.toolLogs.length,
+      errorCount: this.errorHistory.length,
+      planRevisions: this.planRevisions,
+      currentPlan: this.currentPlan ? {
+        id: this.currentPlan.id,
+        stepCount: this.currentPlan.steps?.length,
+        estimatedDuration: this.currentPlan.estimatedDuration
+      } : null
     };
   }
 }

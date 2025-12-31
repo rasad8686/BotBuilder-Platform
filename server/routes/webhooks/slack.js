@@ -348,7 +348,11 @@ async function processInteraction(channel, interactionData) {
 }
 
 /**
- * Process message through bot AI engine
+ * Process message through bot AI engine with RAG support
+ * @param {Object} bot - Bot record
+ * @param {Object} channel - Channel record
+ * @param {Object} eventData - Event data from Slack
+ * @returns {Object} Response object
  */
 async function processBotMessage(bot, channel, eventData) {
   try {
@@ -360,23 +364,341 @@ async function processBotMessage(bot, channel, eventData) {
       return null;
     }
 
-    // Here you would integrate with your AI service
+    // Get bot's AI configuration
+    const aiConfig = bot.ai_config ? JSON.parse(bot.ai_config) : {};
+    const botSettings = bot.settings ? JSON.parse(bot.settings) : {};
+
+    // Get or create conversation session
+    let session = await db('slack_sessions')
+      .where({
+        channel_id: channel.id,
+        slack_channel_id: eventData.channelId,
+        user_id: eventData.userId
+      })
+      .first();
+
+    if (!session) {
+      // Create new session
+      const [newSessionId] = await db('slack_sessions').insert({
+        channel_id: channel.id,
+        slack_channel_id: eventData.channelId,
+        user_id: eventData.userId,
+        thread_ts: eventData.threadTs,
+        context: JSON.stringify([]),
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      session = await db('slack_sessions').where({ id: newSessionId }).first();
+    }
+
+    // Get conversation context
+    let context = [];
+    try {
+      context = JSON.parse(session?.context || '[]');
+    } catch (e) {
+      context = [];
+    }
+
+    // Add user message to context
+    context.push({
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString()
+    });
+
+    // Keep only last 10 messages for context
+    if (context.length > 10) {
+      context = context.slice(-10);
+    }
+
+    // Try to get AI response
+    let aiResponse = null;
+
+    try {
+      // Check if RAG is enabled for this bot
+      const knowledgeBase = await db('knowledge_bases')
+        .where({ bot_id: bot.id, is_active: true })
+        .first();
+
+      if (knowledgeBase) {
+        // Search knowledge base for relevant context
+        const relevantDocs = await searchKnowledgeBase(bot.id, text);
+
+        if (relevantDocs && relevantDocs.length > 0) {
+          const ragContext = relevantDocs.map(doc => doc.content).join('\n\n');
+          // Generate AI response with RAG context
+          aiResponse = await generateAIResponse(bot, text, context, ragContext);
+        }
+      }
+
+      // If no RAG or no relevant docs, use regular AI
+      if (!aiResponse) {
+        aiResponse = await generateAIResponse(bot, text, context, null);
+      }
+    } catch (aiError) {
+      // AI error - use fallback
+      aiResponse = {
+        text: botSettings.fallbackMessage || 'I apologize, but I\'m having trouble processing your request. Please try again.',
+        blocks: null
+      };
+    }
+
+    // Add assistant response to context
+    context.push({
+      role: 'assistant',
+      content: aiResponse.text,
+      timestamp: new Date().toISOString()
+    });
+
+    // Update session context
+    if (session?.id) {
+      await db('slack_sessions')
+        .where({ id: session.id })
+        .update({
+          context: JSON.stringify(context),
+          updated_at: new Date()
+        });
+    }
+
+    // Log analytics
+    await logSlackAnalytics(channel.id, eventData, aiResponse);
+
+    // Build Slack blocks for rich response
+    const blocks = aiResponse.blocks || [
+      slackService.buildTextBlock(aiResponse.text),
+      slackService.buildDivider(),
+      slackService.buildContextBlock([
+        { text: `_Powered by ${bot.name}_` }
+      ])
+    ];
+
     return {
-      text: `Received: "${text}"\n\n_AI processing connected to main bot engine._`,
-      blocks: [
-        slackService.buildTextBlock(`*Message received:* ${text}`),
-        slackService.buildDivider(),
-        slackService.buildContextBlock([
-          { text: `_Processing by ${bot.name}_` }
-        ])
-      ]
+      text: aiResponse.text,
+      blocks: blocks
     };
 
   } catch (error) {
-    // Slack Error processing message - silent fail
     return {
-      text: 'Sorry, I encountered an error processing your message.'
+      text: 'Sorry, I encountered an error processing your message. Please try again.'
     };
+  }
+}
+
+/**
+ * Search knowledge base for relevant documents
+ * @param {number} botId - Bot ID
+ * @param {string} query - Search query
+ * @returns {Array} Relevant documents
+ */
+async function searchKnowledgeBase(botId, query) {
+  try {
+    // Get knowledge base documents
+    const documents = await db('knowledge_documents')
+      .where({ bot_id: botId, is_active: true })
+      .select('id', 'title', 'content', 'metadata');
+
+    if (!documents || documents.length === 0) {
+      return [];
+    }
+
+    // Simple keyword-based search (can be replaced with vector search)
+    const queryWords = query.toLowerCase().split(/\s+/);
+    const scoredDocs = documents.map(doc => {
+      const content = (doc.content || '').toLowerCase();
+      const title = (doc.title || '').toLowerCase();
+
+      let score = 0;
+      queryWords.forEach(word => {
+        if (word.length > 2) {
+          if (content.includes(word)) score += 1;
+          if (title.includes(word)) score += 2;
+        }
+      });
+
+      return { ...doc, score };
+    });
+
+    // Return top 3 relevant documents
+    return scoredDocs
+      .filter(doc => doc.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
+ * Generate AI response using bot's AI configuration
+ * @param {Object} bot - Bot record
+ * @param {string} userMessage - User's message
+ * @param {Array} context - Conversation context
+ * @param {string} ragContext - RAG context from knowledge base
+ * @returns {Object} AI response
+ */
+async function generateAIResponse(bot, userMessage, context, ragContext) {
+  const aiConfig = bot.ai_config ? JSON.parse(bot.ai_config) : {};
+  const botSettings = bot.settings ? JSON.parse(bot.settings) : {};
+
+  // Build system prompt
+  let systemPrompt = aiConfig.systemPrompt || botSettings.systemPrompt ||
+    `You are ${bot.name}, a helpful AI assistant. ${bot.description || ''}`;
+
+  // Add RAG context if available
+  if (ragContext) {
+    systemPrompt += `\n\nUse the following information to help answer the user's question:\n${ragContext}`;
+  }
+
+  // Get AI provider config
+  const aiProvider = aiConfig.provider || 'openai';
+  const aiModel = aiConfig.model || 'gpt-3.5-turbo';
+
+  try {
+    // Check for API key in bot config or environment
+    const apiKey = aiConfig.apiKey || process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      // No API key - return a helpful message
+      return {
+        text: `Thank you for your message! I'm ${bot.name}. I received: "${userMessage}"\n\nTo enable AI responses, please configure an API key in your bot settings.`,
+        blocks: null
+      };
+    }
+
+    // Make AI API call based on provider
+    if (aiProvider === 'openai' || aiProvider === 'azure') {
+      const response = await callOpenAI(apiKey, aiModel, systemPrompt, context, userMessage, aiConfig);
+      return {
+        text: response,
+        blocks: null
+      };
+    } else if (aiProvider === 'anthropic' || aiProvider === 'claude') {
+      const response = await callAnthropic(apiKey, aiModel, systemPrompt, context, userMessage, aiConfig);
+      return {
+        text: response,
+        blocks: null
+      };
+    } else {
+      // Fallback for unknown provider
+      return {
+        text: `Thank you for your message! I received: "${userMessage}"`,
+        blocks: null
+      };
+    }
+  } catch (error) {
+    // Return fallback response on error
+    return {
+      text: botSettings.fallbackMessage || 'I apologize, but I\'m having trouble processing your request right now. Please try again later.',
+      blocks: null
+    };
+  }
+}
+
+/**
+ * Call OpenAI API
+ * @param {string} apiKey - API key
+ * @param {string} model - Model name
+ * @param {string} systemPrompt - System prompt
+ * @param {Array} context - Conversation context
+ * @param {string} userMessage - User message
+ * @param {Object} config - AI config
+ * @returns {string} AI response text
+ */
+async function callOpenAI(apiKey, model, systemPrompt, context, userMessage, config) {
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...context.slice(-8).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    })),
+    { role: 'user', content: userMessage }
+  ];
+
+  const response = await fetch(config.baseUrl || 'https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: messages,
+      max_tokens: config.maxTokens || 1000,
+      temperature: config.temperature || 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+/**
+ * Call Anthropic API
+ * @param {string} apiKey - API key
+ * @param {string} model - Model name
+ * @param {string} systemPrompt - System prompt
+ * @param {Array} context - Conversation context
+ * @param {string} userMessage - User message
+ * @param {Object} config - AI config
+ * @returns {string} AI response text
+ */
+async function callAnthropic(apiKey, model, systemPrompt, context, userMessage, config) {
+  const messages = context.slice(-8).map(msg => ({
+    role: msg.role,
+    content: msg.content
+  }));
+  messages.push({ role: 'user', content: userMessage });
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: model || 'claude-3-haiku-20240307',
+      max_tokens: config.maxTokens || 1000,
+      system: systemPrompt,
+      messages: messages
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+/**
+ * Log Slack message analytics
+ * @param {number} channelId - Channel ID
+ * @param {Object} eventData - Event data
+ * @param {Object} response - AI response
+ */
+async function logSlackAnalytics(channelId, eventData, response) {
+  try {
+    await db('slack_analytics').insert({
+      channel_id: channelId,
+      slack_channel_id: eventData.channelId,
+      user_id: eventData.userId,
+      message_type: eventData.type || 'message',
+      message_length: (eventData.text || '').length,
+      response_length: (response.text || '').length,
+      thread_ts: eventData.threadTs,
+      created_at: new Date()
+    });
+  } catch (error) {
+    // Analytics logging error - silent fail
   }
 }
 

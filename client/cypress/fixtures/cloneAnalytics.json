@@ -1,0 +1,23 @@
+{
+  "total_interactions": 15000,
+  "satisfaction_score": 4.5,
+  "quality_metrics": {
+    "coherence": 0.92,
+    "relevance": 0.89,
+    "helpfulness": 0.94
+  },
+  "top_clones": [
+    {"name": "Professional Assistant", "count": 5000},
+    {"name": "Voice Clone - Sarah", "count": 3500},
+    {"name": "Technical Writer Style", "count": 2000}
+  ],
+  "usage_by_bot": [
+    {"bot": "Support Bot", "count": 8000},
+    {"bot": "Sales Bot", "count": 5000}
+  ],
+  "error_rates": {
+    "personality": 0.01,
+    "voice": 0.02,
+    "style": 0.015
+  }
+}

@@ -72,9 +72,10 @@ const channelConfig = {
     color: 'bg-blue-600',
     steps: ['Basic Info', 'API Credentials', 'Webhook Setup', 'Test Connection'],
     fields: [
-      { key: 'page_id', label: 'Facebook Page ID', type: 'text', required: true, help: 'Your Facebook Page ID' },
-      { key: 'access_token', label: 'Page Access Token', type: 'password', required: true, help: 'Long-lived page access token' },
-      { key: 'app_secret', label: 'App Secret', type: 'password', required: false, help: 'For webhook signature verification' }
+      { key: 'page_id', label: 'Facebook Page ID', type: 'text', required: true, help: 'Your Facebook Page ID from Page Settings' },
+      { key: 'access_token', label: 'Page Access Token', type: 'password', required: true, help: 'Long-lived page access token from Graph API' },
+      { key: 'app_secret', label: 'App Secret', type: 'password', required: true, help: 'For webhook signature verification' },
+      { key: 'verify_token', label: 'Verify Token', type: 'text', required: true, help: 'Custom token for webhook verification' }
     ],
     webhookPath: '/webhooks/messenger',
     verifyToken: 'botbuilder_messenger_webhook',
@@ -210,7 +211,7 @@ export default function ChannelSetup({ type, onComplete, onClose }) {
               />
             </div>
 
-            {(type === 'whatsapp' || type === 'messenger') && (
+            {type === 'whatsapp' && (
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number

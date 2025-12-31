@@ -1,0 +1,183 @@
+=== BOTBUILDER DATABASE - QUICK TABLE REFERENCE ===
+
+AUTHENTICATION & USERS (5)
+├─ users - User accounts, email, password hash, 2FA config
+├─ user_subscriptions - Plan assignment, billing info, Stripe integration
+├─ user_sessions - Active sessions, tokens, device tracking
+├─ two_factor_backup_codes - 2FA recovery codes
+└─ password_reset_tokens - Password reset token lifecycle
+
+ORGANIZATIONS & MULTI-TENANCY (5)
+├─ organizations - Tenant definition, owner, plan tier, Stripe customer ID
+├─ organization_members - Membership roster with roles
+├─ roles - Role definitions (admin, member, viewer) with permissions
+├─ audit_logs - Complete action audit trail with old/new values
+└─ whitelabel_settings - Custom branding per organization
+
+BOT CORE (4)
+├─ bots - Bot definitions, webhooks, message counts
+├─ bot_messages - Message definitions with trigger keywords
+├─ bot_flows - Visual flow builder JSON data with versioning
+└─ bot_flows (referenced in agent flows via agents table)
+
+AI AGENTS & WORKFLOWS (9)
+├─ agents - Agent definitions per bot with model config
+├─ autonomous_agents - Independent agent instances
+├─ agent_tasks - Task assignment to autonomous agents
+├─ task_steps - Individual step execution within tasks
+├─ agent_workflows - Workflow definitions and orchestration
+├─ workflow_executions - Workflow execution logs
+├─ agent_execution_steps - Per-agent steps in workflow
+├─ agent_messages - Inter-agent communication
+└─ tool_executions - Tool invocation history
+
+TOOLS & FUNCTIONS (3)
+├─ tools - Tool definitions (HTTP, database, code, custom)
+├─ agent_tools - Agent-to-tool mapping with priority
+└─ tool_executions - Tool execution history and results
+
+KNOWLEDGE MANAGEMENT (4)
+├─ knowledge_bases - KB configuration with chunk settings
+├─ documents - Document management with status tracking
+├─ chunks - Document chunks with embedding storage
+└─ agent_knowledge_bases - Agent-to-KB associations
+
+NLU & NATURAL LANGUAGE (6)
+├─ intents - NLU intent definitions with confidence
+├─ intent_examples - Training examples per intent
+├─ entities - Entity type definitions
+├─ entity_values - Entity values with synonyms
+├─ entity_branches - Entity branching logic
+└─ entity_versions - Entity version history
+
+FINE-TUNING & MODELS (4)
+├─ fine_tune_models - Custom model configurations
+├─ fine_tune_datasets - Training data files (JSONL, CSV)
+├─ fine_tune_jobs - Training job tracking and metrics
+└─ model_versions - Model version history
+
+CHANNELS & MESSAGING (8)
+├─ channels - Multi-channel configuration (WhatsApp, Telegram, etc.)
+├─ channel_messages - Message delivery tracking with media
+├─ channel_templates - WhatsApp approved templates
+├─ channel_webhooks - Incoming webhook event processing
+├─ channel_contacts - Contact management per channel
+├─ integrations - External service integrations
+├─ integration_logs - Integration operation history
+└─ (voice channels covered in voice section)
+
+VOICE BOTS (7)
+├─ voice_bots - Voice bot configuration
+├─ voice_bot_sessions - Call session tracking
+├─ voice_bot_templates - Voice response templates
+├─ voice_bot_creations - Creation history
+├─ calls - Call records with transcripts
+├─ call_segments - Call segment breakdown
+└─ phone_numbers - Phone number inventory
+
+BOT CLONING (4)
+├─ work_clones - Bot cloning instances
+├─ clone_sessions - Clone session tracking
+├─ clone_training_data - Training data for clones
+└─ clone_responses - Clone response tracking
+
+BILLING & SUBSCRIPTIONS (4)
+├─ subscription_plans - Plan definitions (free, pro, enterprise)
+├─ payment_history - Payment transaction history
+├─ usage_tracking - API and message usage metrics
+└─ api_tokens - API token management with permissions
+
+REVENUE RECOVERY (6)
+├─ recovery_campaigns - Campaign configuration with AI settings
+├─ recovery_events - Event triggers (abandoned cart, churn risk, etc.)
+├─ recovery_messages - Message delivery with personalization
+├─ recovery_analytics - Aggregated metrics by period
+├─ customer_health_scores - AI health and churn scoring
+└─ customer_health_score_history - Score historical tracking
+
+PLUGIN MARKETPLACE (4)
+├─ plugin_categories - Plugin categorization
+├─ plugins - Plugin marketplace listings
+├─ plugin_versions - Version history
+└─ plugin_installations - Per-tenant installation tracking
+
+ENTERPRISE SECURITY (4)
+├─ sso_configurations - SSO provider setup (SAML, OIDC, etc.)
+├─ sso_domains - Domain verification for SSO
+├─ sso_user_mappings - Identity mapping for SSO users
+└─ sso_login_logs - Authentication audit trail
+
+WEBHOOKS & NOTIFICATIONS (2)
+├─ webhook_logs - Webhook delivery logs
+└─ email_notifications - Email queue and history
+
+EXTENSIBILITY (2)
+├─ widget_configs - Embeddable chat widget config
+└─ widget_messages - Widget chat message history
+
+TEAM COLLABORATION (3)
+├─ team_members - Team membership
+├─ team_invitations - Pending team invitations
+└─ team_roles - Team-specific role definitions
+
+ACTIVITY & LOGGING (4)
+├─ activity_logs - General activity tracking
+├─ nlu_logs - NLP processing logs
+├─ embedding_queue - Document embedding job queue
+└─ admin_audit_log - Admin action tracking
+
+FLOW MANAGEMENT (3)
+├─ flow_orchestrations - Flow configuration
+├─ flow_transitions - Flow state transitions
+└─ flow_variables - Flow variable storage
+
+ADMIN MANAGEMENT (3)
+├─ admin_ip_whitelist - IP allowlist for admin access
+├─ admin_login_attempts - Admin login attempt tracking
+└─ admin_sessions - Admin session management
+
+EXPERIMENTATION (2)
+├─ ab_tests - A/B test configuration
+└─ ab_test_results - Test results and metrics
+
+VIEWS (4)
+├─ user_subscription_details - User subscription + plan info
+├─ user_usage_summary - Monthly usage aggregation
+├─ recent_audit_activity - Last 30 days audit events
+└─ user_activity_summary - User action counts by type
+
+=== SUMMARY ===
+Total Tables: 95
+Total Views: 4
+Total Foreign Keys: 100+
+Total Indexes: 150+
+Total Functions: 10+
+Total Triggers: 8+
+
+=== KEY PATTERNS ===
+
+Multi-tenant: All org-related tables use organization_id FK
+Audit Trail: All significant tables have created_at, updated_at
+Status Tracking: Many tables track status with _at timestamps
+JSON Storage: JSONB used for flexible schemas (config, metadata, etc.)
+Versioning: Some tables track versions (bot_flows, plugins, models)
+Soft Delete: Limited use (no standard is_deleted column)
+
+=== GROWTH PROJECTIONS ===
+
+Expect millions of rows:
+- channel_messages (messaging volume)
+- recovery_messages (campaign volume)
+- audit_logs (continuous logging)
+- widget_messages (user interactions)
+
+Partitioning recommended on:
+- channel_messages (by channel_id + date)
+- recovery_events (by status)
+- recovery_messages (by campaign_id)
+
+Archival recommended for:
+- Messages > 1 year old
+- Logs > 365 days old
+- Failed events after retention period
+

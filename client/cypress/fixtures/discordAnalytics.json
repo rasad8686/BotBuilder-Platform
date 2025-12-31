@@ -1,0 +1,32 @@
+{
+  "total_messages": 5420,
+  "unique_users": 234,
+  "commands_executed": 1250,
+  "response_time_avg": 450,
+  "messages_by_day": [
+    {"date": "2025-01-01", "count": 120},
+    {"date": "2025-01-02", "count": 180},
+    {"date": "2025-01-03", "count": 150}
+  ],
+  "command_breakdown": {
+    "help": 320,
+    "ask": 580,
+    "status": 180,
+    "clear": 90,
+    "info": 80
+  },
+  "top_guilds": [
+    {"name": "Test Server", "count": 2500},
+    {"name": "Support Server", "count": 1800}
+  ],
+  "top_users": [
+    {"username": "user1", "count": 150},
+    {"username": "user2", "count": 120}
+  ],
+  "ai_usage": {
+    "total_requests": 1500,
+    "avg_tokens": 250,
+    "success_rate": 0.95
+  },
+  "error_rate": 0.02
+}

@@ -1,0 +1,49 @@
+{
+  "channels": [
+    {
+      "id": "slack-channel-1",
+      "name": "general",
+      "slackId": "C01234567",
+      "workspaceId": "T01234567",
+      "workspaceName": "My Workspace",
+      "isPrivate": false,
+      "isConnected": true,
+      "botId": "bot-1",
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-01-20T14:30:00Z",
+      "settings": {
+        "autoReply": true,
+        "mentionOnly": false,
+        "threadReplies": true
+      },
+      "stats": {
+        "messagesHandled": 450,
+        "avgResponseTime": 1.2
+      }
+    },
+    {
+      "id": "slack-channel-2",
+      "name": "support",
+      "slackId": "C07654321",
+      "workspaceId": "T01234567",
+      "workspaceName": "My Workspace",
+      "isPrivate": false,
+      "isConnected": true,
+      "botId": "bot-1",
+      "createdAt": "2024-01-16T11:00:00Z",
+      "updatedAt": "2024-01-21T15:30:00Z",
+      "settings": {
+        "autoReply": true,
+        "mentionOnly": true,
+        "threadReplies": true
+      },
+      "stats": {
+        "messagesHandled": 320,
+        "avgResponseTime": 1.5
+      }
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "limit": 10
+}

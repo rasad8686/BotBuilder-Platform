@@ -1,0 +1,64 @@
+{
+  "bots": [
+    {
+      "id": "bot-1",
+      "name": "Customer Support Bot",
+      "description": "Handles customer inquiries and support tickets",
+      "status": "active",
+      "type": "support",
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-01-20T14:30:00Z",
+      "settings": {
+        "language": "en",
+        "timezone": "UTC",
+        "welcomeMessage": "Hello! How can I help you today?"
+      },
+      "stats": {
+        "totalConversations": 1250,
+        "avgResponseTime": 1.5,
+        "satisfactionRate": 92
+      }
+    },
+    {
+      "id": "bot-2",
+      "name": "Sales Assistant",
+      "description": "Assists with product inquiries and sales",
+      "status": "active",
+      "type": "sales",
+      "createdAt": "2024-01-10T08:00:00Z",
+      "updatedAt": "2024-01-18T11:15:00Z",
+      "settings": {
+        "language": "en",
+        "timezone": "UTC",
+        "welcomeMessage": "Welcome! Looking for something specific?"
+      },
+      "stats": {
+        "totalConversations": 890,
+        "avgResponseTime": 2.1,
+        "satisfactionRate": 88
+      }
+    },
+    {
+      "id": "bot-3",
+      "name": "FAQ Bot",
+      "description": "Answers frequently asked questions",
+      "status": "inactive",
+      "type": "faq",
+      "createdAt": "2024-01-05T12:00:00Z",
+      "updatedAt": "2024-01-12T09:45:00Z",
+      "settings": {
+        "language": "en",
+        "timezone": "UTC",
+        "welcomeMessage": "Hi! I can help answer your questions."
+      },
+      "stats": {
+        "totalConversations": 2100,
+        "avgResponseTime": 0.8,
+        "satisfactionRate": 95
+      }
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "limit": 10
+}

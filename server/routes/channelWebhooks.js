@@ -1,6 +1,6 @@
 /**
  * Channel Webhook Routes
- * Handles incoming webhooks from WhatsApp, Instagram, Telegram messaging platforms
+ * Handles incoming webhooks from WhatsApp, Instagram, Telegram, Discord messaging platforms
  */
 
 const express = require('express');
@@ -8,16 +8,19 @@ const router = express.Router();
 const channelManager = require('../channels/core/ChannelManager');
 const WhatsAppProvider = require('../channels/providers/WhatsAppProvider');
 const InstagramProvider = require('../channels/providers/InstagramProvider');
+const DiscordProvider = require('../channels/providers/DiscordProvider');
 const Channel = require('../models/Channel');
 const log = require('../utils/logger');
 
 // Initialize providers
 const whatsappProvider = new WhatsAppProvider();
 const instagramProvider = new InstagramProvider();
+const discordProvider = new DiscordProvider();
 
 // Register providers with channel manager
 channelManager.registerHandler('whatsapp', whatsappProvider);
 channelManager.registerHandler('instagram', instagramProvider);
+channelManager.registerHandler('discord', discordProvider);
 
 // Webhook verification tokens from environment (no insecure defaults)
 const WHATSAPP_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -258,6 +261,11 @@ router.get('/status', (req, res) => {
     telegram: {
       enabled: true,
       endpoint: '/webhooks/telegram/:botToken'
+    },
+    discord: {
+      enabled: true,
+      endpoint: '/webhooks/discord/:botId/interactions',
+      gatewayEndpoint: '/webhooks/discord/:botId/gateway'
     }
   });
 });

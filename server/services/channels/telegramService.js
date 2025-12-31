@@ -190,6 +190,160 @@ class TelegramService {
   }
 
   /**
+   * Send sticker
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string|Buffer|Stream} sticker - Sticker to send (file_id, URL, or stream)
+   * @param {Object} options - Additional options
+   */
+  async sendSticker(botToken, chatId, sticker, options = {}) {
+    const bot = this.getBot(botToken);
+
+    const stickerOptions = {};
+
+    if (options.replyToMessageId) {
+      stickerOptions.reply_to_message_id = options.replyToMessageId;
+    }
+
+    if (options.keyboard) {
+      stickerOptions.reply_markup = this.buildKeyboard(options.keyboard);
+    }
+
+    const stickerInput = this._prepareFileInput(sticker);
+    return await bot.api.sendSticker(chatId, stickerInput, stickerOptions);
+  }
+
+  /**
+   * Send animation (GIF)
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string|Buffer|Stream} animation - Animation to send
+   * @param {Object} options - Additional options
+   */
+  async sendAnimation(botToken, chatId, animation, options = {}) {
+    const bot = this.getBot(botToken);
+
+    const animationOptions = {
+      caption: options.caption || '',
+      parse_mode: options.parseMode || 'HTML'
+    };
+
+    if (options.keyboard) {
+      animationOptions.reply_markup = this.buildKeyboard(options.keyboard);
+    }
+
+    const animationInput = this._prepareFileInput(animation);
+    return await bot.api.sendAnimation(chatId, animationInput, animationOptions);
+  }
+
+  /**
+   * Send video note (round video message)
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string|Buffer|Stream} videoNote - Video note to send
+   * @param {Object} options - Additional options
+   */
+  async sendVideoNote(botToken, chatId, videoNote, options = {}) {
+    const bot = this.getBot(botToken);
+    const videoNoteInput = this._prepareFileInput(videoNote);
+    return await bot.api.sendVideoNote(chatId, videoNoteInput, options);
+  }
+
+  /**
+   * Send contact
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string} phoneNumber - Contact phone number
+   * @param {string} firstName - Contact first name
+   * @param {Object} options - Additional options
+   */
+  async sendContact(botToken, chatId, phoneNumber, firstName, options = {}) {
+    const bot = this.getBot(botToken);
+    return await bot.api.sendContact(chatId, phoneNumber, firstName, {
+      last_name: options.lastName,
+      vcard: options.vcard
+    });
+  }
+
+  /**
+   * Send poll
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string} question - Poll question
+   * @param {Array} options - Poll options
+   * @param {Object} pollOptions - Additional poll options
+   */
+  async sendPoll(botToken, chatId, question, pollOptions, options = {}) {
+    const bot = this.getBot(botToken);
+    return await bot.api.sendPoll(chatId, question, pollOptions, {
+      is_anonymous: options.isAnonymous !== false,
+      type: options.type || 'regular',
+      allows_multiple_answers: options.allowsMultipleAnswers || false,
+      correct_option_id: options.correctOptionId,
+      explanation: options.explanation,
+      open_period: options.openPeriod,
+      close_date: options.closeDate
+    });
+  }
+
+  /**
+   * Send dice
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {string} emoji - Dice emoji (default: dice)
+   */
+  async sendDice(botToken, chatId, emoji = '') {
+    const bot = this.getBot(botToken);
+    return await bot.api.sendDice(chatId, { emoji });
+  }
+
+  /**
+   * Forward message
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Destination chat ID
+   * @param {string|number} fromChatId - Source chat ID
+   * @param {number} messageId - Message ID to forward
+   * @param {Object} options - Additional options
+   */
+  async forwardMessage(botToken, chatId, fromChatId, messageId, options = {}) {
+    const bot = this.getBot(botToken);
+    return await bot.api.forwardMessage(chatId, fromChatId, messageId, {
+      disable_notification: options.silent || false
+    });
+  }
+
+  /**
+   * Copy message
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Destination chat ID
+   * @param {string|number} fromChatId - Source chat ID
+   * @param {number} messageId - Message ID to copy
+   * @param {Object} options - Additional options
+   */
+  async copyMessage(botToken, chatId, fromChatId, messageId, options = {}) {
+    const bot = this.getBot(botToken);
+    return await bot.api.copyMessage(chatId, fromChatId, messageId, {
+      caption: options.caption,
+      parse_mode: options.parseMode || 'HTML',
+      disable_notification: options.silent || false
+    });
+  }
+
+  /**
+   * Send media group (album)
+   * @param {string} botToken - Bot token
+   * @param {string|number} chatId - Chat ID
+   * @param {Array} media - Array of InputMedia objects
+   * @param {Object} options - Additional options
+   */
+  async sendMediaGroup(botToken, chatId, media, options = {}) {
+    const bot = this.getBot(botToken);
+    return await bot.api.sendMediaGroup(chatId, media, {
+      disable_notification: options.silent || false
+    });
+  }
+
+  /**
    * Send location
    * @param {string} botToken - Bot token
    * @param {string|number} chatId - Chat ID

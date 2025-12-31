@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Authentication Middleware
+ * @description JWT token verification middleware for protecting API routes.
+ * Supports both cookie-based and header-based authentication.
+ * @module middleware/auth
+ * @author BotBuilder Team
+ */
+
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const log = require('../utils/logger');
@@ -5,13 +13,28 @@ const { getAuthToken } = require('../utils/cookieHelper');
 
 /**
  * Authentication Middleware
- * Verifies JWT token and attaches user information to request object
+ * @function authenticateToken
+ * @description Verifies JWT token and attaches user information to the request object.
+ * Supports two token sources for flexibility:
+ * 1. httpOnly cookie (auth_token) - Most secure, preferred for web apps
+ * 2. Authorization header (Bearer token) - For API clients and mobile apps
  *
- * Token sources (in order of priority):
- * 1. httpOnly cookie (auth_token) - Most secure, preferred
- * 2. Authorization header (Bearer token) - For backward compatibility and API clients
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {void}
  *
- * Usage: Add to any route that requires authentication
+ * @example
+ * // Protect a route
+ * const authenticateToken = require('./middleware/auth');
+ * router.get('/protected', authenticateToken, (req, res) => {
+ *   // req.user contains: { id, email, username, organization_id }
+ *   res.json({ user: req.user });
+ * });
+ *
+ * @throws {401} When no token is provided
+ * @throws {403} When token is invalid or expired
+ * @throws {500} When authentication error occurs
  */
 const authenticateToken = (req, res, next) => {
   try {

@@ -1,0 +1,25 @@
+{
+  "id": 1,
+  "tts": {
+    "provider": "elevenlabs",
+    "voice_id": "voice123",
+    "language": "en-US",
+    "speaking_rate": 1.0,
+    "pitch": 0,
+    "sample_rate": 22050
+  },
+  "stt": {
+    "provider": "google",
+    "language": "en-US",
+    "model": "enhanced",
+    "punctuation": true
+  },
+  "calls": {
+    "provider": "twilio",
+    "phone_numbers": ["+1234567890"],
+    "recording_enabled": true,
+    "voicemail_enabled": true
+  },
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00.000Z"
+}

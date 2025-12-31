@@ -1,0 +1,1242 @@
+openapi: 3.0.3
+info:
+  title: BotBuilder API
+  description: |
+    AI-Powered Chatbot Builder Platform API
+
+    ## Overview
+    BotBuilder provides a comprehensive API for building, deploying, and managing
+    intelligent chatbots across multiple platforms.
+
+    ## Authentication
+    Most endpoints require JWT authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    ## Rate Limiting
+    - General API: 100 requests per 15 minutes
+    - Authentication: 5 requests per 15 minutes
+    - AI Endpoints: 20 requests per minute
+
+    ## Error Responses
+    All errors follow a consistent format:
+    ```json
+    {
+      "success": false,
+      "error": "Error message",
+      "code": "ERROR_CODE"
+    }
+    ```
+
+  version: 2.0.0
+  contact:
+    name: BotBuilder Support
+    email: support@botbuilder.com
+    url: https://github.com/your-org/BotBuilder
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+  - url: https://api.your-domain.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Bots
+    description: Bot CRUD operations
+  - name: AI
+    description: AI configuration and chat
+  - name: Knowledge Base
+    description: RAG knowledge base management
+  - name: Intents
+    description: NLU intent management
+  - name: Entities
+    description: NLU entity management
+  - name: Channels
+    description: Messaging channel integrations
+  - name: Flows
+    description: Conversation flow builder
+  - name: Messages
+    description: Chat message history
+  - name: Sessions
+    description: Chat session management
+  - name: Analytics
+    description: Usage analytics and reporting
+  - name: Organizations
+    description: Multi-organization management
+  - name: Team
+    description: Team member management
+  - name: Roles
+    description: Role and permission management
+  - name: SSO
+    description: Single Sign-On configuration
+  - name: SCIM
+    description: SCIM user provisioning
+  - name: Billing
+    description: Subscription and billing
+  - name: Recovery
+    description: Revenue recovery engine
+  - name: Workflows
+    description: Automation workflows
+  - name: Plugins
+    description: Plugin management
+  - name: Voice
+    description: Voice and speech services
+  - name: Webhooks
+    description: Webhook configuration
+  - name: Admin
+    description: Admin and superadmin operations
+  - name: Widget
+    description: Embeddable chat widget
+
+paths:
+  # ========================================
+  # AUTHENTICATION
+  # ========================================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new user account
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: SecurePass123!
+                name:
+                  type: string
+                  example: John Doe
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and obtain JWT tokens
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                twoFactorToken:
+                  type: string
+                  description: Required if 2FA is enabled
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate current session
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      operationId: refreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  expiresIn:
+                    type: integer
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Get authenticated user's profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  # ========================================
+  # BOTS
+  # ========================================
+  /bots:
+    get:
+      tags:
+        - Bots
+      summary: List all bots
+      description: Get all bots for the current organization
+      operationId: listBots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by bot name
+      responses:
+        '200':
+          description: List of bots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bot'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Bots
+      summary: Create a new bot
+      description: Create a new chatbot
+      operationId: createBot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBotRequest'
+      responses:
+        '201':
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          description: Plan limit reached
+
+  /bots/{botId}:
+    get:
+      tags:
+        - Bots
+      summary: Get bot by ID
+      description: Get a specific bot's details
+      operationId: getBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      responses:
+        '200':
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Bots
+      summary: Update bot
+      description: Update bot configuration
+      operationId: updateBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBotRequest'
+      responses:
+        '200':
+          description: Bot updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Bots
+      summary: Delete bot
+      description: Permanently delete a bot
+      operationId: deleteBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      responses:
+        '200':
+          description: Bot deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ========================================
+  # AI CONFIGURATION
+  # ========================================
+  /bots/{botId}/ai/config:
+    get:
+      tags:
+        - AI
+      summary: Get AI configuration
+      description: Get AI settings for a bot
+      operationId: getAIConfig
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      responses:
+        '200':
+          description: AI configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/AIConfig'
+
+    put:
+      tags:
+        - AI
+      summary: Update AI configuration
+      description: Update AI settings for a bot
+      operationId: updateAIConfig
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIConfig'
+      responses:
+        '200':
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /bots/{botId}/ai/chat:
+    post:
+      tags:
+        - AI
+      summary: Send message to AI
+      description: Send a message and get AI response with RAG
+      operationId: chatWithAI
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  example: Hello, how can I track my order?
+                session_id:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  response:
+                    type: string
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        documentName:
+                          type: string
+                        similarity:
+                          type: number
+                  usage:
+                    type: object
+                    properties:
+                      prompt_tokens:
+                        type: integer
+                      completion_tokens:
+                        type: integer
+                      total_tokens:
+                        type: integer
+
+  # ========================================
+  # KNOWLEDGE BASE
+  # ========================================
+  /knowledge:
+    get:
+      tags:
+        - Knowledge Base
+      summary: List knowledge bases
+      operationId: listKnowledgeBases
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of knowledge bases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  knowledgeBases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeBase'
+
+    post:
+      tags:
+        - Knowledge Base
+      summary: Create knowledge base
+      operationId: createKnowledgeBase
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Knowledge base created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  knowledgeBase:
+                    $ref: '#/components/schemas/KnowledgeBase'
+
+  /knowledge/{kbId}/documents:
+    post:
+      tags:
+        - Knowledge Base
+      summary: Upload document
+      description: Upload a document to the knowledge base
+      operationId: uploadDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kbId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  document:
+                    $ref: '#/components/schemas/Document'
+
+  /knowledge/{kbId}/search:
+    post:
+      tags:
+        - Knowledge Base
+      summary: Search knowledge base
+      description: Semantic search using embeddings
+      operationId: searchKnowledgeBase
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: kbId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                limit:
+                  type: integer
+                  default: 5
+                threshold:
+                  type: number
+                  default: 0.7
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        document_name:
+                          type: string
+                        similarity:
+                          type: number
+
+  # ========================================
+  # ANALYTICS
+  # ========================================
+  /analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics overview
+      operationId: getAnalyticsOverview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      total_messages:
+                        type: integer
+                      total_sessions:
+                        type: integer
+                      total_users:
+                        type: integer
+                      avg_response_time:
+                        type: number
+                      satisfaction_rate:
+                        type: number
+
+  # ========================================
+  # ORGANIZATIONS
+  # ========================================
+  /organizations:
+    get:
+      tags:
+        - Organizations
+      summary: List organizations
+      operationId: listOrganizations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  organizations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Organization'
+
+    post:
+      tags:
+        - Organizations
+      summary: Create organization
+      operationId: createOrganization
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  organization:
+                    $ref: '#/components/schemas/Organization'
+
+  /organizations/{orgId}/members:
+    get:
+      tags:
+        - Organizations
+      summary: List organization members
+      operationId: listOrgMembers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationMember'
+
+  /organizations/{orgId}/invite:
+    post:
+      tags:
+        - Organizations
+      summary: Invite member
+      operationId: inviteMember
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [viewer, member, admin]
+                  default: member
+      responses:
+        '200':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+# ========================================
+# COMPONENTS
+# ========================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
+  parameters:
+    BotId:
+      name: botId
+      in: path
+      required: true
+      description: Bot ID
+      schema:
+        type: integer
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        code:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatar_url:
+          type: string
+        email_verified:
+          type: boolean
+        two_factor_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+
+    Bot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+          enum: [telegram, whatsapp, slack, discord, web, messenger]
+        language:
+          type: string
+        api_token:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBotRequest:
+      type: object
+      required:
+        - name
+        - platform
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        platform:
+          type: string
+          enum: [telegram, whatsapp, slack, discord, web, messenger]
+        language:
+          type: string
+          default: en
+        description:
+          type: string
+        webhook_url:
+          type: string
+
+    UpdateBotRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+          enum: [telegram, whatsapp, slack, discord, web, messenger]
+        language:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+
+    AIConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [openai, anthropic]
+        model:
+          type: string
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 1
+        max_tokens:
+          type: integer
+        system_prompt:
+          type: string
+        knowledge_base_id:
+          type: integer
+
+    KnowledgeBase:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        document_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        original_filename:
+          type: string
+        file_type:
+          type: string
+        file_size:
+          type: integer
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        chunk_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        logo_url:
+          type: string
+        plan_tier:
+          type: string
+          enum: [free, pro, enterprise]
+        created_at:
+          type: string
+          format: date-time
+
+    OrganizationMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        organization_id:
+          type: integer
+        role:
+          type: string
+          enum: [viewer, member, admin]
+        user:
+          $ref: '#/components/schemas/User'
+        joined_at:
+          type: string
+          format: date-time
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        external_user_id:
+          type: string
+        user_info:
+          type: object
+        status:
+          type: string
+          enum: [active, closed, transferred]
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        session_id:
+          type: integer
+        bot_id:
+          type: integer
+        sender_type:
+          type: string
+          enum: [user, bot, agent]
+        content:
+          type: string
+        content_type:
+          type: string
+          enum: [text, image, file, audio]
+        intent_detected:
+          type: string
+        confidence:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+
+    Intent:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        training_phrases:
+          type: array
+          items:
+            type: string
+        responses:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+
+    Entity:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [list, regex, synonym]
+        values:
+          type: array
+          items:
+            type: string
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        type:
+          type: string
+          enum: [telegram, whatsapp, slack, discord]
+        name:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - bearerAuth: []

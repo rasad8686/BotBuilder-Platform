@@ -67,6 +67,9 @@ export default function FineTuning() {
   const [uploading, setUploading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [training, setTraining] = useState(false);
+  const [costEstimate, setCostEstimate] = useState(null);
+  const [loadingCost, setLoadingCost] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState({});
 
   const token = localStorage.getItem('token');
 
@@ -100,6 +103,37 @@ export default function FineTuning() {
     }
   }, [token]);
 
+  const fetchCostEstimate = useCallback(async (modelId, epochs) => {
+    setLoadingCost(true);
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/models/${modelId}/cost-estimate?epochs=${epochs}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCostEstimate(data.estimate);
+      }
+    } catch (err) {
+      // Silent fail for cost estimate
+    } finally {
+      setLoadingCost(false);
+    }
+  }, [token]);
+
+  const fetchTrainingProgress = useCallback(async (modelId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/models/${modelId}/progress`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTrainingProgress(prev => ({ ...prev, [modelId]: data }));
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchModels();
     fetchBaseModels();
@@ -108,6 +142,22 @@ export default function FineTuning() {
     const interval = setInterval(fetchModels, 10000);
     return () => clearInterval(interval);
   }, [fetchModels, fetchBaseModels]);
+
+  // Poll progress for training models
+  useEffect(() => {
+    const trainingModels = models.filter(m => m.status === 'training');
+    if (trainingModels.length === 0) return;
+
+    // Initial fetch
+    trainingModels.forEach(m => fetchTrainingProgress(m.id));
+
+    // Poll every 2 seconds for training models
+    const progressInterval = setInterval(() => {
+      trainingModels.forEach(m => fetchTrainingProgress(m.id));
+    }, 2000);
+
+    return () => clearInterval(progressInterval);
+  }, [models, fetchTrainingProgress]);
 
   const handleCreateModel = async (e) => {
     e.preventDefault();
@@ -255,7 +305,12 @@ export default function FineTuning() {
 
   const openTrainModal = (model) => {
     setSelectedModel(model);
+    setCostEstimate(null);
     setShowTrainModal(true);
+    // Fetch cost estimate if dataset is ready
+    if (model.ready_dataset_count && parseInt(model.ready_dataset_count) > 0) {
+      fetchCostEstimate(model.id, trainingConfig.epochs);
+    }
   };
 
   const openMetricsModal = (model) => {
@@ -489,13 +544,38 @@ export default function FineTuning() {
                   )}
 
                   {model.status === 'training' && (
-                    <button
-                      onClick={() => handleCancelTraining(model.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"
-                    >
-                      <Square className="w-4 h-4" />
-                      {t('fineTuning.cancel')}
-                    </button>
+                    <div className="flex-1 space-y-2">
+                      {/* Progress bar */}
+                      {trainingProgress[model.id] && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span>{trainingProgress[model.id].message}</span>
+                            <span>{trainingProgress[model.id].progress || 0}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                            <div
+                              className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${trainingProgress[model.id].progress || 0}%` }}
+                            />
+                          </div>
+                          {trainingProgress[model.id].metrics?.loss && (
+                            <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              <span>Loss: {trainingProgress[model.id].metrics.loss.toFixed(4)}</span>
+                              {trainingProgress[model.id].metrics.accuracy && (
+                                <span>Acc: {(trainingProgress[model.id].metrics.accuracy * 100).toFixed(1)}%</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => handleCancelTraining(model.id)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"
+                      >
+                        <Square className="w-4 h-4" />
+                        {t('fineTuning.cancel')}
+                      </button>
+                    </div>
                   )}
 
                   {['completed', 'failed', 'cancelled'].includes(model.status) && (
@@ -728,7 +808,13 @@ export default function FineTuning() {
                   min="1"
                   max="10"
                   value={trainingConfig.epochs}
-                  onChange={(e) => setTrainingConfig(prev => ({ ...prev, epochs: parseInt(e.target.value) }))}
+                  onChange={(e) => {
+                    const epochs = parseInt(e.target.value);
+                    setTrainingConfig(prev => ({ ...prev, epochs }));
+                    if (selectedModel) {
+                      fetchCostEstimate(selectedModel.id, epochs);
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -766,6 +852,42 @@ export default function FineTuning() {
                   <option value={0.0002}>0.0002 (Higher)</option>
                 </select>
               </div>
+
+              {/* Cost Estimation */}
+              {costEstimate && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 space-y-2">
+                  <h4 className="font-medium text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    {t('fineTuning.costEstimate', 'Cost Estimate')}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {t('fineTuning.estimatedTokens', 'Estimated Tokens')}:
+                    </div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {costEstimate.estimated_tokens?.toLocaleString()}
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {t('fineTuning.trainingCost', 'Training Cost')}:
+                    </div>
+                    <div className="font-medium text-purple-600 dark:text-purple-400">
+                      ${costEstimate.estimated_training_cost?.toFixed(4)} USD
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {t('fineTuning.totalWithOverhead', 'Total (with 10% buffer)')}:
+                    </div>
+                    <div className="font-bold text-purple-700 dark:text-purple-300">
+                      ${costEstimate.total_estimated_cost?.toFixed(4)} USD
+                    </div>
+                  </div>
+                </div>
+              )}
+              {loadingCost && (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-500" />
+                  <span className="ml-2 text-sm text-gray-500">{t('fineTuning.calculatingCost', 'Calculating cost...')}</span>
+                </div>
+              )}
 
               <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
                 <p className="text-sm text-yellow-700 dark:text-yellow-300">

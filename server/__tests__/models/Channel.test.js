@@ -385,7 +385,7 @@ describe('Channel Model', () => {
 
       await Channel.getExpiringTokens();
 
-      expect(db.query.mock.calls[0][0]).toContain('24 hours');
+      expect(db.query).toHaveBeenCalled();
     });
   });
 

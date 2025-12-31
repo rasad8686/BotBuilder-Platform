@@ -217,11 +217,14 @@ class Channel {
    * Get channels with expiring tokens
    */
   static async getExpiringTokens(hoursBeforeExpiry = 24) {
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const hoursNum = parseInt(hoursBeforeExpiry, 10) || 24;
     const result = await pool.query(
       `SELECT * FROM channels
        WHERE token_expires_at IS NOT NULL
-       AND token_expires_at <= NOW() + INTERVAL '${hoursBeforeExpiry} hours'
-       AND status = 'active'`
+       AND token_expires_at <= NOW() + INTERVAL '1 hour' * $1
+       AND status = 'active'`,
+      [hoursNum]
     );
     return result.rows;
   }

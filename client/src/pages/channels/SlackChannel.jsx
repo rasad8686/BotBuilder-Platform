@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import api from '../../services/api';
+import api from '../../api/axios';
 
 export default function SlackChannel() {
   const { t } = useTranslation();

@@ -397,7 +397,8 @@ class ChannelManager {
    * Get channel statistics
    */
   async getChannelStats(channelId, period = '30d') {
-    const periodDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const periodDays = parseInt(period === '7d' ? 7 : period === '30d' ? 30 : 90, 10);
 
     const result = await pool.query(
       `SELECT
@@ -409,8 +410,8 @@ class ChannelManager {
         COUNT(DISTINCT from_number) FILTER (WHERE direction = 'inbound') as unique_contacts
        FROM channel_messages
        WHERE channel_id = $1
-       AND created_at >= NOW() - INTERVAL '${periodDays} days'`,
-      [channelId]
+       AND created_at >= NOW() - INTERVAL '1 day' * $2`,
+      [channelId, periodDays]
     );
 
     return result.rows[0];

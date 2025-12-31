@@ -273,7 +273,8 @@ class ChannelMessage {
    * Get message statistics
    */
   static async getStats(channelId, period = '30d') {
-    const periodDays = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const periodDays = parseInt(period === '7d' ? 7 : period === '30d' ? 30 : 90, 10);
 
     const result = await pool.query(
       `SELECT
@@ -285,10 +286,10 @@ class ChannelMessage {
         COUNT(*) FILTER (WHERE status = 'failed') as failed
        FROM channel_messages
        WHERE channel_id = $1
-       AND created_at >= NOW() - INTERVAL '${periodDays} days'
+       AND created_at >= NOW() - INTERVAL '1 day' * $2
        GROUP BY DATE(created_at)
        ORDER BY date DESC`,
-      [channelId]
+      [channelId, periodDays]
     );
 
     return result.rows;

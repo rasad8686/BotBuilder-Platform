@@ -1,0 +1,35 @@
+{
+  "total_executions": 8500,
+  "success_rate": 0.94,
+  "avg_time": 2500,
+  "executions_by_day": [
+    {"date": "2025-01-01", "count": 250},
+    {"date": "2025-01-02", "count": 320},
+    {"date": "2025-01-03", "count": 290}
+  ],
+  "tool_usage": {
+    "web_search": 2500,
+    "code_execution": 3200,
+    "api_call": 1800,
+    "file_operations": 1000
+  },
+  "cost_analysis": {
+    "total": 450.50,
+    "by_agent": [
+      {"name": "Research Agent", "cost": 180.25},
+      {"name": "Task Agent", "cost": 150.00},
+      {"name": "Coding Agent", "cost": 120.25}
+    ]
+  },
+  "top_agents": [
+    {"name": "Research Agent", "executions": 3500},
+    {"name": "Task Agent", "executions": 2800},
+    {"name": "Coding Agent", "executions": 2200}
+  ],
+  "error_analysis": {
+    "timeout": 50,
+    "rate_limit": 30,
+    "tool_failure": 80,
+    "other": 40
+  }
+}

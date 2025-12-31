@@ -178,7 +178,8 @@ router.get('/overview', async (req, res) => {
 router.get('/messages-over-time', async (req, res) => {
   try {
     const orgId = req.organization.id;
-    const days = parseInt(req.query.days) || 7;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const days = parseInt(req.query.days, 10) || 7;
 
     // Get daily message counts
     const result = await db.query(
@@ -188,10 +189,10 @@ router.get('/messages-over-time', async (req, res) => {
        FROM bot_messages bm
        JOIN bots b ON b.id = bm.bot_id
        WHERE b.organization_id = $1
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $2
        GROUP BY DATE(bm.created_at)
        ORDER BY date ASC`,
-      [orgId]
+      [orgId, days]
     );
 
     res.json({
@@ -303,7 +304,8 @@ router.get('/recent-activity', async (req, res) => {
 router.get('/hourly-activity', async (req, res) => {
   try {
     const orgId = req.organization.id;
-    const days = parseInt(req.query.days) || 7;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const days = parseInt(req.query.days, 10) || 7;
 
     const result = await db.query(
       `SELECT
@@ -312,10 +314,10 @@ router.get('/hourly-activity', async (req, res) => {
        FROM bot_messages bm
        JOIN bots b ON b.id = bm.bot_id
        WHERE b.organization_id = $1
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $2
        GROUP BY EXTRACT(HOUR FROM bm.created_at)
        ORDER BY hour ASC`,
-      [orgId]
+      [orgId, days]
     );
 
     // Fill in missing hours with 0
@@ -521,9 +523,9 @@ router.get('/export', async (req, res) => {
          FROM bot_messages bm
          JOIN bots b ON b.id = bm.bot_id
          WHERE b.organization_id = $1
-           AND bm.created_at >= NOW() - INTERVAL '${days} days'
+           AND bm.created_at >= NOW() - INTERVAL '1 day' * $2
          ORDER BY bm.created_at DESC`,
-        [orgId]
+        [orgId, days]
       );
       data = result.rows;
       filename = `messages_export_${new Date().toISOString().split('T')[0]}.csv`;
@@ -539,10 +541,10 @@ router.get('/export', async (req, res) => {
          FROM bot_messages bm
          JOIN bots b ON b.id = bm.bot_id
          WHERE b.organization_id = $1
-           AND bm.created_at >= NOW() - INTERVAL '${days} days'
+           AND bm.created_at >= NOW() - INTERVAL '1 day' * $2
          GROUP BY DATE(bm.created_at)
          ORDER BY date DESC`,
-        [orgId]
+        [orgId, days]
       );
       data = result.rows;
       filename = `daily_stats_export_${new Date().toISOString().split('T')[0]}.csv`;
@@ -580,11 +582,14 @@ router.get('/export', async (req, res) => {
 router.get('/comprehensive', async (req, res) => {
   try {
     const orgId = req.organization.id;
-    const days = parseInt(req.query.days) || 30;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const days = parseInt(req.query.days, 10) || 30;
     const botId = req.query.botId; // Optional filter
 
+    // Build params array with days as the last parameter for interval
     const botFilter = botId ? 'AND b.id = $2' : '';
-    const params = botId ? [orgId, botId] : [orgId];
+    const daysParamIndex = botId ? 3 : 2;
+    const params = botId ? [orgId, botId, days] : [orgId, days];
 
     // Overview stats - use LEFT JOIN to handle case with no messages
     const overviewResult = await db.query(
@@ -594,7 +599,7 @@ router.get('/comprehensive', async (req, res) => {
          COUNT(DISTINCT CASE WHEN bm.id IS NOT NULL THEN b.id END) as active_bots
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $${daysParamIndex}
        WHERE b.organization_id = $1
          ${botFilter}`,
       params
@@ -607,7 +612,7 @@ router.get('/comprehensive', async (req, res) => {
          COUNT(bm.id) as count
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $${daysParamIndex}
        WHERE b.organization_id = $1
          ${botFilter}
          AND bm.id IS NOT NULL
@@ -641,7 +646,7 @@ router.get('/comprehensive', async (req, res) => {
          COUNT(bm.id) as count
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $${daysParamIndex}
        WHERE b.organization_id = $1
          ${botFilter}
          AND bm.id IS NOT NULL
@@ -662,7 +667,7 @@ router.get('/comprehensive', async (req, res) => {
          COUNT(bm.id) as count
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $${daysParamIndex}
        WHERE b.organization_id = $1
          ${botFilter}
          AND bm.id IS NOT NULL
@@ -679,11 +684,11 @@ router.get('/comprehensive', async (req, res) => {
          COUNT(DISTINCT bm.session_id) as session_count
        FROM bots b
        LEFT JOIN bot_messages bm ON bm.bot_id = b.id
-         AND bm.created_at >= NOW() - INTERVAL '${days} days'
+         AND bm.created_at >= NOW() - INTERVAL '1 day' * $2
        WHERE b.organization_id = $1
        GROUP BY b.id, b.name
        ORDER BY message_count DESC`,
-      [orgId]
+      [orgId, days]
     );
 
     res.json({

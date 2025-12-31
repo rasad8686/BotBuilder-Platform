@@ -76,6 +76,15 @@ jest.mock('../../services/clone', () => ({
         tone: { dominant: 'positive' }
       }
     })
+  })),
+  CloneService: jest.fn().mockImplementation(() => ({
+    getClones: jest.fn().mockResolvedValue([]),
+    getClone: jest.fn().mockResolvedValue(null),
+    createClone: jest.fn().mockResolvedValue({ id: 1 }),
+    updateClone: jest.fn().mockResolvedValue({ id: 1 }),
+    deleteClone: jest.fn().mockResolvedValue(true),
+    addTrainingData: jest.fn().mockResolvedValue({ id: 1 }),
+    getTrainingData: jest.fn().mockResolvedValue([])
   }))
 }));
 

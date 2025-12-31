@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Professional Assistant",
+    "type": "personality",
+    "description": "A professional and helpful AI assistant",
+    "status": "active",
+    "usage_count": 1500,
+    "created_at": "2025-01-01T00:00:00.000Z",
+    "updated_at": "2025-01-15T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Voice Clone - Sarah",
+    "type": "voice",
+    "description": "Female voice clone",
+    "status": "active",
+    "usage_count": 800,
+    "created_at": "2025-01-05T00:00:00.000Z",
+    "updated_at": "2025-01-20T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Technical Writer Style",
+    "type": "style",
+    "description": "Technical documentation writing style",
+    "status": "active",
+    "usage_count": 450,
+    "created_at": "2025-01-10T00:00:00.000Z",
+    "updated_at": "2025-01-22T00:00:00.000Z"
+  }
+]

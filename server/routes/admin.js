@@ -407,6 +407,7 @@ router.get('/activity-timeline', organizationContext, async (req, res) => {
     const limitNum = Math.min(500, Math.max(1, parseInt(limit)));
 
     // Build query with optional organization filter
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
     let query = `
       SELECT
         al.id,
@@ -419,11 +420,11 @@ router.get('/activity-timeline', organizationContext, async (req, res) => {
         u.email as user_email
       FROM audit_logs al
       LEFT JOIN users u ON al.user_id = u.id
-      WHERE al.created_at >= CURRENT_TIMESTAMP - INTERVAL '${daysNum} days'
+      WHERE al.created_at >= CURRENT_TIMESTAMP - INTERVAL '1 day' * $1
     `;
 
-    const values = [];
-    let paramCount = 1;
+    const values = [daysNum];
+    let paramCount = 2;
 
     if (targetOrgId) {
       query += ` AND al.organization_id = $${paramCount}`;

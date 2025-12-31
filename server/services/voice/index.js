@@ -12,6 +12,10 @@ const VoiceAnalytics = require('./VoiceAnalytics');
 const VoiceStorage = require('./VoiceStorage');
 const FormatConverter = require('./FormatConverter');
 const StreamingTranscription = require('./StreamingTranscription');
+const RecordingService = require('./RecordingService');
+const TranscriptionService = require('./TranscriptionService');
+const SentimentAnalysis = require('./SentimentAnalysis');
+const WebRTCService = require('./WebRTCService');
 
 module.exports = {
   // Core services
@@ -35,5 +39,17 @@ module.exports = {
   FormatConverter,
 
   // Streaming
-  StreamingTranscription
+  StreamingTranscription,
+
+  // Recording
+  RecordingService,
+
+  // Enhanced Transcription
+  TranscriptionService,
+
+  // Sentiment Analysis
+  SentimentAnalysis,
+
+  // WebRTC
+  WebRTCService
 };

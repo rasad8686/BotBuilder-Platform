@@ -1,27 +1,65 @@
 /**
- * Email Service
- * Handles sending emails via Resend API
- * Falls back to console.log in development if RESEND_API_KEY not set
+ * @fileoverview Email Service Module
+ * @description Handles all email operations for the BotBuilder platform using Resend API.
+ * In development mode without RESEND_API_KEY, falls back to console logging.
+ * @module services/emailService
+ * @author BotBuilder Team
  */
 
 const log = require('../utils/logger');
 
+/**
+ * Email Service Class
+ * @class EmailService
+ * @description Manages email delivery for transactional emails including
+ * password resets, email verification, and notifications.
+ *
+ * @example
+ * const emailService = require('./services/emailService');
+ * await emailService.sendPasswordResetEmail('user@example.com', 'reset-token', 'John');
+ */
 class EmailService {
+  /**
+   * Creates an instance of EmailService.
+   * @constructor
+   * @description Initializes the email service with configuration from environment variables.
+   */
   constructor() {
+    /** @type {string|undefined} Resend API key for email delivery */
     this.resendApiKey = process.env.RESEND_API_KEY;
+    /** @type {string} Sender email address */
     this.fromEmail = process.env.EMAIL_FROM || 'noreply@botbuilder.com';
+    /** @type {string} Frontend URL for email links */
     this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
   }
 
   /**
-   * Check if Resend is configured
+   * Checks if the Resend API is configured
+   * @returns {boolean} True if RESEND_API_KEY is set, false otherwise
+   * @description Used to determine whether to send actual emails or fall back to console logging.
    */
   isConfigured() {
     return !!this.resendApiKey;
   }
 
   /**
-   * Send email via Resend API
+   * Sends an email via Resend API
+   * @async
+   * @param {Object} options - Email options
+   * @param {string} options.to - Recipient email address
+   * @param {string} options.subject - Email subject line
+   * @param {string} options.html - HTML content of the email
+   * @param {string} [options.text] - Plain text content (fallback)
+   * @returns {Promise<{success: boolean, id?: string, dev?: boolean}>} Result object
+   * @throws {Error} When email sending fails
+   *
+   * @example
+   * await emailService.sendEmail({
+   *   to: 'user@example.com',
+   *   subject: 'Welcome!',
+   *   html: '<h1>Welcome to BotBuilder</h1>',
+   *   text: 'Welcome to BotBuilder'
+   * });
    */
   async sendEmail({ to, subject, html, text }) {
     if (!this.isConfigured()) {

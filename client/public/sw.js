@@ -14,15 +14,28 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip API requests - don't cache them
+  // Skip API requests - don't cache them, let them fail gracefully
   if (event.request.url.includes('/api/')) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ error: 'Network unavailable' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
+
+  // Skip WebSocket requests
+  if (event.request.url.includes('/ws')) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request)
       .then((response) => response || fetch(event.request))
+      .catch(() => caches.match('/index.html'))
   );
 });
 

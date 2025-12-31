@@ -1,0 +1,12 @@
+{
+  "message_count": 3500,
+  "active_users": 125,
+  "ai_stats": {
+    "total_requests": 1200,
+    "success_rate": 0.96
+  },
+  "top_channels": [
+    {"name": "general", "count": 800},
+    {"name": "support", "count": 500}
+  ]
+}

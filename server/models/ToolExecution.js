@@ -152,8 +152,11 @@ const ToolExecution = {
    * Delete old executions
    */
   async deleteOlderThan(days) {
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const daysNum = parseInt(days, 10) || 30;
     const result = await db.query(
-      `DELETE FROM tool_executions WHERE created_at < NOW() - INTERVAL '${days} days' RETURNING id`
+      `DELETE FROM tool_executions WHERE created_at < NOW() - INTERVAL '1 day' * $1 RETURNING id`,
+      [daysNum]
     );
     return result.rowCount;
   },
@@ -162,7 +165,8 @@ const ToolExecution = {
    * Get execution statistics for a tool
    */
   async getStatsByToolId(toolId, options = {}) {
-    const days = options.days || 30;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const daysNum = parseInt(options.days, 10) || 30;
 
     const result = await db.query(
       `SELECT
@@ -173,8 +177,8 @@ const ToolExecution = {
          MIN(duration_ms) as min_duration_ms,
          MAX(duration_ms) as max_duration_ms
        FROM tool_executions
-       WHERE tool_id = $1 AND created_at > NOW() - INTERVAL '${days} days'`,
-      [toolId]
+       WHERE tool_id = $1 AND created_at > NOW() - INTERVAL '1 day' * $2`,
+      [toolId, daysNum]
     );
     return result.rows[0];
   },
@@ -183,7 +187,8 @@ const ToolExecution = {
    * Get execution statistics for an agent
    */
   async getStatsByAgentId(agentId, options = {}) {
-    const days = options.days || 30;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const daysNum = parseInt(options.days, 10) || 30;
 
     const result = await db.query(
       `SELECT
@@ -192,8 +197,8 @@ const ToolExecution = {
          COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed,
          AVG(duration_ms) as avg_duration_ms
        FROM tool_executions
-       WHERE agent_id = $1 AND created_at > NOW() - INTERVAL '${days} days'`,
-      [agentId]
+       WHERE agent_id = $1 AND created_at > NOW() - INTERVAL '1 day' * $2`,
+      [agentId, daysNum]
     );
     return result.rows[0];
   },

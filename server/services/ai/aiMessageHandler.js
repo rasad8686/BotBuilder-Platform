@@ -162,12 +162,14 @@ class AIMessageHandler {
    */
   static async cleanupOldConversations(daysOld = 30) {
     try {
+      // SECURITY FIX: Use parameterized interval to prevent SQL injection
+      const daysNum = parseInt(daysOld, 10) || 30;
       const query = `
         DELETE FROM ai_conversations
-        WHERE created_at < NOW() - INTERVAL '${daysOld} days'
+        WHERE created_at < NOW() - INTERVAL '1 day' * $1
       `;
 
-      const result = await db.query(query);
+      const result = await db.query(query, [daysNum]);
 
       return result.rowCount;
     } catch (error) {

@@ -337,7 +337,8 @@ class VoiceAnalytics {
    * Get daily trend
    */
   async getDailyTrend(options) {
-    const days = options.days || 30;
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const days = parseInt(options.days, 10) || 30;
 
     let query = `
       SELECT
@@ -346,11 +347,11 @@ class VoiceAnalytics {
         SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful,
         SUM(duration_seconds) as total_duration
       FROM voice_analytics
-      WHERE created_at >= NOW() - INTERVAL '${days} days'
+      WHERE created_at >= NOW() - INTERVAL '1 day' * $1
     `;
 
-    const values = [];
-    let paramIndex = 1;
+    const values = [days];
+    let paramIndex = 2;
 
     if (options.organizationId) {
       query += ` AND organization_id = $${paramIndex}`;

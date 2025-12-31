@@ -17,6 +17,23 @@ const GladiaProcessor = require('../services/voiceToBot/GladiaProcessor');
 let io = null;
 let executionSocket = null;
 
+// Configurable voice streaming settings
+const VOICE_STREAMING_CONFIG = {
+  // Default timeout in milliseconds (5 minutes)
+  defaultTimeout: parseInt(process.env.VOICE_STREAMING_TIMEOUT_MS) || 5 * 60 * 1000,
+  // Maximum allowed timeout (30 minutes)
+  maxTimeout: parseInt(process.env.VOICE_STREAMING_MAX_TIMEOUT_MS) || 30 * 60 * 1000,
+  // Minimum timeout (1 minute)
+  minTimeout: parseInt(process.env.VOICE_STREAMING_MIN_TIMEOUT_MS) || 60 * 1000,
+  // Enable Redis queue persistence for audio chunks
+  enableRedisQueue: process.env.VOICE_REDIS_QUEUE_ENABLED === 'true',
+  // Redis queue settings
+  redisQueuePrefix: process.env.VOICE_REDIS_QUEUE_PREFIX || 'voice:queue:',
+  // Retry settings
+  maxRetries: parseInt(process.env.VOICE_MAX_RETRIES) || 3,
+  retryDelayMs: parseInt(process.env.VOICE_RETRY_DELAY_MS) || 1000
+};
+
 /**
  * Initialize WebSocket server with Express HTTP server
  * @param {http.Server} server - HTTP server instance
@@ -65,7 +82,7 @@ function initializeWebSocket(server) {
 
     // Start voice streaming session
     socket.on('voice:start', (data) => {
-      const { language = 'az', sessionId } = data;
+      const { language = 'az', sessionId, timeout: customTimeout } = data;
       log.info('[WebSocket] Voice streaming started', { socketId: socket.id, language, sessionId });
 
       // Clean up any existing session
@@ -80,6 +97,7 @@ function initializeWebSocket(server) {
       finalTranscript = '';
       audioChunkCount = 0;
       streamingActive = true;
+      let retryCount = 0;
 
       // Clear any existing timeout
       if (streamingTimeout) {
@@ -87,71 +105,127 @@ function initializeWebSocket(server) {
         streamingTimeout = null;
       }
 
-      // Create streaming recognition session with Gladia
-      streamingSession = gladiaProcessor.createStreamingRecognition(
-        { language },
-        // onResult callback
-        (result) => {
-          if (!streamingActive) return;
+      // Calculate streaming timeout - use custom if provided, otherwise use default
+      let streamingDuration = customTimeout
+        ? Math.min(Math.max(customTimeout, VOICE_STREAMING_CONFIG.minTimeout), VOICE_STREAMING_CONFIG.maxTimeout)
+        : VOICE_STREAMING_CONFIG.defaultTimeout;
 
-          // Log ALL results for debugging
-          log.info('[WebSocket] STT Result received', {
-            isFinal: result.isFinal,
-            transcript: result.transcript?.substring(0, 50),
-            confidence: result.confidence
-          });
+      // Helper function to create streaming session with retry logic
+      const createStreamingSessionWithRetry = () => {
+        streamingSession = gladiaProcessor.createStreamingRecognition(
+          { language },
+          // onResult callback
+          (result) => {
+            if (!streamingActive) return;
 
-          if (result.isFinal) {
-            // Accumulate final transcript
-            finalTranscript += result.transcript + ' ';
-            socket.emit('voice:transcript', {
-              transcript: result.transcript,
-              isFinal: true,
-              confidence: result.confidence,
-              fullTranscript: finalTranscript.trim()
-            });
-            log.info('[WebSocket] Sent FINAL transcript to client', { transcript: result.transcript.substring(0, 50) });
-          } else {
-            // Send interim result immediately
-            socket.emit('voice:transcript', {
-              transcript: result.transcript,
-              isFinal: false,
+            // Log ALL results for debugging
+            log.info('[WebSocket] STT Result received', {
+              isFinal: result.isFinal,
+              transcript: result.transcript?.substring(0, 50),
               confidence: result.confidence
             });
-            log.info('[WebSocket] Sent INTERIM transcript to client', { transcript: result.transcript.substring(0, 50) });
-          }
-        },
-        // onError callback
-        (error) => {
-          log.error('[WebSocket] Voice streaming error', { error: error.message });
-          socket.emit('voice:error', { error: error.message });
 
-          // Try to recreate session on certain errors
-          if (error.code === 11 || error.message.includes('exceeded')) {
-            // Streaming limit exceeded, notify client to restart
-            streamingSession = null;
-            streamingActive = false;
-            socket.emit('voice:restart', { reason: 'Streaming limit exceeded' });
+            if (result.isFinal) {
+              // Accumulate final transcript
+              finalTranscript += result.transcript + ' ';
+              socket.emit('voice:transcript', {
+                transcript: result.transcript,
+                isFinal: true,
+                confidence: result.confidence,
+                fullTranscript: finalTranscript.trim()
+              });
+              log.info('[WebSocket] Sent FINAL transcript to client', { transcript: result.transcript.substring(0, 50) });
+            } else {
+              // Send interim result immediately
+              socket.emit('voice:transcript', {
+                transcript: result.transcript,
+                isFinal: false,
+                confidence: result.confidence
+              });
+              log.info('[WebSocket] Sent INTERIM transcript to client', { transcript: result.transcript.substring(0, 50) });
+            }
+          },
+          // onError callback with retry logic
+          (error) => {
+            log.error('[WebSocket] Voice streaming error', { error: error.message, retryCount });
+
+            // Determine if error is retryable
+            const isRetryable = error.code === 'ECONNRESET' ||
+                                error.code === 'ETIMEDOUT' ||
+                                error.message.includes('network') ||
+                                error.message.includes('connection');
+
+            // Retry logic for transient errors
+            if (isRetryable && retryCount < VOICE_STREAMING_CONFIG.maxRetries) {
+              retryCount++;
+              log.info('[WebSocket] Retrying streaming session', { retryCount, maxRetries: VOICE_STREAMING_CONFIG.maxRetries });
+              socket.emit('voice:retrying', {
+                attempt: retryCount,
+                maxRetries: VOICE_STREAMING_CONFIG.maxRetries,
+                reason: error.message
+              });
+
+              // Wait before retry
+              setTimeout(() => {
+                if (streamingActive) {
+                  createStreamingSessionWithRetry();
+                }
+              }, VOICE_STREAMING_CONFIG.retryDelayMs * retryCount);
+              return;
+            }
+
+            socket.emit('voice:error', { error: error.message, retryCount });
+
+            // Streaming limit exceeded or max retries reached, notify client to restart
+            if (error.code === 11 || error.message.includes('exceeded') || retryCount >= VOICE_STREAMING_CONFIG.maxRetries) {
+              streamingSession = null;
+              streamingActive = false;
+              socket.emit('voice:restart', {
+                reason: retryCount >= VOICE_STREAMING_CONFIG.maxRetries
+                  ? `Max retries (${VOICE_STREAMING_CONFIG.maxRetries}) exceeded`
+                  : 'Streaming limit exceeded'
+              });
+            }
           }
-        }
-      );
+        );
+
+        return streamingSession;
+      };
+
+      // Create initial streaming session
+      createStreamingSessionWithRetry();
 
       if (streamingSession) {
-        socket.emit('voice:ready', { status: 'streaming', provider: 'gladia' });
-        log.info('[WebSocket] Gladia real-time STT streaming ready');
+        socket.emit('voice:ready', {
+          status: 'streaming',
+          provider: 'gladia',
+          config: {
+            timeout: streamingDuration,
+            maxRetries: VOICE_STREAMING_CONFIG.maxRetries,
+            redisQueueEnabled: VOICE_STREAMING_CONFIG.enableRedisQueue
+          }
+        });
+        log.info('[WebSocket] Gladia real-time STT streaming ready', {
+          timeout: streamingDuration,
+          redisEnabled: VOICE_STREAMING_CONFIG.enableRedisQueue
+        });
 
-        // Set timeout for max streaming duration (5 minutes)
+        // Set configurable timeout for max streaming duration
         streamingTimeout = setTimeout(() => {
           if (streamingSession && streamingActive) {
-            log.info('[WebSocket] Streaming timeout reached, stopping');
-            socket.emit('voice:timeout', { reason: 'Max streaming duration reached' });
+            log.info('[WebSocket] Streaming timeout reached, stopping', { duration: streamingDuration });
+            socket.emit('voice:timeout', {
+              reason: 'Max streaming duration reached',
+              duration: streamingDuration,
+              finalTranscript: finalTranscript.trim()
+            });
             if (streamingSession) {
               streamingSession.end();
               streamingSession = null;
             }
             streamingActive = false;
           }
-        }, 5 * 60 * 1000);
+        }, streamingDuration);
       } else {
         // Fallback: notify client if Gladia is not available
         log.warn('[WebSocket] Gladia STT not available, check API key');

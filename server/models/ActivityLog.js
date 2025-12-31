@@ -144,6 +144,8 @@ class ActivityLog {
   }
 
   static async getStats(tenantId, days = 30) {
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const daysNum = parseInt(days, 10) || 30;
     const result = await db.query(
       `SELECT
          action,
@@ -151,20 +153,22 @@ class ActivityLog {
          COUNT(*) as count,
          DATE(created_at) as date
        FROM activity_logs
-       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'
+       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '1 day' * $2
        GROUP BY action, entity_type, DATE(created_at)
        ORDER BY date DESC, count DESC`,
-      [tenantId]
+      [tenantId, daysNum]
     );
     return result.rows;
   }
 
   static async deleteOld(tenantId, days = 90) {
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const daysNum = parseInt(days, 10) || 90;
     const result = await db.query(
       `DELETE FROM activity_logs
-       WHERE tenant_id = $1 AND created_at < NOW() - INTERVAL '${days} days'
+       WHERE tenant_id = $1 AND created_at < NOW() - INTERVAL '1 day' * $2
        RETURNING id`,
-      [tenantId]
+      [tenantId, daysNum]
     );
     return result.rowCount;
   }

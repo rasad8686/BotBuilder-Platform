@@ -52,6 +52,11 @@ const OrchestrationBuilder = lazy(() => import('./components/orchestration/Orche
 // Feature Pages
 const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
 const Channels = lazy(() => import('./pages/Channels'));
+const WhatsAppChannel = lazy(() => import('./pages/channels/WhatsAppChannel'));
+const TelegramChannel = lazy(() => import('./pages/channels/TelegramChannel'));
+const SlackChannel = lazy(() => import('./pages/channels/SlackChannel'));
+const InstagramChannel = lazy(() => import('./pages/channels/InstagramChannel'));
+const FacebookChannel = lazy(() => import('./pages/channels/FacebookChannel'));
 const Marketplace = lazy(() => import('./pages/Marketplace'));
 const Orchestrations = lazy(() => import('./pages/Orchestrations'));
 const IntentEntityBuilder = lazy(() => import('./pages/IntentEntityBuilder'));
@@ -177,6 +182,11 @@ function App() {
         <Route path="/executions" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><ExecutionHistory /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/knowledge" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><KnowledgeBase /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/channels" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Channels /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels/whatsapp" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><WhatsAppChannel /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels/telegram" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><TelegramChannel /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels/slack" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><SlackChannel /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels/instagram" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><InstagramChannel /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
+        <Route path="/channels/facebook" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><FacebookChannel /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/marketplace" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Marketplace /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/ai-flow" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><AIFlowStudio /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />
         <Route path="/orchestrations" element={<PrivateRoute><AuthenticatedApp><Layout><SuspenseWrapper><Orchestrations /></SuspenseWrapper></Layout></AuthenticatedApp></PrivateRoute>} />

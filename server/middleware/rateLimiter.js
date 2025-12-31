@@ -57,12 +57,14 @@ async function isBlocked(ip, email) {
 async function recordFailedAttempt(ip, email, settings) {
   try {
     // Check existing attempts
+    // SECURITY FIX: Use parameterized interval to prevent SQL injection
+    const windowMinutes = parseInt(settings.window_minutes, 10) || 15;
     const existing = await db.query(
       `SELECT * FROM rate_limit_blocked
        WHERE ip_address = $1
-       AND created_at > NOW() - INTERVAL '${settings.window_minutes} minutes'
+       AND created_at > NOW() - INTERVAL '1 minute' * $2
        LIMIT 1`,
-      [ip]
+      [ip, windowMinutes]
     );
 
     const blockedUntil = new Date(Date.now() + settings.block_duration_minutes * 60 * 1000);

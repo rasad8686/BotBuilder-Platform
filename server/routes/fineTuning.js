@@ -1494,6 +1494,70 @@ router.post('/ab-tests/:id/select-version', async (req, res) => {
 // ==========================================
 
 /**
+ * GET /api/fine-tuning/models/:id/cost-estimate
+ * Get estimated training cost for a model
+ */
+router.get('/models/:id/cost-estimate', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const { epochs } = req.query;
+
+    const estimate = await fineTuningService.estimateTrainingCost(modelId, orgId, {
+      epochs: parseInt(epochs) || 3
+    });
+
+    res.json({
+      success: true,
+      estimate
+    });
+  } catch (error) {
+    log.error('Error estimating training cost', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/models/:id/progress
+ * Get real-time training progress
+ */
+router.get('/models/:id/progress', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+
+    const progress = await fineTuningService.getTrainingProgress(modelId, orgId);
+
+    res.json({
+      success: true,
+      ...progress
+    });
+  } catch (error) {
+    log.error('Error fetching training progress', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/pricing
+ * Get pricing information for all models
+ */
+router.get('/pricing', (req, res) => {
+  res.json({
+    success: true,
+    pricing: fineTuningService.TRAINING_COSTS,
+    currency: 'USD',
+    unit: 'per 1000 tokens'
+  });
+});
+
+/**
  * GET /api/fine-tuning/base-models
  * Get available base models for fine-tuning
  */
@@ -1524,17 +1588,25 @@ router.get('/base-models', (req, res) => {
       id: 'claude-3-haiku',
       name: 'Claude 3 Haiku',
       provider: 'anthropic',
-      description: 'Fast and lightweight. Coming soon.',
+      description: 'Fast and lightweight. Best for high-volume, low-latency tasks.',
       cost_per_1k_tokens: 0.00025,
-      available: false
+      training_cost_per_1k_tokens: 0.0004,
+      available: true,
+      capabilities: ['fast-inference', 'cost-effective', 'high-throughput'],
+      max_context: 200000,
+      recommended_for: ['Classification', 'Entity extraction', 'Simple Q&A']
     },
     {
       id: 'claude-3-sonnet',
       name: 'Claude 3 Sonnet',
       provider: 'anthropic',
-      description: 'Balanced performance. Coming soon.',
+      description: 'Balanced performance. Ideal balance of speed and intelligence.',
       cost_per_1k_tokens: 0.003,
-      available: false
+      training_cost_per_1k_tokens: 0.008,
+      available: true,
+      capabilities: ['balanced', 'versatile', 'good-reasoning'],
+      max_context: 200000,
+      recommended_for: ['Customer support', 'Content generation', 'Data analysis']
     }
   ];
 
