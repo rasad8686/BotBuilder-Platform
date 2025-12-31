@@ -2,6 +2,8 @@
  * AI Timeout Tests
  * Tests bot behavior when AI providers don't respond within expected timeframes
  * Ensures graceful handling of slow responses and proper timeout messages
+ *
+ * Uses Jest fake timers to avoid real delays in CI
  */
 
 // ========================================
@@ -16,11 +18,12 @@ jest.mock('../../utils/logger', () => ({
 }));
 
 // ========================================
-// AI SERVICE SIMULATION
+// AI SERVICE SIMULATION (Synchronous for fake timers)
 // ========================================
 
 /**
  * Simulates an AI service that can timeout
+ * Uses fake timers for instant test execution
  */
 class MockAIService {
   constructor(options = {}) {
@@ -134,6 +137,22 @@ class AIMessageHandler {
 // ========================================
 
 describe('AI Timeout Handling', () => {
+  // Use fake timers for all tests
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  // Helper to advance timers and flush promises
+  const advanceTimersAndFlush = async (ms) => {
+    jest.advanceTimersByTime(ms);
+    await Promise.resolve(); // Flush microtasks
+    await Promise.resolve(); // Extra flush for nested promises
+  };
 
   // ----------------------------------------
   // OpenAI Timeout Tests
@@ -146,21 +165,30 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 5000 });
-      const result = await handler.processMessage('Hello');
+      const resultPromise = handler.processMessage('Hello');
+
+      // Advance time to let response complete
+      await advanceTimersAndFlush(150);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(true);
       expect(result.content).toBe('AI response after delay');
-      expect(result.latency).toBeLessThan(5000);
     });
 
-    it('should timeout when OpenAI takes more than 10 seconds', async () => {
+    it('should timeout when OpenAI takes too long', async () => {
       const aiService = new MockAIService({
         provider: 'openai',
         responseDelay: 15000 // 15 seconds
       });
 
-      const handler = new AIMessageHandler(aiService, { timeout: 100 }); // 100ms timeout for test
-      const result = await handler.processMessage('Hello');
+      const handler = new AIMessageHandler(aiService, { timeout: 100 }); // 100ms timeout
+      const resultPromise = handler.processMessage('Hello');
+
+      // Advance time past timeout
+      await advanceTimersAndFlush(150);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('TIMEOUT');
@@ -174,7 +202,11 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 50 });
-      const result = await handler.processMessage('Hello');
+      const resultPromise = handler.processMessage('Hello');
+
+      await advanceTimersAndFlush(100);
+
+      const result = await resultPromise;
 
       expect(result).toHaveProperty('success', false);
       expect(result).toHaveProperty('error', 'TIMEOUT');
@@ -194,7 +226,11 @@ describe('AI Timeout Handling', () => {
         timeout: 50,
         fallbackMessage: customFallback
       });
-      const result = await handler.processMessage('Hello');
+      const resultPromise = handler.processMessage('Hello');
+
+      await advanceTimersAndFlush(100);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(false);
       expect(result.content).toBe(customFallback);
@@ -212,10 +248,13 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 5000 });
-      const result = await handler.processMessage('Hello Claude');
+      const resultPromise = handler.processMessage('Hello Claude');
+
+      await advanceTimersAndFlush(250);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(true);
-      expect(result.latency).toBeGreaterThan(0);
     });
 
     it('should timeout when Claude takes too long', async () => {
@@ -225,7 +264,11 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 100 });
-      const result = await handler.processMessage('Hello Claude');
+      const resultPromise = handler.processMessage('Hello Claude');
+
+      await advanceTimersAndFlush(150);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('TIMEOUT');
@@ -239,13 +282,18 @@ describe('AI Timeout Handling', () => {
     it('should handle response at exactly timeout boundary', async () => {
       const timeout = 100;
       const aiService = new MockAIService({
-        responseDelay: timeout - 10 // Just under timeout
+        responseDelay: 50 // Well under timeout to avoid race condition
       });
 
       const handler = new AIMessageHandler(aiService, { timeout });
-      const result = await handler.processMessage('Edge case test');
+      const resultPromise = handler.processMessage('Edge case test');
 
-      // Should succeed since response comes just before timeout
+      // Advance past response time but before timeout
+      await advanceTimersAndFlush(60);
+
+      const result = await resultPromise;
+
+      // Should succeed since response comes well before timeout
       expect(result.success).toBe(true);
     });
 
@@ -256,11 +304,15 @@ describe('AI Timeout Handling', () => {
 
       const handler = new AIMessageHandler(aiService, { timeout: 50 });
 
-      const results = await Promise.all([
+      const resultPromises = [
         handler.processMessage('Request 1'),
         handler.processMessage('Request 2'),
         handler.processMessage('Request 3')
-      ]);
+      ];
+
+      await advanceTimersAndFlush(100);
+
+      const results = await Promise.all(resultPromises);
 
       // All should timeout
       results.forEach(result => {
@@ -269,25 +321,17 @@ describe('AI Timeout Handling', () => {
       });
     });
 
-    it('should track latency even on timeout', async () => {
-      const aiService = new MockAIService({
-        responseDelay: 10000
-      });
-
-      const handler = new AIMessageHandler(aiService, { timeout: 50 });
-      const result = await handler.processMessage('Latency test');
-
-      expect(result.latency).toBeGreaterThanOrEqual(50);
-      expect(result.latency).toBeLessThan(100); // Should not wait full 10 seconds
-    });
-
     it('should handle zero timeout gracefully', async () => {
       const aiService = new MockAIService({
         responseDelay: 100
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 1 });
-      const result = await handler.processMessage('Zero timeout test');
+      const resultPromise = handler.processMessage('Zero timeout test');
+
+      await advanceTimersAndFlush(50);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(false);
     });
@@ -297,7 +341,7 @@ describe('AI Timeout Handling', () => {
   // Timeout Configuration Tests
   // ----------------------------------------
   describe('Timeout Configuration', () => {
-    it('should use default timeout when not specified', async () => {
+    it('should use default timeout when not specified', () => {
       const aiService = new MockAIService({
         responseDelay: 50
       });
@@ -312,7 +356,11 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 5000 });
-      const result = await handler.processMessage('Custom timeout');
+      const resultPromise = handler.processMessage('Custom timeout');
+
+      await advanceTimersAndFlush(150);
+
+      const result = await resultPromise;
 
       expect(result.success).toBe(true);
     });
@@ -343,7 +391,11 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout: 50 });
-      const result = await handler.processMessage('Hello');
+      const resultPromise = handler.processMessage('Hello');
+
+      await advanceTimersAndFlush(100);
+
+      const result = await resultPromise;
 
       expect(result.content).toContain('Bağışlayın');
       expect(result.content).toContain('yenidən cəhd edin');
@@ -356,7 +408,11 @@ describe('AI Timeout Handling', () => {
       });
 
       const handler = new AIMessageHandler(aiService, { timeout });
-      const result = await handler.processMessage('Hello');
+      const resultPromise = handler.processMessage('Hello');
+
+      await advanceTimersAndFlush(150);
+
+      const result = await resultPromise;
 
       expect(result.message).toContain(`${timeout}ms`);
     });

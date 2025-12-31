@@ -40,7 +40,12 @@
       "Bash(npx knex:*)",
       "Bash(timeout 60 npx jest:*)",
       "Bash(timeout 90 npx jest:*)",
-      "Bash(set OPENAI_API_KEY=)"
+      "Bash(set OPENAI_API_KEY=)",
+      "Bash(timeout 10 sleep:*)",
+      "Bash(timeout 30 sleep:*)",
+      "Bash(timeout 60 sleep:*)",
+      "Bash(timeout 300 sleep:*)",
+      "Bash(timeout 600 sleep 600:*)"
     ],
     "deny": [],
     "ask": []
