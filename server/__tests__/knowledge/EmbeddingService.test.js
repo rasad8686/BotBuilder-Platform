@@ -3,6 +3,9 @@
  * Tests for server/knowledge/EmbeddingService.js
  */
 
+// Set API key before importing to allow lazy initialization
+process.env.OPENAI_API_KEY = 'test-api-key';
+
 // Mock OpenAI before requiring the module
 const mockCreate = jest.fn();
 
