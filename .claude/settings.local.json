@@ -37,7 +37,9 @@
       "Bash(npm run lint)",
       "Bash(timeout 45 npm test:*)",
       "Bash(timeout 30 npx jest:*)",
-      "Bash(npx knex:*)"
+      "Bash(npx knex:*)",
+      "Bash(timeout 60 npx jest:*)",
+      "Bash(timeout 90 npx jest:*)"
     ],
     "deny": [],
     "ask": []

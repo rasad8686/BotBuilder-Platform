@@ -3,11 +3,21 @@ const log = require('../utils/logger');
 
 class EmbeddingService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    // Lazy initialization - only create OpenAI client when API key is available
+    this._openai = null;
     this.model = 'text-embedding-3-small';
     this.dimensions = 1536;
+  }
+
+  get openai() {
+    if (!this._openai) {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY environment variable is not set');
+      }
+      this._openai = new OpenAI({ apiKey });
+    }
+    return this._openai;
   }
 
   /**

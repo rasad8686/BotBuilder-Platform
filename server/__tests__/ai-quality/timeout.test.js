@@ -33,22 +33,34 @@ class MockAIService {
     const timeout = options.timeout || this.timeout;
 
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        resolve({
-          content: 'AI response after delay',
-          usage: { prompt_tokens: 100, completion_tokens: 50 }
-        });
+      let resolved = false;
+
+      // Response timer
+      const responseTimer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve({
+            content: 'AI response after delay',
+            usage: { prompt_tokens: 100, completion_tokens: 50 }
+          });
+        }
       }, this.responseDelay);
 
-      // Timeout handler
-      if (this.responseDelay > timeout) {
-        clearTimeout(timer);
-        setTimeout(() => {
+      // Timeout timer - reject if timeout is shorter than response delay
+      const timeoutTimer = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(responseTimer);
           const error = new Error('Request timeout');
           error.code = 'ETIMEDOUT';
           error.isTimeout = true;
           reject(error);
-        }, timeout);
+        }
+      }, timeout);
+
+      // Clear timeout timer if response comes first
+      if (this.responseDelay <= timeout) {
+        setTimeout(() => clearTimeout(timeoutTimer), this.responseDelay + 10);
       }
     });
   }
