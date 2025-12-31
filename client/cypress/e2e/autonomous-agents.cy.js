@@ -634,7 +634,7 @@ describe('Autonomous Agents', () => {
     });
 
     it('should handle timeout', () => {
-      cy.intercept('POST', '/api/agents/*/execute', { delay: 60000 }).as('timeout');
+      cy.intercept('POST', '/api/agents/*/execute', { delay: 60000 }).as('timeoutRequest');
       cy.get('body').should('exist');
     });
 

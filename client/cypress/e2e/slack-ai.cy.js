@@ -21,6 +21,7 @@ describe('Slack AI Integration', () => {
   };
 
   beforeEach(() => {
+    localStorage.setItem('token', 'test-token');
     setupAndLogin();
     cy.visit('/channels/slack');
   });

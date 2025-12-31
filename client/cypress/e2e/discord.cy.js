@@ -723,7 +723,7 @@ describe('Discord Channel', () => {
     });
 
     it('should display connection timeout', () => {
-      cy.intercept('POST', '/api/discord/test-connection', { delay: 30000 }).as('timeout');
+      cy.intercept('POST', '/api/discord/test-connection', { delay: 30000 }).as('connectionTimeout');
       cy.get('body').should('exist');
     });
 

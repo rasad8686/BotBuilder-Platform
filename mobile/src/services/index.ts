@@ -5,3 +5,7 @@ export { conversationService } from './conversationService';
 export { analyticsService } from './analyticsService';
 export { notificationService } from './notificationService';
 export { socketService } from './socketService';
+export { voiceService } from './voiceService';
+export { cloneService } from './cloneService';
+export { pluginService } from './pluginService';
+export { offlineService } from './offlineService';

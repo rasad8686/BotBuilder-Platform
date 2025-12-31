@@ -254,10 +254,23 @@ export type RootStackParamList = {
   Bots: undefined;
   BotDetail: { botId: string };
   BotSettings: { botId: string };
+  CreateBot: undefined;
   Conversations: undefined;
   ConversationDetail: { conversationId: string };
   Analytics: undefined;
   Settings: undefined;
   Profile: undefined;
   Notifications: undefined;
+  // Voice screens
+  VoiceBots: undefined;
+  VoiceCall: { botId: string; botName: string };
+  // Clone screens
+  Clones: undefined;
+  CloneDetail: { cloneId: string };
+  // Plugin screens
+  Plugins: undefined;
+  PluginDetail: { pluginId: string };
+  // Settings screens
+  ChangePassword: undefined;
+  HelpCenter: undefined;
 };
