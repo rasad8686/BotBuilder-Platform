@@ -45,7 +45,9 @@
       "Bash(timeout 30 sleep:*)",
       "Bash(timeout 60 sleep:*)",
       "Bash(timeout 300 sleep:*)",
-      "Bash(timeout 600 sleep 600:*)"
+      "Bash(timeout 600 sleep 600:*)",
+      "Bash(timeout 900 sleep:*)",
+      "Bash(timeout 300 npm test -- --coverage --coverageReporters=text-summary)"
     ],
     "deny": [],
     "ask": []

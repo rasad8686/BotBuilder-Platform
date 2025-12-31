@@ -13,6 +13,17 @@ jest.mock('../../../../utils/logger', () => ({
 // Mock global fetch
 global.fetch = jest.fn();
 
+// Mock AbortController
+class MockAbortController {
+  constructor() {
+    this.signal = { aborted: false };
+  }
+  abort() {
+    this.signal.aborted = true;
+  }
+}
+global.AbortController = MockAbortController;
+
 const HttpTool = require('../../../../services/autonomous/tools/HttpTool');
 
 describe('HttpTool', () => {
@@ -20,7 +31,12 @@ describe('HttpTool', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     httpTool = new HttpTool();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('constructor', () => {
