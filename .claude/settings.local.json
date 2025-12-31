@@ -39,7 +39,8 @@
       "Bash(timeout 30 npx jest:*)",
       "Bash(npx knex:*)",
       "Bash(timeout 60 npx jest:*)",
-      "Bash(timeout 90 npx jest:*)"
+      "Bash(timeout 90 npx jest:*)",
+      "Bash(set OPENAI_API_KEY=)"
     ],
     "deny": [],
     "ask": []

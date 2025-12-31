@@ -262,7 +262,7 @@ describe('GladiaProcessor', () => {
       expect(errorHandler).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it('should pass language option to initSession', () => {
+    it('should pass language option to initSession', async () => {
       fetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ id: 'test', url: 'wss://test' })
@@ -271,14 +271,14 @@ describe('GladiaProcessor', () => {
       processor.createStreamingRecognition({ language: 'tr' }, jest.fn(), jest.fn());
 
       // Wait for async call
-      setTimeout(() => {
-        expect(fetch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            body: expect.stringContaining('"tr"')
-          })
-        );
-      }, 0);
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: expect.stringContaining('"tr"')
+        })
+      );
     });
   });
 
