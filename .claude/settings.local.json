@@ -52,7 +52,15 @@
       "Bash(npm outdated:*)",
       "Bash(timeout 120 npx jest:*)",
       "Bash(findstr:*)",
-      "Bash(timeout 360 npm test -- --coverage --coverageReporters=text-summary)"
+      "Bash(timeout 360 npm test -- --coverage --coverageReporters=text-summary)",
+      "Bash(timeout 60 npm test -- server/__tests__/routes/conversations.test.js --testTimeout=30000)",
+      "Bash(timeout 60 npm test:*)",
+      "Bash(timeout 60 tail:*)",
+      "Bash(timeout 180 npm test -- --testPathPattern=\"clone\" --no-coverage)",
+      "Bash(timeout 240 npm test -- --no-coverage)",
+      "Bash(taskkill:*)",
+      "Bash(timeout 300 npm test -- --no-coverage)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

@@ -1600,13 +1600,15 @@ router.get('/status/:id', async (req, res) => {
 // TEMPLATES API
 // ==========================================
 
-const { CloneTemplates, CloneExport, CloneImport, CloneSharing, CloneAnalytics, CloneBackup } = require('../services/clone');
-const cloneTemplates = new CloneTemplates();
-const cloneExport = new CloneExport();
-const cloneImport = new CloneImport();
-const cloneSharing = new CloneSharing();
-const cloneAnalytics = new CloneAnalytics();
-const cloneBackup = new CloneBackup();
+// Services now export singleton instances, use them directly
+const {
+  CloneTemplates: cloneTemplates,
+  CloneExport: cloneExport,
+  CloneImport: cloneImport,
+  CloneSharing: cloneSharing,
+  CloneAnalytics: cloneAnalytics,
+  CloneBackup: cloneBackup
+} = require('../services/clone');
 
 /**
  * GET /api/clones/templates

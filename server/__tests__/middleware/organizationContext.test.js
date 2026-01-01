@@ -58,6 +58,15 @@ describe('organizationContext middleware', () => {
       expect(db.query).not.toHaveBeenCalled();
     });
 
+    it('should skip if user id is undefined', async () => {
+      req.user = { id: undefined };
+
+      await organizationContext(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(db.query).not.toHaveBeenCalled();
+    });
+
     it('should process when user has valid id', async () => {
       db.query.mockResolvedValueOnce({
         rows: [{ org_id: 10, role: 'admin', name: 'Test Org', slug: 'test', owner_id: 1 }]
@@ -67,6 +76,18 @@ describe('organizationContext middleware', () => {
 
       expect(db.query).toHaveBeenCalled();
       expect(next).toHaveBeenCalled();
+    });
+
+    it('should log debug info with path when no user', async () => {
+      req.user = null;
+      req.path = '/api/test/path';
+
+      await organizationContext(req, res, next);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('No user'),
+        expect.objectContaining({ path: '/api/test/path' })
+      );
     });
   });
 
@@ -146,6 +167,47 @@ describe('organizationContext middleware', () => {
       expect(req.organization.id).toBe(10);
       expect(req.organization.name).toBe('Owned Org');
     });
+
+    it('should query organizations table with owner_id when member check fails', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
+          rows: [{ org_id: 10, role: 'admin', name: 'Owned', owner_id: 1 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenNthCalledWith(2,
+        expect.stringContaining('FROM organizations'),
+        [1]
+      );
+    });
+
+    it('should filter by status = active in organization_members query', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', slug: 'test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.stringContaining("om.status = 'active'"),
+        [1]
+      );
+    });
+
+    it('should order by joined_at ASC and limit to 1', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'First Org', slug: 'first', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.stringMatching(/ORDER BY.*joined_at.*ASC.*LIMIT 1/s),
+        [1]
+      );
+    });
   });
 
   describe('Organization from JWT', () => {
@@ -188,6 +250,20 @@ describe('organizationContext middleware', () => {
       expect(req.organization.id).toBe(20);
       expect(req.organization.is_owner).toBe(true);
     });
+
+    it('should use numeric JWT organization ID', async () => {
+      req.user.current_organization_id = 999;
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 999, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining([1, 999])
+      );
+    });
   });
 
   describe('Organization from header', () => {
@@ -216,6 +292,22 @@ describe('organizationContext middleware', () => {
         expect.arrayContaining([1, '42'])
       );
     });
+
+    it('should log header organization ID in debug', async () => {
+      req.headers['x-organization-id'] = '30';
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 30, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Processing'),
+        expect.objectContaining({
+          headerOrgId: '30'
+        })
+      );
+    });
   });
 
   describe('Organization from query param', () => {
@@ -229,6 +321,20 @@ describe('organizationContext middleware', () => {
 
       expect(req.organization.id).toBe(40);
       expect(req.organization.name).toBe('Query Org');
+    });
+
+    it('should use numeric query param organization ID', async () => {
+      req.query.organization_id = 555;
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 555, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining([1, 555])
+      );
     });
   });
 
@@ -253,8 +359,7 @@ describe('organizationContext middleware', () => {
         .mockResolvedValueOnce({ rows: [] }) // Not owner
         .mockResolvedValueOnce({ // Default org (member)
           rows: [{ org_id: 10, role: 'member', name: 'Default', slug: 'default', owner_id: 2 }]
-        })
-        .mockResolvedValueOnce({ rows: [] }); // Not owner of default
+        });
 
       await organizationContext(req, res, next);
 
@@ -275,6 +380,53 @@ describe('organizationContext middleware', () => {
       expect(res._getJSONData()).toMatchObject({
         code: 'NO_ORGANIZATION_ACCESS'
       });
+    });
+
+    it('should check owner query with correct organization ID and user ID', async () => {
+      req.user.current_organization_id = 80;
+      db.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
+          rows: [{ org_id: 80, role: 'admin', name: 'Test', owner_id: 1 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenNthCalledWith(2,
+        expect.stringContaining('WHERE id = $1 AND owner_id = $2'),
+        [80, 1]
+      );
+    });
+
+    it('should fallback when user is not owner and check default org as member first', async () => {
+      req.user.current_organization_id = 90;
+      db.query
+        .mockResolvedValueOnce({ rows: [] }) // Not a member of requested org
+        .mockResolvedValueOnce({ rows: [] }) // Not owner of requested org
+        .mockResolvedValueOnce({ // Default org member check
+          rows: [{ org_id: 5, role: 'member', name: 'Default', slug: 'default', owner_id: 3 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.id).toBe(5);
+      expect(req.organization.role).toBe('member');
+    });
+
+    it('should fallback to owned organization when not member of any', async () => {
+      req.user.current_organization_id = 95;
+      db.query
+        .mockResolvedValueOnce({ rows: [] }) // Not a member of requested
+        .mockResolvedValueOnce({ rows: [] }) // Not owner of requested
+        .mockResolvedValueOnce({ rows: [] }) // Not a member of any
+        .mockResolvedValueOnce({ // Owns an organization
+          rows: [{ org_id: 6, role: 'admin', name: 'Owned', slug: 'owned', owner_id: 1 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.id).toBe(6);
+      expect(req.organization.role).toBe('admin');
     });
   });
 
@@ -335,6 +487,54 @@ describe('organizationContext middleware', () => {
 
       expect(req.hasRole('superadmin')).toBe(false);
     });
+
+    it('should handle undefined user role gracefully', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: undefined, name: 'Test', owner_id: 2 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.hasRole('viewer')).toBe(false);
+      expect(req.hasRole('admin')).toBe(false);
+    });
+
+    it('should handle null user role gracefully', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: null, name: 'Test', owner_id: 2 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.hasRole('viewer')).toBe(false);
+    });
+
+    it('should handle invalid role that is not in hierarchy', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'invalid_role', name: 'Test', owner_id: 2 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.hasRole('viewer')).toBe(false);
+      expect(req.hasRole('member')).toBe(false);
+      expect(req.hasRole('admin')).toBe(false);
+    });
+
+    it('should use role hierarchy levels correctly', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'member', name: 'Test', owner_id: 2 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      // member (level 2) >= viewer (level 1)
+      expect(req.hasRole('viewer')).toBe(true);
+      // member (level 2) >= member (level 2)
+      expect(req.hasRole('member')).toBe(true);
+      // member (level 2) < admin (level 3)
+      expect(req.hasRole('admin')).toBe(false);
+    });
   });
 
   describe('Error handling', () => {
@@ -393,6 +593,71 @@ describe('organizationContext middleware', () => {
         })
       );
     });
+
+    it('should include stack trace in error log', async () => {
+      const error = new Error('Test error');
+      error.stack = 'Full stack trace here';
+      db.query.mockRejectedValue(error);
+
+      await organizationContext(req, res, next);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          stack: 'Full stack trace here'
+        })
+      );
+    });
+
+    it('should not call next when database error occurs', async () => {
+      db.query.mockRejectedValue(new Error('DB error'));
+
+      await organizationContext(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should handle error when user exists but undefined', async () => {
+      req.user = undefined;
+      const error = new Error('Test error');
+      db.query.mockRejectedValue(error);
+
+      await organizationContext(req, res, next);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          userId: undefined
+        })
+      );
+    });
+
+    it('should return success: false in all error responses', async () => {
+      db.query.mockRejectedValue(new Error('Error'));
+
+      await organizationContext(req, res, next);
+
+      expect(res._getJSONData().success).toBe(false);
+    });
+
+    it('should handle TypeError gracefully', async () => {
+      db.query.mockRejectedValue(new TypeError('Type error'));
+
+      await organizationContext(req, res, next);
+
+      expect(res.statusCode).toBe(403);
+      expect(res._getJSONData()).toMatchObject({
+        code: 'ORGANIZATION_CONTEXT_ERROR'
+      });
+    });
+
+    it('should handle ReferenceError gracefully', async () => {
+      db.query.mockRejectedValue(new ReferenceError('Reference error'));
+
+      await organizationContext(req, res, next);
+
+      expect(res.statusCode).toBe(403);
+    });
   });
 
   describe('Logging', () => {
@@ -408,6 +673,37 @@ describe('organizationContext middleware', () => {
         expect.objectContaining({
           path: '/api/bots',
           userId: 1
+        })
+      );
+    });
+
+    it('should include headerOrgId in debug log when present', async () => {
+      req.headers['x-organization-id'] = '123';
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 123, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headerOrgId: '123'
+        })
+      );
+    });
+
+    it('should include undefined headerOrgId when header not present', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headerOrgId: undefined
         })
       );
     });
@@ -458,6 +754,232 @@ describe('organizationContext middleware', () => {
       await organizationContext(req, res, next);
 
       expect(req.organization.id).toBe(100);
+    });
+
+    it('should handle all organization sources at once', async () => {
+      req.user.current_organization_id = 1;
+      req.headers['x-organization-id'] = '2';
+      req.query.organization_id = '3';
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 1, role: 'admin', name: 'JWT Wins', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.id).toBe(1);
+    });
+
+    it('should preserve all organization fields from database', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{
+          org_id: 10,
+          role: 'admin',
+          name: 'Complete Org',
+          slug: 'complete',
+          owner_id: 1
+        }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization).toMatchObject({
+        org_id: 10,
+        role: 'admin',
+        name: 'Complete Org',
+        slug: 'complete',
+        owner_id: 1,
+        id: 10,
+        is_owner: true
+      });
+    });
+
+    it('should handle empty string organization ID from header', async () => {
+      req.headers['x-organization-id'] = '';
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Default', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      // Empty string is falsy, should use default
+      expect(req.organization.id).toBe(10);
+    });
+
+    it('should handle empty string organization ID from query', async () => {
+      req.query.organization_id = '';
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Default', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.id).toBe(10);
+    });
+
+    it('should handle zero as organization ID', async () => {
+      req.user.current_organization_id = 0;
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 0, role: 'admin', name: 'Zero Org', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      // 0 is falsy but should be treated as valid if returned from DB
+      expect(req.organization.id).toBe(0);
+    });
+
+    it('should attach organization even when member query returns it', async () => {
+      req.user.current_organization_id = 100;
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 100, role: 'member', name: 'Member Org', slug: 'member', owner_id: 5 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization).toBeDefined();
+      expect(req.organization.id).toBe(100);
+    });
+
+    it('should handle organization with all possible roles', async () => {
+      const roles = ['viewer', 'member', 'admin'];
+
+      for (const role of roles) {
+        jest.clearAllMocks();
+        db.query.mockResolvedValueOnce({
+          rows: [{ org_id: 10, role, name: 'Test', owner_id: 2 }]
+        });
+
+        await organizationContext(req, res, next);
+
+        expect(req.organization.role).toBe(role);
+      }
+    });
+
+    it('should set correct org_id and id fields', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 999, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.org_id).toBe(999);
+      expect(req.organization.id).toBe(999);
+    });
+
+    it('should handle special characters in organization name', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: "Test's Org & Co.", slug: 'test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.name).toBe("Test's Org & Co.");
+    });
+
+    it('should handle unicode in organization slug', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', slug: 'test-org-日本', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization.slug).toBe('test-org-日本');
+    });
+  });
+
+  describe('Database query specifics', () => {
+    it('should join organizations table with organization_members', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', slug: 'test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.stringMatching(/JOIN organizations o ON o\.id = om\.org_id/),
+        [1]
+      );
+    });
+
+    it('should select all required fields from member query', async () => {
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', slug: 'test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenCalledWith(
+        expect.stringMatching(/SELECT om\.org_id, om\.role, o\.name, o\.slug, o\.owner_id/),
+        [1]
+      );
+    });
+
+    it('should select all required fields from owner query', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
+          rows: [{ org_id: 10, role: 'admin', name: 'Owned', slug: 'owned', owner_id: 1 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenNthCalledWith(2,
+        expect.stringMatching(/SELECT id as org_id, 'admin' as role, name, slug, owner_id/),
+        [1]
+      );
+    });
+
+    it('should limit owner query to 1 result', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
+          rows: [{ org_id: 10, role: 'admin', name: 'Test', owner_id: 1 }]
+        });
+
+      await organizationContext(req, res, next);
+
+      expect(db.query).toHaveBeenNthCalledWith(2,
+        expect.stringContaining('LIMIT 1'),
+        [1]
+      );
+    });
+  });
+
+  describe('Request object mutations', () => {
+    it('should not modify req.user', async () => {
+      const originalUser = { id: 1, email: 'test@example.com' };
+      req.user = { ...originalUser };
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.user).toEqual(originalUser);
+    });
+
+    it('should add organization object to request', async () => {
+      expect(req.organization).toBeUndefined();
+
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.organization).toBeDefined();
+    });
+
+    it('should add hasRole function to request', async () => {
+      expect(req.hasRole).toBeUndefined();
+
+      db.query.mockResolvedValueOnce({
+        rows: [{ org_id: 10, role: 'admin', name: 'Test', owner_id: 1 }]
+      });
+
+      await organizationContext(req, res, next);
+
+      expect(req.hasRole).toBeDefined();
     });
   });
 });
@@ -514,6 +1036,91 @@ describe('requireOrganization middleware', () => {
 
     requireOrganization(req, res, next);
 
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should accept organization with valid numeric id', () => {
+    req.organization = { id: 456, name: 'Test Org' };
+
+    requireOrganization(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should return success: false on failure', () => {
+    req.organization = null;
+
+    requireOrganization(req, res, next);
+
+    expect(res._getJSONData().success).toBe(false);
+  });
+
+  it('should include error code in response', () => {
+    requireOrganization(req, res, next);
+
+    expect(res._getJSONData().code).toBe('ORGANIZATION_REQUIRED');
+  });
+
+  it('should not call next when organization is undefined', () => {
+    req.organization = undefined;
+
+    requireOrganization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should not call next when organization is null', () => {
+    req.organization = null;
+
+    requireOrganization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should not call next when organization is empty object', () => {
+    req.organization = {};
+
+    requireOrganization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should accept organization with additional fields', () => {
+    req.organization = {
+      id: 1,
+      name: 'Test Org',
+      slug: 'test',
+      role: 'admin',
+      is_owner: true
+    };
+
+    requireOrganization(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should handle empty string id as falsy', () => {
+    req.organization = { id: '', name: 'Test' };
+
+    requireOrganization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should not modify request or response if successful', () => {
+    req.organization = { id: 1, name: 'Test' };
+    const reqBefore = { ...req };
+
+    requireOrganization(req, res, next);
+
+    expect(req.organization).toEqual(reqBefore.organization);
+  });
+
+  it('should be a synchronous function', () => {
+    req.organization = { id: 1 };
+    const result = requireOrganization(req, res, next);
+
+    expect(result).toBeUndefined();
     expect(next).toHaveBeenCalled();
   });
 });

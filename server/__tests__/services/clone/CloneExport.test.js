@@ -20,6 +20,7 @@ const CloneExport = require('../../../services/clone/CloneExport');
 describe('CloneExport Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    db.query.mockReset();
   });
 
   describe('exportClone', () => {
@@ -40,9 +41,7 @@ describe('CloneExport Service', () => {
     ];
 
     it('should export clone as JSON without training data', async () => {
-      db.query
-        .mockResolvedValueOnce({ rows: [mockClone] })
-        .mockResolvedValueOnce({ rows: [] });
+      db.query.mockResolvedValueOnce({ rows: [mockClone] });
 
       const result = await CloneExport.exportClone('clone-123', 'user-456', {
         format: 'json',
@@ -86,9 +85,10 @@ describe('CloneExport Service', () => {
     });
 
     it('should return error for unauthorized user', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ ...mockClone, user_id: 'other-user' }] });
+      // SQL filters by user_id, so unauthorized returns empty rows
+      db.query.mockResolvedValueOnce({ rows: [] });
 
-      const result = await CloneExport.exportClone('clone-123', 'user-456', {});
+      const result = await CloneExport.exportClone('clone-123', 'wrong-user', {});
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
@@ -111,11 +111,11 @@ describe('CloneExport Service', () => {
     ];
 
     it('should export multiple clones', async () => {
+      // exportMultiple calls exportClone for each clone
+      // Each exportClone makes 1 query (no training data requested)
       db.query
         .mockResolvedValueOnce({ rows: [mockClones[0]] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [mockClones[1]] })
-        .mockResolvedValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [mockClones[1]] });
 
       const result = await CloneExport.exportMultiple(
         ['clone-1', 'clone-2'],
@@ -130,7 +130,6 @@ describe('CloneExport Service', () => {
     it('should handle partial failures', async () => {
       db.query
         .mockResolvedValueOnce({ rows: [mockClones[0]] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] }); // Clone not found
 
       const result = await CloneExport.exportMultiple(

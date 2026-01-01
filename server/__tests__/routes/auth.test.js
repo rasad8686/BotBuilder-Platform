@@ -97,11 +97,7 @@ jest.mock('../../utils/cookieHelper', () => ({
   clearAuthCookie: jest.fn()
 }));
 
-jest.mock('../../utils/sessionHelper', () => ({
-  createSession: jest.fn().mockResolvedValue({ id: 1 }),
-  logRegister: jest.fn().mockResolvedValue(true),
-  logLogin: jest.fn().mockResolvedValue(true)
-}));
+// sessionHelper mock removed - module doesn't exist
 
 jest.mock('crypto', () => ({
   randomBytes: jest.fn((size) => ({
