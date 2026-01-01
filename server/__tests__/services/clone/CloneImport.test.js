@@ -2,14 +2,20 @@
  * CloneImport Service Tests
  */
 
-const CloneImport = require('../../../services/clone/CloneImport');
-
 // Mock dependencies
 jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
+jest.mock('../../../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
 const db = require('../../../db');
+const CloneImport = require('../../../services/clone/CloneImport');
 
 describe('CloneImport Service', () => {
   beforeEach(() => {

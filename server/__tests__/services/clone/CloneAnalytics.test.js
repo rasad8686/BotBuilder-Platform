@@ -2,14 +2,20 @@
  * CloneAnalytics Service Tests
  */
 
-const CloneAnalytics = require('../../../services/clone/CloneAnalytics');
-
 // Mock dependencies
 jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
+jest.mock('../../../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
 const db = require('../../../db');
+const CloneAnalytics = require('../../../services/clone/CloneAnalytics');
 
 describe('CloneAnalytics Service', () => {
   beforeEach(() => {
@@ -242,7 +248,10 @@ describe('CloneAnalytics Service', () => {
     };
 
     it('should return dashboard statistics', async () => {
-      db.query.mockResolvedValueOnce({ rows: [mockStats] });
+      // getDashboardStats makes 2 queries: clone stats and response stats
+      db.query
+        .mockResolvedValueOnce({ rows: [mockStats] })
+        .mockResolvedValueOnce({ rows: [{ total_responses: 5000, avg_rating: 4.1 }] });
 
       const result = await CloneAnalytics.getDashboardStats('user-456');
 

@@ -388,15 +388,27 @@ class CloneBackup {
 
   /**
    * Get backup details
+   * @param {string} cloneId - Clone ID
    * @param {string} backupId - Backup ID
    * @param {string} userId - User ID
+   * @param {Object} options - Options
    * @returns {Promise<Object>} Backup details
    */
-  async getBackupDetails(backupId, userId) {
+  async getBackupDetails(cloneId, backupId, userId, options = {}) {
     try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
       const result = await db.query(
-        `SELECT * FROM clone_backups WHERE id = $1 AND user_id = $2`,
-        [backupId, userId]
+        `SELECT * FROM clone_backups WHERE id = $1 AND clone_id = $2`,
+        [backupId, cloneId]
       );
 
       if (result.rows.length === 0) {
@@ -406,9 +418,9 @@ class CloneBackup {
       const backup = result.rows[0];
       const data = typeof backup.backup_data === 'string'
         ? JSON.parse(backup.backup_data)
-        : backup.backup_data;
+        : (backup.data ? JSON.parse(backup.data) : backup.backup_data);
 
-      return {
+      const response = {
         success: true,
         backup: {
           id: backup.id,
@@ -416,16 +428,20 @@ class CloneBackup {
           name: backup.name,
           description: backup.description,
           type: backup.backup_type,
-          size: backup.file_size,
+          sizeBytes: backup.file_size || backup.size_bytes,
           createdAt: backup.created_at,
-          metadata: data.metadata,
-          clone: {
-            name: data.clone.name,
-            status: data.clone.status,
-            trainingScore: data.clone.training_score
-          }
+          includesTrainingData: backup.includes_training_data
         }
       };
+
+      if (options.includePreview && data) {
+        response.backup.preview = {
+          cloneName: data.clone?.name,
+          samplesCount: data.trainingData?.length || 0
+        };
+      }
+
+      return response;
     } catch (error) {
       log.error('Error getting backup details', { error: error.message });
       return { success: false, error: error.message };
@@ -434,16 +450,27 @@ class CloneBackup {
 
   /**
    * Delete backup
+   * @param {string} cloneId - Clone ID
    * @param {string} backupId - Backup ID
    * @param {string} userId - User ID
    * @returns {Promise<Object>} Delete result
    */
-  async deleteBackup(backupId, userId) {
+  async deleteBackup(cloneId, backupId, userId) {
     try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
       const result = await db.query(
-        `DELETE FROM clone_backups WHERE id = $1 AND user_id = $2
+        `DELETE FROM clone_backups WHERE id = $1 AND clone_id = $2
          RETURNING file_path`,
-        [backupId, userId]
+        [backupId, cloneId]
       );
 
       if (result.rows.length === 0) {
@@ -546,6 +573,359 @@ class CloneBackup {
     delete sanitized.secret;
     return sanitized;
   }
+
+  /**
+   * List backups for a clone
+   * @param {string} cloneId - Clone ID
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Backups list
+   */
+  async listBackups(cloneId, userId) {
+    try {
+      // Verify ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const result = await db.query(
+        `SELECT id, backup_id, name, description, backup_type,
+                file_size as size_bytes, created_at, includes_training_data
+         FROM clone_backups
+         WHERE clone_id = $1 AND user_id = $2
+         ORDER BY created_at DESC`,
+        [cloneId, userId]
+      );
+
+      return {
+        success: true,
+        backups: result.rows
+      };
+    } catch (error) {
+      log.error('Error listing backups', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Restore backup with clone ID verification
+   * @param {string} cloneId - Clone ID
+   * @param {string} backupId - Backup ID
+   * @param {string} userId - User ID
+   * @param {Object} options - Restore options
+   * @returns {Promise<Object>} Restore result
+   */
+  async restoreBackup(cloneId, backupId, userId, options = {}) {
+    try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      // Get backup
+      const backupResult = await db.query(
+        `SELECT * FROM clone_backups WHERE id = $1 AND clone_id = $2`,
+        [backupId, cloneId]
+      );
+
+      if (backupResult.rows.length === 0) {
+        return { success: false, error: 'Backup not found' };
+      }
+
+      const backup = backupResult.rows[0];
+      const backupData = typeof backup.backup_data === 'string'
+        ? JSON.parse(backup.backup_data)
+        : (backup.data ? JSON.parse(backup.data) : backup.backup_data);
+
+      if (options.createNew) {
+        // Create new clone from backup
+        return await this._restoreAsNewClone(backupData, userId, cloneId, options);
+      } else {
+        // Restore to existing clone
+        const cloneData = backupData.clone || backupData;
+
+        const result = await db.query(
+          `UPDATE work_clones SET
+            config = COALESCE($1, config),
+            status = COALESCE($2, status),
+            updated_at = NOW()
+          WHERE id = $3
+          RETURNING *`,
+          [
+            JSON.stringify(cloneData.config || {}),
+            cloneData.status || 'active',
+            cloneId
+          ]
+        );
+
+        // Restore training data if requested
+        if (options.includeTrainingData && backupData.trainingData) {
+          for (const item of backupData.trainingData) {
+            try {
+              await db.query(
+                `INSERT INTO clone_training_data (clone_id, input, output)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT DO NOTHING`,
+                [cloneId, item.input, item.output]
+              );
+            } catch {
+              // Skip duplicates
+            }
+          }
+        }
+
+        return {
+          success: true,
+          clone: result.rows[0]
+        };
+      }
+    } catch (error) {
+      log.error('Error restoring backup', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Delete backup with clone ID verification
+   * @param {string} cloneId - Clone ID
+   * @param {string} backupId - Backup ID
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Delete result
+   */
+  async deleteBackupWithClone(cloneId, backupId, userId) {
+    try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const result = await db.query(
+        `DELETE FROM clone_backups WHERE id = $1 AND clone_id = $2
+         RETURNING file_path`,
+        [backupId, cloneId]
+      );
+
+      if (result.rows.length === 0) {
+        return { success: false, error: 'Backup not found' };
+      }
+
+      return { success: true, message: 'Backup deleted' };
+    } catch (error) {
+      log.error('Error deleting backup', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get backup details with clone ID verification
+   * @param {string} cloneId - Clone ID
+   * @param {string} backupId - Backup ID
+   * @param {string} userId - User ID
+   * @param {Object} options - Options
+   * @returns {Promise<Object>} Backup details
+   */
+  async getBackupDetailsWithClone(cloneId, backupId, userId, options = {}) {
+    try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const result = await db.query(
+        `SELECT * FROM clone_backups WHERE id = $1 AND clone_id = $2`,
+        [backupId, cloneId]
+      );
+
+      if (result.rows.length === 0) {
+        return { success: false, error: 'Backup not found' };
+      }
+
+      const backup = result.rows[0];
+      const data = typeof backup.backup_data === 'string'
+        ? JSON.parse(backup.backup_data)
+        : (backup.data ? JSON.parse(backup.data) : backup.backup_data);
+
+      const response = {
+        success: true,
+        backup: {
+          id: backup.id,
+          backupId: backup.backup_id,
+          description: backup.description,
+          sizeBytes: backup.file_size || backup.size_bytes,
+          createdAt: backup.created_at,
+          includesTrainingData: backup.includes_training_data
+        }
+      };
+
+      if (options.includePreview && data) {
+        response.backup.preview = {
+          cloneName: data.clone?.name,
+          samplesCount: data.trainingData?.length || 0
+        };
+      }
+
+      return response;
+    } catch (error) {
+      log.error('Error getting backup details', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Clean up old backups for a user
+   * @param {string} userId - User ID
+   * @param {Object} options - Cleanup options
+   * @returns {Promise<Object>} Cleanup result
+   */
+  async cleanupOldBackups(userId, options = {}) {
+    try {
+      const retentionDays = options.retentionDays || 30;
+      const maxBackupsPerClone = options.maxBackupsPerClone || 10;
+
+      // Find old backups
+      const oldBackups = await db.query(
+        `SELECT cb.id, cb.file_path
+         FROM clone_backups cb
+         JOIN work_clones wc ON wc.id = cb.clone_id
+         WHERE wc.user_id = $1
+           AND (cb.created_at < NOW() - INTERVAL '${retentionDays} days'
+                OR cb.backup_type = 'automatic')
+         ORDER BY cb.created_at ASC`,
+        [userId]
+      );
+
+      let deletedCount = 0;
+      for (const backup of oldBackups.rows) {
+        try {
+          await db.query(`DELETE FROM clone_backups WHERE id = $1`, [backup.id]);
+          if (backup.file_path) {
+            try {
+              await fs.unlink(backup.file_path);
+            } catch {
+              // File may not exist
+            }
+          }
+          deletedCount++;
+        } catch {
+          // Continue with other deletions
+        }
+      }
+
+      return {
+        success: true,
+        deletedCount
+      };
+    } catch (error) {
+      log.error('Error cleaning up old backups', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Schedule automatic backup for a clone
+   * @param {string} cloneId - Clone ID
+   * @param {string} userId - User ID
+   * @param {Object} options - Schedule options
+   * @returns {Promise<Object>} Schedule result
+   */
+  async scheduleAutoBackup(cloneId, userId, options = {}) {
+    try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const frequency = options.frequency || 'weekly';
+      const retentionCount = options.retentionCount || 7;
+
+      if (frequency === 'none') {
+        // Disable auto backup
+        await db.query(
+          `DELETE FROM clone_backup_schedules WHERE clone_id = $1`,
+          [cloneId]
+        );
+        return { success: true, schedule: null };
+      }
+
+      // Create or update schedule
+      const result = await db.query(
+        `INSERT INTO clone_backup_schedules (clone_id, user_id, frequency, retention_count)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (clone_id)
+         DO UPDATE SET frequency = $3, retention_count = $4, updated_at = NOW()
+         RETURNING *`,
+        [cloneId, userId, frequency, retentionCount]
+      );
+
+      return {
+        success: true,
+        schedule: result.rows[0]
+      };
+    } catch (error) {
+      log.error('Error scheduling auto backup', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get storage usage for a user
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Storage usage
+   */
+  async getStorageUsage(userId) {
+    try {
+      const result = await db.query(
+        `SELECT
+          COUNT(*) as total_backups,
+          COALESCE(SUM(file_size), 0) as total_size_bytes,
+          COUNT(DISTINCT clone_id) as clones_with_backups
+         FROM clone_backups cb
+         JOIN work_clones wc ON wc.id = cb.clone_id
+         WHERE wc.user_id = $1`,
+        [userId]
+      );
+
+      const stats = result.rows[0] || {};
+      const totalSizeBytes = parseInt(stats.total_size_bytes) || 0;
+
+      return {
+        success: true,
+        usage: {
+          totalBackups: parseInt(stats.total_backups) || 0,
+          totalSizeBytes,
+          totalSizeMB: totalSizeBytes / (1024 * 1024),
+          clonesWithBackups: parseInt(stats.clones_with_backups) || 0
+        }
+      };
+    } catch (error) {
+      log.error('Error getting storage usage', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
 }
 
-module.exports = CloneBackup;
+module.exports = new CloneBackup();

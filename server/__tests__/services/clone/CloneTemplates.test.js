@@ -2,14 +2,20 @@
  * CloneTemplates Service Tests
  */
 
-const CloneTemplates = require('../../../services/clone/CloneTemplates');
-
 // Mock dependencies
 jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
+jest.mock('../../../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
 const db = require('../../../db');
+const CloneTemplates = require('../../../services/clone/CloneTemplates');
 
 describe('CloneTemplates Service', () => {
   beforeEach(() => {
@@ -30,7 +36,8 @@ describe('CloneTemplates Service', () => {
       const result = await CloneTemplates.getBuiltInTemplates({ type: 'personality' });
 
       expect(result.success).toBe(true);
-      expect(result.templates.every(t => t.type === 'personality')).toBe(true);
+      // Built-in templates use cloneType, not type
+      expect(result.templates.every(t => t.type === 'personality' || t.cloneType === 'personality')).toBe(true);
     });
 
     it('should filter by category', async () => {
@@ -222,7 +229,8 @@ describe('CloneTemplates Service', () => {
     });
 
     it('should reject saving non-owned clone', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ ...mockClone, user_id: 'other-user' }] });
+      // SQL query filters by user_id, so non-owned clone returns empty rows
+      db.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await CloneTemplates.saveAsTemplate(
         'clone-123',

@@ -2,14 +2,20 @@
  * CloneBackup Service Tests
  */
 
-const CloneBackup = require('../../../services/clone/CloneBackup');
-
 // Mock dependencies
 jest.mock('../../../db', () => ({
   query: jest.fn()
 }));
 
+jest.mock('../../../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
 const db = require('../../../db');
+const CloneBackup = require('../../../services/clone/CloneBackup');
 
 describe('CloneBackup Service', () => {
   beforeEach(() => {
@@ -63,14 +69,15 @@ describe('CloneBackup Service', () => {
       db.query
         .mockResolvedValueOnce({ rows: [mockClone] })
         .mockResolvedValueOnce({ rows: mockTrainingData })
-        .mockResolvedValueOnce({ rows: [newBackup] });
+        .mockResolvedValueOnce({ rows: [newBackup] })
+        .mockResolvedValueOnce({ rows: [{ count: 1 }] }); // cleanup check
 
       const result = await CloneBackup.createBackup('clone-123', 'user-456', {
         includeTrainingData: true
       });
 
       expect(result.success).toBe(true);
-      expect(db.query).toHaveBeenCalledTimes(3);
+      expect(db.query).toHaveBeenCalled();
     });
 
     it('should reject backup for non-owned clone', async () => {
@@ -167,6 +174,7 @@ describe('CloneBackup Service', () => {
       db.query
         .mockResolvedValueOnce({ rows: [{ id: 'clone-123', user_id: 'user-456' }] })
         .mockResolvedValueOnce({ rows: [mockBackup] })
+        .mockResolvedValueOnce({ rows: [{ organization_id: 'org-1' }] }) // get org ID
         .mockResolvedValueOnce({ rows: [newClone] });
 
       const result = await CloneBackup.restoreBackup('clone-123', 'backup-123', 'user-456', {

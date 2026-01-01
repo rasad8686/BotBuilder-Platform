@@ -2,11 +2,16 @@
  * CloneSharing Service Tests
  */
 
-const CloneSharing = require('../../../services/clone/CloneSharing');
-
 // Mock dependencies
 jest.mock('../../../db', () => ({
   query: jest.fn()
+}));
+
+jest.mock('../../../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
 }));
 
 jest.mock('crypto', () => ({
@@ -20,6 +25,7 @@ jest.mock('crypto', () => ({
 }));
 
 const db = require('../../../db');
+const CloneSharing = require('../../../services/clone/CloneSharing');
 
 describe('CloneSharing Service', () => {
   beforeEach(() => {
@@ -66,7 +72,8 @@ describe('CloneSharing Service', () => {
     });
 
     it('should reject sharing non-owned clone', async () => {
-      db.query.mockResolvedValueOnce({ rows: [{ ...mockClone, user_id: 'other-user' }] });
+      // SQL query filters by user_id, so non-owned clone returns empty rows
+      db.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await CloneSharing.shareWithUser(
         'clone-123',

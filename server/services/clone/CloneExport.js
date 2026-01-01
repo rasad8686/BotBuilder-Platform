@@ -195,14 +195,14 @@ class CloneExport {
   async exportMultiple(cloneIds, userId, options = {}) {
     try {
       const exports = [];
-      const errors = [];
+      const failed = [];
 
       for (const cloneId of cloneIds) {
-        const result = await this.exportToJson(cloneId, userId, options);
+        const result = await this.exportClone(cloneId, userId, options);
         if (result.success) {
           exports.push({ cloneId, data: result.data });
         } else {
-          errors.push({ cloneId, error: result.error });
+          failed.push({ cloneId, error: result.error });
         }
       }
 
@@ -216,13 +216,13 @@ class CloneExport {
           version: '1.0',
           exportedAt: new Date().toISOString(),
           clones: exports.map(e => e.data),
-          errors
+          failed
         }, null, 2));
 
-        return { success: true, filePath, fileName, count: exports.length, errors };
+        return { success: true, filePath, fileName, count: exports.length, failed };
       }
 
-      return { success: true, exports, errors };
+      return { success: true, exports, failed };
     } catch (error) {
       log.error('Error exporting multiple clones', { error: error.message });
       return { success: false, error: error.message };
@@ -257,6 +257,86 @@ class CloneExport {
     } catch (error) {
       log.error('Error getting download URL', { error: error.message });
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Export clone (wrapper for exportToJson with format support)
+   * @param {string} cloneId - Clone ID
+   * @param {string} userId - User ID
+   * @param {Object} options - Export options
+   * @returns {Promise<Object>} Export result
+   */
+  async exportClone(cloneId, userId, options = {}) {
+    try {
+      const result = await db.query(
+        `SELECT * FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (result.rows.length === 0) {
+        return { success: false, error: 'Clone not found or unauthorized' };
+      }
+
+      const clone = result.rows[0];
+
+      let trainingData = [];
+      if (options.includeTrainingData) {
+        const trainingResult = await db.query(
+          `SELECT * FROM clone_training_data WHERE clone_id = $1`,
+          [cloneId]
+        );
+        trainingData = trainingResult.rows;
+      }
+
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        clone: {
+          id: clone.id,
+          name: clone.name,
+          type: clone.type || 'personality',
+          config: this._parseJson(clone.config) || clone.style_profile || {},
+          status: clone.status,
+          created_at: clone.created_at,
+          updated_at: clone.updated_at
+        },
+        trainingData: options.includeTrainingData ? trainingData : undefined
+      };
+
+      return {
+        success: true,
+        data: JSON.stringify(exportData),
+        format: options.format || 'json'
+      };
+    } catch (error) {
+      log.error('Error exporting clone', { error: error.message, cloneId });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get export history for user
+   * @param {string} userId - User ID
+   * @param {Object} options - Query options
+   * @returns {Promise<Object>} Export history
+   */
+  async getExportHistory(userId, options = {}) {
+    try {
+      const limit = options.limit || 50;
+      const result = await db.query(
+        `SELECT id, clone_id, format, file_size, created_at
+         FROM clone_exports
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2`,
+        [userId, limit]
+      );
+
+      return { success: true, history: result.rows };
+    } catch (error) {
+      log.error('Error getting export history', { error: error.message, userId });
+      return { success: true, history: [] }; // Return empty on error
     }
   }
 
@@ -337,4 +417,4 @@ Exported at: ${new Date().toISOString()}
   }
 }
 
-module.exports = CloneExport;
+module.exports = new CloneExport();

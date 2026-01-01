@@ -104,9 +104,10 @@ class CloneTemplates {
   /**
    * Get single template by ID
    * @param {string} templateId - Template ID
+   * @param {string} userId - Optional user ID for custom templates
    * @returns {Promise<Object>} Template data
    */
-  async getTemplate(templateId) {
+  async getTemplate(templateId, userId = null) {
     try {
       // Check built-in templates first
       const builtIn = this.builtInTemplates.find(t => t.id === templateId);
@@ -142,12 +143,22 @@ class CloneTemplates {
    * Create clone from template
    * @param {string} templateId - Template ID
    * @param {string} userId - User ID
-   * @param {string} orgId - Organization ID
-   * @param {Object} customizations - Customization options
+   * @param {Object|string} optionsOrOrgId - Options object or organization ID
+   * @param {Object} customizations - Customization options (if 3rd param is orgId)
    * @returns {Promise<Object>} Created clone
    */
-  async createFromTemplate(templateId, userId, orgId, customizations = {}) {
+  async createFromTemplate(templateId, userId, optionsOrOrgId, customizations = {}) {
     try {
+      // Handle flexible signature: (templateId, userId, options) or (templateId, userId, orgId, customizations)
+      let orgId = null;
+      let options = {};
+      if (typeof optionsOrOrgId === 'object') {
+        options = optionsOrOrgId || {};
+      } else {
+        orgId = optionsOrOrgId;
+        options = customizations;
+      }
+
       const templateResult = await this.getTemplate(templateId);
       if (!templateResult.success) {
         return templateResult;
@@ -156,40 +167,50 @@ class CloneTemplates {
       const template = templateResult.template;
       const config = template.config || template;
 
+      // Merge config overrides
+      const finalConfig = options.configOverrides
+        ? { ...config, ...options.configOverrides }
+        : config;
+
       // Create clone from template
       const result = await db.query(
         `INSERT INTO work_clones (
           organization_id, user_id, name, description,
           ai_model, temperature, max_tokens,
           base_system_prompt, personality_prompt, writing_style_prompt,
-          tone_settings, settings, status, template_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          tone_settings, settings, status, template_id, type
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *`,
         [
           orgId,
           userId,
-          customizations.name || `${template.name} Clone`,
-          customizations.description || template.description,
-          config.aiModel || 'gpt-4',
-          config.temperature || 0.7,
-          config.maxTokens || 2048,
-          config.baseSystemPrompt || template.systemPrompt,
-          config.personalityPrompt || template.personalityPrompt,
-          config.writingStylePrompt || template.stylePrompt,
-          JSON.stringify(config.toneSettings || {}),
-          JSON.stringify({ ...config.settings, templateId }),
+          options.name || `${template.name} Clone`,
+          options.description || template.description,
+          finalConfig.aiModel || 'gpt-4',
+          finalConfig.temperature || 0.7,
+          finalConfig.maxTokens || 2048,
+          finalConfig.baseSystemPrompt || finalConfig.systemPrompt || template.systemPrompt,
+          finalConfig.personalityPrompt || template.personalityPrompt,
+          finalConfig.writingStylePrompt || finalConfig.stylePrompt || template.stylePrompt,
+          JSON.stringify(finalConfig.toneSettings || {}),
+          JSON.stringify({ ...finalConfig.settings, templateId }),
           'draft',
-          template.isBuiltIn ? null : templateId
+          template.isBuiltIn ? null : templateId,
+          template.type || template.cloneType || 'personality'
         ]
       );
 
       // Record template usage
       if (!template.isBuiltIn) {
-        await db.query(
-          `INSERT INTO clone_template_usage (template_id, user_id, clone_id)
-           VALUES ($1, $2, $3)`,
-          [templateId, userId, result.rows[0].id]
-        );
+        try {
+          await db.query(
+            `INSERT INTO clone_template_usage (template_id, user_id, clone_id)
+             VALUES ($1, $2, $3)`,
+            [templateId, userId, result.rows[0].id]
+          );
+        } catch {
+          // Ignore usage tracking errors
+        }
       }
 
       return {
@@ -317,6 +338,12 @@ class CloneTemplates {
    */
   async deleteTemplate(templateId, userId) {
     try {
+      // Check if it's a built-in template
+      const builtIn = this.builtInTemplates.find(t => t.id === templateId);
+      if (builtIn) {
+        return { success: false, error: 'Cannot delete built-in template' };
+      }
+
       const result = await db.query(
         `UPDATE clone_templates SET is_active = false
          WHERE id = $1 AND created_by_user_id = $2
@@ -513,6 +540,147 @@ class CloneTemplates {
       return {};
     }
   }
+
+  /**
+   * Get built-in templates with optional filtering
+   * @param {Object} options - Filter options (type, category)
+   * @returns {Promise<Object>} Built-in templates
+   */
+  async getBuiltInTemplates(options = {}) {
+    try {
+      let templates = [...this.builtInTemplates];
+
+      if (options.type) {
+        templates = templates.filter(t => t.type === options.type || t.cloneType === options.type);
+      }
+
+      if (options.category) {
+        templates = templates.filter(t => t.category === options.category);
+      }
+
+      return {
+        success: true,
+        templates
+      };
+    } catch (error) {
+      log.error('Error getting built-in templates', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get user's custom templates
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} User templates
+   */
+  async getUserTemplates(userId) {
+    try {
+      const result = await db.query(
+        `SELECT * FROM clone_templates
+         WHERE created_by_user_id = $1 AND is_active = true
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+
+      return {
+        success: true,
+        templates: result.rows.map(t => ({
+          ...t,
+          config: this._parseJson(t.config)
+        }))
+      };
+    } catch (error) {
+      log.error('Error getting user templates', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Save clone as template
+   * @param {string} cloneId - Clone ID
+   * @param {string} userId - User ID
+   * @param {Object} options - Template options
+   * @returns {Promise<Object>} Created template
+   */
+  async saveAsTemplate(cloneId, userId, options = {}) {
+    try {
+      // Get clone
+      const cloneResult = await db.query(
+        `SELECT * FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, userId]
+      );
+
+      if (cloneResult.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const clone = cloneResult.rows[0];
+
+      // Create template
+      const result = await db.query(
+        `INSERT INTO clone_templates (
+          organization_id, created_by_user_id, name, description,
+          category, clone_type, config, is_public
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *`,
+        [
+          clone.organization_id,
+          userId,
+          options.name || `${clone.name} Template`,
+          options.description || clone.description,
+          options.category || 'custom',
+          clone.type || 'personality',
+          JSON.stringify({
+            aiModel: clone.ai_model,
+            temperature: clone.temperature,
+            maxTokens: clone.max_tokens,
+            baseSystemPrompt: clone.base_system_prompt,
+            personalityPrompt: clone.personality_prompt
+          }),
+          options.isPublic || false
+        ]
+      );
+
+      return {
+        success: true,
+        template: result.rows[0]
+      };
+    } catch (error) {
+      log.error('Error saving clone as template', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get public templates
+   * @param {Object} options - Query options (limit, offset)
+   * @returns {Promise<Object>} Public templates
+   */
+  async getPublicTemplates(options = {}) {
+    try {
+      const limit = options.limit || 50;
+      const offset = options.offset || 0;
+
+      const result = await db.query(
+        `SELECT * FROM clone_templates
+         WHERE is_public = true AND is_active = true
+         ORDER BY created_at DESC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+
+      return {
+        success: true,
+        templates: result.rows.map(t => ({
+          ...t,
+          config: this._parseJson(t.config)
+        }))
+      };
+    } catch (error) {
+      log.error('Error getting public templates', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
 }
 
-module.exports = CloneTemplates;
+module.exports = new CloneTemplates();

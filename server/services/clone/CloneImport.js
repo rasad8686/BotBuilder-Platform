@@ -242,22 +242,35 @@ class CloneImport {
 
   /**
    * Validate import and preview what will be imported
-   * @param {Object} data - Import data
+   * @param {Object|string} dataOrString - Import data or JSON string
    * @returns {Object} Preview information
    */
-  async previewImport(data) {
+  async previewImport(dataOrString) {
     try {
+      let data;
+      try {
+        data = typeof dataOrString === 'string' ? JSON.parse(dataOrString) : dataOrString;
+      } catch {
+        return { success: false, error: 'Invalid JSON format' };
+      }
+
       const validation = this._validateImportData(data);
       if (!validation.valid) {
         return { success: false, error: validation.error };
       }
 
       const clone = data.clone || data;
+      const warnings = [];
+
+      if (data.version && !this.supportedVersions.includes(data.version)) {
+        warnings.push('Unsupported export version');
+      }
 
       return {
         success: true,
         preview: {
           name: clone.name,
+          type: clone.type || 'personality',
           description: clone.description,
           aiModel: clone.aiModel,
           hasTrainingData: !!(data.trainingData && data.trainingData.length > 0),
@@ -266,9 +279,112 @@ class CloneImport {
           responsesCount: data.responses?.length || 0,
           trainingScore: clone.trainingScore || 0,
           exportedAt: data.exportedAt,
-          version: data.version
+          version: data.version,
+          isValid: true,
+          warnings: warnings.length > 0 ? warnings : undefined
         }
       };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Import clone from JSON string
+   * @param {string} jsonString - JSON string of export data
+   * @param {string} userId - User ID
+   * @param {Object} options - Import options
+   * @returns {Promise<Object>} Import result
+   */
+  async importClone(jsonString, userId, options = {}) {
+    try {
+      let data;
+      try {
+        data = JSON.parse(jsonString);
+      } catch {
+        return { success: false, error: 'Invalid JSON format' };
+      }
+
+      const clone = data.clone || data;
+      const name = options.name || clone.name;
+
+      // Insert the clone
+      const result = await db.query(
+        `INSERT INTO work_clones (user_id, name, type, config, status)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [userId, name, clone.type || 'personality', JSON.stringify(clone.config || {}), 'active']
+      );
+
+      const newClone = result.rows[0];
+
+      // Import training data if requested
+      if (options.importTrainingData && data.trainingData) {
+        for (const item of data.trainingData) {
+          await db.query(
+            `INSERT INTO clone_training_data (clone_id, input, output)
+             VALUES ($1, $2, $3)`,
+            [newClone.id, item.input, item.output]
+          );
+        }
+      }
+
+      return { success: true, cloneId: newClone.id, clone: newClone };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Merge imported data with existing clone
+   * @param {string} existingCloneId - Existing clone ID
+   * @param {string} jsonString - JSON string of import data
+   * @param {string} userId - User ID
+   * @param {Object} options - Merge options
+   * @returns {Promise<Object>} Merge result
+   */
+  async mergeClone(existingCloneId, jsonString, userId, options = {}) {
+    try {
+      let data;
+      try {
+        data = JSON.parse(jsonString);
+      } catch {
+        return { success: false, error: 'Invalid JSON format' };
+      }
+
+      // Get existing clone
+      const existing = await db.query(
+        `SELECT * FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [existingCloneId, userId]
+      );
+
+      if (existing.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      const existingClone = existing.rows[0];
+      const importClone = data.clone || data;
+
+      // Check type compatibility
+      if (existingClone.type && importClone.type && existingClone.type !== importClone.type) {
+        return { success: false, error: 'Clone type mismatch' };
+      }
+
+      // Merge config based on strategy
+      let mergedConfig;
+      if (options.mergeStrategy === 'replace') {
+        mergedConfig = importClone.config;
+      } else {
+        mergedConfig = { ...this._parseJson(existingClone.config), ...importClone.config };
+      }
+
+      // Update the clone
+      const result = await db.query(
+        `UPDATE work_clones SET config = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [JSON.stringify(mergedConfig), existingCloneId]
+      );
+
+      return { success: true, clone: result.rows[0] };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -423,4 +539,4 @@ class CloneImport {
   }
 }
 
-module.exports = CloneImport;
+module.exports = new CloneImport();

@@ -34,6 +34,21 @@ class CloneSharing {
         return { success: false, error: 'Clone not found or not owned by you' };
       }
 
+      // Check if trying to share with yourself
+      if (ownerId === targetUserId) {
+        return { success: false, error: 'Cannot share with yourself' };
+      }
+
+      // Check if target user exists
+      const userResult = await db.query(
+        `SELECT id FROM users WHERE id = $1`,
+        [targetUserId]
+      );
+
+      if (userResult.rows.length === 0) {
+        return { success: false, error: 'Target user not found' };
+      }
+
       // Check if already shared
       const existingShare = await db.query(
         `SELECT id FROM clone_shares WHERE clone_id = $1 AND shared_with_user_id = $2`,
@@ -42,16 +57,17 @@ class CloneSharing {
 
       if (existingShare.rows.length > 0) {
         // Update existing share
-        await db.query(
+        const updateResult = await db.query(
           `UPDATE clone_shares SET
             permission_level = $1,
             can_train = $2,
             can_export = $3,
             expires_at = $4,
             updated_at = NOW()
-          WHERE id = $5`,
+          WHERE id = $5
+          RETURNING *`,
           [
-            options.permissionLevel || 'use',
+            options.permission || options.permissionLevel || 'use',
             options.canTrain || false,
             options.canExport || false,
             options.expiresAt || null,
@@ -59,7 +75,7 @@ class CloneSharing {
           ]
         );
 
-        return { success: true, shareId: existingShare.rows[0].id, updated: true };
+        return { success: true, share: updateResult.rows[0], updated: true };
       }
 
       // Create new share
@@ -73,7 +89,7 @@ class CloneSharing {
           cloneId,
           ownerId,
           targetUserId,
-          options.permissionLevel || 'use',
+          options.permission || options.permissionLevel || 'use',
           options.canTrain || false,
           options.canExport || false,
           options.expiresAt || null
@@ -116,6 +132,16 @@ class CloneSharing {
 
       if (cloneResult.rows.length === 0) {
         return { success: false, error: 'Clone not found or not owned by you' };
+      }
+
+      // Check if organization exists
+      const orgResult = await db.query(
+        `SELECT id FROM organizations WHERE id = $1`,
+        [targetOrgId]
+      );
+
+      if (orgResult.rows.length === 0) {
+        return { success: false, error: 'Organization not found' };
       }
 
       // Create organization share
@@ -372,23 +398,32 @@ class CloneSharing {
 
   /**
    * Revoke share
+   * @param {string} cloneId - Clone ID
    * @param {string} shareId - Share ID
    * @param {string} ownerId - Owner user ID
    * @returns {Promise<Object>} Revoke result
    */
-  async revokeShare(shareId, ownerId) {
+  async revokeShare(cloneId, shareId, ownerId) {
     try {
+      // Verify clone ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, ownerId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
       const result = await db.query(
         `UPDATE clone_shares SET is_active = false, updated_at = NOW()
-         WHERE id = $1 AND clone_id IN (
-           SELECT id FROM work_clones WHERE user_id = $2
-         )
+         WHERE id = $1 AND clone_id = $2
          RETURNING *`,
-        [shareId, ownerId]
+        [shareId, cloneId]
       );
 
       if (result.rows.length === 0) {
-        return { success: false, error: 'Share not found or not authorized' };
+        return { success: false, error: 'Share not found' };
       }
 
       return { success: true, message: 'Share revoked successfully' };
@@ -518,6 +553,159 @@ class CloneSharing {
     // This would integrate with notification service
     log.info('Clone share notification', { userId, notification });
   }
+
+  /**
+   * Create share link (alias for generateShareLink)
+   * @param {string} cloneId - Clone ID
+   * @param {string} ownerId - Owner user ID
+   * @param {Object} options - Link options
+   * @returns {Promise<Object>} Share link result
+   */
+  async createShareLink(cloneId, ownerId, options = {}) {
+    try {
+      // Verify ownership
+      const cloneResult = await db.query(
+        `SELECT id, name FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, ownerId]
+      );
+
+      if (cloneResult.rows.length === 0) {
+        return { success: false, error: 'Clone not found or not owned by you' };
+      }
+
+      // Generate unique token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresIn = options.expiresIn || 7;
+      const expiresAt = new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000);
+
+      // Hash password if provided
+      const passwordHash = options.password ? this._hashPassword(options.password) : null;
+
+      // Store share link
+      const result = await db.query(
+        `INSERT INTO clone_share_links (
+          clone_id, created_by_user_id, token,
+          permission_level, max_uses, expires_at,
+          password_hash
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *`,
+        [
+          cloneId,
+          ownerId,
+          token,
+          options.permission || 'view',
+          options.maxUses || null,
+          expiresAt,
+          passwordHash
+        ]
+      );
+
+      return {
+        success: true,
+        link: {
+          ...result.rows[0],
+          token,
+          hasPassword: !!passwordHash
+        }
+      };
+    } catch (error) {
+      log.error('Error creating share link', { error: error.message, cloneId });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get shares for a clone (wrapper for getCloneShares)
+   * @param {string} cloneId - Clone ID
+   * @param {string} ownerId - Owner user ID
+   * @returns {Promise<Object>} Clone shares
+   */
+  async getShares(cloneId, ownerId) {
+    try {
+      // Verify ownership
+      const cloneCheck = await db.query(
+        `SELECT id FROM work_clones WHERE id = $1 AND user_id = $2`,
+        [cloneId, ownerId]
+      );
+
+      if (cloneCheck.rows.length === 0) {
+        return { success: false, error: 'Clone not found' };
+      }
+
+      // Get all shares
+      const sharesResult = await db.query(
+        `SELECT cs.*, u.name as shared_with_name, u.email as shared_with_email
+         FROM clone_shares cs
+         LEFT JOIN users u ON u.id = cs.shared_with_user_id
+         WHERE cs.clone_id = $1
+         ORDER BY cs.created_at DESC`,
+        [cloneId]
+      );
+
+      return {
+        success: true,
+        shares: sharesResult.rows
+      };
+    } catch (error) {
+      log.error('Error getting shares', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Access shared clone via token
+   * @param {string} token - Share link token
+   * @param {Object} options - Access options (password, etc.)
+   * @returns {Promise<Object>} Access result
+   */
+  async accessSharedClone(token, options = {}) {
+    try {
+      // Find share link
+      const linkResult = await db.query(
+        `SELECT sl.*, wc.name as clone_name, wc.id as clone_id
+         FROM clone_share_links sl
+         JOIN work_clones wc ON wc.id = sl.clone_id
+         WHERE sl.token = $1 AND sl.is_active = true`,
+        [token]
+      );
+
+      if (linkResult.rows.length === 0) {
+        return { success: false, error: 'Invalid share link' };
+      }
+
+      const link = linkResult.rows[0];
+
+      // Check expiration
+      if (link.expires_at && new Date(link.expires_at) < new Date()) {
+        return { success: false, error: 'Share link has expired' };
+      }
+
+      // Check password
+      if (link.password_hash) {
+        if (!options.password) {
+          return { success: false, error: 'Password required', requiresPassword: true };
+        }
+        if (!this._verifyPassword(options.password, link.password_hash)) {
+          return { success: false, error: 'Invalid password' };
+        }
+      }
+
+      // Get clone data
+      const cloneResult = await db.query(
+        `SELECT * FROM work_clones WHERE id = $1`,
+        [link.clone_id]
+      );
+
+      return {
+        success: true,
+        clone: cloneResult.rows[0],
+        permission: link.permission_level
+      };
+    } catch (error) {
+      log.error('Error accessing shared clone', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
 }
 
-module.exports = CloneSharing;
+module.exports = new CloneSharing();
