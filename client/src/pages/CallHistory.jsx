@@ -98,9 +98,9 @@ const CallHistory = () => {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f5f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#f5f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }} role="status" aria-busy="true" aria-label="Loading call history">
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #e9ecef', borderTopColor: '#667eea', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }}></div>
+          <div style={{ width: '48px', height: '48px', border: '4px solid #e9ecef', borderTopColor: '#667eea', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} aria-hidden="true"></div>
           <p style={{ color: '#6c757d' }}>{t('common.loading')}</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -142,8 +142,9 @@ const CallHistory = () => {
         {/* Filters */}
         <div style={{ background: 'white', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.bot', 'Bot')}</label>
+            <label htmlFor="filter-bot" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.bot', 'Bot')}</label>
             <select
+              id="filter-bot"
               value={filters.botId}
               onChange={(e) => setFilters({ ...filters, botId: e.target.value })}
               style={{ padding: '10px 16px', border: '1px solid #e9ecef', borderRadius: '8px', fontSize: '14px', minWidth: '200px' }}
@@ -155,8 +156,9 @@ const CallHistory = () => {
             </select>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.status', 'Status')}</label>
+            <label htmlFor="filter-status" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.status', 'Status')}</label>
             <select
+              id="filter-status"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               style={{ padding: '10px 16px', border: '1px solid #e9ecef', borderRadius: '8px', fontSize: '14px', minWidth: '150px' }}
@@ -168,8 +170,9 @@ const CallHistory = () => {
             </select>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.direction', 'Direction')}</label>
+            <label htmlFor="filter-direction" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#6c757d' }}>{t('voice.direction', 'Direction')}</label>
             <select
+              id="filter-direction"
               value={filters.direction}
               onChange={(e) => setFilters({ ...filters, direction: e.target.value })}
               style={{ padding: '10px 16px', border: '1px solid #e9ecef', borderRadius: '8px', fontSize: '14px', minWidth: '150px' }}
@@ -212,17 +215,17 @@ const CallHistory = () => {
               <p style={{ color: '#6c757d' }}>{t('voice.noCallsDesc', 'Call history will appear here')}</p>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }} role="table" aria-label="Call history">
               <thead>
                 <tr style={{ background: '#f8f9fa' }}>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.bot', 'Bot')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.direction', 'Direction')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.from', 'From')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.to', 'To')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.duration', 'Duration')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.status', 'Status')}</th>
-                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.date', 'Date')}</th>
-                  <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('common.actions', 'Actions')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.bot', 'Bot')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.direction', 'Direction')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.from', 'From')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.to', 'To')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.duration', 'Duration')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.status', 'Status')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('voice.date', 'Date')}</th>
+                  <th scope="col" style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1a1a2e', fontSize: '13px' }}>{t('common.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -269,6 +272,7 @@ const CallHistory = () => {
                           cursor: 'pointer',
                           fontSize: '12px'
                         }}
+                        aria-label={`View details for call from ${call.from_number || 'unknown'} to ${call.to_number || 'unknown'}`}
                       >
                         {t('common.view', 'View')}
                       </button>
@@ -283,11 +287,11 @@ const CallHistory = () => {
 
       {/* Call Details Modal */}
       {selectedCall && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} role="dialog" aria-modal="true" aria-labelledby="call-details-title">
           <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflow: 'auto' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #e9ecef', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: '#1a1a2e' }}>{t('voice.callDetails', 'Call Details')}</h2>
-              <button onClick={() => setSelectedCall(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6c757d' }}>×</button>
+              <h2 id="call-details-title" style={{ margin: 0, fontSize: '20px', color: '#1a1a2e' }}>{t('voice.callDetails', 'Call Details')}</h2>
+              <button onClick={() => setSelectedCall(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6c757d' }} aria-label="Close call details">×</button>
             </div>
 
             <div style={{ padding: '24px' }}>

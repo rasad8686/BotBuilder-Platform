@@ -123,8 +123,8 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
 
   if (loading) {
     return (
-      <div className="metrics-dashboard loading">
-        <div className="loading-spinner"></div>
+      <div className="metrics-dashboard loading" role="status" aria-busy="true" aria-label="Loading metrics">
+        <div className="loading-spinner" aria-hidden="true"></div>
         <p>{t('common.loading')}</p>
       </div>
     );
@@ -132,7 +132,7 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
 
   if (error) {
     return (
-      <div className="metrics-dashboard error">
+      <div className="metrics-dashboard error" role="alert">
         <p className="error-message">{error}</p>
         <button onClick={fetchMetrics} className="btn btn-secondary">
           {t('common.retry')}
@@ -170,22 +170,31 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
       </div>
 
       {/* Tabs */}
-      <div className="metrics-tabs">
+      <div className="metrics-tabs" role="tablist" aria-label="Metrics navigation">
         <button
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
+          role="tab"
+          aria-selected={activeTab === 'overview'}
+          aria-controls="panel-overview"
         >
           {t('fineTuning.metrics.overview', 'Overview')}
         </button>
         <button
           className={`tab ${activeTab === 'loss' ? 'active' : ''}`}
           onClick={() => setActiveTab('loss')}
+          role="tab"
+          aria-selected={activeTab === 'loss'}
+          aria-controls="panel-loss"
         >
           {t('fineTuning.metrics.lossChart', 'Loss')}
         </button>
         <button
           className={`tab ${activeTab === 'accuracy' ? 'active' : ''}`}
           onClick={() => setActiveTab('accuracy')}
+          role="tab"
+          aria-selected={activeTab === 'accuracy'}
+          aria-controls="panel-accuracy"
         >
           {t('fineTuning.metrics.accuracyChart', 'Accuracy')}
         </button>
@@ -193,6 +202,9 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
           <button
             className={`tab ${activeTab === 'compare' ? 'active' : ''}`}
             onClick={() => setActiveTab('compare')}
+            role="tab"
+            aria-selected={activeTab === 'compare'}
+            aria-controls="panel-compare"
           >
             {t('fineTuning.metrics.compare', 'Compare')}
           </button>
@@ -201,18 +213,18 @@ export default function MetricsDashboard({ modelId, onClose, compareModelIds = [
 
       {/* Content */}
       <div className="metrics-content">
-        {activeTab === 'overview' && (
-          <OverviewTab summary={summary} onGenerateMock={handleGenerateMock} t={t} />
-        )}
-        {activeTab === 'loss' && (
-          <LossChartTab data={lossHistory} t={t} />
-        )}
-        {activeTab === 'accuracy' && (
-          <AccuracyChartTab data={accuracyHistory} t={t} />
-        )}
-        {activeTab === 'compare' && (
-          <ComparisonTab data={comparisonData} t={t} />
-        )}
+        <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" hidden={activeTab !== 'overview'}>
+          {activeTab === 'overview' && <OverviewTab summary={summary} onGenerateMock={handleGenerateMock} t={t} />}
+        </div>
+        <div id="panel-loss" role="tabpanel" aria-labelledby="tab-loss" hidden={activeTab !== 'loss'}>
+          {activeTab === 'loss' && <LossChartTab data={lossHistory} t={t} />}
+        </div>
+        <div id="panel-accuracy" role="tabpanel" aria-labelledby="tab-accuracy" hidden={activeTab !== 'accuracy'}>
+          {activeTab === 'accuracy' && <AccuracyChartTab data={accuracyHistory} t={t} />}
+        </div>
+        <div id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden={activeTab !== 'compare'}>
+          {activeTab === 'compare' && <ComparisonTab data={comparisonData} t={t} />}
+        </div>
       </div>
     </div>
   );
@@ -510,17 +522,17 @@ function ComparisonTab({ data, t }) {
 
       {/* Comparison Table */}
       <div className="comparison-table">
-        <h4>{t('fineTuning.metrics.detailedComparison', 'Detailed Comparison')}</h4>
-        <table>
+        <h4 id="comparison-table-heading">{t('fineTuning.metrics.detailedComparison', 'Detailed Comparison')}</h4>
+        <table role="table" aria-labelledby="comparison-table-heading">
           <thead>
             <tr>
-              <th>{t('fineTuning.modelName', 'Model')}</th>
-              <th>{t('fineTuning.baseModel', 'Base Model')}</th>
-              <th>{t('fineTuning.status.label', 'Status')}</th>
-              <th>{t('fineTuning.metrics.finalLoss', 'Final Loss')}</th>
-              <th>{t('fineTuning.metrics.finalAccuracy', 'Accuracy')}</th>
-              <th>{t('fineTuning.metrics.totalTokens', 'Tokens')}</th>
-              <th>{t('fineTuning.metrics.trainingCost', 'Cost')}</th>
+              <th scope="col">{t('fineTuning.modelName', 'Model')}</th>
+              <th scope="col">{t('fineTuning.baseModel', 'Base Model')}</th>
+              <th scope="col">{t('fineTuning.status.label', 'Status')}</th>
+              <th scope="col">{t('fineTuning.metrics.finalLoss', 'Final Loss')}</th>
+              <th scope="col">{t('fineTuning.metrics.finalAccuracy', 'Accuracy')}</th>
+              <th scope="col">{t('fineTuning.metrics.totalTokens', 'Tokens')}</th>
+              <th scope="col">{t('fineTuning.metrics.trainingCost', 'Cost')}</th>
             </tr>
           </thead>
           <tbody>

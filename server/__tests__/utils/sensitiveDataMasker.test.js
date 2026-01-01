@@ -1,6 +1,6 @@
 /**
  * Sensitive Data Masker Tests
- * Tests for sensitive data masking utilities
+ * Comprehensive tests for sensitive data masking utilities
  */
 
 const {
@@ -21,6 +21,20 @@ describe('sensitiveDataMasker', () => {
       expect(SENSITIVE_PATTERNS).toBeDefined();
       expect(SENSITIVE_PATTERNS.OPENAI_KEY).toBeDefined();
       expect(SENSITIVE_PATTERNS.JWT_TOKEN).toBeDefined();
+    });
+
+    it('should have all required pattern types', () => {
+      expect(SENSITIVE_PATTERNS.OPENAI_KEY).toBeInstanceOf(RegExp);
+      expect(SENSITIVE_PATTERNS.ANTHROPIC_KEY).toBeInstanceOf(RegExp);
+      expect(SENSITIVE_PATTERNS.STRIPE_SECRET).toBeInstanceOf(RegExp);
+      expect(SENSITIVE_PATTERNS.GEMINI_KEY).toBeInstanceOf(RegExp);
+      expect(SENSITIVE_PATTERNS.DATABASE_URL).toBeInstanceOf(RegExp);
+      expect(SENSITIVE_PATTERNS.JWT_TOKEN).toBeInstanceOf(RegExp);
+    });
+
+    it('should use global flags for patterns', () => {
+      expect(SENSITIVE_PATTERNS.OPENAI_KEY.global).toBe(true);
+      expect(SENSITIVE_PATTERNS.EMAIL.global).toBe(true);
     });
   });
 
@@ -48,6 +62,39 @@ describe('sensitiveDataMasker', () => {
 
       expect(result.startsWith('ab')).toBe(true);
       expect(result.endsWith('st')).toBe(true);
+    });
+
+    it('should limit middle asterisks to 20', () => {
+      const longString = 'a'.repeat(100);
+      const result = maskValue(longString, 4, 4);
+
+      const middleAsterisks = result.match(/\*/g).length;
+      expect(middleAsterisks).toBe(20);
+    });
+
+    it('should handle empty string', () => {
+      const result = maskValue('');
+
+      expect(result).toBe('');
+    });
+
+    it('should handle single character', () => {
+      const result = maskValue('a');
+
+      expect(result).toBe('*');
+    });
+
+    it('should mask exactly at boundary length', () => {
+      const result = maskValue('abcdefghijkl', 4, 4); // length 12
+
+      expect(result).toBe('************');
+    });
+
+    it('should handle custom show parameters', () => {
+      const result = maskValue('0123456789', 1, 1);
+
+      expect(result.startsWith('0')).toBe(true);
+      expect(result.endsWith('9')).toBe(true);
     });
   });
 
@@ -111,6 +158,18 @@ describe('sensitiveDataMasker', () => {
 
       expect(result).toMatch(/^some\*+here$/);
     });
+
+    it('should handle non-string input', () => {
+      expect(maskApiKey(123)).toBe('[NOT_SET]');
+      expect(maskApiKey({})).toBe('[NOT_SET]');
+      expect(maskApiKey([])).toBe('[NOT_SET]');
+    });
+
+    it('should preserve key prefix information', () => {
+      expect(maskApiKey('sk-proj-test1234')).toContain('sk-proj-');
+      expect(maskApiKey('sk-ant-test1234')).toContain('sk-ant-');
+      expect(maskApiKey('AIzatest1234')).toContain('AIza');
+    });
   });
 
   describe('maskEmail', () => {
@@ -135,6 +194,38 @@ describe('sensitiveDataMasker', () => {
     it('should return invalid emails unchanged', () => {
       expect(maskEmail('notanemail')).toBe('notanemail');
       expect(maskEmail(null)).toBeNull();
+    });
+
+    it('should handle empty string', () => {
+      expect(maskEmail('')).toBe('');
+    });
+
+    it('should handle undefined', () => {
+      expect(maskEmail(undefined)).toBeUndefined();
+    });
+
+    it('should handle non-string input', () => {
+      expect(maskEmail(123)).toBe(123);
+      expect(maskEmail({})).toEqual({});
+    });
+
+    it('should limit asterisks to 8 for long local parts', () => {
+      const result = maskEmail('verylongemailaddress@example.com');
+
+      const asterisks = result.split('@')[0].match(/\*/g).length;
+      expect(asterisks).toBeLessThanOrEqual(8);
+    });
+
+    it('should handle multiple @ symbols gracefully', () => {
+      const result = maskEmail('test@@example.com');
+
+      expect(result).toContain('@');
+    });
+
+    it('should handle two-character local part', () => {
+      const result = maskEmail('ab@example.com');
+
+      expect(result).toBe('ab@example.com');
     });
   });
 
@@ -170,6 +261,24 @@ describe('sensitiveDataMasker', () => {
     it('should return non-string values unchanged', () => {
       expect(maskDatabaseUrl(null)).toBeNull();
       expect(maskDatabaseUrl(123)).toBe(123);
+    });
+
+    it('should handle empty string', () => {
+      expect(maskDatabaseUrl('')).toBe('');
+    });
+
+    it('should handle URLs without passwords', () => {
+      const url = 'postgresql://localhost:5432/mydb';
+      const result = maskDatabaseUrl(url);
+
+      expect(result).toBe('postgresql://localhost:5432/mydb');
+    });
+
+    it('should be case insensitive', () => {
+      const url = 'PostgreSQL://user:pass@host/db';
+      const result = maskDatabaseUrl(url);
+
+      expect(result).toBe('PostgreSQL://user:****@host/db');
     });
   });
 
@@ -220,6 +329,60 @@ describe('sensitiveDataMasker', () => {
     it('should return non-string values unchanged', () => {
       expect(maskSensitiveString(null)).toBeNull();
       expect(maskSensitiveString(undefined)).toBeUndefined();
+    });
+
+    it('should mask multiple patterns in same string', () => {
+      const text = 'Key: sk-test123456789 Token: eyJ.test.token Email: test@example.com';
+      const result = maskSensitiveString(text);
+
+      expect(result).not.toContain('sk-test123456789');
+      expect(result).toContain('eyJ****[JWT_TOKEN]****');
+    });
+
+    it('should mask UUIDs (Gladia keys)', () => {
+      const text = 'API key: 12345678-1234-1234-1234-123456789abc';
+      const result = maskSensitiveString(text);
+
+      expect(result).toContain('12345678-****-****-****-9abc');
+    });
+
+    it('should mask token fields in JSON', () => {
+      const text = '{"token": "secret-token-value"}';
+      const result = maskSensitiveString(text);
+
+      expect(result).toContain('"token": "****"');
+    });
+
+    it('should mask api_key fields in JSON', () => {
+      const text = '{"api_key": "my-api-key"}';
+      const result = maskSensitiveString(text);
+
+      expect(result).toContain('"api_key": "****"');
+    });
+
+    it('should handle empty string', () => {
+      expect(maskSensitiveString('')).toBe('');
+    });
+
+    it('should mask Anthropic keys', () => {
+      const text = 'Using sk-ant-api03-1234567890abcdef';
+      const result = maskSensitiveString(text);
+
+      expect(result).not.toContain('1234567890abcdef');
+    });
+
+    it('should mask database URLs', () => {
+      const text = 'DB: postgresql://user:password@host/db';
+      const result = maskSensitiveString(text);
+
+      expect(result).toContain('postgresql://user:****@host/db');
+    });
+
+    it('should mask credit cards without dashes', () => {
+      const text = 'Card: 4111 1111 1111 1111';
+      const result = maskSensitiveString(text);
+
+      expect(result).toContain('****-****-****-1111');
     });
   });
 
@@ -292,6 +455,92 @@ describe('sensitiveDataMasker', () => {
 
       expect(result.databaseUrl).toBe('postgresql://user:****@localhost/db');
     });
+
+    it('should mask email fields', () => {
+      const obj = {
+        userEmail: 'john.doe@example.com',
+        contactEmail: 'contact@company.com'
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result.userEmail).toContain('@example.com');
+      expect(result.userEmail).not.toBe('john.doe@example.com');
+    });
+
+    it('should handle deeply nested objects', () => {
+      const obj = {
+        level1: {
+          level2: {
+            level3: {
+              password: 'deep-secret'
+            }
+          }
+        }
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result.level1.level2.level3.password).not.toBe('deep-secret');
+    });
+
+    it('should mask camelCase field names', () => {
+      const obj = {
+        apiKey: 'test-key',
+        accessToken: 'test-token',
+        jwtSecret: 'secret-jwt'
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result.apiKey).not.toBe('test-key');
+      expect(result.accessToken).not.toBe('test-token');
+      expect(result.jwtSecret).not.toBe('secret-jwt');
+    });
+
+    it('should mask kebab-case field names', () => {
+      const obj = {
+        'api-key': 'test-key',
+        'private-key': 'private'
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result['api-key']).not.toBe('test-key');
+      expect(result['private-key']).not.toBe('private');
+    });
+
+    it('should mask snake_case field names', () => {
+      const obj = {
+        api_key: 'test-key',
+        private_key: 'private',
+        refresh_token: 'token'
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result.api_key).not.toBe('test-key');
+      expect(result.private_key).not.toBe('private');
+      expect(result.refresh_token).not.toBe('token');
+    });
+
+    it('should handle arrays of primitives', () => {
+      const obj = {
+        tokens: ['token1', 'token2', 'token3']
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(Array.isArray(result.tokens)).toBe(true);
+    });
+
+    it('should preserve non-sensitive fields', () => {
+      const obj = {
+        username: 'john',
+        email: 'john@example.com',
+        role: 'admin',
+        password: 'secret'
+      };
+      const result = maskSensitiveObject(obj);
+
+      expect(result.username).toBe('john');
+      expect(result.role).toBe('admin');
+      expect(result.password).not.toBe('secret');
+    });
   });
 
   describe('getMaskedEnv', () => {
@@ -322,8 +571,69 @@ describe('sensitiveDataMasker', () => {
 
       const result = getMaskedEnv();
 
-      // Will show [NOT_SET] or be undefined
       expect(result.OPENAI_API_KEY === '[NOT_SET]' || result.OPENAI_API_KEY === undefined).toBe(true);
+    });
+
+    it('should mask DATABASE_URL', () => {
+      process.env.DATABASE_URL = 'postgresql://user:password@host/db';
+
+      const result = getMaskedEnv();
+
+      expect(result.DATABASE_URL).not.toBe('postgresql://user:password@host/db');
+    });
+
+    it('should preserve non-sensitive variables', () => {
+      process.env.PORT = '3000';
+      process.env.NODE_ENV = 'development';
+
+      const result = getMaskedEnv();
+
+      expect(result.PORT).toBe('3000');
+      expect(result.NODE_ENV).toBe('development');
+    });
+
+    it('should mask variables with "secret" in name', () => {
+      process.env.MY_SECRET_KEY = 'secret-value';
+
+      const result = getMaskedEnv();
+
+      expect(result.MY_SECRET_KEY).not.toBe('secret-value');
+    });
+
+    it('should mask variables with "password" in name', () => {
+      process.env.ADMIN_PASSWORD = 'admin-pass';
+
+      const result = getMaskedEnv();
+
+      expect(result.ADMIN_PASSWORD).not.toBe('admin-pass');
+    });
+
+    it('should mask variables with "token" in name', () => {
+      process.env.GITHUB_TOKEN = 'github-token';
+
+      const result = getMaskedEnv();
+
+      expect(result.GITHUB_TOKEN).not.toBe('github-token');
+    });
+
+    it('should mask all listed sensitive env vars', () => {
+      const sensitiveVars = [
+        'OPENAI_API_KEY',
+        'ANTHROPIC_API_KEY',
+        'GEMINI_API_KEY',
+        'STRIPE_SECRET_KEY',
+        'TELEGRAM_BOT_TOKEN'
+      ];
+
+      sensitiveVars.forEach(varName => {
+        process.env[varName] = 'sensitive-value';
+      });
+
+      const result = getMaskedEnv();
+
+      sensitiveVars.forEach(varName => {
+        expect(result[varName]).not.toBe('sensitive-value');
+      });
     });
   });
 
@@ -358,6 +668,61 @@ describe('sensitiveDataMasker', () => {
       safeLog('Hello', 123, true);
 
       expect(mockLog).toHaveBeenCalledWith('Hello', 123, true);
+    });
+
+    it('should handle multiple arguments', () => {
+      const mockLog = jest.fn();
+      const safeLog = createSafeLogger(mockLog);
+
+      safeLog('Message', { password: 'secret' }, 'More text');
+
+      expect(mockLog).toHaveBeenCalledTimes(1);
+      expect(mockLog.mock.calls[0].length).toBe(3);
+    });
+
+    it('should handle null and undefined', () => {
+      const mockLog = jest.fn();
+      const safeLog = createSafeLogger(mockLog);
+
+      safeLog(null, undefined, 'text');
+
+      expect(mockLog).toHaveBeenCalledWith(null, undefined, 'text');
+    });
+
+    it('should mask nested sensitive data', () => {
+      const mockLog = jest.fn();
+      const safeLog = createSafeLogger(mockLog);
+
+      safeLog({
+        level1: {
+          level2: {
+            apiKey: 'sk-test-key-12345678901234567890'
+          }
+        }
+      });
+
+      const loggedValue = mockLog.mock.calls[0][0];
+      expect(loggedValue.level1.level2.apiKey).not.toBe('sk-test-key-12345678901234567890');
+    });
+
+    it('should return the result of the original logger', () => {
+      const mockLog = jest.fn().mockReturnValue('logged');
+      const safeLog = createSafeLogger(mockLog);
+
+      const result = safeLog('test');
+
+      expect(result).toBe('logged');
+    });
+
+    it('should handle arrays in log arguments', () => {
+      const mockLog = jest.fn();
+      const safeLog = createSafeLogger(mockLog);
+
+      safeLog(['normal', { password: 'secret' }]);
+
+      expect(mockLog).toHaveBeenCalled();
+      const loggedValue = mockLog.mock.calls[0][0];
+      expect(loggedValue[1].password).not.toBe('secret');
     });
   });
 });

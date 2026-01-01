@@ -90,78 +90,78 @@ export default function BotCard({ bot, onDelete }) {
       </div>
 
       {/* Action Buttons - Grid Layout */}
-      <div className="grid grid-cols-2 gap-1.5 mt-4">
+      <div className="grid grid-cols-2 gap-1.5 mt-4" role="group" aria-label={t('bots.actions', 'Bot actions')}>
         <button
           onClick={() => navigate(`/bots/${bot.id}/flow`)}
-          className="bg-purple-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Visual Flow Builder"
+          className="bg-purple-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+          aria-label={`${t('bots.flowBuilder')} - ${bot.name}`}
         >
-          🔀 <span className="truncate">{t('bots.flowBuilder')}</span>
+          <span aria-hidden="true">🔀</span> <span className="truncate">{t('bots.flowBuilder')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
-          className="bg-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="AI Configuration"
+          className="bg-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+          aria-label={`${t('bots.aiConfig')} - ${bot.name}`}
         >
-          🤖 <span className="truncate">{t('bots.aiConfig')}</span>
+          <span aria-hidden="true">🤖</span> <span className="truncate">{t('bots.aiConfig')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bots/${bot.id}/agents`)}
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Agent Studio - Multi-Agent AI"
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+          aria-label={`${t('bots.agents')} - ${bot.name}`}
         >
-          🎯 <span className="truncate">{t('bots.agents')}</span>
+          <span aria-hidden="true">🎯</span> <span className="truncate">{t('bots.agents')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bots/${bot.id}/tools`)}
-          className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Tool Studio - Function Calling"
+          className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
+          aria-label={`${t('bots.tools')} - ${bot.name}`}
         >
-          🔧 <span className="truncate">{t('bots.tools')}</span>
+          <span aria-hidden="true">🔧</span> <span className="truncate">{t('bots.tools')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bots/${bot.id}/workflows`)}
-          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Workflow Builder - Visual AI Workflows"
+          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+          aria-label={`${t('bots.workflows')} - ${bot.name}`}
         >
-          🔄 <span className="truncate">{t('bots.workflows')}</span>
+          <span aria-hidden="true">🔄</span> <span className="truncate">{t('bots.workflows')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bots/${bot.id}/widget`)}
-          className="bg-orange-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Widget Settings"
+          className="bg-orange-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
+          aria-label={`${t('bots.widget')} - ${bot.name}`}
         >
-          📟 <span className="truncate">{t('bots.widget')}</span>
+          <span aria-hidden="true">📟</span> <span className="truncate">{t('bots.widget')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bot/${bot.id}/edit`)}
-          className="bg-blue-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Edit bot"
+          className="bg-blue-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          aria-label={`${t('bots.edit')} - ${bot.name}`}
         >
-          ✏️ <span className="truncate">{t('bots.edit')}</span>
+          <span aria-hidden="true">✏️</span> <span className="truncate">{t('bots.edit')}</span>
         </button>
 
         <button
           onClick={() => navigate(`/bot/${bot.id}/messages`)}
-          className="bg-green-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-xs truncate"
-          title="Manage messages"
+          className="bg-green-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+          aria-label={`${t('bots.messages')} - ${bot.name}`}
         >
-          💬 <span className="truncate">{t('bots.messages')}</span>
+          <span aria-hidden="true">💬</span> <span className="truncate">{t('bots.messages')}</span>
         </button>
 
         <PermissionGuard require="admin">
           <button
             onClick={() => onDelete(bot)}
-            className="col-span-2 bg-red-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-1 text-xs"
-            title="Delete bot"
+            className="col-span-2 bg-red-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-1 text-xs focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+            aria-label={`${t('common.delete')} ${bot.name}`}
           >
-            🗑️ <span>{t('common.delete')}</span>
+            <span aria-hidden="true">🗑️</span> <span>{t('common.delete')}</span>
           </button>
         </PermissionGuard>
       </div>

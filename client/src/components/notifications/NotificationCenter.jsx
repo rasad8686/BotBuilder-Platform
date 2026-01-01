@@ -104,13 +104,19 @@ export default function NotificationCenter() {
       {/* Bell Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+        className="relative p-2 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
+        aria-label={t('notifications.openNotifications', 'Open notifications') + (unreadCount > 0 ? `, ${unreadCount} ${t('notifications.unread', 'unread')}` : '')}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
-        <span className="text-xl">🔔</span>
+        <span className="text-xl" aria-hidden="true">🔔</span>
 
         {/* Badge */}
         {unreadCount > 0 && (
-          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-semibold rounded-full flex items-center justify-center">
+          <span
+            className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-semibold rounded-full flex items-center justify-center"
+            aria-hidden="true"
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -118,7 +124,11 @@ export default function NotificationCenter() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-96 max-h-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden z-[1000] animate-fadeIn">
+        <div
+          className="absolute top-full right-0 mt-2 w-96 max-h-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden z-[1000] animate-fadeIn"
+          role="region"
+          aria-label={t('notifications.title', 'Notifications')}
+        >
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
             <div>

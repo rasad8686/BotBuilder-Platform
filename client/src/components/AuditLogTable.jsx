@@ -121,31 +121,33 @@ const AuditLogTable = ({ logs, loading = false }) => {
       <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex justify-end">
         <button
           onClick={exportToCSV}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          aria-label="Export audit logs to CSV file"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4" aria-hidden="true" />
           Export CSV
         </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200" role="table" aria-label="Audit logs">
+          <caption className="sr-only">Audit log entries showing user actions, timestamps, and resources</caption>
           <thead className="bg-gray-50">
             <tr>
-              <th className="w-8 px-3 py-3"></th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="w-8 px-3 py-3"><span className="sr-only">Expand row</span></th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Timestamp
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 User
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Action
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Resource
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 IP Address
               </th>
             </tr>
@@ -163,11 +165,15 @@ const AuditLogTable = ({ logs, loading = false }) => {
                   >
                     <td className="px-3 py-4 text-center">
                       {hasDetails && (
-                        <button className="text-gray-400 hover:text-gray-600">
+                        <button
+                          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+                        >
                           {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" />
+                            <ChevronUp className="w-4 h-4" aria-hidden="true" />
                           ) : (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-4 h-4" aria-hidden="true" />
                           )}
                         </button>
                       )}

@@ -25,10 +25,17 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
   };
 
   return (
-    <div className="plugin-card" onClick={() => onViewDetails(plugin)}>
-      <div className="plugin-icon">
+    <article
+      className="plugin-card"
+      onClick={() => onViewDetails(plugin)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onViewDetails(plugin)}
+      aria-label={`${plugin.name} plugin - ${plugin.is_free ? 'Free' : `$${plugin.price}`} - Rating: ${plugin.rating || 0} out of 5`}
+    >
+      <div className="plugin-icon" aria-hidden="true">
         {plugin.icon_url ? (
-          <img src={plugin.icon_url} alt={plugin.name} />
+          <img src={plugin.icon_url} alt="" />
         ) : (
           <span className="default-icon">🧩</span>
         )}
@@ -42,13 +49,13 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
         </p>
 
         <div className="plugin-meta">
-          <div className="plugin-rating">
-            {renderStars(plugin.rating || 0)}
-            <span className="rating-count">({plugin.review_count || 0})</span>
+          <div className="plugin-rating" aria-label={`Rating: ${plugin.rating || 0} out of 5 stars, ${plugin.review_count || 0} reviews`}>
+            <span aria-hidden="true">{renderStars(plugin.rating || 0)}</span>
+            <span className="rating-count" aria-hidden="true">({plugin.review_count || 0})</span>
           </div>
-          <div className="plugin-downloads">
-            <span className="download-icon">↓</span>
-            {formatDownloads(plugin.downloads || 0)}
+          <div className="plugin-downloads" aria-label={`${formatDownloads(plugin.downloads || 0)} downloads`}>
+            <span className="download-icon" aria-hidden="true">↓</span>
+            <span aria-hidden="true">{formatDownloads(plugin.downloads || 0)}</span>
           </div>
         </div>
 
@@ -65,6 +72,7 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
           <button
             className="btn-uninstall"
             onClick={() => onUninstall(plugin)}
+            aria-label={`Uninstall ${plugin.name}`}
           >
             Uninstall
           </button>
@@ -72,6 +80,7 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
           <button
             className="btn-install"
             onClick={() => onInstall(plugin)}
+            aria-label={`Install ${plugin.name}`}
           >
             Install
           </button>
@@ -248,7 +257,7 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
           background: #fecaca;
         }
       `}</style>
-    </div>
+    </article>
   );
 };
 

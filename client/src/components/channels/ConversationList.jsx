@@ -150,11 +150,12 @@ export default function ConversationList({ channel, onSelectConversation, onBack
           <button
             onClick={onBack}
             className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+            aria-label="Go back to channels"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </button>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
+            <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`} aria-hidden="true">
               <Icon className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -165,15 +166,18 @@ export default function ConversationList({ channel, onSelectConversation, onBack
           <button
             onClick={fetchConversations}
             className="ml-auto p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+            aria-label={loading ? 'Refreshing conversations' : 'Refresh conversations'}
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
+          <label htmlFor="conversation-search" className="sr-only">Search conversations</label>
           <input
+            id="conversation-search"
             type="text"
             placeholder="Search conversations..."
             value={searchTerm}
@@ -186,12 +190,13 @@ export default function ConversationList({ channel, onSelectConversation, onBack
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+          <div className="flex items-center justify-center py-12" role="status" aria-busy="true" aria-label="Loading conversations">
+            <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" aria-hidden="true" />
+            <span className="sr-only">Loading conversations...</span>
           </div>
         ) : filteredConversations.length === 0 ? (
           <div className="text-center py-12">
-            <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-white mb-2">No conversations</h3>
             <p className="text-gray-400">
               {searchTerm ? 'No matching conversations found' : 'Start receiving messages to see conversations here'}
@@ -204,6 +209,7 @@ export default function ConversationList({ channel, onSelectConversation, onBack
                 key={conversation.id}
                 onClick={() => onSelectConversation(conversation)}
                 className="w-full p-4 flex items-center gap-3 hover:bg-gray-800 transition-colors text-left"
+                aria-label={`Conversation with ${conversation.contact_name || conversation.contact_id}${conversation.unread_count > 0 ? `, ${conversation.unread_count} unread messages` : ''}`}
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">

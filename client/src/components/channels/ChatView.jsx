@@ -239,8 +239,9 @@ export default function ChatView({ channel, conversation, onBack }) {
             <button
               onClick={onBack}
               className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+              aria-label="Go back to conversation list"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </button>
             <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
               {conversation.contact_avatar ? (
@@ -263,14 +264,14 @@ export default function ChatView({ channel, conversation, onBack }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
-              <Phone className="w-5 h-5" />
+            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors" aria-label="Start voice call">
+              <Phone className="w-5 h-5" aria-hidden="true" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
-              <Video className="w-5 h-5" />
+            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors" aria-label="Start video call">
+              <Video className="w-5 h-5" aria-hidden="true" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors">
-              <MoreVertical className="w-5 h-5" />
+            <button className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors" aria-label="More options">
+              <MoreVertical className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -279,8 +280,9 @@ export default function ChatView({ channel, conversation, onBack }) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center justify-center h-full" role="status" aria-busy="true" aria-label="Loading messages">
+            <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <span className="sr-only">Loading messages...</span>
           </div>
         ) : (
           Object.entries(groupedMessages).map(([date, dateMessages]) => (
@@ -391,8 +393,11 @@ export default function ChatView({ channel, conversation, onBack }) {
               type="button"
               onClick={() => setShowAttachMenu(!showAttachMenu)}
               className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+              aria-label="Attach file"
+              aria-expanded={showAttachMenu}
+              aria-haspopup="true"
             >
-              <Paperclip className="w-5 h-5" />
+              <Paperclip className="w-5 h-5" aria-hidden="true" />
             </button>
 
             {showAttachMenu && (
@@ -401,7 +406,7 @@ export default function ChatView({ channel, conversation, onBack }) {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowAttachMenu(false)}
                 />
-                <div className="absolute bottom-12 left-0 bg-gray-700 rounded-lg shadow-xl border border-gray-600 z-20 py-2 w-48">
+                <div className="absolute bottom-12 left-0 bg-gray-700 rounded-lg shadow-xl border border-gray-600 z-20 py-2 w-48" role="menu" aria-label="Attachment options">
                   <button
                     type="button"
                     onClick={() => {
@@ -409,8 +414,9 @@ export default function ChatView({ channel, conversation, onBack }) {
                       fileInputRef.current.click();
                     }}
                     className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-600 flex items-center gap-2"
+                    role="menuitem"
                   >
-                    <Image className="w-4 h-4 text-green-400" />
+                    <Image className="w-4 h-4 text-green-400" aria-hidden="true" />
                     Photo
                   </button>
                   <button
@@ -420,8 +426,9 @@ export default function ChatView({ channel, conversation, onBack }) {
                       fileInputRef.current.click();
                     }}
                     className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-600 flex items-center gap-2"
+                    role="menuitem"
                   >
-                    <FileText className="w-4 h-4 text-blue-400" />
+                    <FileText className="w-4 h-4 text-blue-400" aria-hidden="true" />
                     Document
                   </button>
                 </div>
@@ -434,10 +441,13 @@ export default function ChatView({ channel, conversation, onBack }) {
             ref={fileInputRef}
             onChange={handleFileSelect}
             className="hidden"
+            aria-label="Select file to upload"
           />
 
           {/* Message Input */}
+          <label htmlFor="chat-message-input" className="sr-only">Type a message</label>
           <input
+            id="chat-message-input"
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -449,8 +459,9 @@ export default function ChatView({ channel, conversation, onBack }) {
           <button
             type="button"
             className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+            aria-label="Add emoji"
           >
-            <Smile className="w-5 h-5" />
+            <Smile className="w-5 h-5" aria-hidden="true" />
           </button>
 
           {/* Send Button */}
@@ -458,8 +469,9 @@ export default function ChatView({ channel, conversation, onBack }) {
             type="submit"
             disabled={sending || (!newMessage.trim() && !selectedFile)}
             className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Send message"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-5 h-5" aria-hidden="true" />
           </button>
         </form>
       </div>

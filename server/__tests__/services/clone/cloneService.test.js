@@ -1,6 +1,6 @@
 /**
  * CloneService Tests
- * Tests for the main clone orchestration service
+ * Comprehensive tests for the main clone orchestration service
  */
 
 // Mock db
@@ -61,9 +61,10 @@ jest.mock('../../../services/clone/StyleCloneEngine', () => {
       },
       metrics: { accuracy: 0.88 }
     }),
-    generateText: jest.fn().mockResolvedValue({
+    generateWithStyle: jest.fn().mockResolvedValue({
       success: true,
       text: 'Generated text content',
+      tokensUsed: 50,
       latencyMs: 200
     })
   }));
@@ -71,18 +72,33 @@ jest.mock('../../../services/clone/StyleCloneEngine', () => {
 
 jest.mock('../../../services/clone/PersonalityEngine', () => {
   return jest.fn().mockImplementation(() => ({
-    analyzePersonality: jest.fn().mockResolvedValue({
+    analyzeConversations: jest.fn().mockResolvedValue({
       success: true,
-      traits: { openness: 0.8, extraversion: 0.6 }
+      analysis: {
+        traits: { openness: 0.8, extraversion: 0.6 },
+        patterns: {
+          greetings: ['Hello'],
+          farewells: ['Goodbye'],
+          acknowledgments: ['I understand']
+        },
+        confidence: 85
+      }
     }),
-    trainPersonalityClone: jest.fn().mockResolvedValue({
+    createPersonalityProfile: jest.fn().mockResolvedValue({
       success: true,
-      personalityProfile: { traits: {}, responsePatterns: {} },
+      profile: {
+        traits: { friendliness: 8, formality: 5 },
+        toneSettings: { primaryTone: 'friendly' },
+        responsePatterns: { greetings: ['Hi!'] },
+        systemPrompt: 'You are a friendly assistant.',
+        personalityPrompt: 'Be warm and welcoming.'
+      },
       metrics: { consistency: 0.9 }
     }),
     generateResponse: jest.fn().mockResolvedValue({
       success: true,
       response: 'Personality-based response',
+      tokensUsed: 100,
       latencyMs: 150
     })
   }));
@@ -558,8 +574,12 @@ describe('CloneService', () => {
       mockQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] });
       // Mock update voice profile
       mockQuery.mockResolvedValueOnce({ rows: [] });
+      // Mock getVersions
+      mockQuery.mockResolvedValueOnce({ rows: [{ max_version: 0 }] });
       // Mock createVersion
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ id: 1, version: 1 }] });
+      // Mock deactivate previous versions
+      mockQuery.mockResolvedValueOnce({ rows: [] });
       // Mock updateJobStatus (ready)
       mockQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] });
 
@@ -677,6 +697,388 @@ describe('CloneService', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('At least 3 text samples');
+    });
+  });
+
+  describe('generateWithStyle', () => {
+    it('should generate text with style', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'ready' }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          formality_level: 'neutral',
+          tone: 'professional'
+        }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // logUsage
+
+      const result = await service.generateWithStyle(1, 'Write a greeting');
+
+      expect(result.success).toBe(true);
+      expect(result.text).toBeDefined();
+    });
+
+    it('should return error if clone not ready', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'training' }]
+      });
+
+      const result = await service.generateWithStyle(1, 'Hello');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not ready');
+    });
+
+    it('should return error if profile not found', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'ready' }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // No profile
+
+      const result = await service.generateWithStyle(1, 'Hello');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('profile not found');
+    });
+  });
+
+  describe('trainPersonalityClone', () => {
+    it('should train personality clone successfully', async () => {
+      // Mock getCloneJob
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, type: 'personality', name: 'Test' }]
+      });
+      // Mock getSamples
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          { id: 1, type: 'chat_history', content: JSON.stringify([{ role: 'user', content: 'Hi' }]) },
+          { id: 2, type: 'text', content: 'Sample 2' },
+          { id: 3, type: 'text', content: 'Sample 3' },
+          { id: 4, type: 'email', content: 'Sample 4' },
+          { id: 5, type: 'email', content: 'Sample 5' }
+        ]
+      });
+      // Mock various updates
+      mockQuery.mockResolvedValue({ rows: [{ id: 1 }] });
+
+      const result = await service.trainPersonalityClone(1, 1);
+
+      expect(result.success).toBe(true);
+      expect(result.profile).toBeDefined();
+    });
+
+    it('should return error for wrong job type', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, type: 'voice' }]
+      });
+
+      const result = await service.trainPersonalityClone(1, 1);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Invalid job type');
+    });
+
+    it('should return error for insufficient samples', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, type: 'personality' }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          { id: 1, type: 'text', content: 'Sample 1' },
+          { id: 2, type: 'text', content: 'Sample 2' }
+        ]
+      });
+
+      const result = await service.trainPersonalityClone(1, 1);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('At least 5 conversation samples');
+    });
+  });
+
+  describe('generateWithPersonality', () => {
+    it('should generate response with personality', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'ready' }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          system_prompt: 'You are helpful',
+          traits: JSON.stringify({ friendliness: 8 }),
+          response_patterns: JSON.stringify({ greetings: ['Hi'] })
+        }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // logUsage
+
+      const result = await service.generateWithPersonality(1, 'Hello');
+
+      expect(result.success).toBe(true);
+      expect(result.response).toBeDefined();
+    });
+
+    it('should return error if clone not ready', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'training' }]
+      });
+
+      const result = await service.generateWithPersonality(1, 'Hello');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not ready');
+    });
+
+    it('should return error if profile not found', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'ready' }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.generateWithPersonality(1, 'Hello');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('profile not found');
+    });
+  });
+
+  describe('createVersion', () => {
+    it('should create version successfully', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ max_version: 2 }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, version: 3 }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // deactivate previous
+
+      const result = await service.createVersion(1, {
+        modelPath: '/models/v3',
+        config: { setting: 'value' },
+        metrics: { accuracy: 0.95 },
+        samplesCount: 10
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.version.version).toBe(3);
+    });
+
+    it('should create first version', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ max_version: null }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, version: 1 }]
+      });
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.createVersion(1, {});
+
+      expect(result.success).toBe(true);
+      expect(result.version.version).toBe(1);
+    });
+  });
+
+  describe('getVersions', () => {
+    it('should return all versions', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          { id: 1, version: 2 },
+          { id: 2, version: 1 }
+        ]
+      });
+
+      const result = await service.getVersions(1);
+
+      expect(result.success).toBe(true);
+      expect(result.versions).toHaveLength(2);
+    });
+  });
+
+  describe('activateVersion', () => {
+    it('should activate version', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // deactivate all
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, is_active: true }]
+      });
+
+      const result = await service.activateVersion(1, 1);
+
+      expect(result.success).toBe(true);
+      expect(result.version.is_active).toBe(true);
+    });
+
+    it('should return error if version not found', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.activateVersion(1, 999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Version not found');
+    });
+  });
+
+  describe('applyToBot', () => {
+    it('should apply clone to bot', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'ready', type: 'voice' }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, config: JSON.stringify({ setting: 'value' }) }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }]
+      });
+      // Mock applyCloneToBot queries
+      mockQuery.mockResolvedValue({ rows: [] });
+
+      const result = await service.applyToBot(1, 'bot-1', 'user-1');
+
+      expect(result.success).toBe(true);
+      expect(result.application).toBeDefined();
+    });
+
+    it('should return error if clone not ready', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, status: 'training' }]
+      });
+
+      const result = await service.applyToBot(1, 'bot-1', 'user-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not ready');
+    });
+  });
+
+  describe('removeFromBot', () => {
+    it('should remove clone from bot', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }]
+      });
+
+      const result = await service.removeFromBot(1, 'user-1');
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should return error if application not found', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.removeFromBot(999, 'user-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Application not found');
+    });
+  });
+
+  describe('getUsageStats', () => {
+    it('should return usage statistics', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{
+          total_uses: 100,
+          total_tokens: 5000,
+          avg_latency: 250,
+          avg_similarity: 0.85,
+          unique_sessions: 25
+        }]
+      });
+
+      const result = await service.getUsageStats(1);
+
+      expect(result.success).toBe(true);
+      expect(result.stats.total_uses).toBe(100);
+    });
+
+    it('should filter by date range', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ total_uses: 50 }]
+      });
+
+      await service.getUsageStats(1, {
+        startDate: '2024-01-01',
+        endDate: '2024-12-31'
+      });
+
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('created_at >='),
+        expect.arrayContaining([1, '2024-01-01', '2024-12-31'])
+      );
+    });
+  });
+
+  describe('createABTest', () => {
+    it('should create A/B test', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, name: 'Test A/B' }]
+      });
+
+      const result = await service.createABTest({
+        organizationId: 1,
+        name: 'Test A/B',
+        description: 'Testing variants',
+        botId: 1,
+        variantACloneId: 1,
+        variantBCloneId: 2,
+        trafficSplit: 50,
+        createdBy: 'user-1'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.test.name).toBe('Test A/B');
+    });
+  });
+
+  describe('getABTestResults', () => {
+    it('should return A/B test results', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1, variant_a_clone_id: 1, variant_b_clone_id: 2, start_date: '2024-01-01', end_date: '2024-12-31' }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ total_uses: 100, total_tokens: 5000 }]
+      });
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ total_uses: 150, total_tokens: 6000 }]
+      });
+
+      const result = await service.getABTestResults(1);
+
+      expect(result.success).toBe(true);
+      expect(result.test).toBeDefined();
+      expect(result.results.variantA).toBeDefined();
+      expect(result.results.variantB).toBeDefined();
+    });
+
+    it('should return error if test not found', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.getABTestResults(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('A/B test not found');
+    });
+  });
+
+  describe('deleteCloneJob', () => {
+    it('should delete clone job', async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 1 }]
+      });
+
+      const result = await service.deleteCloneJob(1, 'user-1');
+
+      expect(result.success).toBe(true);
+      expect(mockLog.info).toHaveBeenCalledWith('Clone job deleted', { jobId: 1 });
+    });
+
+    it('should return error if job not found', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      const result = await service.deleteCloneJob(999, 'user-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Clone job not found');
     });
   });
 });

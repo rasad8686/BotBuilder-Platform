@@ -50,7 +50,9 @@
       "Bash(timeout 300 npm test -- --coverage --coverageReporters=text-summary)",
       "Bash(npx eslint:*)",
       "Bash(npm outdated:*)",
-      "Bash(timeout 120 npx jest:*)"
+      "Bash(timeout 120 npx jest:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout 360 npm test -- --coverage --coverageReporters=text-summary)"
     ],
     "deny": [],
     "ask": []
