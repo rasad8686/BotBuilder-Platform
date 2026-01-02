@@ -388,7 +388,7 @@ router.get('/:id/logs', async (req, res) => {
  */
 router.post('/:id/regenerate-secret', async (req, res) => {
   try {
-    const webhookId = req.params.id; // UUID string, no need to parseInt
+    const webhookId = req.params.id;
     const organizationId = req.organization.id;
 
     log.info('Regenerating webhook secret', { webhookId });
@@ -409,12 +409,12 @@ router.post('/:id/regenerate-secret', async (req, res) => {
     // Generate new secret
     const secret = crypto.randomBytes(32).toString('hex');
 
-    // Update secret
+    // Update secret and signing_secret
     const result = await db.query(
       `UPDATE webhooks
-       SET secret = $1, updated_at = NOW()
+       SET secret = $1, signing_secret = $1, updated_at = NOW()
        WHERE id = $2
-       RETURNING id, name, url, secret, events, is_active, created_at, updated_at`,
+       RETURNING id, name, url, secret, signing_secret, events, is_active, created_at, updated_at`,
       [secret, webhookId]
     );
 
@@ -429,6 +429,276 @@ router.post('/:id/regenerate-secret', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to regenerate secret'
+    });
+  }
+});
+
+/**
+ * POST /api/webhooks/:id/rotate-secret
+ * Rotate webhook signing secret
+ */
+router.post('/:id/rotate-secret', async (req, res) => {
+  try {
+    const webhookId = req.params.id;
+    const organizationId = req.organization.id;
+
+    log.info('Rotating webhook signing secret', { webhookId });
+
+    // Verify webhook belongs to organization
+    const checkResult = await db.query(
+      'SELECT id FROM webhooks WHERE id = $1 AND organization_id = $2',
+      [webhookId, organizationId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Webhook not found'
+      });
+    }
+
+    // Generate new signing secret
+    const signingSecret = crypto.randomBytes(32).toString('hex');
+
+    // Update signing_secret
+    const result = await db.query(
+      `UPDATE webhooks
+       SET signing_secret = $1, secret = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, name, url, signing_secret, events, is_active, created_at, updated_at`,
+      [signingSecret, webhookId]
+    );
+
+    log.info('Webhook signing secret rotated successfully', { webhookId });
+
+    res.json({
+      success: true,
+      data: {
+        ...result.rows[0],
+        message: 'Signing secret rotated. Update your webhook handler with the new secret.'
+      }
+    });
+  } catch (error) {
+    log.error('Error rotating signing secret', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to rotate signing secret'
+    });
+  }
+});
+
+/**
+ * GET /api/webhooks/:id/stats
+ * Get webhook statistics (success rate, avg response time)
+ */
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const webhookId = req.params.id;
+    const organizationId = req.organization.id;
+    const days = parseInt(req.query.days) || 30;
+
+    log.info('Fetching webhook stats', { webhookId, days });
+
+    // Verify webhook belongs to organization
+    const checkResult = await db.query(
+      'SELECT id, failure_count, last_failure_at, disabled_at FROM webhooks WHERE id = $1 AND organization_id = $2',
+      [webhookId, organizationId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Webhook not found'
+      });
+    }
+
+    const webhook = checkResult.rows[0];
+
+    // Get statistics
+    const statsResult = await db.query(
+      `SELECT
+         COUNT(*) AS total_deliveries,
+         COUNT(CASE WHEN delivery_status = 'success' OR success = true THEN 1 END) AS successful,
+         COUNT(CASE WHEN delivery_status = 'failed' OR success = false THEN 1 END) AS failed,
+         ROUND(AVG(response_time_ms)::numeric, 2) AS avg_response_time,
+         MIN(response_time_ms) AS min_response_time,
+         MAX(response_time_ms) AS max_response_time
+       FROM webhook_delivery_logs
+       WHERE webhook_id = $1
+         AND created_at > NOW() - INTERVAL '1 day' * $2`,
+      [webhookId, days]
+    );
+
+    // Get daily breakdown
+    const dailyResult = await db.query(
+      `SELECT
+         DATE(created_at) AS date,
+         COUNT(*) AS total,
+         COUNT(CASE WHEN delivery_status = 'success' OR success = true THEN 1 END) AS successful,
+         COUNT(CASE WHEN delivery_status = 'failed' OR success = false THEN 1 END) AS failed
+       FROM webhook_delivery_logs
+       WHERE webhook_id = $1
+         AND created_at > NOW() - INTERVAL '1 day' * $2
+       GROUP BY DATE(created_at)
+       ORDER BY DATE(created_at) DESC`,
+      [webhookId, days]
+    );
+
+    // Get event type breakdown
+    const eventsResult = await db.query(
+      `SELECT
+         event_type,
+         COUNT(*) AS total,
+         COUNT(CASE WHEN delivery_status = 'success' OR success = true THEN 1 END) AS successful
+       FROM webhook_delivery_logs
+       WHERE webhook_id = $1
+         AND created_at > NOW() - INTERVAL '1 day' * $2
+       GROUP BY event_type
+       ORDER BY total DESC`,
+      [webhookId, days]
+    );
+
+    const stats = statsResult.rows[0];
+    const totalDeliveries = parseInt(stats.total_deliveries) || 0;
+    const successful = parseInt(stats.successful) || 0;
+    const successRate = totalDeliveries > 0 ? Math.round((successful / totalDeliveries) * 100) : 0;
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          total_deliveries: totalDeliveries,
+          successful: successful,
+          failed: parseInt(stats.failed) || 0,
+          success_rate: successRate,
+          avg_response_time: parseFloat(stats.avg_response_time) || 0,
+          min_response_time: parseInt(stats.min_response_time) || 0,
+          max_response_time: parseInt(stats.max_response_time) || 0
+        },
+        health: {
+          failure_count: webhook.failure_count || 0,
+          last_failure_at: webhook.last_failure_at,
+          disabled_at: webhook.disabled_at,
+          status: webhook.disabled_at ? 'disabled' : (webhook.failure_count >= 5 ? 'failing' : 'healthy')
+        },
+        daily: dailyResult.rows,
+        by_event: eventsResult.rows,
+        period_days: days
+      }
+    });
+  } catch (error) {
+    log.error('Error fetching webhook stats', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch webhook stats'
+    });
+  }
+});
+
+/**
+ * POST /api/webhooks/:id/retry/:logId
+ * Retry a failed webhook delivery
+ */
+router.post('/:id/retry/:logId', async (req, res) => {
+  try {
+    const webhookId = req.params.id;
+    const logId = parseInt(req.params.logId);
+    const organizationId = req.organization.id;
+
+    log.info('Retrying webhook delivery', { webhookId, logId });
+
+    // Verify webhook belongs to organization
+    const webhookResult = await db.query(
+      'SELECT * FROM webhooks WHERE id = $1 AND organization_id = $2',
+      [webhookId, organizationId]
+    );
+
+    if (webhookResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Webhook not found'
+      });
+    }
+
+    // Get the failed delivery log
+    const logResult = await db.query(
+      `SELECT * FROM webhook_delivery_logs
+       WHERE id = $1 AND webhook_id = $2`,
+      [logId, webhookId]
+    );
+
+    if (logResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery log not found'
+      });
+    }
+
+    const deliveryLog = logResult.rows[0];
+    const webhook = webhookResult.rows[0];
+
+    // Retry the delivery
+    const retryResult = await webhookService.retryDelivery(webhook, deliveryLog);
+
+    log.info('Webhook retry completed', { webhookId, logId, success: retryResult.success });
+
+    res.json({
+      success: true,
+      data: retryResult
+    });
+  } catch (error) {
+    log.error('Error retrying webhook', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retry webhook delivery'
+    });
+  }
+});
+
+/**
+ * POST /api/webhooks/:id/enable
+ * Re-enable a disabled webhook
+ */
+router.post('/:id/enable', async (req, res) => {
+  try {
+    const webhookId = req.params.id;
+    const organizationId = req.organization.id;
+
+    log.info('Enabling webhook', { webhookId });
+
+    // Verify webhook belongs to organization
+    const checkResult = await db.query(
+      'SELECT id FROM webhooks WHERE id = $1 AND organization_id = $2',
+      [webhookId, organizationId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Webhook not found'
+      });
+    }
+
+    // Re-enable webhook and reset failure count
+    const result = await db.query(
+      `UPDATE webhooks
+       SET is_active = true, disabled_at = NULL, failure_count = 0, updated_at = NOW()
+       WHERE id = $1
+       RETURNING id, name, url, events, is_active, failure_count, disabled_at, created_at, updated_at`,
+      [webhookId]
+    );
+
+    log.info('Webhook enabled successfully', { webhookId });
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    log.error('Error enabling webhook', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to enable webhook'
     });
   }
 });

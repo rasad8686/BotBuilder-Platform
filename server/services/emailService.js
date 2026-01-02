@@ -368,6 +368,76 @@ If you didn't create an account with BotBuilder, you can safely ignore this emai
 
     return this.sendEmail({ to: email, subject, html, text });
   }
+
+  /**
+   * Send API key rotation notification
+   * @param {string} email - Recipient email
+   * @param {Object} data - Rotation data
+   * @param {string} data.userName - User's name
+   * @param {string} data.tokenName - Name of the token
+   * @param {string} data.newTokenPreview - Preview of new token
+   * @param {Date} data.oldTokenValidUntil - When old token expires
+   * @param {boolean} data.isAutoRotation - Whether this was automatic rotation
+   */
+  async sendKeyRotationEmail(email, data) {
+    const { userName, tokenName, newTokenPreview, oldTokenValidUntil, isAutoRotation } = data;
+    const dashboardUrl = `${this.frontendUrl}/settings/api-tokens`;
+
+    const rotationType = isAutoRotation ? 'automatically rotated' : 'rotated';
+    const subject = `API Key ${isAutoRotation ? 'Auto-' : ''}Rotated - BotBuilder`;
+
+    const validUntilStr = oldTokenValidUntil
+      ? new Date(oldTokenValidUntil).toLocaleString('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        })
+      : 'N/A';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0f; color: #e5e7eb; padding: 40px 20px; margin: 0;">
+        <div style="max-width: 500px; margin: 0 auto; background-color: #12121a; border-radius: 16px; padding: 40px; border: 1px solid #2d2d3a;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #f59e0b; margin: 0; font-size: 28px;">API Key Rotated</h1>
+          </div>
+          <p style="margin-bottom: 16px; font-size: 16px; line-height: 1.6;">
+            Hi${userName ? ` ${userName}` : ''},
+          </p>
+          <p style="margin-bottom: 24px; font-size: 16px; line-height: 1.6;">
+            Your API key has been ${rotationType}. A new key has been created to replace the old one.
+          </p>
+          <div style="background-color: #1a1a2e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Token Name</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">${tokenName}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">New Token Preview</p>
+            <p style="margin: 0 0 16px 0; font-size: 14px; font-family: monospace; color: #8b5cf6;">${newTokenPreview}</p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #9ca3af;">Old Token Valid Until</p>
+            <p style="margin: 0; font-size: 16px; color: #f59e0b;">${validUntilStr}</p>
+          </div>
+          <div style="background-color: #422006; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+            <p style="margin: 0; font-size: 14px; color: #fef3c7;">
+              <strong>Action Required:</strong> Update your applications with the new API key before the old one expires.
+            </p>
+          </div>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
+              View API Tokens
+            </a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `Your API key "${tokenName}" has been ${rotationType}.\n\nNew Token Preview: ${newTokenPreview}\nOld Token Valid Until: ${validUntilStr}\n\nPlease update your applications with the new API key.\n\nView your API tokens: ${dashboardUrl}`;
+
+    return this.sendEmail({ to: email, subject, html, text });
+  }
 }
 
 module.exports = new EmailService();

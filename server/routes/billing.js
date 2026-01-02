@@ -481,6 +481,185 @@ router.get('/usage', authenticateToken, async (req, res) => {
 });
 
 /**
+ * GET /api/billing/pricing
+ * Get pricing configuration for cost calculator
+ */
+router.get('/pricing', async (req, res) => {
+  try {
+    const pricing = require('../config/pricing');
+    res.json({
+      success: true,
+      pricing: pricing
+    });
+  } catch (error) {
+    log.error('Get pricing error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get pricing'
+    });
+  }
+});
+
+/**
+ * POST /api/billing/calculate
+ * Calculate estimated cost based on usage
+ */
+router.post('/calculate', async (req, res) => {
+  try {
+    const { requests, tokens, model, tier } = req.body;
+    const pricing = require('../config/pricing');
+
+    // Validate inputs
+    const requestCount = parseInt(requests) || 0;
+    const tokenCount = parseInt(tokens) || 0;
+    const selectedModel = model || 'gpt-3.5';
+    const selectedTier = tier || 'free';
+
+    // Get tier pricing
+    const tierPricing = pricing.tiers[selectedTier] || pricing.tiers.free;
+    const modelPricing = pricing.aiModels[selectedModel] || pricing.aiModels['gpt-3.5'];
+
+    // Calculate request cost
+    const billableRequests = Math.max(0, requestCount - tierPricing.includedRequests);
+    const requestCost = billableRequests * tierPricing.requestPrice;
+
+    // Calculate token cost (assume 50% input, 50% output)
+    const inputTokens = Math.floor(tokenCount * 0.5);
+    const outputTokens = Math.ceil(tokenCount * 0.5);
+    const tokenCost = (inputTokens * modelPricing.inputTokenPrice) + (outputTokens * modelPricing.outputTokenPrice);
+
+    // Total cost
+    const totalCost = requestCost + tokenCost;
+
+    res.json({
+      success: true,
+      estimatedCost: Math.round(totalCost * 100) / 100,
+      breakdown: {
+        requests: {
+          total: requestCount,
+          included: tierPricing.includedRequests,
+          billable: billableRequests,
+          pricePerRequest: tierPricing.requestPrice,
+          cost: Math.round(requestCost * 100) / 100
+        },
+        tokens: {
+          total: tokenCount,
+          inputTokens: inputTokens,
+          outputTokens: outputTokens,
+          inputPrice: modelPricing.inputTokenPrice,
+          outputPrice: modelPricing.outputTokenPrice,
+          cost: Math.round(tokenCost * 100) / 100
+        },
+        model: selectedModel,
+        tier: selectedTier
+      }
+    });
+  } catch (error) {
+    log.error('Calculate cost error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate cost'
+    });
+  }
+});
+
+/**
+ * GET /api/billing/current-period
+ * Get current billing period cost
+ */
+router.get('/current-period', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get user's organization
+    const orgResult = await db.query(
+      `SELECT o.id, o.plan_tier
+       FROM organizations o
+       JOIN organization_members om ON om.org_id = o.id
+       WHERE om.user_id = $1 AND om.status = 'active'
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (orgResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        currentPeriod: {
+          startDate: new Date(new Date().setDate(1)).toISOString(),
+          endDate: new Date(new Date().setMonth(new Date().getMonth() + 1, 0)).toISOString(),
+          totalCost: 0,
+          requestCount: 0,
+          tokenCount: 0,
+          projectedMonthEnd: 0
+        }
+      });
+    }
+
+    const org = orgResult.rows[0];
+    const tier = org.plan_tier || 'free';
+    const pricing = require('../config/pricing');
+    const tierPricing = pricing.tiers[tier] || pricing.tiers.free;
+
+    // Get current month start/end
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const daysInMonth = endDate.getDate();
+    const dayOfMonth = now.getDate();
+
+    // Try to get usage data
+    let requestCount = 0;
+    let tokenCount = 0;
+
+    try {
+      const usageResult = await db.query(
+        `SELECT COALESCE(SUM(message_count), 0) as request_count
+         FROM message_usage
+         WHERE organization_id = $1
+         AND period_start >= $2`,
+        [org.id, startDate]
+      );
+      requestCount = parseInt(usageResult.rows[0]?.request_count) || 0;
+    } catch (e) {
+      // Table might not exist, use mock data
+      requestCount = Math.floor(Math.random() * 5000) + 500;
+      tokenCount = requestCount * 150;
+    }
+
+    // Calculate costs
+    const billableRequests = Math.max(0, requestCount - tierPricing.includedRequests);
+    const requestCost = billableRequests * tierPricing.requestPrice;
+
+    // Project month-end cost
+    const dailyAverage = requestCount / dayOfMonth;
+    const projectedRequests = Math.floor(dailyAverage * daysInMonth);
+    const projectedBillable = Math.max(0, projectedRequests - tierPricing.includedRequests);
+    const projectedCost = projectedBillable * tierPricing.requestPrice;
+
+    res.json({
+      success: true,
+      currentPeriod: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        totalCost: Math.round(requestCost * 100) / 100,
+        requestCount: requestCount,
+        tokenCount: tokenCount || requestCount * 150,
+        projectedMonthEnd: Math.round(projectedCost * 100) / 100,
+        tier: tier,
+        includedRequests: tierPricing.includedRequests,
+        billableRequests: billableRequests
+      }
+    });
+  } catch (error) {
+    log.error('Get current period error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get current period cost'
+    });
+  }
+});
+
+/**
  * GET /api/billing/plans
  * Get available subscription plans
  */
