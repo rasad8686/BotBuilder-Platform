@@ -109,6 +109,13 @@ async function clearAttempts(ip, email) {
   }
 }
 
+// Tier limits configuration
+const TIER_LIMITS = {
+  free: { requestsPerMinute: 20, requestsPerDay: 1000 },
+  pro: { requestsPerMinute: 100, requestsPerDay: 10000 },
+  enterprise: { requestsPerMinute: 500, requestsPerDay: 100000 }
+};
+
 // Rate limiter for API routes
 // SECURITY: No localhost skip - rate limiting applies to ALL requests
 const apiLimiter = rateLimit({
@@ -122,6 +129,43 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // REMOVED: localhost skip - security vulnerability
 });
+
+// Middleware to add custom rate limit headers with tier info
+const rateLimitHeaders = async (req, res, next) => {
+  try {
+    // Get user's tier from organization
+    let tier = 'free';
+    if (req.user && req.user.current_organization_id) {
+      const orgResult = await db.query(
+        'SELECT plan_tier FROM organizations WHERE id = $1',
+        [req.user.current_organization_id]
+      );
+      if (orgResult.rows.length > 0) {
+        tier = (orgResult.rows[0].plan_tier || 'free').toLowerCase();
+      }
+    }
+
+    // Normalize tier
+    if (!TIER_LIMITS[tier]) {
+      tier = 'free';
+    }
+
+    const limits = TIER_LIMITS[tier];
+    const now = new Date();
+    const resetTime = new Date(now);
+    resetTime.setMinutes(resetTime.getMinutes() + 1);
+    resetTime.setSeconds(0, 0);
+
+    // Set custom headers
+    res.setHeader('X-RateLimit-Limit', limits.requestsPerMinute);
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, limits.requestsPerMinute - 1));
+    res.setHeader('X-RateLimit-Reset', Math.floor(resetTime.getTime() / 1000));
+    res.setHeader('X-RateLimit-Tier', tier);
+  } catch (error) {
+    // Silent fail - don't block request if header setting fails
+  }
+  next();
+};
 
 // Stricter rate limiter for auth routes
 const authLimiter = rateLimit({
@@ -210,5 +254,7 @@ module.exports = {
   getRateLimitSettings,
   isBlocked,
   recordFailedAttempt,
-  clearAttempts
+  clearAttempts,
+  rateLimitHeaders,
+  TIER_LIMITS
 };
