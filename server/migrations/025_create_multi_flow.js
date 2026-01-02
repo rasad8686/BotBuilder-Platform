@@ -1,108 +1,53 @@
-const { Pool } = require('pg');
-require('dotenv').config();
-const log = require('../utils/logger');
+/**
+ * Migration: Multi-flow orchestration tables
+ */
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-
-async function up() {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
+exports.up = function(knex) {
+  return knex.schema
     // 1. flow_orchestrations - Multi-flow orchestration management
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS flow_orchestrations (
-        id SERIAL PRIMARY KEY,
-        bot_id INTEGER NOT NULL REFERENCES bots(id) ON DELETE CASCADE,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        is_active BOOLEAN DEFAULT true,
-        entry_flow_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    .createTable('flow_orchestrations', (table) => {
+      table.increments('id').primary();
+      table.integer('bot_id').notNullable().references('id').inTable('bots').onDelete('CASCADE');
+      table.string('name', 255).notNullable();
+      table.text('description');
+      table.boolean('is_active').defaultTo(true);
+      table.integer('entry_flow_id');
+      table.timestamp('created_at').defaultTo(knex.fn.now());
+      table.timestamp('updated_at').defaultTo(knex.fn.now());
 
-    // 2. flow_transitions - Transitions between flows
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS flow_transitions (
-        id SERIAL PRIMARY KEY,
-        orchestration_id INTEGER NOT NULL REFERENCES flow_orchestrations(id) ON DELETE CASCADE,
-        from_flow_id INTEGER NOT NULL,
-        to_flow_id INTEGER NOT NULL,
-        trigger_type VARCHAR(50) NOT NULL CHECK (trigger_type IN ('on_complete', 'on_condition', 'on_intent', 'on_keyword')),
-        trigger_value JSONB DEFAULT '{}',
-        priority INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // 3. flow_variables - Shared variables between flows
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS flow_variables (
-        id SERIAL PRIMARY KEY,
-        orchestration_id INTEGER NOT NULL REFERENCES flow_orchestrations(id) ON DELETE CASCADE,
-        name VARCHAR(255) NOT NULL,
-        type VARCHAR(50) NOT NULL DEFAULT 'string',
-        default_value TEXT,
-        scope VARCHAR(50) NOT NULL DEFAULT 'session' CHECK (scope IN ('global', 'session', 'flow')),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Indexes for better performance
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_flow_orchestrations_bot_id ON flow_orchestrations(bot_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_flow_transitions_orchestration_id ON flow_transitions(orchestration_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_flow_transitions_from_flow_id ON flow_transitions(from_flow_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_flow_variables_orchestration_id ON flow_variables(orchestration_id)`);
-
-    await client.query('COMMIT');
-    log.info('Migration 025_create_multi_flow completed successfully');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    log.error('Migration 025_create_multi_flow failed', { error: error.message });
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function down() {
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    await client.query('DROP TABLE IF EXISTS flow_variables CASCADE');
-    await client.query('DROP TABLE IF EXISTS flow_transitions CASCADE');
-    await client.query('DROP TABLE IF EXISTS flow_orchestrations CASCADE');
-
-    await client.query('COMMIT');
-    log.info('Migration 025_create_multi_flow rolled back successfully');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    log.error('Migration 025_create_multi_flow rollback failed', { error: error.message });
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-// Run migration
-if (require.main === module) {
-  up()
-    .then(() => {
-      log.info('Migration completed');
-      process.exit(0);
+      table.index('bot_id');
     })
-    .catch((error) => {
-      log.error('Migration failed', { error: error.message });
-      process.exit(1);
-    });
-}
+    // 2. flow_transitions - Transitions between flows
+    .createTable('flow_transitions', (table) => {
+      table.increments('id').primary();
+      table.integer('orchestration_id').notNullable().references('id').inTable('flow_orchestrations').onDelete('CASCADE');
+      table.integer('from_flow_id').notNullable();
+      table.integer('to_flow_id').notNullable();
+      table.string('trigger_type', 50).notNullable();
+      table.jsonb('trigger_value').defaultTo('{}');
+      table.integer('priority').defaultTo(0);
+      table.timestamp('created_at').defaultTo(knex.fn.now());
 
-module.exports = { up, down };
+      table.index('orchestration_id');
+      table.index('from_flow_id');
+    })
+    // 3. flow_variables - Shared variables between flows
+    .createTable('flow_variables', (table) => {
+      table.increments('id').primary();
+      table.integer('orchestration_id').notNullable().references('id').inTable('flow_orchestrations').onDelete('CASCADE');
+      table.string('name', 255).notNullable();
+      table.string('type', 50).notNullable().defaultTo('string');
+      table.text('default_value');
+      table.string('scope', 50).notNullable().defaultTo('session');
+      table.timestamp('created_at').defaultTo(knex.fn.now());
+
+      table.index('orchestration_id');
+    });
+};
+
+exports.down = function(knex) {
+  return knex.schema
+    .dropTableIfExists('flow_variables')
+    .dropTableIfExists('flow_transitions')
+    .dropTableIfExists('flow_orchestrations');
+};

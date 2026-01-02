@@ -3,23 +3,42 @@
  */
 
 exports.up = async function(knex) {
-  // 1. bot_messages - composite index for org, bot, and date queries
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_bot_messages_org_bot_created
-    ON bot_messages(organization_id, bot_id, created_at)
-  `);
+  // 1. bot_messages - composite index for bot and date queries
+  // Note: organization_id column may not exist in all setups
+  const hasBotMessages = await knex.schema.hasTable('bot_messages');
+  if (hasBotMessages) {
+    const hasOrgColumn = await knex.schema.hasColumn('bot_messages', 'organization_id');
+    if (hasOrgColumn) {
+      await knex.raw(`
+        CREATE INDEX IF NOT EXISTS idx_bot_messages_org_bot_created
+        ON bot_messages(organization_id, bot_id, created_at)
+      `);
+    } else {
+      // Create simpler index without organization_id
+      await knex.raw(`
+        CREATE INDEX IF NOT EXISTS idx_bot_messages_bot_created
+        ON bot_messages(bot_id, created_at)
+      `);
+    }
+  }
 
-  // 2. intents - index for bot's active intents lookup
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_intents_bot_active
-    ON intents(bot_id, is_active)
-  `);
+  // 2. intents - index for bot's active intents lookup (if table exists)
+  const hasIntents = await knex.schema.hasTable('intents');
+  if (hasIntents) {
+    await knex.raw(`
+      CREATE INDEX IF NOT EXISTS idx_intents_bot_active
+      ON intents(bot_id, is_active)
+    `);
+  }
 
-  // 3. sso_domains - index for domain verification lookup
-  await knex.raw(`
-    CREATE INDEX IF NOT EXISTS idx_sso_domains_domain_verified
-    ON sso_domains(domain, is_verified)
-  `);
+  // 3. sso_domains - index for domain verification lookup (if table exists)
+  const hasSsoDomains = await knex.schema.hasTable('sso_domains');
+  if (hasSsoDomains) {
+    await knex.raw(`
+      CREATE INDEX IF NOT EXISTS idx_sso_domains_domain_verified
+      ON sso_domains(domain, is_verified)
+    `);
+  }
 
   // 4. recovery_events - index for org event type queries (if table exists)
   const hasRecoveryEvents = await knex.schema.hasTable('recovery_events');
