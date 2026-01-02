@@ -65,12 +65,14 @@ const authenticateToken = (req, res, next) => {
       }
 
       // Attach user information to request object
+      // Support both organizationId and current_organization_id for compatibility
+      const orgId = decoded.current_organization_id || decoded.organizationId || decoded.organization_id;
       req.user = {
         id: decoded.id,
         email: decoded.email,
         username: decoded.username,
-        current_organization_id: decoded.current_organization_id,
-        organization_id: decoded.current_organization_id
+        current_organization_id: orgId,
+        organization_id: orgId
       };
 
       next();
@@ -85,4 +87,8 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Support both import syntaxes:
+// const authenticateToken = require('./auth');
+// const { authenticateToken } = require('./auth');
 module.exports = authenticateToken;
+module.exports.authenticateToken = authenticateToken;

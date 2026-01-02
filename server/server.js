@@ -26,9 +26,10 @@ const { validatePassword } = require('./utils/passwordValidator');
 const fineTuningPoller = require('./jobs/fineTuningPoller');
 const { setupSwagger } = require('./config/swagger');
 const refreshTokenService = require('./services/refreshTokenService');
+const { applyGraphQLMiddleware } = require('./graphql');
 
 // Load .env from parent directory (BotBuilder root)
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env'), override: true });
 
 // ========================================
 // 🔐 VALIDATE ENVIRONMENT VARIABLES
@@ -950,6 +951,12 @@ app.use('/api/feedback', require('./routes/feedback'));
 // ✅ API Tokens routes
 app.use('/api/api-tokens', require('./routes/api-tokens'));
 
+// ✅ Service Accounts routes (CI/CD, automated systems)
+app.use('/api/service-accounts', require('./routes/serviceAccounts'));
+
+// ✅ Batch API routes (async batch processing)
+app.use('/api/batch', require('./routes/batch'));
+
 // ✅ Multi-Agent AI routes
 app.use('/api/agents', require('./routes/agents'));
 app.use('/api/workflows', require('./routes/workflows'));
@@ -1038,6 +1045,48 @@ app.use('/scim/v2', require('./routes/scim'));
 // ✅ AI Revenue Recovery Engine routes
 app.use('/api/recovery', require('./routes/recovery'));
 
+// ✅ Rate Limits routes (Developer Portal)
+app.use('/api/rate-limits', require('./routes/rateLimits'));
+
+// ✅ API Documentation routes (OpenAPI spec)
+app.use('/api/docs', require('./routes/docs'));
+
+// ✅ Status Page routes (Public)
+app.use('/api/status', require('./routes/status'));
+
+// ✅ SDK Generation routes (Developer Portal)
+app.use('/api/sdk', require('./routes/sdk'));
+
+// ✅ Multi-Region Support routes
+app.use('/api/regions', require('./routes/regions'));
+
+// ✅ API Versions routes
+app.use('/api/api-versions', require('./routes/apiVersions'));
+
+// ✅ Marketplace routes (Plugin/Template Marketplace)
+app.use('/api/marketplace', require('./routes/marketplace'));
+
+// ✅ Team Workspaces routes
+app.use('/api/workspaces', require('./routes/workspaces'));
+
+// ✅ Custom Domains routes
+app.use('/api/custom-domains', require('./routes/customDomains'));
+
+// ✅ Enterprise Contracts routes
+app.use('/api/enterprise', require('./routes/enterpriseContracts'));
+
+// ✅ Reseller/Partner Portal routes
+app.use('/api/reseller', require('./routes/reseller'));
+
+// ✅ Affiliate Portal routes
+app.use('/api/affiliate', require('./routes/affiliate'));
+
+// ✅ Certification Program routes
+app.use('/api/certifications', require('./routes/certifications'));
+
+// ✅ Blog/Tutorials routes
+app.use('/api/blog', require('./routes/blog'));
+
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
@@ -1046,6 +1095,16 @@ app.use(notFoundHandler);
 
 // ✅ Global error handler - SECURITY: No stack traces in production
 app.use(errorHandler);
+
+// ✅ Initialize GraphQL server (Apollo Server)
+const initGraphQL = async () => {
+  try {
+    await applyGraphQLMiddleware(app, server);
+    log.info('GraphQL server initialized', { endpoint: '/graphql' });
+  } catch (error) {
+    log.error('Failed to initialize GraphQL', { error: error.message });
+  }
+};
 
 // ✅ Start server with WebSocket support
 server.listen(PORT, async () => {
@@ -1061,4 +1120,7 @@ server.listen(PORT, async () => {
 
   // 🔄 Start fine-tuning status poller (checks OpenAI every 30s)
   fineTuningPoller.start();
+
+  // 🚀 Initialize GraphQL server
+  await initGraphQL();
 });
