@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Brain, ClipboardList, Zap, CheckCircle, XCircle, Settings, Clock } from 'lucide-react';
 
 const statusColors = {
   pending: { bg: '#fff3cd', color: '#856404' },
@@ -10,10 +11,10 @@ const statusColors = {
 };
 
 const stepIcons = {
-  think: '🧠',
-  plan: '📋',
-  execute: '⚡',
-  complete: '✅'
+  think: Brain,
+  plan: ClipboardList,
+  execute: Zap,
+  complete: CheckCircle
 };
 
 const AgentTasks = () => {
@@ -402,7 +403,7 @@ const AgentTasks = () => {
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '18px' }}>{stepIcons[step.action_type] || '⚙️'}</span>
+                              <span style={{ display: 'flex', alignItems: 'center' }}>{(() => { const StepIcon = stepIcons[step.action_type] || Settings; return <StepIcon size={18} />; })()}</span>
                               <span style={{ fontWeight: '600', color: '#1a1a2e', fontSize: '14px' }}>
                                 Step {step.step_number}: {step.action}
                               </span>
@@ -410,7 +411,7 @@ const AgentTasks = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               {step.duration_ms && (
                                 <span style={{ fontSize: '12px', color: '#6c757d' }}>
-                                  ⏱️ {formatDuration(step.duration_ms)}
+                                  <Clock size={12} className="inline mr-1" />{formatDuration(step.duration_ms)}
                                 </span>
                               )}
                               <span style={{
@@ -439,7 +440,7 @@ const AgentTasks = () => {
                           )}
                           {step.error_message && (
                             <div style={{ marginTop: '8px', padding: '12px', background: '#fff5f5', borderRadius: '8px', fontSize: '13px', color: '#c53030' }}>
-                              ❌ {step.error_message}
+                              <XCircle size={14} className="inline mr-1" />{step.error_message}
                             </div>
                           )}
                         </div>
@@ -453,7 +454,7 @@ const AgentTasks = () => {
               {selectedTask.status === 'completed' && selectedTask.result && (
                 <div style={{ padding: '20px', borderTop: '1px solid #e9ecef', background: '#f0fff4' }}>
                   <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#155724', fontWeight: '600' }}>
-                    ✅ {t('autonomous.result', 'Result')}
+                    <CheckCircle size={16} className="inline mr-1" /> {t('autonomous.result', 'Result')}
                   </h3>
                   <div style={{ padding: '16px', background: 'white', borderRadius: '8px', fontSize: '14px', lineHeight: '1.6' }}>
                     {selectedTask.result.output || selectedTask.result.summary || JSON.stringify(selectedTask.result, null, 2)}
@@ -465,7 +466,7 @@ const AgentTasks = () => {
               {selectedTask.status === 'failed' && selectedTask.error_message && (
                 <div style={{ padding: '20px', borderTop: '1px solid #e9ecef', background: '#fff5f5' }}>
                   <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#c53030', fontWeight: '600' }}>
-                    ❌ {t('autonomous.error', 'Error')}
+                    <XCircle size={16} className="inline mr-1" /> {t('autonomous.error', 'Error')}
                   </h3>
                   <div style={{ padding: '16px', background: 'white', borderRadius: '8px', fontSize: '14px', color: '#c53030' }}>
                     {selectedTask.error_message}

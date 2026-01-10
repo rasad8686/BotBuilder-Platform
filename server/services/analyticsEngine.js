@@ -6,6 +6,7 @@
 
 const db = require('../db');
 const cron = require('node-cron');
+const log = require('../utils/logger');
 
 class AnalyticsEngine {
   constructor() {
@@ -518,9 +519,9 @@ class AnalyticsEngine {
     const job = cron.schedule(cronExpression, async () => {
       try {
         await this.generateReport(reportId);
-        console.log(`Scheduled report ${reportId} executed successfully`);
+        log.info(`Scheduled report ${reportId} executed successfully`);
       } catch (error) {
-        console.error(`Error executing scheduled report ${reportId}:`, error);
+        log.error(`Error executing scheduled report ${reportId}:`, error);
       }
     });
 

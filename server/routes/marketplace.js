@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const marketplaceService = require('../services/marketplaceService');
-const { authenticateToken } = require('../middleware/auth');
+const authenticateToken = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 // ============ Public Routes ============

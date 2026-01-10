@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { MessageSquare } from 'lucide-react';
 import { WidgetCustomizer } from '../components/widget';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -87,7 +88,7 @@ export default function WidgetSettings() {
         justifyContent: 'center'
       }}>
         <div style={{ textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}><MessageSquare size={48} style={{ color: '#6b7280' }} /></div>
           <div>{t('common.loading', 'Loading...')}</div>
         </div>
       </div>
@@ -125,7 +126,7 @@ export default function WidgetSettings() {
           </button>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '28px' }}>💬</span>
+              <span style={{ fontSize: '28px' }}><MessageSquare size={28} /></span>
               {t('widget.title', 'Web Widget')}
             </h1>
             <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>

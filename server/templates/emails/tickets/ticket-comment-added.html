@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Reply on Ticket #{{ticketNumber}}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: {{primaryColor}}; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    {{#if logo}}
+                    <img src="{{logo}}" alt="{{companyName}}" style="height: 40px; width: auto;">
+                    {{else}}
+                    <span style="font-size: 24px; font-weight: 700; color: #ffffff;">{{companyName}}</span>
+                    {{/if}}
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 14px; color: rgba(255,255,255,0.9);">Ticket #{{ticketNumber}}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px;">
+              <!-- Title -->
+              <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #1f2937;">
+                New Reply on Your Ticket
+              </h1>
+
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #6b7280;">
+                <strong style="color: #1f2937;">{{subject}}</strong>
+              </p>
+
+              <!-- Agent Info -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="vertical-align: middle;">
+                          {{#if agentAvatar}}
+                          <img src="{{agentAvatar}}" alt="{{agentName}}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
+                          {{else}}
+                          <div style="width: 48px; height: 48px; background-color: {{primaryColor}}; border-radius: 50%; text-align: center; line-height: 48px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                            {{agentInitials}}
+                          </div>
+                          {{/if}}
+                        </td>
+                        <td style="padding-left: 12px; vertical-align: middle;">
+                          <span style="font-size: 16px; font-weight: 600; color: #1f2937; display: block;">{{agentName}}</span>
+                          <span style="font-size: 13px; color: #6b7280;">Support Team &bull; {{repliedAt}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Reply Content -->
+              <div style="padding: 20px; background-color: #f3e8ff; border-radius: 12px; border-left: 4px solid {{primaryColor}}; margin-bottom: 32px;">
+                <p style="margin: 0; font-size: 15px; color: #374151; line-height: 1.7; white-space: pre-wrap;">{{replyContent}}</p>
+              </div>
+
+              {{#if attachments}}
+              <!-- Attachments -->
+              <div style="margin-bottom: 32px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1f2937;">Attachments</h4>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  {{#each attachments}}
+                  <tr>
+                    <td style="padding: 8px 12px; background-color: #f9fafb; border-radius: 6px; margin-bottom: 8px;">
+                      <a href="{{this.url}}" style="font-size: 14px; color: {{../primaryColor}}; text-decoration: none;">
+                        &#128206; {{this.name}}
+                      </a>
+                      <span style="font-size: 12px; color: #9ca3af; margin-left: 8px;">{{this.size}}</span>
+                    </td>
+                  </tr>
+                  {{/each}}
+                </table>
+              </div>
+              {{/if}}
+
+              <!-- CTA Buttons -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ticketUrl}}" style="display: inline-block; padding: 14px 32px; background-color: {{primaryColor}}; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 8px; margin-right: 12px;">
+                      View Full Conversation
+                    </a>
+                    <a href="mailto:{{replyToEmail}}?subject=Re: [Ticket #{{ticketNumber}}] {{subject}}" style="display: inline-block; padding: 14px 32px; background-color: #ffffff; color: {{primaryColor}}; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 8px; border: 2px solid {{primaryColor}};">
+                      Reply via Email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Previous Conversation -->
+          {{#if previousMessages}}
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px;">
+              <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #6b7280;">Previous in this conversation</h4>
+              {{#each previousMessages}}
+              <div style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+                <span style="font-size: 13px; font-weight: 500; color: #1f2937;">{{this.author}}</span>
+                <span style="font-size: 12px; color: #9ca3af;"> &bull; {{this.date}}</span>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{this.preview}}</p>
+              </div>
+              {{/each}}
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
+                You can reply directly to this email to respond.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                {{companyName}} &bull; <a href="{{portalUrl}}" style="color: {{primaryColor}}; text-decoration: none;">Support Center</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

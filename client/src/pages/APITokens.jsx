@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { BookOpen, Key, Copy, CheckCircle } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import { SkeletonTable } from '../components/SkeletonLoader';
+import KeyRotation, { RotationButton } from '../components/KeyRotation';
 
 export default function ApiTokens() {
   const { t } = useTranslation();
@@ -10,6 +12,8 @@ export default function ApiTokens() {
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showRotationModal, setShowRotationModal] = useState(false);
+  const [selectedToken, setSelectedToken] = useState(null);
   const [newToken, setNewToken] = useState(null);
   const [formData, setFormData] = useState({
     tokenName: '',
@@ -135,7 +139,7 @@ export default function ApiTokens() {
 
         {/* API Documentation Card */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-3">📚 API Documentation</h2>
+          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5" /> API Documentation</h2>
           <p className="text-blue-700 dark:text-blue-300 mb-4">
             Use API tokens to access BotBuilder API programmatically. Include the token in the Authorization header of your requests.
           </p>
@@ -173,7 +177,7 @@ export default function ApiTokens() {
         {/* Tokens List */}
         {tokens.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-12 text-center transition-colors duration-300">
-            <div className="text-6xl mb-4">🔑</div>
+            <div className="text-6xl mb-4"><Key className="w-16 h-16 mx-auto text-purple-600" /></div>
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{t('apiTokens.noTokens')}</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{t('apiTokens.noTokensDesc')}</p>
             <button
@@ -204,10 +208,10 @@ export default function ApiTokens() {
                       </code>
                       <button
                         onClick={() => copyToClipboard(token.token_preview)}
-                        className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm"
+                        className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm flex items-center gap-1"
                         title="Copy token preview"
                       >
-                        📋 Copy
+                        <Copy className="w-4 h-4" /> Copy
                       </button>
                     </div>
 
@@ -255,6 +259,13 @@ export default function ApiTokens() {
                   </div>
 
                   <div className="flex gap-2">
+                    <RotationButton
+                      onClick={() => {
+                        setSelectedToken(token);
+                        setShowRotationModal(true);
+                      }}
+                      hasScheduled={!!token.rotation_scheduled_at}
+                    />
                     <button
                       onClick={() => handleToggleToken(token.id)}
                       className={`px-4 py-2 rounded-lg ${
@@ -287,7 +298,7 @@ export default function ApiTokens() {
               {newToken ? (
                 <div>
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                    <p className="text-green-800 dark:text-green-200 font-semibold mb-2">✅ Token Created!</p>
+                    <p className="text-green-800 dark:text-green-200 font-semibold mb-2 flex items-center gap-2"><CheckCircle className="w-5 h-5" /> Token Created!</p>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-4">
                       Copy this token now. You won't be able to see it again!
                     </p>
@@ -296,9 +307,9 @@ export default function ApiTokens() {
                     </div>
                     <button
                       onClick={() => copyToClipboard(newToken)}
-                      className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                     >
-                      📋 Copy Token
+                      <Copy className="w-4 h-4" /> Copy Token
                     </button>
                   </div>
 
@@ -380,6 +391,20 @@ export default function ApiTokens() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Key Rotation Modal */}
+        {showRotationModal && selectedToken && (
+          <KeyRotation
+            token={selectedToken}
+            onClose={() => {
+              setShowRotationModal(false);
+              setSelectedToken(null);
+            }}
+            onRotationComplete={() => {
+              fetchData();
+            }}
+          />
         )}
       </div>
     </div>

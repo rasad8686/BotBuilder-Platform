@@ -1,0 +1,568 @@
+{
+  "info": {
+    "_postman_id": "botbuilder-api-collection",
+    "name": "BotBuilder API",
+    "description": "Complete API collection for BotBuilder - Enterprise AI Chatbot Platform\n\n## Setup\n1. Import this collection\n2. Import the environment file\n3. Set your `baseUrl` and `apiKey` in the environment\n4. Run \"Login\" to get JWT token\n\n## Authentication\nMost endpoints require JWT authentication. After login, the token is automatically saved to the environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.token);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.environment.set('userId', jsonData.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.token);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.environment.set('userId', jsonData.user.id);",
+                  "    pm.environment.set('organizationId', jsonData.user.currentOrganizationId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with email and password"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.token);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bots",
+      "item": [
+        {
+          "name": "List Bots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bots?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Bot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('botId', jsonData.bot.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer Support Bot\",\n  \"platform\": \"telegram\",\n  \"language\": \"en\",\n  \"description\": \"Handles customer inquiries 24/7\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bots",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots"]
+            }
+          }
+        },
+        {
+          "name": "Get Bot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Bot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Bot Name\",\n  \"description\": \"Updated description\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Bot",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Chat",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello, how can you help me?\",\n  \"sessionId\": \"session_{{$randomUUID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}/ai/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}", "ai", "chat"]
+            }
+          }
+        },
+        {
+          "name": "Get AI Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}/ai/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}", "ai", "config"]
+            }
+          }
+        },
+        {
+          "name": "Update AI Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"openai\",\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.7,\n  \"max_tokens\": 1024,\n  \"system_prompt\": \"You are a helpful assistant.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bots/{{botId}}/ai/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bots", "{{botId}}", "ai", "config"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Get Message History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{botId}}?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "{{botId}}"],
+              "query": [
+                {"key": "limit", "value": "50"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Autonomous Agents",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/agents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agents"]
+            }
+          }
+        },
+        {
+          "name": "Create Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('agentId', jsonData.agent.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Research Agent\",\n  \"description\": \"Autonomous agent for web research\",\n  \"model\": \"gpt-4o\",\n  \"tools\": [\"web_search\", \"web_scrape\", \"summarize\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agents"]
+            }
+          }
+        },
+        {
+          "name": "Execute Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goal\": \"Research the latest trends in AI chatbots and summarize key findings\",\n  \"context\": {\n    \"maxSteps\": 10,\n    \"timeout\": 300\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/agents/{{agentId}}/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "agents", "{{agentId}}", "execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Base",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/knowledge/{{botId}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "knowledge", "{{botId}}", "documents"]
+            }
+          }
+        },
+        {
+          "name": "Query Knowledge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"How do I configure the bot?\",\n  \"topK\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/knowledge/{{botId}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "knowledge", "{{botId}}", "query"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks"]
+            }
+          }
+        },
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-server.com/webhook\",\n  \"events\": [\"bot.created\", \"message.received\", \"agent.completed\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?period=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "period", "value": "month"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Status",
+      "item": [
+        {
+          "name": "Get System Status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Services Status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "status", "services"]
+            }
+          }
+        },
+        {
+          "name": "Get Uptime History",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status/history?days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "status", "history"],
+              "query": [
+                {"key": "days", "value": "30"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

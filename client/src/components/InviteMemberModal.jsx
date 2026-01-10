@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Shield, Pencil, Eye } from 'lucide-react';
 import axiosInstance from '../api/axios';
 
 export default function InviteMemberModal({ isOpen, onClose, onSuccess, organizationId }) {
@@ -143,8 +144,8 @@ export default function InviteMemberModal({ isOpen, onClose, onSuccess, organiza
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('admin')}`}>
-                      🛡️ ADMIN
+                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('admin')} flex items-center gap-1`}>
+                      <Shield className="w-3 h-3" /> ADMIN
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 mt-1">
@@ -171,8 +172,8 @@ export default function InviteMemberModal({ isOpen, onClose, onSuccess, organiza
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('member')}`}>
-                      ✏️ MEMBER
+                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('member')} flex items-center gap-1`}>
+                      <Pencil className="w-3 h-3" /> MEMBER
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 mt-1">
@@ -199,8 +200,8 @@ export default function InviteMemberModal({ isOpen, onClose, onSuccess, organiza
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('viewer')}`}>
-                      👁️ VIEWER
+                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getRoleBadgeColor('viewer')} flex items-center gap-1`}>
+                      <Eye className="w-3 h-3" /> VIEWER
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 mt-1">

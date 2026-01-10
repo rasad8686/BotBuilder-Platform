@@ -45,6 +45,11 @@ const EXEMPT_ROUTES = [
   '/voice-to-bot/',            // Voice upload
   '/webhooks/',                // Channel webhooks (full path)
   '/fine-tuning/',             // Fine-tuning API (has own auth)
+  '/email/',                   // Email marketing API (has JWT auth)
+  '/surveys/',                 // Surveys API (has JWT auth)
+  '/public/surveys/',          // Public surveys (no auth)
+  '/public/tickets/',          // Public tickets (no auth)
+  '/public/email/',            // Public email (unsubscribe, etc.)
 ];
 
 /**

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Target, Search, PenTool, BarChart3, CheckSquare, MessageSquare, Globe, FileText, ClipboardList, Hash, List, Save, FileEdit, Theater, Bot, Zap, Check } from 'lucide-react';
 
 const roleOptions = [
-  { value: 'orchestrator', label: 'Orchestrator', icon: '🎯', description: 'Coordinates multiple agents' },
-  { value: 'researcher', label: 'Researcher', icon: '🔍', description: 'Gathers and analyzes information' },
-  { value: 'writer', label: 'Writer', icon: '✍️', description: 'Creates content and documents' },
-  { value: 'analyzer', label: 'Analyzer', icon: '📊', description: 'Analyzes data and provides insights' },
-  { value: 'reviewer', label: 'Reviewer', icon: '✅', description: 'Reviews and validates work' },
-  { value: 'assistant', label: 'Assistant', icon: '💬', description: 'General purpose assistant' }
+  { value: 'orchestrator', label: 'Orchestrator', Icon: Target, description: 'Coordinates multiple agents' },
+  { value: 'researcher', label: 'Researcher', Icon: Search, description: 'Gathers and analyzes information' },
+  { value: 'writer', label: 'Writer', Icon: PenTool, description: 'Creates content and documents' },
+  { value: 'analyzer', label: 'Analyzer', Icon: BarChart3, description: 'Analyzes data and provides insights' },
+  { value: 'reviewer', label: 'Reviewer', Icon: CheckSquare, description: 'Reviews and validates work' },
+  { value: 'assistant', label: 'Assistant', Icon: MessageSquare, description: 'General purpose assistant' }
 ];
 
 const modelOptions = [
@@ -20,12 +21,12 @@ const modelOptions = [
 ];
 
 const capabilityOptions = [
-  { id: 'web_search', label: 'Web Search', icon: '🌐' },
-  { id: 'analyze_text', label: 'Text Analysis', icon: '📝' },
-  { id: 'format_data', label: 'Data Formatting', icon: '📋' },
-  { id: 'calculate', label: 'Calculations', icon: '🔢' },
-  { id: 'generate_list', label: 'List Generation', icon: '📑' },
-  { id: 'save_note', label: 'Notes/Memory', icon: '💾' }
+  { id: 'web_search', label: 'Web Search', Icon: Globe },
+  { id: 'analyze_text', label: 'Text Analysis', Icon: FileText },
+  { id: 'format_data', label: 'Data Formatting', Icon: ClipboardList },
+  { id: 'calculate', label: 'Calculations', Icon: Hash },
+  { id: 'generate_list', label: 'List Generation', Icon: List },
+  { id: 'save_note', label: 'Notes/Memory', Icon: Save }
 ];
 
 const AgentBuilder = () => {
@@ -147,11 +148,11 @@ const AgentBuilder = () => {
   };
 
   const steps = [
-    { id: 'basics', label: t('agentBuilder.basics', 'Basics'), icon: '📝' },
-    { id: 'role', label: t('agentBuilder.role', 'Role'), icon: '🎭' },
-    { id: 'model', label: t('agentBuilder.model', 'Model'), icon: '🤖' },
-    { id: 'capabilities', label: t('agentBuilder.capabilities', 'Capabilities'), icon: '⚡' },
-    { id: 'review', label: t('agentBuilder.review', 'Review'), icon: '✅' }
+    { id: 'basics', label: t('agentBuilder.basics', 'Basics'), Icon: FileEdit },
+    { id: 'role', label: t('agentBuilder.role', 'Role'), Icon: Theater },
+    { id: 'model', label: t('agentBuilder.model', 'Model'), Icon: Bot },
+    { id: 'capabilities', label: t('agentBuilder.capabilities', 'Capabilities'), Icon: Zap },
+    { id: 'review', label: t('agentBuilder.review', 'Review'), Icon: CheckSquare }
   ];
 
   if (isLoading) {
@@ -216,7 +217,7 @@ const AgentBuilder = () => {
                 transition: 'all 0.2s'
               }}
             >
-              <span style={{ fontSize: '16px' }}>{step.icon}</span>
+              <step.Icon size={16} />
               {step.label}
             </button>
           ))}
@@ -302,7 +303,7 @@ const AgentBuilder = () => {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <span style={{ fontSize: '32px' }}>{role.icon}</span>
+                    <role.Icon size={32} />
                     <div>
                       <div style={{ fontWeight: '600', color: '#1a1a2e', fontSize: '16px' }}>{role.label}</div>
                       <div style={{ color: '#6c757d', fontSize: '14px', marginTop: '4px' }}>{role.description}</div>
@@ -415,10 +416,10 @@ const AgentBuilder = () => {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <span style={{ fontSize: '24px' }}>{cap.icon}</span>
+                    <cap.Icon size={24} />
                     <span style={{ fontWeight: '500', color: '#1a1a2e' }}>{cap.label}</span>
                     {formData.capabilities.includes(cap.id) && (
-                      <span style={{ marginLeft: 'auto', color: '#667eea', fontSize: '18px' }}>✓</span>
+                      <span style={{ marginLeft: 'auto', color: '#667eea' }}><Check size={18} /></span>
                     )}
                   </button>
                 ))}
@@ -540,7 +541,7 @@ const AgentBuilder = () => {
                   </>
                 ) : (
                   <>
-                    <span>✓</span>
+                    <Check size={16} />
                     {isEditing ? t('common.save', 'Save Changes') : t('agentBuilder.createAgent', 'Create Agent')}
                   </>
                 )}

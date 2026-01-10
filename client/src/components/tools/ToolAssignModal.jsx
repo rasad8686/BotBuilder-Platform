@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Target, Search, PenTool, BarChart3, CheckCircle, Shuffle, Bot } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const ROLE_ICONS = {
+  orchestrator: Target,
+  researcher: Search,
+  writer: PenTool,
+  analyzer: BarChart3,
+  reviewer: CheckCircle,
+  router: Shuffle,
+  custom: Bot
+};
 
 const ToolAssignModal = ({ tool, botId, onClose, onSave }) => {
   const [agents, setAgents] = useState([]);
@@ -118,16 +129,8 @@ const ToolAssignModal = ({ tool, botId, onClose, onSave }) => {
   };
 
   const getRoleIcon = (role) => {
-    const icons = {
-      'orchestrator': '🎯',
-      'researcher': '🔍',
-      'writer': '✍️',
-      'analyzer': '📊',
-      'reviewer': '✅',
-      'router': '🔀',
-      'custom': '🤖'
-    };
-    return icons[role] || '🤖';
+    const Icon = ROLE_ICONS[role] || Bot;
+    return <Icon size={18} />;
   };
 
   return (

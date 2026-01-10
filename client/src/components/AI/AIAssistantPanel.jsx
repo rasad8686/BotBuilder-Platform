@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Bot, Lightbulb, Sparkles, Search, Send, CheckCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -145,9 +146,9 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
   };
 
   const tabs = [
-    { id: 'suggest', label: 'Suggest', icon: '💡' },
-    { id: 'improve', label: 'Improve', icon: '✨' },
-    { id: 'analyze', label: 'Analyze', icon: '🔍' }
+    { id: 'suggest', label: 'Suggest', Icon: Lightbulb },
+    { id: 'improve', label: 'Improve', Icon: Sparkles },
+    { id: 'analyze', label: 'Analyze', Icon: Search }
   ];
 
   const priorityColors = {
@@ -171,7 +172,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
         borderBottom: '1px solid #e5e7eb'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '20px' }}>🤖</span>
+          <Bot size={20} />
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>
             AI Assistant
           </h3>
@@ -206,10 +207,12 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '16px'
+              fontSize: '16px',
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
-            ➤
+            <Send size={16} />
           </button>
         </div>
       </div>
@@ -239,7 +242,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
               gap: '4px'
             }}
           >
-            <span>{tab.icon}</span>
+            <tab.Icon size={14} />
             {tab.label}
           </button>
         ))}
@@ -280,7 +283,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
                 fontSize: '14px'
               }}
             >
-              {loading ? 'Analyzing...' : '💡 Get Node Suggestions'}
+              {loading ? 'Analyzing...' : 'Get Node Suggestions'}
             </button>
 
             {suggestions.length > 0 && (
@@ -389,7 +392,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
                 fontSize: '14px'
               }}
             >
-              {loading ? 'Improving...' : '✨ Improve Flow'}
+              {loading ? 'Improving...' : 'Improve Flow'}
             </button>
           </div>
         )}
@@ -413,7 +416,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
                 fontSize: '14px'
               }}
             >
-              {loading ? 'Analyzing...' : '🔍 Analyze Flow'}
+              {loading ? 'Analyzing...' : 'Analyze Flow'}
             </button>
 
             {analysis && (
@@ -490,7 +493,7 @@ export default function AIAssistantPanel({ currentFlow, onApplySuggestion, onImp
                     borderRadius: '10px',
                     textAlign: 'center'
                   }}>
-                    <span style={{ fontSize: '24px' }}>✅</span>
+                    <CheckCircle size={24} style={{ color: '#15803d' }} />
                     <p style={{ margin: '8px 0 0', color: '#15803d', fontSize: '14px' }}>
                       Flow looks good! No issues found.
                     </p>

@@ -1,19 +1,20 @@
 import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
+import { Target, Search, PenTool, BarChart3, CheckCircle, Shuffle, Settings, MessageCircle, Bot } from 'lucide-react';
 
 const roleIcons = {
-  orchestrator: '🎯',
-  researcher: '🔍',
-  writer: '✍️',
-  analyzer: '📊',
-  reviewer: '✅',
-  router: '🔀',
-  custom: '⚙️',
-  assistant: '💬'
+  orchestrator: Target,
+  researcher: Search,
+  writer: PenTool,
+  analyzer: BarChart3,
+  reviewer: CheckCircle,
+  router: Shuffle,
+  custom: Settings,
+  assistant: MessageCircle
 };
 
 const AgentNode = memo(({ data, selected }) => {
-  const icon = roleIcons[data.role] || '🤖';
+  const IconComponent = roleIcons[data.role] || Bot;
 
   return (
     <div className={`agent-node ${selected ? 'selected' : ''}`}>
@@ -25,7 +26,7 @@ const AgentNode = memo(({ data, selected }) => {
       />
 
       <div className="node-header">
-        <span className="node-icon">{icon}</span>
+        <span className="node-icon"><IconComponent size={18} /></span>
         <span className="node-type">Agent</span>
       </div>
 

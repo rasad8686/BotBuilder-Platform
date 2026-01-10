@@ -12,7 +12,6 @@
 const express = require('express');
 const router = express.Router();
 const authenticate = require('../middleware/auth');
-const { organizationContext } = require('../middleware/organizationContext');
 const RecoveryService = require('../services/recoveryEngine/RecoveryService');
 
 // Helper function to get organization ID from request
@@ -25,9 +24,9 @@ const RecoveryAnalyticsService = require('../services/recoveryEngine/RecoveryAna
 const RecoveryMessagingService = require('../services/recoveryEngine/RecoveryMessagingService');
 const db = require('../db');
 
-// Apply authentication and organization context to all routes
+// Apply authentication to all routes
+// Note: organizationContext is handled gracefully within routes to avoid 403 for users without orgs
 router.use(authenticate);
-router.use(organizationContext);
 
 // ============================================
 // CAMPAIGNS ENDPOINTS
@@ -41,6 +40,17 @@ router.get('/campaigns', async (req, res) => {
   try {
     const orgId = getOrganizationId(req);
     const { status, campaign_type, bot_id, limit, offset } = req.query;
+
+    // If no organization, return empty results (user not in any org yet)
+    if (!orgId) {
+      return res.json({
+        success: true,
+        campaigns: [],
+        total: 0,
+        limit: parseInt(limit) || 50,
+        offset: parseInt(offset) || 0
+      });
+    }
 
     // Check if table exists
     const tableCheck = await db.query(`

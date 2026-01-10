@@ -1,0 +1,1157 @@
+client/src/components/agents/AgentCard.jsx:4:  orchestrator: '🎯',
+client/src/components/agents/AgentCard.jsx:5:  researcher: '🔍',
+client/src/components/agents/AgentCard.jsx:6:  writer: '✍️',
+client/src/components/agents/AgentCard.jsx:7:  analyzer: '📊',
+client/src/components/agents/AgentCard.jsx:8:  reviewer: '✅',
+client/src/components/agents/AgentCard.jsx:9:  router: '🔀',
+client/src/components/agents/AgentCard.jsx:10:  custom: '⚙️',
+client/src/components/agents/AgentCard.jsx:11:  assistant: '💬'
+client/src/components/agents/AgentCard.jsx:26:  const icon = roleIcons[agent.role] || '🤖';
+client/src/components/agents/AgentCard.jsx:65:          ▶ Test
+client/src/components/agents/AgentCard.jsx:68:          ✏️ Edit
+client/src/components/agents/AgentCard.jsx:71:          🗑️
+client/src/components/agents/AgentKnowledgePanel.jsx:110:          <span className="empty-icon">🧠</span>
+client/src/components/agents/AgentKnowledgePanel.jsx:121:                <div className="kb-icon">🧠</div>
+client/src/components/agents/AgentList.jsx:16:          <div className="empty-icon">🤖</div>
+client/src/components/agents/AgentMetrics.jsx:73:          <div className="metric-icon">📊</div>
+client/src/components/agents/AgentMetrics.jsx:81:          <div className="metric-icon">✅</div>
+client/src/components/agents/AgentMetrics.jsx:98:          <div className="metric-icon">⏱️</div>
+client/src/components/agents/AgentMetrics.jsx:106:          <div className="metric-icon">🔤</div>
+client/src/components/agents/AgentScheduler.jsx:4:  { value: 'once', label: 'One Time', icon: '1️⃣', description: 'Run once at a specific time' },
+client/src/components/agents/AgentScheduler.jsx:5:  { value: 'recurring', label: 'Recurring', icon: '🔄', description: 'Run at regular intervals' },
+client/src/components/agents/AgentScheduler.jsx:205:              <span>📅</span>
+client/src/components/agents/AgentTestPanel.jsx:82:                '▶ Run Test'
+client/src/components/agents/AgentTestPanel.jsx:89:              <span className="error-icon">⚠️</span>
+client/src/components/agents/AgentTestPanel.jsx:101:                      🎫 {response.tokensUsed} tokens
+client/src/components/agents/AgentTestPanel.jsx:106:                      ⏱️ {response.durationMs}ms
+client/src/components/agents/AgentTestPanel.jsx:113:                {response.success ? '✅ Success' : '❌ Failed'}
+client/src/components/agents/AgentToolsPanel.jsx:62:      'http_request': '🌐',
+client/src/components/agents/AgentToolsPanel.jsx:63:      'database_query': '🗄️',
+client/src/components/agents/AgentToolsPanel.jsx:64:      'code_execution': '💻',
+client/src/components/agents/AgentToolsPanel.jsx:65:      'web_scraper': '🕷️',
+client/src/components/agents/AgentToolsPanel.jsx:66:      'email': '📧'
+client/src/components/agents/AgentToolsPanel.jsx:68:    return icons[type] || '🔧';
+client/src/components/agents/AgentToolsPanel.jsx:97:          <span className="empty-icon">🔧</span>
+client/src/components/agents/ToolSelector.jsx:4:  { id: 'web_search', name: 'Web Search', icon: '🌐', description: 'Search the web for information', category: 'research' },
+client/src/components/agents/ToolSelector.jsx:5:  { id: 'analyze_text', name: 'Text Analysis', icon: '📝', description: 'Analyze and extract info from text', category: 'analysis' },
+client/src/components/agents/ToolSelector.jsx:6:  { id: 'format_data', name: 'Data Formatter', icon: '📋', description: 'Format data into structured output', category: 'utility' },
+client/src/components/agents/ToolSelector.jsx:7:  { id: 'calculate', name: 'Calculator', icon: '🔢', description: 'Perform mathematical calculations', category: 'utility' },
+client/src/components/agents/ToolSelector.jsx:8:  { id: 'generate_list', name: 'List Generator', icon: '📑', description: 'Generate formatted lists', category: 'utility' },
+client/src/components/agents/ToolSelector.jsx:9:  { id: 'save_note', name: 'Save Note', icon: '💾', description: 'Save notes for later use', category: 'memory' },
+client/src/components/agents/ToolSelector.jsx:10:  { id: 'get_note', name: 'Get Note', icon: '📖', description: 'Retrieve saved notes', category: 'memory' },
+client/src/components/agents/ToolSelector.jsx:11:  { id: 'http_request', name: 'HTTP Request', icon: '🔗', description: 'Make HTTP API calls', category: 'integration' },
+client/src/components/agents/ToolSelector.jsx:12:  { id: 'send_email', name: 'Send Email', icon: '📧', description: 'Send email notifications', category: 'integration' },
+client/src/components/agents/ToolSelector.jsx:13:  { id: 'browser', name: 'Browser', icon: '🖥️', description: 'Browse and scrape web pages', category: 'research' }
+client/src/components/agents/ToolSelector.jsx:59:          <span className="search-icon">🔍</span>
+client/src/components/AI/AIAssistantPanel.jsx:148:    { id: 'suggest', label: 'Suggest', icon: '💡' },
+client/src/components/AI/AIAssistantPanel.jsx:149:    { id: 'improve', label: 'Improve', icon: '✨' },
+client/src/components/AI/AIAssistantPanel.jsx:150:    { id: 'analyze', label: 'Analyze', icon: '🔍' }
+client/src/components/AI/AIAssistantPanel.jsx:174:          <span style={{ fontSize: '20px' }}>🤖</span>
+client/src/components/AI/AIAssistantPanel.jsx:283:              {loading ? 'Analyzing...' : '💡 Get Node Suggestions'}
+client/src/components/AI/AIAssistantPanel.jsx:392:              {loading ? 'Improving...' : '✨ Improve Flow'}
+client/src/components/AI/AIAssistantPanel.jsx:416:              {loading ? 'Analyzing...' : '🔍 Analyze Flow'}
+client/src/components/AI/AIAssistantPanel.jsx:493:                    <span style={{ fontSize: '24px' }}>✅</span>
+client/src/components/AI/AIChatTester.jsx:121:        <div className="text-6xl mb-4">⚙️</div>
+client/src/components/AI/AIChatTester.jsx:143:            {testing ? '⏳ Testing...' : '🧪 Test Connection'}
+client/src/components/AI/AIChatTester.jsx:155:                <div className="font-semibold mb-1">✅ Connection Successful!</div>
+client/src/components/AI/AIChatTester.jsx:176:            <span className="text-xl">💬</span>
+client/src/components/AI/AIChatTester.jsx:195:                ⏹️ Stop
+client/src/components/AI/AIChatTester.jsx:203:                🗑️ Clear
+client/src/components/AI/AIChatTester.jsx:213:              <div className="text-4xl mb-2">👋</div>
+client/src/components/AI/AIChatTester.jsx:239:                          <span>📊 {msg.usage.totalTokens} tokens</span>
+client/src/components/AI/AIChatTester.jsx:240:                          <span>💰 ${msg.cost.toFixed(6)}</span>
+client/src/components/AI/AIChatTester.jsx:241:                          <span>⏱️ {msg.responseTime}ms</span>
+client/src/components/AI/AIChatTester.jsx:300:              {sending ? '⏳' : '📤'} Send
+client/src/components/AI/AIChatTester.jsx:305:            💡 This chat maintains context based on your context_window setting. Clear chat to start fresh.
+client/src/components/AI/AIChatTester.jsx:312:        <h4 className="font-semibold text-blue-900 mb-2">💡 Testing Tips:</h4>
+client/src/components/AI/AIConfigPanel.jsx:144:    { id: 'setup', label: 'Setup', icon: '⚙️' },
+client/src/components/AI/AIConfigPanel.jsx:145:    { id: 'prompt', label: 'Prompt', icon: '💭' },
+client/src/components/AI/AIConfigPanel.jsx:146:    { id: 'parameters', label: 'Parameters', icon: '🎛️' },
+client/src/components/AI/AIConfigPanel.jsx:147:    { id: 'test', label: 'Test', icon: '🧪' }
+client/src/components/AI/AIConfigPanel.jsx:154:          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+client/src/components/AI/AIConfigPanel.jsx:174:            🤖 AI Configuration
+client/src/components/AI/AIConfigPanel.jsx:184:            ✅ {success}
+client/src/components/AI/AIConfigPanel.jsx:191:            ⚠️ {error}
+client/src/components/AI/AIConfigPanel.jsx:245:                    💡 Provide your own API key or leave empty to use the platform key (if configured)
+client/src/components/AI/AIConfigPanel.jsx:319:                <span className="animate-spin">⏳</span>
+client/src/components/AI/AIConfigPanel.jsx:324:                💾 Save Configuration
+client/src/components/AI/AIConfigPanel.jsx:337:                  <span className="animate-spin">⏳</span> Testing...
+client/src/components/AI/AIConfigPanel.jsx:340:                '🧪 Test Connection'
+client/src/components/AI/AIConfigPanel.jsx:348:          <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+client/src/components/AI/AIModelSelector.jsx:74:                    <span>💰 ${model.pricing.input}/${model.pricing.output} per 1M tokens</span>
+client/src/components/AI/AIModelSelector.jsx:75:                    <span>📝 {model.maxTokens.toLocaleString()} max tokens</span>
+client/src/components/AI/AIParametersPanel.jsx:48:          🎯 Higher values make output more random and creative, lower values make it more focused and deterministic.
+client/src/components/AI/AIParametersPanel.jsx:83:          📝 Maximum number of tokens to generate in the response. Higher values allow longer responses but cost more.
+client/src/components/AI/AIParametersPanel.jsx:118:          🧠 Number of previous messages the AI can remember. Higher values maintain more context but use more tokens.
+client/src/components/AI/AIParametersPanel.jsx:156:        <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Cost Considerations:</h4>
+client/src/components/AI/AIPromptEditor.jsx:13:      icon: '🤖',
+client/src/components/AI/AIPromptEditor.jsx:18:      icon: '💬',
+client/src/components/AI/AIPromptEditor.jsx:23:      icon: '🔧',
+client/src/components/AI/AIPromptEditor.jsx:28:      icon: '💼',
+client/src/components/AI/AIPromptEditor.jsx:33:      icon: '📚',
+client/src/components/AI/AIPromptEditor.jsx:38:      icon: '✍️',
+client/src/components/AI/AIPromptEditor.jsx:55:          📋 {showTemplates ? 'Hide Templates' : 'Show Prompt Templates'}
+client/src/components/AI/AIPromptEditor.jsx:97:            💡 The system prompt defines the AI's personality and behavior
+client/src/components/AI/AIPromptEditor.jsx:107:        <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for good prompts:</h4>
+client/src/components/AI/AIProviderSelector.jsx:30:                    {provider.id === 'openai' && '🤖 '}
+client/src/components/AI/AIProviderSelector.jsx:31:                    {provider.id === 'claude' && '🧠 '}
+client/src/components/AI/AIUsageChart.jsx:50:        <div className="text-4xl mb-4 animate-pulse">📊</div>
+client/src/components/AI/AIUsageChart.jsx:59:        ⚠️ {error}
+client/src/components/AI/AIUsageChart.jsx:111:            ✅ {summary.successfulRequests} success · ❌ {summary.failedRequests} failed
+client/src/components/AI/AIUsageChart.jsx:121:            📥 {summary.totalPromptTokens.toLocaleString()} in · 📤 {summary.totalCompletionTokens.toLocaleString()} out
+client/src/components/AI/AIUsageChart.jsx:131:            💰 ${(summary.totalCost / Math.max(summary.totalRequests, 1)).toFixed(6)} per request
+client/src/components/AI/AIUsageChart.jsx:141:            ⏱️ Average time per request
+client/src/components/AI/AIUsageChart.jsx:219:          <div className="text-4xl mb-4">📊</div>
+client/src/components/AI/FlowTemplateSelector.jsx:6:  support: '🎧',
+client/src/components/AI/FlowTemplateSelector.jsx:7:  sales: '💼',
+client/src/components/AI/FlowTemplateSelector.jsx:8:  scheduling: '📅',
+client/src/components/AI/FlowTemplateSelector.jsx:9:  ecommerce: '🛒',
+client/src/components/AI/FlowTemplateSelector.jsx:10:  feedback: '⭐',
+client/src/components/AI/FlowTemplateSelector.jsx:11:  default: '🤖'
+client/src/components/AI/FlowTemplateSelector.jsx:169:            <div style={{ fontSize: '24px', marginBottom: '4px' }}>📊</div>
+client/src/components/AI/FlowTemplateSelector.jsx:195:            <div style={{ fontSize: '24px', marginBottom: '4px' }}>🔗</div>
+client/src/components/AI/FlowTemplateSelector.jsx:377:          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+client/src/components/AI/FlowTemplateSelector.jsx:494:                <span>📊 {template.estimatedNodes} nodes</span>
+client/src/components/AI/FlowTemplateSelector.jsx:495:                <span style={{ textTransform: 'capitalize' }}>📁 {template.category}</span>
+client/src/components/AI/GeneratedFlowPreview.jsx:4:  start: '▶️',
+client/src/components/AI/GeneratedFlowPreview.jsx:5:  message: '💬',
+client/src/components/AI/GeneratedFlowPreview.jsx:7:  input: '📝',
+client/src/components/AI/GeneratedFlowPreview.jsx:8:  menu: '📋',
+client/src/components/AI/GeneratedFlowPreview.jsx:9:  condition: '🔀',
+client/src/components/AI/GeneratedFlowPreview.jsx:11:  api_call: '🔌',
+client/src/components/AI/GeneratedFlowPreview.jsx:12:  set_variable: '📊',
+client/src/components/AI/GeneratedFlowPreview.jsx:13:  delay: '⏱️',
+client/src/components/AI/GeneratedFlowPreview.jsx:14:  email: '📧',
+client/src/components/AI/GeneratedFlowPreview.jsx:15:  webhook: '🔗',
+client/src/components/AI/GeneratedFlowPreview.jsx:16:  ai_response: '🤖',
+client/src/components/AI/GeneratedFlowPreview.jsx:17:  goto: '↩️',
+client/src/components/AI/GeneratedFlowPreview.jsx:18:  end: '🏁'
+client/src/components/AI/GeneratedFlowPreview.jsx:139:            {viewMode === 'list' ? '📊 Visual' : '📋 List'}
+client/src/components/AI/GeneratedFlowPreview.jsx:238:                      {NODE_TYPE_ICONS[node.type] || '📦'}
+client/src/components/AI/GeneratedFlowPreview.jsx:431:                    <span>{NODE_TYPE_ICONS[node.type] || '📦'}</span>
+client/src/components/autonomous/AutonomousAgentCard.jsx:28:          <span>🤖</span>
+client/src/components/autonomous/AutonomousAgentCard.jsx:95:          📋 Tasks
+client/src/components/autonomous/AutonomousAgentCard.jsx:98:          ✏️
+client/src/components/autonomous/AutonomousAgentCard.jsx:101:          🗑️
+client/src/components/autonomous/TaskList.jsx:4:  pending: { bg: '#fff3cd', color: '#856404', icon: '⏳' },
+client/src/components/autonomous/TaskList.jsx:5:  running: { bg: '#cce5ff', color: '#004085', icon: '🔄' },
+client/src/components/autonomous/TaskList.jsx:6:  completed: { bg: '#d4edda', color: '#155724', icon: '✅' },
+client/src/components/autonomous/TaskList.jsx:51:            <span className="empty-icon">📋</span>
+client/src/components/autonomous/TaskList.jsx:109:                    📊 {task.completed_steps || 0}/{task.total_steps || 0} steps
+client/src/components/autonomous/TaskList.jsx:112:                    🕐 {formatDate(task.created_at)}
+client/src/components/BottomNavBar.jsx:17:      icon: '🏠',
+client/src/components/BottomNavBar.jsx:23:      icon: '🤖',
+client/src/components/BottomNavBar.jsx:36:      icon: '📊',
+client/src/components/BottomNavBar.jsx:42:      icon: '👤',
+client/src/components/Breadcrumb.jsx:18:      { label: t('breadcrumb.dashboard', 'Dashboard'), path: '/dashboard', icon: '🏠' }
+client/src/components/Breadcrumb.jsx:23:      'mybots': { label: t('breadcrumb.myBots', 'My Bots'), icon: '🤖' },
+client/src/components/Breadcrumb.jsx:24:      'my-bots': { label: t('breadcrumb.myBots', 'My Bots'), icon: '🤖' },
+client/src/components/Breadcrumb.jsx:25:      'bots': { label: t('breadcrumb.bots', 'Bots'), icon: '🤖' },
+client/src/components/Breadcrumb.jsx:27:      'edit': { label: t('breadcrumb.edit', 'Edit'), icon: '✏️' },
+client/src/components/Breadcrumb.jsx:28:      'flow': { label: t('breadcrumb.flowBuilder', 'Flow Builder'), icon: '🔀' },
+client/src/components/Breadcrumb.jsx:29:      'ai-config': { label: t('breadcrumb.aiConfig', 'AI Configuration'), icon: '🧠' },
+client/src/components/Breadcrumb.jsx:30:      'tools': { label: t('breadcrumb.tools', 'Tools'), icon: '🔧' },
+client/src/components/Breadcrumb.jsx:31:      'agents': { label: t('breadcrumb.agents', 'Agents'), icon: '🤖' },
+client/src/components/Breadcrumb.jsx:32:      'workflows': { label: t('breadcrumb.workflows', 'Workflows'), icon: '🔄' },
+client/src/components/Breadcrumb.jsx:33:      'executions': { label: t('breadcrumb.executions', 'Executions'), icon: '📋' },
+client/src/components/Breadcrumb.jsx:34:      'orchestrations': { label: t('breadcrumb.orchestrations', 'Orchestrations'), icon: '🔀' },
+client/src/components/Breadcrumb.jsx:35:      'intents': { label: t('breadcrumb.intents', 'Intents'), icon: '🎯' },
+client/src/components/Breadcrumb.jsx:36:      'widget': { label: t('breadcrumb.widget', 'Widget Settings'), icon: '🎨' },
+client/src/components/Breadcrumb.jsx:37:      'messages': { label: t('breadcrumb.messages', 'Messages'), icon: '💬' },
+client/src/components/Breadcrumb.jsx:38:      'knowledge': { label: t('breadcrumb.knowledge', 'Knowledge Base'), icon: '🧠' },
+client/src/components/Breadcrumb.jsx:39:      'channels': { label: t('breadcrumb.channels', 'Channels'), icon: '📱' },
+client/src/components/Breadcrumb.jsx:40:      'ai-flow': { label: t('breadcrumb.aiFlow', 'AI Flow Studio'), icon: '🤖' },
+client/src/components/Breadcrumb.jsx:41:      'agent-studio': { label: t('breadcrumb.agentStudio', 'Agent Studio'), icon: '🎯' },
+client/src/components/Breadcrumb.jsx:42:      'autonomous-agents': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), icon: '🦾' },
+client/src/components/Breadcrumb.jsx:43:      'autonomous': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), icon: '🦾' },
+client/src/components/Breadcrumb.jsx:44:      'tasks': { label: t('breadcrumb.tasks', 'Tasks'), icon: '📋' },
+client/src/components/Breadcrumb.jsx:45:      'work-clone': { label: t('breadcrumb.workClone', 'Work Clone'), icon: '👤' },
+client/src/components/Breadcrumb.jsx:46:      'clone-training': { label: t('breadcrumb.training', 'Training'), icon: '📚' },
+client/src/components/Breadcrumb.jsx:47:      'clone-settings': { label: t('breadcrumb.settings', 'Settings'), icon: '⚙️' },
+client/src/components/Breadcrumb.jsx:48:      'voice-bots': { label: t('breadcrumb.voiceBots', 'Voice Bots'), icon: '📞' },
+client/src/components/Breadcrumb.jsx:49:      'call-history': { label: t('breadcrumb.callHistory', 'Call History'), icon: '📋' },
+client/src/components/Breadcrumb.jsx:50:      'voice-to-bot': { label: t('breadcrumb.voiceToBot', 'Voice to Bot'), icon: '🎙️' },
+client/src/components/Breadcrumb.jsx:51:      'fine-tuning': { label: t('breadcrumb.fineTuning', 'Fine Tuning'), icon: '🧠' },
+client/src/components/Breadcrumb.jsx:52:      'billing': { label: t('breadcrumb.billing', 'Billing'), icon: '💳' },
+client/src/components/Breadcrumb.jsx:53:      'api-tokens': { label: t('breadcrumb.apiTokens', 'API Tokens'), icon: '🔑' },
+client/src/components/Breadcrumb.jsx:54:      'webhooks': { label: t('breadcrumb.webhooks', 'Webhooks'), icon: '🔗' },
+client/src/components/Breadcrumb.jsx:55:      'usage': { label: t('breadcrumb.usage', 'Usage'), icon: '📊' },
+client/src/components/Breadcrumb.jsx:56:      'settings': { label: t('breadcrumb.settings', 'Settings'), icon: '⚙️' },
+client/src/components/Breadcrumb.jsx:57:      'security': { label: t('breadcrumb.security', 'Security'), icon: '🔐' },
+client/src/components/Breadcrumb.jsx:58:      'sso': { label: t('breadcrumb.sso', 'SSO'), icon: '🛡️' },
+client/src/components/Breadcrumb.jsx:59:      'team': { label: t('breadcrumb.team', 'Team'), icon: '👥' },
+client/src/components/Breadcrumb.jsx:60:      'organizations': { label: t('breadcrumb.organization', 'Organization'), icon: '🏢' },
+client/src/components/Breadcrumb.jsx:61:      'recovery': { label: t('breadcrumb.recovery', 'Recovery'), icon: '📈' },
+client/src/components/Breadcrumb.jsx:62:      'campaigns': { label: t('breadcrumb.campaigns', 'Campaigns'), icon: '🎯' },
+client/src/components/Breadcrumb.jsx:63:      'carts': { label: t('breadcrumb.carts', 'Abandoned Carts'), icon: '🛒' },
+client/src/components/Breadcrumb.jsx:64:      'customers': { label: t('breadcrumb.customers', 'Customers'), icon: '❤️' },
+client/src/components/Breadcrumb.jsx:65:      'admin': { label: t('breadcrumb.admin', 'Admin'), icon: '👔' },
+client/src/components/Breadcrumb.jsx:66:      'audit-logs': { label: t('breadcrumb.auditLogs', 'Audit Logs'), icon: '📋' },
+client/src/components/Breadcrumb.jsx:67:      'health': { label: t('breadcrumb.health', 'System Health'), icon: '🔧' },
+client/src/components/Breadcrumb.jsx:68:      'whitelabel': { label: t('breadcrumb.whitelabel', 'White Label'), icon: '🎨' },
+client/src/components/Breadcrumb.jsx:69:      'rate-limiting': { label: t('breadcrumb.rateLimiting', 'Rate Limiting'), icon: '🛡️' },
+client/src/components/Breadcrumb.jsx:70:      'roles': { label: t('breadcrumb.roles', 'Roles'), icon: '👔' },
+client/src/components/Breadcrumb.jsx:71:      'marketplace': { label: t('breadcrumb.marketplace', 'Marketplace'), icon: '🧩' },
+client/src/components/Breadcrumb.jsx:72:      'integrations': { label: t('breadcrumb.integrations', 'Integrations'), icon: '🔌' },
+client/src/components/Breadcrumb.jsx:73:      'analytics': { label: t('breadcrumb.analytics', 'Analytics'), icon: '📊' },
+client/src/components/dashboard/AgentStatsWidget.jsx:144:          <div className="stat-icon">🎯</div>
+client/src/components/dashboard/AgentStatsWidget.jsx:153:          <div className="stat-icon">🔄</div>
+client/src/components/dashboard/AgentStatsWidget.jsx:162:          <div className="stat-icon">📊</div>
+client/src/components/dashboard/AgentStatsWidget.jsx:173:          <div className="stat-icon">🔤</div>
+client/src/components/dashboard/AgentStatsWidget.jsx:205:          <span className="link-icon">🎯</span>
+client/src/components/dashboard/AgentStatsWidget.jsx:209:          <span className="link-icon">🔄</span>
+client/src/components/dashboard/AgentStatsWidget.jsx:213:          <span className="link-icon">📋</span>
+client/src/components/debug/DebugPanel.jsx:78:    { id: 'execution', label: 'Execution', icon: '▶' },
+client/src/components/debug/DebugPanel.jsx:79:    { id: 'inspector', label: 'Inspector', icon: '🔍' },
+client/src/components/debug/DebugPanel.jsx:80:    { id: 'variables', label: 'Variables', icon: '📦' },
+client/src/components/debug/DebugPanel.jsx:81:    { id: 'errors', label: 'Errors', icon: '⚠', count: errors.length + warnings.length }
+client/src/components/debug/DebugPanel.jsx:92:          <span style={{ marginRight: '8px' }}>🐛</span>
+client/src/components/debug/DebugPanel.jsx:110:          <span style={styles.debugIcon}>🐛</span>
+client/src/components/debug/DebugPanel.jsx:125:            🗑
+client/src/components/debug/DebugPanel.jsx:135:            📌
+client/src/components/debug/ErrorLog.jsx:76:          icon: '⚠',
+client/src/components/debug/ErrorLog.jsx:83:          icon: 'ℹ',
+client/src/components/debug/ErrorLog.jsx:152:        <span style={styles.searchIcon}>🔍</span>
+client/src/components/debug/ErrorLog.jsx:174:            {filter === 'errors' ? '✓' : filter === 'warnings' ? '👍' : '📝'}
+client/src/components/debug/ErrorLog.jsx:229:                          📍 {entry.nodeId}
+client/src/components/debug/ErrorLog.jsx:246:                      📋
+client/src/components/debug/ErrorLog.jsx:254:                        {isExpanded ? '▼' : '▶'}
+client/src/components/debug/ExecutionPath.jsx:14:      case 'start': return '▶';
+client/src/components/debug/ExecutionPath.jsx:15:      case 'end': return '⏹';
+client/src/components/debug/ExecutionPath.jsx:16:      case 'text': return '💬';
+client/src/components/debug/ExecutionPath.jsx:19:      case 'agent': return '🤖';
+client/src/components/debug/ExecutionPath.jsx:20:      case 'api': return '🔌';
+client/src/components/debug/ExecutionPath.jsx:23:      case 'loop': return '🔄';
+client/src/components/debug/ExecutionPath.jsx:34:        return { status: 'running', color: '#f59e0b', icon: '⏳' };
+client/src/components/debug/ExecutionPath.jsx:55:        <div style={styles.emptyIcon}>🛤</div>
+client/src/components/debug/ExecutionPath.jsx:146:                    <span style={styles.spinningIcon}>⏳</span>
+client/src/components/debug/ExecutionPath.jsx:174:                        ⏱ {formatDuration(output.duration)}
+client/src/components/debug/ExecutionPath.jsx:198:                      ⚠ {output.error.substring(0, 50)}...
+client/src/components/debug/NodeInspector.jsx:42:      case 'running': return '⏳';
+client/src/components/debug/NodeInspector.jsx:52:      case 'start': return '▶';
+client/src/components/debug/NodeInspector.jsx:53:      case 'end': return '⏹';
+client/src/components/debug/NodeInspector.jsx:54:      case 'text': return '💬';
+client/src/components/debug/NodeInspector.jsx:57:      case 'agent': return '🤖';
+client/src/components/debug/NodeInspector.jsx:58:      case 'api': return '🔌';
+client/src/components/debug/NodeInspector.jsx:61:      case 'loop': return '🔄';
+client/src/components/debug/NodeInspector.jsx:69:        <div style={styles.emptyIcon}>🔍</div>
+client/src/components/debug/NodeInspector.jsx:123:          <span style={styles.durationIcon}>⏱</span>
+client/src/components/debug/NodeInspector.jsx:133:          icon="ℹ"
+client/src/components/debug/NodeInspector.jsx:164:          icon="📥"
+client/src/components/debug/NodeInspector.jsx:180:          icon="📤"
+client/src/components/debug/NodeInspector.jsx:196:          icon="⚙"
+client/src/components/debug/VariablesViewer.jsx:104:          <span style={styles.searchIcon}>🔍</span>
+client/src/components/debug/VariablesViewer.jsx:147:          <div style={styles.emptyIcon}>📦</div>
+client/src/components/debug/VariablesViewer.jsx:173:                      {isExpanded ? '▼' : '▶'}
+client/src/components/debug/VariablesViewer.jsx:191:                    📋
+client/src/components/execution/AgentMessageLog.jsx:63:            <span className="empty-icon">💬</span>
+client/src/components/execution/ExecutionMonitor.jsx:129:                ▶️ Start
+client/src/components/execution/ExecutionMonitor.jsx:135:                  ⏸️ Pause
+client/src/components/execution/ExecutionMonitor.jsx:138:                  ⏹️ Stop
+client/src/components/execution/ExecutionMonitor.jsx:145:                  ▶️ Resume
+client/src/components/execution/ExecutionMonitor.jsx:148:                  ⏹️ Stop
+client/src/components/execution/ExecutionMonitor.jsx:158:          ⚠️ {error}
+client/src/components/execution/ExecutionStats.jsx:44:          <div className="stat-icon">⏱️</div>
+client/src/components/execution/ExecutionStats.jsx:52:          <div className="stat-icon">🔤</div>
+client/src/components/execution/ExecutionStats.jsx:60:          <div className="stat-icon">💰</div>
+client/src/components/execution/ExecutionStats.jsx:68:          <div className="stat-icon">📊</div>
+client/src/components/execution/ExecutionTimeline.jsx:6:      case 'pending': return '⏳';
+client/src/components/execution/ExecutionTimeline.jsx:7:      case 'running': return '🔄';
+client/src/components/execution/ExecutionTimeline.jsx:8:      case 'completed': return '✅';
+client/src/components/execution/LiveAgentView.jsx:18:      orchestrator: '🎯',
+client/src/components/execution/LiveAgentView.jsx:19:      researcher: '🔍',
+client/src/components/execution/LiveAgentView.jsx:20:      writer: '✍️',
+client/src/components/execution/LiveAgentView.jsx:21:      analyzer: '📊',
+client/src/components/execution/LiveAgentView.jsx:22:      reviewer: '✅',
+client/src/components/execution/LiveAgentView.jsx:23:      router: '🔀',
+client/src/components/execution/LiveAgentView.jsx:24:      custom: '⚙️'
+client/src/components/execution/LiveAgentView.jsx:26:    return icons[role?.toLowerCase()] || '🤖';
+client/src/components/execution/LiveAgentView.jsx:33:          <span className="idle-icon">🤖</span>
+client/src/components/execution/LiveAgentView.jsx:93:            <h4>📥 Input</h4>
+client/src/components/execution/LiveAgentView.jsx:104:            <h4>📤 Output (streaming)</h4>
+client/src/components/execution/StepDetailPanel.jsx:86:              <span className="error-icon">⚠️</span>
+client/src/components/execution/StepDetailPanel.jsx:98:            {showRawJson ? '📄 Hide Raw JSON' : '📄 Show Raw JSON'}
+client/src/components/FeedbackModal.jsx:35:    { value: 'bug', label: t('feedback.categories.bug', '🐛 Bug Report'), emoji: '🐛' },
+client/src/components/FeedbackModal.jsx:36:    { value: 'feature', label: t('feedback.categories.feature', '✨ Feature Request'), emoji: '✨' },
+client/src/components/FeedbackModal.jsx:38:    { value: 'suggestion', label: t('feedback.categories.suggestion', '💡 Suggestion'), emoji: '💡' },
+client/src/components/FeedbackModal.jsx:39:    { value: 'other', label: t('feedback.categories.other', '📝 Other'), emoji: '📝' }
+client/src/components/FeedbackModal.jsx:155:              <span>💬</span>
+client/src/components/FeedbackModal.jsx:177:              <span className="text-2xl">✅</span>
+client/src/components/FeedbackModal.jsx:257:                <span className="text-lg">⚠️</span>
+client/src/components/FeedbackModal.jsx:287:                    <span>📤</span>
+client/src/components/FlowToolbox.jsx:9:      icon: '▶️',
+client/src/components/FlowToolbox.jsx:16:      icon: '💬',
+client/src/components/FlowToolbox.jsx:30:      icon: '🔀',
+client/src/components/FlowToolbox.jsx:37:      icon: '⏹️',
+client/src/components/FlowToolbox.jsx:93:              <span>💾</span>
+client/src/components/FlowToolbox.jsx:103:          <span>📥</span>
+client/src/components/FlowToolbox.jsx:111:          <span>🗑️</span>
+client/src/components/FlowToolbox.jsx:118:        <h4 className="text-xs font-semibold text-purple-800 mb-1">💡 Tips</h4>
+client/src/components/FlowToolbox.jsx:122:          <li>• Click ✏️ to edit node</li>
+client/src/components/GlobalSearch.jsx:24:    { name: t('search.dashboard', 'Dashboard'), path: '/dashboard', icon: '🏠', keywords: ['home', 'ana', 'panel'] },
+client/src/components/GlobalSearch.jsx:25:    { name: t('search.myBots', 'My Bots'), path: '/mybots', icon: '🤖', keywords: ['bots', 'botlar'] },
+client/src/components/GlobalSearch.jsx:27:    { name: t('search.aiFlow', 'AI Flow Studio'), path: '/ai-flow', icon: '🤖', keywords: ['flow', 'studio', 'ai'] },
+client/src/components/GlobalSearch.jsx:28:    { name: t('search.agentStudio', 'Agent Studio'), path: '/agent-studio', icon: '🎯', keywords: ['agent', 'studio'] },
+client/src/components/GlobalSearch.jsx:29:    { name: t('search.autonomousAgents', 'Autonomous Agents'), path: '/autonomous-agents', icon: '🦾', keywords: ['autonomous', 'auto'] },
+client/src/components/GlobalSearch.jsx:30:    { name: t('search.workflows', 'Workflows'), path: '/workflows', icon: '🔄', keywords: ['workflow', 'axin'] },
+client/src/components/GlobalSearch.jsx:31:    { name: t('search.knowledge', 'Knowledge Base'), path: '/knowledge', icon: '🧠', keywords: ['knowledge', 'bilik'] },
+client/src/components/GlobalSearch.jsx:32:    { name: t('search.channels', 'Channels'), path: '/channels', icon: '📱', keywords: ['channel', 'kanal'] },
+client/src/components/GlobalSearch.jsx:33:    { name: t('search.integrations', 'Integrations'), path: '/integrations', icon: '🔌', keywords: ['integration', 'inteqrasiya'] },
+client/src/components/GlobalSearch.jsx:34:    { name: t('search.voiceBots', 'Voice Bots'), path: '/voice-bots', icon: '📞', keywords: ['voice', 'ses'] },
+client/src/components/GlobalSearch.jsx:35:    { name: t('search.callHistory', 'Call History'), path: '/call-history', icon: '📋', keywords: ['call', 'zeng'] },
+client/src/components/GlobalSearch.jsx:36:    { name: t('search.workClone', 'Work Clone'), path: '/work-clone', icon: '👤', keywords: ['clone', 'klon'] },
+client/src/components/GlobalSearch.jsx:37:    { name: t('search.voiceToBot', 'Voice to Bot'), path: '/voice-to-bot', icon: '🎙️', keywords: ['voice', 'ses'] },
+client/src/components/GlobalSearch.jsx:38:    { name: t('search.fineTuning', 'Fine Tuning'), path: '/fine-tuning', icon: '🧠', keywords: ['fine', 'tuning'] },
+client/src/components/GlobalSearch.jsx:39:    { name: t('search.marketplace', 'Marketplace'), path: '/marketplace', icon: '🧩', keywords: ['market', 'bazar'] },
+client/src/components/GlobalSearch.jsx:40:    { name: t('search.billing', 'Billing'), path: '/billing', icon: '💳', keywords: ['billing', 'odenis', 'payment'] },
+client/src/components/GlobalSearch.jsx:41:    { name: t('search.apiTokens', 'API Tokens'), path: '/api-tokens', icon: '🔑', keywords: ['api', 'token', 'key'] },
+client/src/components/GlobalSearch.jsx:42:    { name: t('search.webhooks', 'Webhooks'), path: '/webhooks', icon: '🔗', keywords: ['webhook', 'hook'] },
+client/src/components/GlobalSearch.jsx:43:    { name: t('search.usage', 'Usage'), path: '/usage', icon: '📊', keywords: ['usage', 'istifade'] },
+client/src/components/GlobalSearch.jsx:44:    { name: t('search.settings', 'Settings'), path: '/settings', icon: '⚙️', keywords: ['settings', 'ayarlar'] },
+client/src/components/GlobalSearch.jsx:45:    { name: t('search.security', 'Security'), path: '/settings/security', icon: '🔐', keywords: ['security', 'tehlukesizlik'] },
+client/src/components/GlobalSearch.jsx:46:    { name: t('search.sso', 'Enterprise SSO'), path: '/settings/sso', icon: '🛡️', keywords: ['sso', 'enterprise'] },
+client/src/components/GlobalSearch.jsx:47:    { name: t('search.team', 'Team'), path: '/team', icon: '👥', keywords: ['team', 'komanda'] },
+client/src/components/GlobalSearch.jsx:48:    { name: t('search.organization', 'Organization'), path: '/organizations/settings', icon: '🏢', keywords: ['org', 'teskilat'] },
+client/src/components/GlobalSearch.jsx:49:    { name: t('search.recovery', 'Recovery Dashboard'), path: '/recovery', icon: '📈', keywords: ['recovery', 'berpa'] },
+client/src/components/GlobalSearch.jsx:50:    { name: t('search.analytics', 'Analytics'), path: '/analytics', icon: '📊', keywords: ['analytics', 'analitika'] },
+client/src/components/GlobalSearch.jsx:51:    { name: t('search.adminDashboard', 'Admin Dashboard'), path: '/admin/dashboard', icon: '👔', keywords: ['admin', 'idareetme'] },
+client/src/components/GlobalSearch.jsx:254:                      <span className="text-xl">🤖</span>
+client/src/components/GlobalSearch.jsx:301:                  <div className="text-4xl mb-2">🔍</div>
+client/src/components/GlobalSearch.jsx:309:                  <div className="text-4xl mb-2">🔍</div>
+client/src/components/InviteMemberModal.jsx:147:                      🛡️ ADMIN
+client/src/components/InviteMemberModal.jsx:175:                      ✏️ MEMBER
+client/src/components/InviteMemberModal.jsx:203:                      👁️ VIEWER
+client/src/components/knowledge/DocumentList.jsx:6:      'txt': '📄',
+client/src/components/knowledge/DocumentList.jsx:7:      'text': '📄',
+client/src/components/knowledge/DocumentList.jsx:8:      'md': '📝',
+client/src/components/knowledge/DocumentList.jsx:9:      'markdown': '📝',
+client/src/components/knowledge/DocumentList.jsx:10:      'pdf': '📕',
+client/src/components/knowledge/DocumentList.jsx:11:      'docx': '📘',
+client/src/components/knowledge/DocumentList.jsx:12:      'doc': '📘',
+client/src/components/knowledge/DocumentList.jsx:13:      'url': '🌐',
+client/src/components/knowledge/DocumentList.jsx:14:      'web': '🌐'
+client/src/components/knowledge/DocumentList.jsx:16:    return icons[type?.toLowerCase()] || '📄';
+client/src/components/knowledge/DocumentList.jsx:49:        <span className="empty-icon">📂</span>
+client/src/components/knowledge/DocumentList.jsx:80:          🔄
+client/src/components/knowledge/DocumentList.jsx:121:                  🗑️
+client/src/components/knowledge/DocumentUpload.jsx:196:              <span className="drop-icon">📄</span>
+client/src/components/knowledge/KBAssignModal.jsx:89:      'orchestrator': '🎯',
+client/src/components/knowledge/KBAssignModal.jsx:90:      'researcher': '🔍',
+client/src/components/knowledge/KBAssignModal.jsx:91:      'writer': '✍️',
+client/src/components/knowledge/KBAssignModal.jsx:92:      'analyzer': '📊',
+client/src/components/knowledge/KBAssignModal.jsx:93:      'reviewer': '✅',
+client/src/components/knowledge/KBAssignModal.jsx:94:      'router': '🔀',
+client/src/components/knowledge/KBAssignModal.jsx:95:      'custom': '🤖'
+client/src/components/knowledge/KBAssignModal.jsx:97:    return icons[role] || '🤖';
+client/src/components/knowledge/KBAssignModal.jsx:108:        <span className="kb-icon">🧠</span>
+client/src/components/knowledge/KBCard.jsx:19:        <span className="kb-icon">🧠</span>
+client/src/components/knowledge/KBCard.jsx:42:          🔗
+client/src/components/knowledge/KBCard.jsx:52:          🗑️
+client/src/components/knowledge/SearchTest.jsx:110:                  📄 {result.document_name}
+client/src/components/knowledge/SearchTest.jsx:135:          <span className="no-results-icon">🔍</span>
+client/src/components/Layout.jsx:26:    { code: 'en', flag: '🇬🇧', name: 'English' },
+client/src/components/Layout.jsx:27:    { code: 'tr', flag: '🇹🇷', name: 'Türkçe' },
+client/src/components/Layout.jsx:28:    { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+client/src/components/Layout.jsx:29:    { code: 'az', flag: '🇦🇿', name: 'Azərbaycan' }
+client/src/components/Layout.jsx:170:                    {user?.name?.charAt(0)?.toUpperCase() || '👤'}
+client/src/components/Layout.jsx:195:                    ⚙️ {t('sidebar.settings', 'Settings')}
+client/src/components/Layout.jsx:201:                    💳 {t('sidebar.billing', 'Billing')}
+client/src/components/Layout.jsx:208:                    🚪 {t('sidebar.logout', 'Logout')}
+client/src/components/MetricsDashboard.jsx:251:      icon: '📉'
+client/src/components/MetricsDashboard.jsx:257:      icon: '🎯'
+client/src/components/MetricsDashboard.jsx:263:      icon: '📊'
+client/src/components/MetricsDashboard.jsx:269:      icon: '⏱️'
+client/src/components/MetricsDashboard.jsx:275:      icon: '💰'
+client/src/components/MetricsDashboard.jsx:281:      icon: '🏆'
+client/src/components/nodes/ConditionNode.jsx:16:            <div className="text-xl">🔀</div>
+client/src/components/nodes/ConditionNode.jsx:24:              ✏️
+client/src/components/nodes/EndNode.jsx:14:        <div className="text-2xl">⏹️</div>
+client/src/components/nodes/QuestionNode.jsx:24:              ✏️
+client/src/components/nodes/StartNode.jsx:8:        <div className="text-2xl">▶️</div>
+client/src/components/nodes/TextNode.jsx:17:            <div className="text-xl">💬</div>
+client/src/components/nodes/TextNode.jsx:25:              ✏️
+client/src/components/notifications/NotificationCenter.jsx:8:  warning: '⚠',
+client/src/components/notifications/NotificationCenter.jsx:9:  info: 'ℹ'
+client/src/components/notifications/NotificationCenter.jsx:112:        <span className="text-xl" aria-hidden="true">🔔</span>
+client/src/components/notifications/NotificationCenter.jsx:168:                <div className="text-5xl mb-3 opacity-50">🔔</div>
+client/src/components/notifications/Toast.jsx:7:  warning: '⚠',
+client/src/components/notifications/Toast.jsx:8:  info: 'ℹ'
+client/src/components/orchestration/FlowConnector.jsx:4:  { value: 'on_complete', label: 'On Flow Complete', icon: '✅', description: 'Trigger when the source flow completes' },
+client/src/components/orchestration/FlowConnector.jsx:5:  { value: 'on_condition', label: 'On Condition', icon: '🔀', description: 'Trigger based on variable condition' },
+client/src/components/orchestration/FlowConnector.jsx:6:  { value: 'on_intent', label: 'On Intent', icon: '🎯', description: 'Trigger when specific intent is detected' },
+client/src/components/orchestration/FlowConnector.jsx:7:  { value: 'on_keyword', label: 'On Keyword', icon: '🔑', description: 'Trigger when keywords are found in user input' }
+client/src/components/orchestration/FlowConnector.jsx:38:            <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+client/src/components/orchestration/OrchestrationBuilder.jsx:95:              <div style={{ fontSize: 24, marginBottom: 4 }}>{isEntryFlow ? '🚀' : '📋'}</div>
+client/src/components/orchestration/OrchestrationBuilder.jsx:292:              <span>🔀</span>
+client/src/components/orchestration/OrchestrationBuilder.jsx:316:            <span>📊</span> Variables
+client/src/components/orchestration/OrchestrationBuilder.jsx:334:            <span>{isRunning ? '⏳' : '▶'}</span> {isRunning ? 'Running...' : 'Run Workflow'}
+client/src/components/orchestration/OrchestrationBuilder.jsx:420:            <span>🚀</span>
+client/src/components/orchestration/VariableManager.jsx:6:  { value: 'string', label: 'String', icon: '📝' },
+client/src/components/orchestration/VariableManager.jsx:7:  { value: 'number', label: 'Number', icon: '🔢' },
+client/src/components/orchestration/VariableManager.jsx:9:  { value: 'array', label: 'Array', icon: '📋' },
+client/src/components/orchestration/VariableManager.jsx:10:  { value: 'object', label: 'Object', icon: '📦' }
+client/src/components/orchestration/VariableManager.jsx:100:    return typeInfo?.icon || '📝';
+client/src/components/orchestration/VariableManager.jsx:128:              <span>📊</span> Shared Variables
+client/src/components/orchestration/VariableManager.jsx:303:            <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+client/src/components/OrganizationSwitcher.jsx:65:        return '👑';
+client/src/components/OrganizationSwitcher.jsx:67:        return '🛡️';
+client/src/components/OrganizationSwitcher.jsx:69:        return '✏️';
+client/src/components/OrganizationSwitcher.jsx:71:        return '👁️';
+client/src/components/OrganizationSwitcher.jsx:73:        return '👤';
+client/src/components/OrganizationSwitcher.jsx:89:            <span className="text-lg">🏢</span>
+client/src/components/OrganizationSwitcher.jsx:148:                    <span className="text-base">🏢</span>
+client/src/components/OrganizationSwitcher.jsx:176:                <span>⚙️</span>
+client/src/components/PermissionGuard.jsx:49:          ⚠️ You need {require} role or higher to access this feature. Your role: {userRole || 'none'}
+client/src/components/plugins/PluginAnalytics.jsx:163:          <span className="empty-icon">📊</span>
+client/src/components/plugins/PluginAnalytics.jsx:178:                    <span>🧩</span>
+client/src/components/plugins/PluginAnalytics.jsx:291:              <span>🧩</span>
+client/src/components/plugins/PluginAnalytics.jsx:329:            <span className="card-icon">⬇️</span>
+client/src/components/plugins/PluginAnalytics.jsx:343:            <span className="card-icon">📥</span>
+client/src/components/plugins/PluginAnalytics.jsx:357:            <span className="card-icon">💰</span>
+client/src/components/plugins/PluginAnalytics.jsx:370:            <span className="card-icon">⭐</span>
+client/src/components/plugins/PluginBuilder.jsx:405:                  <span className="pricing-icon">🆓</span>
+client/src/components/plugins/PluginBuilder.jsx:413:                  <span className="pricing-icon">💰</span>
+client/src/components/plugins/PluginCard.jsx:40:          <span className="default-icon">🧩</span>
+client/src/components/plugins/PluginDetails.jsx:93:              <span className="default-icon">🧩</span>
+client/src/components/plugins/PluginDetails.jsx:247:                      <span className="perm-icon">🔐</span>
+client/src/components/plugins/PluginFilters.jsx:17:        <span className="search-icon">🔍</span>
+client/src/components/plugins/PluginPurchase.jsx:90:            <span className="default-icon">🧩</span>
+client/src/components/plugins/PluginPurchase.jsx:113:          <span className="lock-icon">🔒</span>
+client/src/components/plugins/PluginUpload.jsx:252:                      <span className="file-icon">📦</span>
+client/src/components/plugins/PluginUpload.jsx:269:                      <span className="upload-icon">📤</span>
+client/src/components/plugins/PluginUpload.jsx:298:                        <span className="placeholder-icon">🖼️</span>
+client/src/components/plugins/PluginUpload.jsx:333:                        <span className="placeholder-icon">🖼️</span>
+client/src/components/plugins/PluginUpload.jsx:365:                      <span>🧩</span>
+client/src/components/team/ActivityLog.jsx:6:  team_member_added: { label: 'Member Added', icon: '👤', color: '#10b981' },
+client/src/components/team/ActivityLog.jsx:7:  team_member_updated: { label: 'Member Updated', icon: '✏️', color: '#3b82f6' },
+client/src/components/team/ActivityLog.jsx:8:  team_member_removed: { label: 'Member Removed', icon: '🚫', color: '#ef4444' },
+client/src/components/team/ActivityLog.jsx:9:  team_invitation_sent: { label: 'Invitation Sent', icon: '📧', color: '#8b5cf6' },
+client/src/components/team/ActivityLog.jsx:10:  team_invitation_accepted: { label: 'Invitation Accepted', icon: '✅', color: '#10b981' },
+client/src/components/team/ActivityLog.jsx:11:  role_created: { label: 'Role Created', icon: '🔐', color: '#3b82f6' },
+client/src/components/team/ActivityLog.jsx:12:  role_updated: { label: 'Role Updated', icon: '🔄', color: '#f59e0b' },
+client/src/components/team/ActivityLog.jsx:13:  role_deleted: { label: 'Role Deleted', icon: '🗑️', color: '#ef4444' },
+client/src/components/team/ActivityLog.jsx:14:  version_created: { label: 'Version Created', icon: '📝', color: '#3b82f6' },
+client/src/components/team/ActivityLog.jsx:16:  branch_created: { label: 'Branch Created', icon: '🌿', color: '#10b981' },
+client/src/components/team/ActivityLog.jsx:17:  branch_merged: { label: 'Branch Merged', icon: '🔀', color: '#8b5cf6' },
+client/src/components/team/ActivityLog.jsx:18:  branch_deleted: { label: 'Branch Deleted', icon: '✂️', color: '#ef4444' }
+client/src/components/team/ActivityLog.jsx:83:    return ACTION_LABELS[action] || { label: action, icon: '📋', color: '#6b7280' };
+client/src/components/team/ActivityLog.jsx:179:          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+client/src/components/team/InviteModal.jsx:105:            <div className="text-5xl mb-4">✉️</div>
+client/src/components/team/MemberList.jsx:79:        <div style={{ fontSize: '48px', marginBottom: '16px' }}>👥</div>
+client/src/components/team/RoleEditor.jsx:397:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔐</div>
+client/src/components/tools/ToolAssignModal.jsx:122:      'orchestrator': '🎯',
+client/src/components/tools/ToolAssignModal.jsx:123:      'researcher': '🔍',
+client/src/components/tools/ToolAssignModal.jsx:124:      'writer': '✍️',
+client/src/components/tools/ToolAssignModal.jsx:125:      'analyzer': '📊',
+client/src/components/tools/ToolAssignModal.jsx:126:      'reviewer': '✅',
+client/src/components/tools/ToolAssignModal.jsx:127:      'router': '🔀',
+client/src/components/tools/ToolAssignModal.jsx:128:      'custom': '🤖'
+client/src/components/tools/ToolAssignModal.jsx:130:    return icons[role] || '🤖';
+client/src/components/tools/ToolAssignModal.jsx:141:        <span className="tool-icon">🔧</span>
+client/src/components/tools/ToolCard.jsx:6:      'http_request': '🌐',
+client/src/components/tools/ToolCard.jsx:7:      'http': '🌐',
+client/src/components/tools/ToolCard.jsx:8:      'api': '🌐',
+client/src/components/tools/ToolCard.jsx:9:      'database_query': '🗄️',
+client/src/components/tools/ToolCard.jsx:10:      'database': '🗄️',
+client/src/components/tools/ToolCard.jsx:11:      'sql': '🗄️',
+client/src/components/tools/ToolCard.jsx:12:      'code_execution': '💻',
+client/src/components/tools/ToolCard.jsx:13:      'code': '💻',
+client/src/components/tools/ToolCard.jsx:14:      'javascript': '💻',
+client/src/components/tools/ToolCard.jsx:15:      'web_scraper': '🕷️',
+client/src/components/tools/ToolCard.jsx:16:      'scraper': '🕷️',
+client/src/components/tools/ToolCard.jsx:17:      'email': '📧',
+client/src/components/tools/ToolCard.jsx:18:      'smtp': '📧',
+client/src/components/tools/ToolCard.jsx:19:      'custom': '🔧'
+client/src/components/tools/ToolCard.jsx:21:    return icons[type] || '🔧';
+client/src/components/tools/ToolCard.jsx:89:            🤖 {tool.assignedAgentsCount} agent{tool.assignedAgentsCount !== 1 ? 's' : ''}
+client/src/components/tools/ToolCard.jsx:96:          ▶️ Test
+client/src/components/tools/ToolCard.jsx:99:          ✏️ Edit
+client/src/components/tools/ToolCard.jsx:103:            🔗 Assign
+client/src/components/tools/ToolCard.jsx:107:          🗑️
+client/src/components/tools/ToolForm.jsx:17:    { value: 'http_request', label: 'HTTP/API Request', icon: '🌐' },
+client/src/components/tools/ToolForm.jsx:18:    { value: 'database_query', label: 'Database Query', icon: '🗄️' },
+client/src/components/tools/ToolForm.jsx:19:    { value: 'code_execution', label: 'Code Execution', icon: '💻' },
+client/src/components/tools/ToolForm.jsx:20:    { value: 'web_scraper', label: 'Web Scraper', icon: '🕷️' },
+client/src/components/tools/ToolForm.jsx:21:    { value: 'email', label: 'Email (SMTP)', icon: '📧' }
+client/src/components/tools/ToolList.jsx:55:          <div className="empty-icon">🔧</div>
+client/src/components/tools/ToolTestPanel.jsx:119:              <>▶️ Run Test</>
+client/src/components/tools/ToolTestPanel.jsx:141:                    ⏱️ {result.duration_ms || 0}ms
+client/src/components/TrainingProgress.jsx:474:                            ⚠️ {t('trainingProgress.simulationMode', 'Simulation mode - OpenAI not configured')}
+client/src/components/UpgradeLimitModal.jsx:29:          <div className="text-5xl mb-3">🔒</div>
+client/src/components/UsageBar.jsx:62:          ⚠️ Approaching limit - consider upgrading
+client/src/components/version/BranchSelector.jsx:159:          <span style={{ fontSize: '16px' }}>🌿</span>
+client/src/components/version/BranchSelector.jsx:267:                    <span style={{ fontSize: '16px' }}>🌿</span>
+client/src/components/version/RestoreModal.jsx:154:          <span className="text-xl">⚠️</span>
+client/src/components/version/VersionHistory.jsx:101:        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+client/src/components/widget/ChatWidget.jsx:10:  botAvatar: '🤖',
+client/src/components/widget/ChatWidget.jsx:183:          content: `📎 ${file.name}`,
+client/src/components/widget/ChatWidget.jsx:411:              📎
+client/src/components/widget/ChatWidget.jsx:482:        {isOpen ? '✕' : '💬'}
+client/src/components/widget/WidgetCustomizer.jsx:35:    botAvatar: initialConfig.botAvatar || '🤖',
+client/src/components/widget/WidgetCustomizer.jsx:204:              {['🤖', '💬', '🎯', '⚡', '🌟', '🔮', '🚀', '💡'].map(emoji => (
+client/src/components/widget/WidgetCustomizer.jsx:321:                {copied ? '✓ Copied!' : '📋 Copy'}
+client/src/components/widget/WidgetCustomizer.jsx:368:              {showPreview ? '👁 Hide' : '👁 Show'}
+client/src/components/workflow/nodes/AgentNode.jsx:5:  orchestrator: '🎯',
+client/src/components/workflow/nodes/AgentNode.jsx:6:  researcher: '🔍',
+client/src/components/workflow/nodes/AgentNode.jsx:7:  writer: '✍️',
+client/src/components/workflow/nodes/AgentNode.jsx:8:  analyzer: '📊',
+client/src/components/workflow/nodes/AgentNode.jsx:9:  reviewer: '✅',
+client/src/components/workflow/nodes/AgentNode.jsx:10:  router: '🔀',
+client/src/components/workflow/nodes/AgentNode.jsx:11:  custom: '⚙️',
+client/src/components/workflow/nodes/AgentNode.jsx:12:  assistant: '💬'
+client/src/components/workflow/nodes/AgentNode.jsx:16:  const icon = roleIcons[data.role] || '🤖';
+client/src/components/workflow/nodes/EndNode.jsx:14:      <div className="node-icon">⏹</div>
+client/src/components/workflow/nodes/StartNode.jsx:7:      <div className="node-icon">▶</div>
+client/src/components/workflow/WorkflowConfigPanel.jsx:24:          <span className="empty-icon">👆</span>
+client/src/components/workflow/WorkflowSidebar.jsx:7:      { type: 'start', label: 'Start', icon: '▶', color: '#48bb78', description: 'Workflow entry point' }
+client/src/components/workflow/WorkflowSidebar.jsx:13:      { type: 'agent', label: 'Agent', icon: '🤖', color: '#667eea', description: 'AI agent execution' }
+client/src/components/workflow/WorkflowSidebar.jsx:26:      { type: 'end', label: 'End', icon: '⏹', color: '#f56565', description: 'Workflow exit point' }
+client/src/components/workflow/WorkflowSidebar.jsx:87:                    {agent.role === 'orchestrator' ? '🎯' :
+client/src/components/workflow/WorkflowSidebar.jsx:88:                     agent.role === 'researcher' ? '🔍' :
+client/src/components/workflow/WorkflowSidebar.jsx:89:                     agent.role === 'writer' ? '✍️' :
+client/src/components/workflow/WorkflowSidebar.jsx:90:                     agent.role === 'analyzer' ? '📊' :
+client/src/components/workflow/WorkflowSidebar.jsx:91:                     agent.role === 'reviewer' ? '✅' :
+client/src/components/workflow/WorkflowSidebar.jsx:92:                     agent.role === 'router' ? '🔀' : '🤖'}
+client/src/components/workflow/WorkflowToolbar.jsx:40:            ↩️
+client/src/components/workflow/WorkflowToolbar.jsx:49:            ↪️
+client/src/components/workflow/WorkflowToolbar.jsx:90:          🗑️ Clear
+client/src/components/workflow/WorkflowToolbar.jsx:102:          {isRunning ? '⏳ Running...' : '▶️ Run Test'}
+client/src/components/workflow/WorkflowToolbar.jsx:112:          {isSaving ? '💾 Saving...' : '💾 Save'}
+client/src/contexts/LanguageContext.jsx:32:    { code: 'tr', name: 'Türkçe', flag: '🇹🇷', isText: false },
+client/src/contexts/LanguageContext.jsx:33:    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿', isText: false },
+client/src/contexts/LanguageContext.jsx:34:    { code: 'ru', name: 'Русский', flag: '🇷🇺', isText: false }
+client/src/pages/AdminRateLimiting.jsx:147:            <span className="text-3xl">🛡️</span>
+client/src/pages/AdminRateLimiting.jsx:281:              <span className="text-3xl">🚫</span>
+client/src/pages/AdminRateLimiting.jsx:318:              <span className="text-5xl mb-4 block">⚠️</span>
+client/src/pages/AdminRateLimiting.jsx:331:              <span className="text-5xl mb-4 block">✅</span>
+client/src/pages/AdminRateLimiting.jsx:411:            <span className="text-2xl">💡</span>
+client/src/pages/AdminRoles.jsx:8:  { key: 'bots', icon: '🤖', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:9:  { key: 'flows', icon: '🔀', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:10:  { key: 'messages', icon: '💬', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:11:  { key: 'analytics', icon: '📊', actions: ['read', 'export'] },
+client/src/pages/AdminRoles.jsx:12:  { key: 'organization', icon: '🏢', actions: ['read', 'update', 'invite', 'remove_members'] },
+client/src/pages/AdminRoles.jsx:13:  { key: 'api_tokens', icon: '🔑', actions: ['create', 'read', 'delete'] },
+client/src/pages/AdminRoles.jsx:14:  { key: 'webhooks', icon: '🔗', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:15:  { key: 'knowledge_base', icon: '🧠', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:16:  { key: 'agents', icon: '🎯', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:17:  { key: 'workflows', icon: '🔄', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:18:  { key: 'channels', icon: '📱', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:19:  { key: 'voice_bots', icon: '📞', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:20:  { key: 'integrations', icon: '🔌', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:21:  { key: 'roles', icon: '👔', actions: ['create', 'read', 'update', 'delete'] },
+client/src/pages/AdminRoles.jsx:22:  { key: 'users', icon: '👤', actions: ['read', 'update', 'delete', 'assign_role'] }
+client/src/pages/AdminRoles.jsx:177:          <div className="text-4xl mb-4 animate-pulse">👔</div>
+client/src/pages/AdminRoles.jsx:198:              👔 {t('roles.title', 'Role Management')}
+client/src/pages/AdminRoles.jsx:292:            <div className="text-6xl mb-4">👔</div>
+client/src/pages/AdminStats.jsx:61:          <div className="animate-spin text-4xl mb-4">⏳</div>
+client/src/pages/AdminStats.jsx:72:      icon: '👥',
+client/src/pages/AdminStats.jsx:79:      icon: '🤖',
+client/src/pages/AdminStats.jsx:86:      icon: '💬',
+client/src/pages/AdminStats.jsx:93:      icon: '✨',
+client/src/pages/AdminStats.jsx:100:      icon: '💰',
+client/src/pages/AdminStats.jsx:107:      icon: '📊',
+client/src/pages/AdminStats.jsx:119:            📈 {t('admin.statistics')}
+client/src/pages/AdminStats.jsx:188:              ℹ️ {t('admin.systemInformation')}
+client/src/pages/AdminStats.jsx:225:            🔄 {t('admin.refreshStatistics')}
+client/src/pages/AgentBuilder.jsx:6:  { value: 'orchestrator', label: 'Orchestrator', icon: '🎯', description: 'Coordinates multiple agents' },
+client/src/pages/AgentBuilder.jsx:7:  { value: 'researcher', label: 'Researcher', icon: '🔍', description: 'Gathers and analyzes information' },
+client/src/pages/AgentBuilder.jsx:8:  { value: 'writer', label: 'Writer', icon: '✍️', description: 'Creates content and documents' },
+client/src/pages/AgentBuilder.jsx:9:  { value: 'analyzer', label: 'Analyzer', icon: '📊', description: 'Analyzes data and provides insights' },
+client/src/pages/AgentBuilder.jsx:10:  { value: 'reviewer', label: 'Reviewer', icon: '✅', description: 'Reviews and validates work' },
+client/src/pages/AgentBuilder.jsx:11:  { value: 'assistant', label: 'Assistant', icon: '💬', description: 'General purpose assistant' }
+client/src/pages/AgentBuilder.jsx:23:  { id: 'web_search', label: 'Web Search', icon: '🌐' },
+client/src/pages/AgentBuilder.jsx:24:  { id: 'analyze_text', label: 'Text Analysis', icon: '📝' },
+client/src/pages/AgentBuilder.jsx:25:  { id: 'format_data', label: 'Data Formatting', icon: '📋' },
+client/src/pages/AgentBuilder.jsx:26:  { id: 'calculate', label: 'Calculations', icon: '🔢' },
+client/src/pages/AgentBuilder.jsx:27:  { id: 'generate_list', label: 'List Generation', icon: '📑' },
+client/src/pages/AgentBuilder.jsx:28:  { id: 'save_note', label: 'Notes/Memory', icon: '💾' }
+client/src/pages/AgentBuilder.jsx:150:    { id: 'basics', label: t('agentBuilder.basics', 'Basics'), icon: '📝' },
+client/src/pages/AgentBuilder.jsx:151:    { id: 'role', label: t('agentBuilder.role', 'Role'), icon: '🎭' },
+client/src/pages/AgentBuilder.jsx:152:    { id: 'model', label: t('agentBuilder.model', 'Model'), icon: '🤖' },
+client/src/pages/AgentBuilder.jsx:154:    { id: 'review', label: t('agentBuilder.review', 'Review'), icon: '✅' }
+client/src/pages/AgentMonitor.jsx:158:                🤖
+client/src/pages/AgentMonitor.jsx:191:            { id: 'overview', label: 'Overview', icon: '📊' },
+client/src/pages/AgentMonitor.jsx:192:            { id: 'metrics', label: 'Metrics', icon: '📈' },
+client/src/pages/AgentMonitor.jsx:193:            { id: 'logs', label: 'Logs', icon: '📋' },
+client/src/pages/AgentMonitor.jsx:194:            { id: 'alerts', label: 'Alerts', icon: '⚠️' }
+client/src/pages/AgentMonitor.jsx:309:                    <span style={{ fontSize: '32px' }}>✅</span>
+client/src/pages/AgentMonitor.jsx:449:                <span style={{ fontSize: '48px' }}>✅</span>
+client/src/pages/AgentMonitor.jsx:463:                        {alert.severity === 'critical' ? '🔴' : alert.severity === 'warning' ? '🟠' : '🔵'}
+client/src/pages/AgentStudio.jsx:192:              <span style={{ fontSize: '32px' }}>🎯</span>
+client/src/pages/AgentStudio.jsx:212:                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+client/src/pages/AgentStudio.jsx:251:                    <span style={{ fontSize: '24px' }}>🤖</span>
+client/src/pages/AgentStudio.jsx:303:            🔧 {t('agentStudio.tools')}
+client/src/pages/AgentTasks.jsx:13:  think: '🧠',
+client/src/pages/AgentTasks.jsx:14:  plan: '📋',
+client/src/pages/AgentTasks.jsx:16:  complete: '✅'
+client/src/pages/AgentTasks.jsx:232:                🤖
+client/src/pages/AgentTasks.jsx:276:                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
+client/src/pages/AgentTasks.jsx:312:                    <span>📊 {task.completed_steps || 0}/{task.total_steps || 0}</span>
+client/src/pages/AgentTasks.jsx:313:                    <span>📅 {formatDate(task.created_at).split(',')[0]}</span>
+client/src/pages/AgentTasks.jsx:326:                <div style={{ fontSize: '48px', marginBottom: '12px' }}>👆</div>
+client/src/pages/AgentTasks.jsx:405:                              <span style={{ fontSize: '18px' }}>{stepIcons[step.action_type] || '⚙️'}</span>
+client/src/pages/AgentTasks.jsx:413:                                  ⏱️ {formatDuration(step.duration_ms)}
+client/src/pages/AgentTasks.jsx:456:                    ✅ {t('autonomous.result', 'Result')}
+client/src/pages/AgentTasks.jsx:569:                      <span>▶</span>
+client/src/pages/AgentTemplates.jsx:6:  research: '🔍',
+client/src/pages/AgentTemplates.jsx:7:  content: '✍️',
+client/src/pages/AgentTemplates.jsx:8:  data: '📊',
+client/src/pages/AgentTemplates.jsx:9:  automation: '⚙️',
+client/src/pages/AgentTemplates.jsx:10:  customer_service: '💬',
+client/src/pages/AgentTemplates.jsx:11:  development: '💻',
+client/src/pages/AgentTemplates.jsx:12:  marketing: '📱',
+client/src/pages/AgentTemplates.jsx:13:  analysis: '📈'
+client/src/pages/AgentTemplates.jsx:153:                <span style={{ fontSize: '32px' }}>📦</span>
+client/src/pages/AgentTemplates.jsx:176:              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px' }}>🔍</span>
+client/src/pages/AgentTemplates.jsx:209:              <span>📋</span>
+client/src/pages/AgentTemplates.jsx:234:                <span>{categoryIcons[category] || '📁'}</span>
+client/src/pages/AgentTemplates.jsx:250:                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+client/src/pages/AgentTemplates.jsx:275:                        <span style={{ fontSize: '40px' }}>{template.icon || categoryIcons[template.category] || '🤖'}</span>
+client/src/pages/AgentTemplates.jsx:380:                <span style={{ fontSize: '40px' }}>{selectedTemplate.icon || '🤖'}</span>
+client/src/pages/AIConfiguration.jsx:131:    { id: 'setup', label: 'Setup', icon: '⚙️' },
+client/src/pages/AIConfiguration.jsx:132:    { id: 'prompt', label: 'Prompt', icon: '💬' },
+client/src/pages/AIConfiguration.jsx:133:    { id: 'parameters', label: 'Parameters', icon: '🎚️' },
+client/src/pages/AIConfiguration.jsx:134:    { id: 'test', label: 'Test', icon: '🧪' }
+client/src/pages/AIConfiguration.jsx:217:        alert('✅ Connection successful! AI is configured and ready.');
+client/src/pages/AIConfiguration.jsx:331:          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+client/src/pages/AIConfiguration.jsx:361:            ✅ {success}
+client/src/pages/AIConfiguration.jsx:368:            ⚠️ {error}
+client/src/pages/AIConfiguration.jsx:458:                          <span>💰 {model.pricing}</span>
+client/src/pages/AIConfiguration.jsx:459:                          <span>📊 {model.maxTokens}</span>
+client/src/pages/AIConfiguration.jsx:479:                    💡 Provide your own API key or leave empty to use the platform key (if configured)
+client/src/pages/AIConfiguration.jsx:528:                    🧠 Link a Knowledge Base to enable RAG (Retrieval-Augmented Generation).
+client/src/pages/AIConfiguration.jsx:534:                        <span>✅</span>
+client/src/pages/AIConfiguration.jsx:552:                    📋 Show Prompt Templates
+client/src/pages/AIConfiguration.jsx:573:                    💡 The system prompt defines the AI's personality and behavior
+client/src/pages/AIConfiguration.jsx:579:                  <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for good prompts:</h4>
+client/src/pages/AIConfiguration.jsx:618:                    🎨 Higher values make output more random and creative, lower values make it more focused and deterministic.
+client/src/pages/AIConfiguration.jsx:647:                    📏 Maximum number of tokens to generate in the response. Higher values allow longer responses but cost more.
+client/src/pages/AIConfiguration.jsx:676:                    🧠 Number of previous messages the AI can remember. Higher values maintain more context but use more tokens.
+client/src/pages/AIConfiguration.jsx:712:                  <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Cost Considerations:</h4>
+client/src/pages/AIConfiguration.jsx:741:                    ⚠️ Please save your AI configuration before testing
+client/src/pages/AIConfiguration.jsx:750:                      <span className="text-white font-semibold">💬 Chat Tester</span>
+client/src/pages/AIConfiguration.jsx:761:                          ⏹️ Stop
+client/src/pages/AIConfiguration.jsx:799:                                  <div>📊 {message.tokens} tokens</div>
+client/src/pages/AIConfiguration.jsx:800:                                  <div>💰 ${message.cost.toFixed(8)}</div>
+client/src/pages/AIConfiguration.jsx:801:                                  <div>⏱️ {message.responseTime}ms</div>
+client/src/pages/AIConfiguration.jsx:832:                      ⚠️ {testError}
+client/src/pages/AIConfiguration.jsx:857:                      💡 Test your AI configuration by sending messages. Responses are generated using your current settings.
+client/src/pages/AIConfiguration.jsx:875:                <span className="animate-spin">⏳</span>
+client/src/pages/AIConfiguration.jsx:880:                💾 Save Configuration
+client/src/pages/AIConfiguration.jsx:888:          <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+client/src/pages/AIFlowStudio.jsx:73:    { id: 'generate', label: t('aiFlow.aiGenerate'), icon: '✨' },
+client/src/pages/AIFlowStudio.jsx:74:    { id: 'templates', label: t('aiFlow.templates'), icon: '📋' }
+client/src/pages/AIFlowStudio.jsx:90:              <span className="text-3xl">🤖</span>
+client/src/pages/AIFlowStudio.jsx:104:            <span>🚀</span> {t('aiFlow.openInWorkflow')}
+client/src/pages/AIFlowStudio.jsx:150:                    <span>✨</span> {t('aiFlow.generateNewWithAI')}
+client/src/pages/AIFlowStudio.jsx:156:                    <span>📋</span> {t('aiFlow.browseTemplates')}
+client/src/pages/AIFlowStudio.jsx:242:                <div className="text-5xl mb-4">🤖</div>
+client/src/pages/AIFlowStudio.jsx:260:                      🤖
+client/src/pages/AIFlowStudio.jsx:281:            <span>💡</span>
+client/src/pages/AIFlowStudio.jsx:285:            <span>📝</span>
+client/src/pages/AIFlowStudio.jsx:289:            <span>🔄</span>
+client/src/pages/AnalyticsPro.jsx:8:  requests: { label: 'Requests', icon: '📊', color: '#3b82f6' },
+client/src/pages/AnalyticsPro.jsx:9:  latency: { label: 'Latency', icon: '⏱️', color: '#10b981' },
+client/src/pages/AnalyticsPro.jsx:11:  cost: { label: 'Cost', icon: '💰', color: '#f59e0b' }
+client/src/pages/AnalyticsPro.jsx:15:  { value: 'line', label: 'Line Chart', icon: '📈' },
+client/src/pages/AnalyticsPro.jsx:16:  { value: 'bar', label: 'Bar Chart', icon: '📊' },
+client/src/pages/AnalyticsPro.jsx:17:  { value: 'pie', label: 'Pie Chart', icon: '🥧' },
+client/src/pages/AnalyticsPro.jsx:18:  { value: 'heatmap', label: 'Heatmap', icon: '🔥' },
+client/src/pages/AnalyticsPro.jsx:19:  { value: 'funnel', label: 'Funnel', icon: '🔻' }
+client/src/pages/APITokens.jsx:141:          <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-3">📚 API Documentation</h2>
+client/src/pages/APITokens.jsx:179:            <div className="text-6xl mb-4">🔑</div>
+client/src/pages/APITokens.jsx:213:                        📋 Copy
+client/src/pages/APITokens.jsx:300:                    <p className="text-green-800 dark:text-green-200 font-semibold mb-2">✅ Token Created!</p>
+client/src/pages/APITokens.jsx:311:                      📋 Copy Token
+client/src/pages/AutonomousAgents.jsx:196:              <span style={{ fontSize: '32px' }}>🤖</span>
+client/src/pages/AutonomousAgents.jsx:228:            <div style={{ fontSize: '64px', marginBottom: '16px' }}>🤖</div>
+client/src/pages/AutonomousAgents.jsx:269:                      🤖
+client/src/pages/AutonomousAgents.jsx:350:                    📋 {t('autonomous.viewTasks', 'Tasks')}
+client/src/pages/AutonomousAgents.jsx:365:                    ✏️
+client/src/pages/AutonomousAgents.jsx:379:                    🗑️
+client/src/pages/Billing.jsx:323:                        ⚠️ Subscription canceled - Access until {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+client/src/pages/Blog/BlogCategory.jsx:6:  news: { title: 'News', description: 'Latest updates and announcements', icon: '📰' },
+client/src/pages/Blog/BlogCategory.jsx:7:  tutorial: { title: 'Tutorials', description: 'Learn how to build amazing bots', icon: '📚' },
+client/src/pages/Blog/BlogCategory.jsx:8:  'case-study': { title: 'Case Studies', description: 'Real-world success stories', icon: '📊' },
+client/src/pages/Blog/BlogCategory.jsx:9:  announcement: { title: 'Announcements', description: 'Important product updates', icon: '📢' }
+client/src/pages/Blog/BlogCategory.jsx:20:  const categoryInfo = CATEGORY_INFO[category] || { title: category, description: '', icon: '📄' };
+client/src/pages/Blog/BlogCategory.jsx:111:                    <span>👁 {post.views_count}</span>
+client/src/pages/Blog/BlogCategory.jsx:112:                    <span>❤️ {post.likes_count}</span>
+client/src/pages/Blog/BlogPost.jsx:175:            ❤️ {post.likes_count} Likes
+client/src/pages/Blog/BlogPost.jsx:177:          <span style={styles.views}>👁 {post.views_count} Views</span>
+client/src/pages/Blog/BlogPost.jsx:178:          <span style={styles.commentCount}>💬 {post.comments_count} Comments</span>
+client/src/pages/Blog/TutorialDetail.jsx:111:            <span style={styles.duration}>⏱ {tutorial.estimated_time} min</span>
+client/src/pages/Blog/TutorialDetail.jsx:239:                    <span style={styles.completedText}>🎉 Tutorial Completed!</span>
+client/src/pages/Blog/TutorialProgress.jsx:125:                  <span style={styles.duration}>⏱ {item.estimated_time} min</span>
+client/src/pages/Blog/TutorialsList.jsx:173:                    ⏱ {tutorial.estimated_time} min
+client/src/pages/Blog/TutorialsList.jsx:182:                    📝 {tutorial.steps_count} steps
+client/src/pages/Blog/TutorialsList.jsx:186:                      ⭐ {parseFloat(tutorial.rating).toFixed(1)}
+client/src/pages/Blog/TutorialsList.jsx:210:                    <span>👁 {tutorial.views_count}</span>
+client/src/pages/BotMessages.jsx:159:            <div className="text-5xl">🤖</div>
+client/src/pages/BotMessages.jsx:171:          <h3 className="text-2xl font-bold text-gray-800">{t('botMessages.title')} 💬</h3>
+client/src/pages/BotMessages.jsx:233:            <div className="text-6xl mb-4">💬</div>
+client/src/pages/BotMessages.jsx:245:                        {msg.message_type === 'greeting' ? '👋' : msg.message_type === 'response' ? '💬' : '🤷'}
+client/src/pages/CallHistory.jsx:118:              <span style={{ fontSize: '32px' }}>📋</span>
+client/src/pages/CallHistory.jsx:213:              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📞</div>
+client/src/pages/CallHistory.jsx:244:                        {call.direction === 'inbound' ? '📥' : '📤'} {call.direction}
+client/src/pages/CallHistory.jsx:342:                          {segment.speaker === 'bot' ? '🤖 Bot' : '👤 Caller'}
+client/src/pages/channels/FacebookChannel.jsx:365:                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
+client/src/pages/CloneDashboard.jsx:63:      case 'voice': return '🎙️';
+client/src/pages/CloneDashboard.jsx:64:      case 'style': return '✍️';
+client/src/pages/CloneDashboard.jsx:65:      case 'personality': return '🎭';
+client/src/pages/CloneDashboard.jsx:66:      case 'full': return '🔮';
+client/src/pages/CloneDashboard.jsx:67:      default: return '📦';
+client/src/pages/CloneDashboard.jsx:147:            🎙️ {t('clone.newVoice', 'New Voice Clone')}
+client/src/pages/CloneDashboard.jsx:164:            ✍️ {t('clone.newStyle', 'New Style Clone')}
+client/src/pages/CloneDashboard.jsx:181:            🎭 {t('clone.newPersonality', 'New Personality Clone')}
+client/src/pages/CloneDashboard.jsx:193:          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>🎙️ {t('clone.stats.voice', 'Voice')}</div>
+client/src/pages/CloneDashboard.jsx:197:          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>✍️ {t('clone.stats.style', 'Style')}</div>
+client/src/pages/CloneDashboard.jsx:201:          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>🎭 {t('clone.stats.personality', 'Personality')}</div>
+client/src/pages/CloneDashboard.jsx:243:          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔮</div>
+client/src/pages/CloneDashboard.jsx:261:              🎙️ {t('clone.createVoice', 'Create Voice Clone')}
+client/src/pages/CloneDashboard.jsx:275:              ✍️ {t('clone.createStyle', 'Create Style Clone')}
+client/src/pages/CloneDashboard.jsx:431:            <div style={{ fontSize: '24px', marginBottom: '8px' }}>📝</div>
+client/src/pages/CloneDashboard.jsx:446:            <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎓</div>
+client/src/pages/CloneDashboard.jsx:461:            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⚙️</div>
+client/src/pages/CloneTraining.jsx:6:  { value: 'email', label: 'Email', icon: '✉️' },
+client/src/pages/CloneTraining.jsx:7:  { value: 'document', label: 'Document', icon: '📄' },
+client/src/pages/CloneTraining.jsx:8:  { value: 'chat', label: 'Chat Message', icon: '💬' },
+client/src/pages/CloneTraining.jsx:9:  { value: 'social', label: 'Social Post', icon: '📱' },
+client/src/pages/CloneTraining.jsx:10:  { value: 'custom', label: 'Custom', icon: '⚙️' }
+client/src/pages/CloneTraining.jsx:343:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+client/src/pages/CloneTraining.jsx:366:                  {dataTypes.find(dt => dt.value === data.data_type)?.icon || '📄'}
+client/src/pages/CloneTraining.jsx:404:                        🔍
+client/src/pages/CreateBot.jsx:19:    { code: 'en', name: 'English', flag: '🇺🇸' },
+client/src/pages/CreateBot.jsx:20:    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+client/src/pages/CreateBot.jsx:21:    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿' },
+client/src/pages/CreateBot.jsx:22:    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+client/src/pages/CreateBot.jsx:23:    { code: 'ka', name: 'ქართული', flag: '🇬🇪' },
+client/src/pages/CreateBot.jsx:24:    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+client/src/pages/CreateBot.jsx:25:    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+client/src/pages/CreateBot.jsx:26:    { code: 'es', name: 'Español', flag: '🇪🇸' },
+client/src/pages/CreateBot.jsx:27:    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+client/src/pages/CreateBot.jsx:28:    { code: 'zh', name: '中文', flag: '🇨🇳' },
+client/src/pages/CreateBot.jsx:29:    { code: 'ja', name: '日本語', flag: '🇯🇵' },
+client/src/pages/CreateBot.jsx:30:    { code: 'ko', name: '한국어', flag: '🇰🇷' },
+client/src/pages/CreateBot.jsx:31:    { code: 'pt', name: 'Português', flag: '🇵🇹' },
+client/src/pages/CreateBot.jsx:32:    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+client/src/pages/CreateBot.jsx:33:    { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+client/src/pages/CreateBot.jsx:34:    { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+client/src/pages/CreateBot.jsx:35:    { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+client/src/pages/CreateBot.jsx:36:    { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:37:    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
+client/src/pages/CreateBot.jsx:38:    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
+client/src/pages/CreateBot.jsx:39:    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
+client/src/pages/CreateBot.jsx:40:    { code: 'th', name: 'ไทย', flag: '🇹🇭' },
+client/src/pages/CreateBot.jsx:41:    { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
+client/src/pages/CreateBot.jsx:42:    { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+client/src/pages/CreateBot.jsx:43:    { code: 'ro', name: 'Română', flag: '🇷🇴' },
+client/src/pages/CreateBot.jsx:44:    { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
+client/src/pages/CreateBot.jsx:45:    { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
+client/src/pages/CreateBot.jsx:46:    { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
+client/src/pages/CreateBot.jsx:47:    { code: 'da', name: 'Dansk', flag: '🇩🇰' },
+client/src/pages/CreateBot.jsx:48:    { code: 'no', name: 'Norsk', flag: '🇳🇴' },
+client/src/pages/CreateBot.jsx:49:    { code: 'he', name: 'עברית', flag: '🇮🇱' },
+client/src/pages/CreateBot.jsx:50:    { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
+client/src/pages/CreateBot.jsx:51:    { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
+client/src/pages/CreateBot.jsx:52:    { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
+client/src/pages/CreateBot.jsx:53:    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+client/src/pages/CreateBot.jsx:54:    { code: 'ur', name: 'اردو', flag: '🇵🇰' },
+client/src/pages/CreateBot.jsx:55:    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:56:    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:57:    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:58:    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:59:    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:60:    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:61:    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+client/src/pages/CreateBot.jsx:62:    { code: 'bg', name: 'Български', flag: '🇧🇬' },
+client/src/pages/CreateBot.jsx:63:    { code: 'hr', name: 'Hrvatski', flag: '🇭🇷' },
+client/src/pages/CreateBot.jsx:64:    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
+client/src/pages/CreateBot.jsx:65:    { code: 'sl', name: 'Slovenščina', flag: '🇸🇮' },
+client/src/pages/CreateBot.jsx:66:    { code: 'sr', name: 'Српски', flag: '🇷🇸' },
+client/src/pages/CreateBot.jsx:67:    { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
+client/src/pages/CreateBot.jsx:68:    { code: 'lv', name: 'Latviešu', flag: '🇱🇻' },
+client/src/pages/CreateBot.jsx:69:    { code: 'et', name: 'Eesti', flag: '🇪🇪' },
+client/src/pages/CreateBot.jsx:70:    { code: 'ca', name: 'Català', flag: '🇪🇸' },
+client/src/pages/CreateBot.jsx:71:    { code: 'eu', name: 'Euskara', flag: '🇪🇸' },
+client/src/pages/CreateBot.jsx:72:    { code: 'gl', name: 'Galego', flag: '🇪🇸' },
+client/src/pages/CreateBot.jsx:73:    { code: 'cy', name: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+client/src/pages/CreateBot.jsx:74:    { code: 'ga', name: 'Gaeilge', flag: '🇮🇪' },
+client/src/pages/CreateBot.jsx:75:    { code: 'is', name: 'Íslenska', flag: '🇮🇸' },
+client/src/pages/CreateBot.jsx:76:    { code: 'kk', name: 'Қазақша', flag: '🇰🇿' },
+client/src/pages/CreateBot.jsx:77:    { code: 'uz', name: 'Oʻzbek', flag: '🇺🇿' },
+client/src/pages/CreateBot.jsx:78:    { code: 'ky', name: 'Кыргызча', flag: '🇰🇬' },
+client/src/pages/CreateBot.jsx:79:    { code: 'mn', name: 'Монгол', flag: '🇲🇳' },
+client/src/pages/CreateBot.jsx:80:    { code: 'ne', name: 'नेपाली', flag: '🇳🇵' },
+client/src/pages/CreateBot.jsx:81:    { code: 'si', name: 'සිංහල', flag: '🇱🇰' },
+client/src/pages/CreateBot.jsx:82:    { code: 'km', name: 'ខ្មែរ', flag: '🇰🇭' },
+client/src/pages/CreateBot.jsx:83:    { code: 'lo', name: 'ລາວ', flag: '🇱🇦' },
+client/src/pages/CreateBot.jsx:84:    { code: 'my', name: 'မြန်မာ', flag: '🇲🇲' },
+client/src/pages/CreateBot.jsx:85:    { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
+client/src/pages/CreateBot.jsx:86:    { code: 'auto', name: 'Auto-detect', flag: '🌐' }
+client/src/pages/CreateBot.jsx:202:            Create New Bot 🤖
+client/src/pages/CreateBot.jsx:212:            ⚠️ {error}
+client/src/pages/CreateBot.jsx:251:                <option value="telegram">✈️ Telegram</option>
+client/src/pages/CreateBot.jsx:252:                <option value="whatsapp">💬 WhatsApp</option>
+client/src/pages/CreateBot.jsx:253:                <option value="discord">🎮 Discord</option>
+client/src/pages/CreateBot.jsx:254:                <option value="slack">💼 Slack</option>
+client/src/pages/CreateBot.jsx:255:                <option value="messenger">💌 Facebook Messenger</option>
+client/src/pages/CreateBot.jsx:328:                  <span className="animate-spin">⏳</span>
+client/src/pages/CreateBot.jsx:333:                  🚀 Create Bot
+client/src/pages/CreateBot.jsx:350:              <div className="text-5xl mb-2">🎉</div>
+client/src/pages/CreateBot.jsx:372:                  📋 Copy
+client/src/pages/CreateBot.jsx:379:                ⚠️ <strong>Important:</strong> Store this token securely. You'll need it to authenticate API requests for this bot.
+client/src/pages/DeveloperPortal/AlertSettings.jsx:38:    { value: 'spending', label: t('alerts.spending', 'Spending'), icon: '💰', description: t('alerts.spendingDesc', 'Alert when spending exceeds threshold') },
+client/src/pages/DeveloperPortal/AlertSettings.jsx:40:    { value: 'usage', label: t('alerts.usage', 'Usage'), icon: '📊', description: t('alerts.usageDesc', 'Alert when daily requests exceed threshold') },
+client/src/pages/DeveloperPortal/AlertSettings.jsx:50:    { value: 'email', label: t('alerts.email', 'Email'), icon: '📧' },
+client/src/pages/DeveloperPortal/AlertSettings.jsx:51:    { value: 'webhook', label: t('alerts.webhook', 'Webhook'), icon: '🔗' },
+client/src/pages/DeveloperPortal/AlertSettings.jsx:52:    { value: 'slack', label: t('alerts.slack', 'Slack'), icon: '💬' }
+client/src/pages/DeveloperPortal/AlertSettings.jsx:308:            <span style={styles.emptyIcon} aria-hidden="true">🔔</span>
+client/src/pages/DeveloperPortal/AlertSettings.jsx:376:                    📜 {t('alerts.history', 'History')}
+client/src/pages/DeveloperPortal/AlertSettings.jsx:384:                    {testingId === alertItem.id ? '⏳' : '🧪'} {t('alerts.test', 'Test')}
+client/src/pages/DeveloperPortal/AlertSettings.jsx:391:                    🗑️
+client/src/pages/DeveloperPortal/APIKeyList.jsx:172:            <div className="text-5xl mb-4" aria-hidden="true">🔑</div>
+client/src/pages/DeveloperPortal/APIKeyList.jsx:294:                      <span aria-hidden="true">📋</span>
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:238:            <span aria-hidden="true">📊</span>
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:260:              <span aria-hidden="true">📈</span> {t('developer.usageStats', 'Usage Statistics')}
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:273:              <span aria-hidden="true">🔑</span> {t('developer.apiKeys', 'API Keys')}
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:356:                <span aria-hidden="true">🔄</span>
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:374:                icon="📊"
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:386:                icon="✅"
+client/src/pages/DeveloperPortal/APIUsageDashboard.jsx:392:                icon="💰"
+client/src/pages/DeveloperPortal/AuditLogs.jsx:296:            📊 {t('audit.stats', 'Stats')}
+client/src/pages/DeveloperPortal/AuditLogs.jsx:305:              {exporting ? '...' : '📥'} JSON
+client/src/pages/DeveloperPortal/AuditLogs.jsx:313:              {exporting ? '...' : '📥'} CSV
+client/src/pages/Docs.jsx:14:    icon: '🚀',
+client/src/pages/Docs.jsx:64:    icon: '🤖',
+client/src/pages/Docs.jsx:114:    icon: '🧠',
+client/src/pages/Docs.jsx:168:    icon: '📚',
+client/src/pages/Docs.jsx:219:    icon: '📱',
+client/src/pages/Docs.jsx:291:    icon: '🦾',
+client/src/pages/Docs.jsx:342:    icon: '🔌',
+client/src/pages/Docs.jsx:413:    icon: '💳',
+client/src/pages/Docs.jsx:452:    icon: '🔐',
+client/src/pages/EditBot.jsx:21:    { code: 'en', name: 'English', flag: '🇺🇸' },
+client/src/pages/EditBot.jsx:22:    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+client/src/pages/EditBot.jsx:23:    { code: 'az', name: 'Azərbaycan', flag: '🇦🇿' },
+client/src/pages/EditBot.jsx:24:    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+client/src/pages/EditBot.jsx:25:    { code: 'ka', name: 'ქართული', flag: '🇬🇪' },
+client/src/pages/EditBot.jsx:26:    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+client/src/pages/EditBot.jsx:27:    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+client/src/pages/EditBot.jsx:28:    { code: 'es', name: 'Español', flag: '🇪🇸' },
+client/src/pages/EditBot.jsx:29:    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+client/src/pages/EditBot.jsx:30:    { code: 'zh', name: '中文', flag: '🇨🇳' },
+client/src/pages/EditBot.jsx:31:    { code: 'ja', name: '日本語', flag: '🇯🇵' },
+client/src/pages/EditBot.jsx:32:    { code: 'ko', name: '한국어', flag: '🇰🇷' },
+client/src/pages/EditBot.jsx:33:    { code: 'pt', name: 'Português', flag: '🇵🇹' },
+client/src/pages/EditBot.jsx:34:    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+client/src/pages/EditBot.jsx:35:    { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+client/src/pages/EditBot.jsx:36:    { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+client/src/pages/EditBot.jsx:37:    { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+client/src/pages/EditBot.jsx:38:    { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:39:    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
+client/src/pages/EditBot.jsx:40:    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
+client/src/pages/EditBot.jsx:41:    { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
+client/src/pages/EditBot.jsx:42:    { code: 'th', name: 'ไทย', flag: '🇹🇭' },
+client/src/pages/EditBot.jsx:43:    { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
+client/src/pages/EditBot.jsx:44:    { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+client/src/pages/EditBot.jsx:45:    { code: 'ro', name: 'Română', flag: '🇷🇴' },
+client/src/pages/EditBot.jsx:46:    { code: 'hu', name: 'Magyar', flag: '🇭🇺' },
+client/src/pages/EditBot.jsx:47:    { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
+client/src/pages/EditBot.jsx:48:    { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
+client/src/pages/EditBot.jsx:49:    { code: 'da', name: 'Dansk', flag: '🇩🇰' },
+client/src/pages/EditBot.jsx:50:    { code: 'no', name: 'Norsk', flag: '🇳🇴' },
+client/src/pages/EditBot.jsx:51:    { code: 'he', name: 'עברית', flag: '🇮🇱' },
+client/src/pages/EditBot.jsx:52:    { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
+client/src/pages/EditBot.jsx:53:    { code: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
+client/src/pages/EditBot.jsx:54:    { code: 'tl', name: 'Filipino', flag: '🇵🇭' },
+client/src/pages/EditBot.jsx:55:    { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+client/src/pages/EditBot.jsx:56:    { code: 'ur', name: 'اردو', flag: '🇵🇰' },
+client/src/pages/EditBot.jsx:57:    { code: 'ta', name: 'தமிழ்', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:58:    { code: 'te', name: 'తెలుగు', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:59:    { code: 'mr', name: 'मराठी', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:60:    { code: 'gu', name: 'ગુજરાતી', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:61:    { code: 'kn', name: 'ಕನ್ನಡ', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:62:    { code: 'ml', name: 'മലയാളം', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:63:    { code: 'pa', name: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+client/src/pages/EditBot.jsx:64:    { code: 'bg', name: 'Български', flag: '🇧🇬' },
+client/src/pages/EditBot.jsx:65:    { code: 'hr', name: 'Hrvatski', flag: '🇭🇷' },
+client/src/pages/EditBot.jsx:66:    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
+client/src/pages/EditBot.jsx:67:    { code: 'sl', name: 'Slovenščina', flag: '🇸🇮' },
+client/src/pages/EditBot.jsx:68:    { code: 'sr', name: 'Српски', flag: '🇷🇸' },
+client/src/pages/EditBot.jsx:69:    { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' },
+client/src/pages/EditBot.jsx:70:    { code: 'lv', name: 'Latviešu', flag: '🇱🇻' },
+client/src/pages/EditBot.jsx:71:    { code: 'et', name: 'Eesti', flag: '🇪🇪' },
+client/src/pages/EditBot.jsx:72:    { code: 'ca', name: 'Català', flag: '🇪🇸' },
+client/src/pages/EditBot.jsx:73:    { code: 'eu', name: 'Euskara', flag: '🇪🇸' },
+client/src/pages/EditBot.jsx:74:    { code: 'gl', name: 'Galego', flag: '🇪🇸' },
+client/src/pages/EditBot.jsx:75:    { code: 'cy', name: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+client/src/pages/EditBot.jsx:76:    { code: 'ga', name: 'Gaeilge', flag: '🇮🇪' },
+client/src/pages/EditBot.jsx:77:    { code: 'is', name: 'Íslenska', flag: '🇮🇸' },
+client/src/pages/EditBot.jsx:78:    { code: 'kk', name: 'Қазақша', flag: '🇰🇿' },
+client/src/pages/EditBot.jsx:79:    { code: 'uz', name: 'Oʻzbek', flag: '🇺🇿' },
+client/src/pages/EditBot.jsx:80:    { code: 'ky', name: 'Кыргызча', flag: '🇰🇬' },
+client/src/pages/EditBot.jsx:81:    { code: 'mn', name: 'Монгол', flag: '🇲🇳' },
+client/src/pages/EditBot.jsx:82:    { code: 'ne', name: 'नेपाली', flag: '🇳🇵' },
+client/src/pages/EditBot.jsx:83:    { code: 'si', name: 'සිංහල', flag: '🇱🇰' },
+client/src/pages/EditBot.jsx:84:    { code: 'km', name: 'ខ្មែរ', flag: '🇰🇭' },
+client/src/pages/EditBot.jsx:85:    { code: 'lo', name: 'ລາວ', flag: '🇱🇦' },
+client/src/pages/EditBot.jsx:86:    { code: 'my', name: 'မြန်မာ', flag: '🇲🇲' },
+client/src/pages/EditBot.jsx:87:    { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
+client/src/pages/EditBot.jsx:88:    { code: 'auto', name: 'Auto-detect', flag: '🌐' }
+client/src/pages/EditBot.jsx:237:            Edit Bot ✏️
+client/src/pages/EditBot.jsx:247:            ✅ Bot updated successfully! Redirecting...
+client/src/pages/EditBot.jsx:254:            ⚠️ {error}
+client/src/pages/EditBot.jsx:293:                <option value="telegram">✈️ Telegram</option>
+client/src/pages/EditBot.jsx:294:                <option value="whatsapp">💬 WhatsApp</option>
+client/src/pages/EditBot.jsx:295:                <option value="discord">🎮 Discord</option>
+client/src/pages/EditBot.jsx:296:                <option value="slack">💼 Slack</option>
+client/src/pages/EditBot.jsx:297:                <option value="messenger">💌 Facebook Messenger</option>
+client/src/pages/EditBot.jsx:398:                    <span className="animate-spin">⏳</span>
+client/src/pages/EditBot.jsx:403:                    💾 Save Changes
+client/src/pages/EditBot.jsx:436:                  📋 Copy
+client/src/pages/EditBot.jsx:444:              ⚠️ <strong>Note:</strong> API tokens cannot be changed. If you suspect your token has been compromised, please delete and recreate the bot.
+client/src/pages/EditBot.jsx:455:            🤖 Configure AI Settings
+client/src/pages/EditBot.jsx:461:            💬 Manage Bot Messages
+client/src/pages/EditBot.jsx:467:            🔀 Edit Flow Builder
+client/src/pages/ExecutionHistory.jsx:252:          <span className="empty-icon">📋</span>
+client/src/pages/ExecutionHistory.jsx:313:            <span className="empty-icon">📋</span>
+client/src/pages/ExecutionHistory.jsx:343:                        👁️ {t('common.view')}
+client/src/pages/ExecutionHistory.jsx:349:                        🗑️
+client/src/pages/FlowBuilder.jsx:293:                <div className="text-6xl mb-4">🤖</div>
+client/src/pages/FlowBuilder.jsx:297:                  <p>💡 {t('flowBuilder.emptyState.tip1')}</p>
+client/src/pages/FlowBuilder.jsx:298:                  <p>💡 {t('flowBuilder.emptyState.tip2')}</p>
+client/src/pages/FlowBuilder.jsx:299:                  <p>💡 {t('flowBuilder.emptyState.tip3')}</p>
+client/src/pages/ForgotPassword.jsx:97:            <div style={styles.successIcon}>✅</div>
+client/src/pages/ForgotPassword.jsx:115:            <div style={styles.devBadge}>🔧 DEV MODE</div>
+client/src/pages/ForgotPassword.jsx:116:            <h1 style={styles.title}>🔐 Reset Password</h1>
+client/src/pages/ForgotPassword.jsx:171:          <h1 style={styles.title}>🔐 {t('forgotPassword.title')}</h1>
+client/src/pages/ForgotPassword.jsx:177:            <div style={styles.successIcon}>✅</div>
+client/src/pages/Integrations.jsx:6:  slack: '💬',
+client/src/pages/Integrations.jsx:7:  google_calendar: '📅',
+client/src/pages/Integrations.jsx:8:  gmail: '📧',
+client/src/pages/Integrations.jsx:9:  crm: '👥'
+client/src/pages/Integrations.jsx:185:            <span style={{ fontSize: '32px' }}>🔗</span>
+client/src/pages/Integrations.jsx:205:            <span>✅</span>
+client/src/pages/Integrations.jsx:253:                        {integrationIcons[integration.type] || '🔌'}
+client/src/pages/Integrations.jsx:276:                      📧 {integration.metadata.email}
+client/src/pages/Integrations.jsx:302:                      {testingId === integration.id ? '...' : '🔄'} {t('integrations.test', 'Test')}
+client/src/pages/IntentEntityBuilder.jsx:651:          <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
+client/src/pages/IntentEntityBuilder.jsx:660:              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+client/src/pages/IntentEntityBuilder.jsx:677:                  <span style={{ fontSize: '24px' }}>🤖</span>
+client/src/pages/IntentEntityBuilder.jsx:711:        <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
+client/src/pages/IntentEntityBuilder.jsx:720:              📥 {importLoading ? 'Importing...' : 'Import'}
+client/src/pages/IntentEntityBuilder.jsx:725:                  🎯 Import Intents (CSV/JSON)
+client/src/pages/IntentEntityBuilder.jsx:728:                  📦 Import Entities (CSV/JSON)
+client/src/pages/IntentEntityBuilder.jsx:741:              📤 {exportLoading ? 'Exporting...' : 'Export'}
+client/src/pages/IntentEntityBuilder.jsx:746:                  🎯 Export Intents (CSV)
+client/src/pages/IntentEntityBuilder.jsx:749:                  🎯 Export Intents (JSON)
+client/src/pages/IntentEntityBuilder.jsx:752:                  📦 Export Entities (CSV)
+client/src/pages/IntentEntityBuilder.jsx:755:                  📦 Export Entities (JSON)
+client/src/pages/IntentEntityBuilder.jsx:774:          🎯 {t('intentEntity.intents')} ({intents.length})
+client/src/pages/IntentEntityBuilder.jsx:783:          📦 {t('intentEntity.entities')} ({entities.length})
+client/src/pages/IntentEntityBuilder.jsx:792:          📊 Analytics
+client/src/pages/IntentEntityBuilder.jsx:801:          ⚠️ Conflicts {conflictsData?.summary?.totalConflicts > 0 && `(${conflictsData.summary.totalConflicts})`}
+client/src/pages/IntentEntityBuilder.jsx:938:                        💾 {t('common.save')}
+client/src/pages/IntentEntityBuilder.jsx:941:                        🗑️ {t('common.delete')}
+client/src/pages/IntentEntityBuilder.jsx:1077:                          💾 {t('common.save')}
+client/src/pages/IntentEntityBuilder.jsx:1080:                          🗑️ {t('common.delete')}
+client/src/pages/IntentEntityBuilder.jsx:1128:                    <h4 style={styles.chartTitle}>📈 Daily Usage (Last 30 Days)</h4>
+client/src/pages/IntentEntityBuilder.jsx:1142:                    <h4 style={styles.chartTitle}>📊 Confidence Distribution</h4>
+client/src/pages/IntentEntityBuilder.jsx:1156:                    <h4 style={styles.chartTitle}>🎯 Top 5 Intents</h4>
+client/src/pages/IntentEntityBuilder.jsx:1183:                    <h4 style={styles.chartTitle}>⚠️ Low Confidence Messages</h4>
+client/src/pages/IntentEntityBuilder.jsx:1206:                    <h4 style={styles.chartTitle}>📚 Training Gaps</h4>
+client/src/pages/IntentEntityBuilder.jsx:1232:                  🔄 Refresh Analytics
+client/src/pages/IntentEntityBuilder.jsx:1263:                {conflictsLoading ? '🔄 Scanning...' : '🔍 Scan for Conflicts'}
+client/src/pages/IntentEntityBuilder.jsx:1275:                    <span style={styles.criticalBadge}>🔴 {conflictsData.summary.critical} Critical</span>
+client/src/pages/IntentEntityBuilder.jsx:1278:                    <span style={styles.highBadge}>🟠 {conflictsData.summary.high} High</span>
+client/src/pages/IntentEntityBuilder.jsx:1285:                    <div style={styles.emptyState}>✅ No conflicts found! Your intents are well-defined.</div>
+client/src/pages/IntentEntityBuilder.jsx:1317:                            🗑️ Delete 1st
+client/src/pages/IntentEntityBuilder.jsx:1324:                            🗑️ Delete 2nd
+client/src/pages/IntentEntityBuilder.jsx:1334:                            🔀 Merge
+client/src/pages/IntentEntityBuilder.jsx:1351:        <h3 style={styles.testTitle}>🧪 Test NLU</h3>
+client/src/pages/IntentEntityBuilder.jsx:1367:            {analyzing ? '...' : '🔍 Analyze'}
+client/src/pages/IVRBuilder.jsx:11:  greeting: { icon: '👋', label: 'Greeting', color: '#4CAF50' },
+client/src/pages/IVRBuilder.jsx:12:  menu: { icon: '📋', label: 'Menu', color: '#2196F3' },
+client/src/pages/IVRBuilder.jsx:13:  input: { icon: '🔢', label: 'Input', color: '#FF9800' },
+client/src/pages/IVRBuilder.jsx:14:  transfer: { icon: '📞', label: 'Transfer', color: '#9C27B0' },
+client/src/pages/IVRBuilder.jsx:15:  voicemail: { icon: '📧', label: 'Voicemail', color: '#607D8B' },
+client/src/pages/IVRBuilder.jsx:16:  ai: { icon: '🤖', label: 'AI Response', color: '#00BCD4' },
+client/src/pages/IVRBuilder.jsx:17:  condition: { icon: '🔀', label: 'Condition', color: '#FF5722' },
+client/src/pages/IVRBuilder.jsx:18:  hangup: { icon: '📴', label: 'Hang Up', color: '#f44336' },
+client/src/pages/IVRBuilder.jsx:19:  playAudio: { icon: '🔊', label: 'Play Audio', color: '#795548' },
+client/src/pages/IVRBuilder.jsx:20:  recordMessage: { icon: '🎙️', label: 'Record', color: '#E91E63' }
+client/src/pages/IVRBuilder.jsx:387:            🗑️ Delete Node
+client/src/pages/IVRBuilder.jsx:604:              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📞</div>
+client/src/pages/KnowledgeBase.jsx:234:              <span className="empty-icon">🧠</span>
+client/src/pages/Login.jsx:339:                <span className="text-4xl">🔐</span>
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:112:      plugin: '🧩',
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:113:      template: '📋',
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:114:      integration: '🔗',
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:115:      theme: '🎨'
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:117:    return icons[itemType] || '📦';
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:304:                        ⬇️ {item.downloads.toLocaleString()}
+client/src/pages/Marketplace/MarketplaceBrowse.jsx:356:                <span style={styles.categoryIcon}>{cat.icon || '📁'}</span>
+client/src/pages/Marketplace/MarketplaceCart.jsx:99:    const icons = { plugin: '🧩', template: '📋', integration: '🔗', theme: '🎨' };
+client/src/pages/Marketplace/MarketplaceCart.jsx:100:    return icons[itemType] || '📦';
+client/src/pages/Marketplace/MarketplaceCart.jsx:125:          <span style={styles.emptyIcon}>🛒</span>
+client/src/pages/Marketplace/MarketplaceCart.jsx:204:              🔒 {t('marketplace.secureCheckout', 'Secure checkout powered by Stripe')}
+client/src/pages/Marketplace/MarketplaceDetail.jsx:155:    const icons = { plugin: '🧩', template: '📋', integration: '🔗', theme: '🎨' };
+client/src/pages/Marketplace/MarketplaceDetail.jsx:156:    return icons[itemType] || '📦';
+client/src/pages/Marketplace/MarketplaceDetail.jsx:248:              <span style={styles.stat}>⬇️ {item.downloads.toLocaleString()} {t('marketplace.downloads', 'downloads')}</span>
+client/src/pages/Marketplace/MarketplaceDetail.jsx:400:                        👍 {t('marketplace.helpful', 'Helpful')} ({review.helpful_count})
+client/src/pages/Marketplace/MyPurchases.jsx:114:    const icons = { plugin: '🧩', template: '📋', integration: '🔗', theme: '🎨' };
+client/src/pages/Marketplace/MyPurchases.jsx:115:    return icons[itemType] || '📦';
+client/src/pages/Marketplace/MyPurchases.jsx:180:              <span style={styles.emptyIcon}>📦</span>
+client/src/pages/Marketplace/MyPurchases.jsx:236:              <span style={styles.emptyIcon}>⚙️</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:91:    const icons = { plugin: '🧩', template: '📋', integration: '🔗', theme: '🎨' };
+client/src/pages/Marketplace/SellerDashboard.jsx:92:    return icons[itemType] || '📦';
+client/src/pages/Marketplace/SellerDashboard.jsx:126:          <span style={styles.statIcon}>📦</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:133:          <span style={styles.statIcon}>✅</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:140:          <span style={styles.statIcon}>⬇️</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:147:          <span style={styles.statIcon}>💰</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:158:          📦 {t('seller.manageItems', 'Manage Items')}
+client/src/pages/Marketplace/SellerDashboard.jsx:161:          💵 {t('seller.viewEarnings', 'View Earnings')}
+client/src/pages/Marketplace/SellerDashboard.jsx:164:          🛒 {t('seller.viewMarketplace', 'View Marketplace')}
+client/src/pages/Marketplace/SellerDashboard.jsx:208:            <span style={styles.emptyIcon}>📦</span>
+client/src/pages/Marketplace/SellerDashboard.jsx:232:                    <span>⬇️ {item.downloads}</span>
+client/src/pages/Marketplace.jsx:247:            <span className="empty-icon">🔍</span>
+client/src/pages/MyBots.jsx:67:      setSuccessMessage('Bot created successfully! 🎉');
+client/src/pages/MyBots.jsx:248:              {t('myBots.title')} 🤖
+client/src/pages/MyBots.jsx:286:            ✅ {successMessage}
+client/src/pages/MyBots.jsx:293:            ⚠️ {error}
+client/src/pages/MyBots.jsx:345:            <div className="text-6xl mb-4">🤖</div>
+client/src/pages/MyBots.jsx:370:            <div className="text-6xl mb-4">🔍</div>
+client/src/pages/Orchestrations.jsx:150:              <span style={{ fontSize: 32 }}>🔀</span>
+client/src/pages/Orchestrations.jsx:176:              <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
+client/src/pages/Orchestrations.jsx:230:                    🤖
+client/src/pages/Orchestrations.jsx:259:            <span style={{ fontSize: 32 }}>🔀</span>
+client/src/pages/Orchestrations.jsx:294:          <div style={{ fontSize: 64, marginBottom: 16 }}>🔀</div>
+client/src/pages/Orchestrations.jsx:341:                    🔀
+client/src/pages/Organizations.jsx:72:        return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', icon: '👑' };
+client/src/pages/Organizations.jsx:74:        return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', icon: '🛡️' };
+client/src/pages/Organizations.jsx:76:        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', icon: '✏️' };
+client/src/pages/Organizations.jsx:78:        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: '👁️' };
+client/src/pages/Organizations.jsx:80:        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: '👤' };
+client/src/pages/Organizations.jsx:165:                      <span>👥</span>
+client/src/pages/Organizations.jsx:169:                      <span>📅</span>
+client/src/pages/Organizations.jsx:187:            <div className="text-6xl mb-4">🏢</div>
+client/src/pages/OrganizationSettings.jsx:163:      case 'owner': return '👑';
+client/src/pages/OrganizationSettings.jsx:164:      case 'admin': return '🛡️';
+client/src/pages/OrganizationSettings.jsx:165:      case 'member': return '✏️';
+client/src/pages/OrganizationSettings.jsx:166:      case 'viewer': return '👁️';
+client/src/pages/OrganizationSettings.jsx:167:      default: return '👤';
+client/src/pages/OrganizationSettings.jsx:199:            ✅ {successMessage}
+client/src/pages/OrganizationSettings.jsx:206:            ⚠️ {error}
+client/src/pages/OrganizationSettings.jsx:332:                        <option value="admin">🛡️ ADMIN</option>
+client/src/pages/OrganizationSettings.jsx:333:                        <option value="member">✏️ MEMBER</option>
+client/src/pages/OrganizationSettings.jsx:334:                        <option value="viewer">👁️ VIEWER</option>
+client/src/pages/PersonalityClone.jsx:30:    friendliness: { label: 'Friendliness', emoji: '😊', low: 'Reserved', high: 'Warm' },
+client/src/pages/PersonalityClone.jsx:31:    formality: { label: 'Formality', emoji: '👔', low: 'Casual', high: 'Formal' },
+client/src/pages/PersonalityClone.jsx:32:    enthusiasm: { label: 'Enthusiasm', emoji: '🎉', low: 'Calm', high: 'Energetic' },
+client/src/pages/PersonalityClone.jsx:33:    directness: { label: 'Directness', emoji: '🎯', low: 'Subtle', high: 'Direct' },
+client/src/pages/PersonalityClone.jsx:34:    empathy: { label: 'Empathy', emoji: '💝', low: 'Detached', high: 'Empathetic' },
+client/src/pages/PersonalityClone.jsx:35:    humor: { label: 'Humor', emoji: '😄', low: 'Serious', high: 'Playful' },
+client/src/pages/PersonalityClone.jsx:36:    patience: { label: 'Patience', emoji: '🧘', low: 'Brief', high: 'Patient' },
+client/src/pages/PersonalityClone.jsx:37:    creativity: { label: 'Creativity', emoji: '🎨', low: 'Practical', high: 'Creative' }
+client/src/pages/PersonalityClone.jsx:286:            <span role="img" aria-label="personality">🎭</span> {t('clone.personalityClone', 'Personality Clone')}
+client/src/pages/PersonalityClone.jsx:578:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+client/src/pages/PersonalityClone.jsx:627:                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>💬</div>
+client/src/pages/PhoneNumberManagement.jsx:197:              <span style={{ fontSize: '32px' }}>📱</span>
+client/src/pages/PhoneNumberManagement.jsx:267:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📞</div>
+client/src/pages/PhoneNumberManagement.jsx:395:                        📋 {t('voice.viewCalls', 'View Calls')}
+client/src/pages/PhoneNumberManagement.jsx:413:                        🗑️ {t('voice.release', 'Release')}
+client/src/pages/PhoneNumberManagement.jsx:593:                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>🔍</div>
+client/src/pages/Playground.jsx:227:              <span className="text-3xl">🎮</span>
+client/src/pages/PluginDeveloper.jsx:131:          <div className="stat-icon">📦</div>
+client/src/pages/PluginDeveloper.jsx:138:          <div className="stat-icon">⬇️</div>
+client/src/pages/PluginDeveloper.jsx:145:          <div className="stat-icon">💰</div>
+client/src/pages/PluginDeveloper.jsx:152:          <div className="stat-icon">⭐</div>
+client/src/pages/PluginDeveloper.jsx:188:                <span className="empty-icon">🧩</span>
+client/src/pages/PluginDeveloper.jsx:217:                              <span>🧩</span>
+client/src/pages/PluginDeveloper.jsx:254:                            ✏️
+client/src/pages/PluginDeveloper.jsx:264:                            ⬆️
+client/src/pages/PluginDeveloper.jsx:274:                            📊
+client/src/pages/PluginDeveloper.jsx:281:                            🗑️
+client/src/pages/ResetPassword.jsx:134:            <div style={styles.successIcon}>✅</div>
+client/src/pages/ResetPassword.jsx:150:          <h1 style={styles.title}>🔑 {t('resetPassword.title')}</h1>
+client/src/pages/SecuritySettings.jsx:186:            <span className="text-3xl">🔐</span>
+client/src/pages/SecuritySettings.jsx:204:                <span className="text-2xl">✅</span>
+client/src/pages/SecuritySettings.jsx:389:                <span className="text-2xl">⚠️</span>
+client/src/pages/SecuritySettings.jsx:413:              <span className="text-3xl">📱</span>
+client/src/pages/SecuritySettings.jsx:456:                        {session.deviceInfo?.includes('Mobile') ? '📱' : '💻'}
+client/src/pages/Settings.jsx:84:                <span>🔐</span>
+client/src/pages/Settings.jsx:103:              ⚠️ {t('settings.deleteWarning')}
+client/src/pages/StyleClone.jsx:314:            <span role="img" aria-label="style">✍️</span> {t('clone.styleClone', 'Style Clone')}
+client/src/pages/StyleClone.jsx:508:              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄</div>
+client/src/pages/StyleClone.jsx:537:                          <span style={{ fontSize: '20px' }}>{sample.type === 'document' ? '📄' : '📝'}</span>
+client/src/pages/StyleClone.jsx:628:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+client/src/pages/Superadmin/Dashboard.jsx:9:    '&#128202;': BarChart3,      // 📊 Chart
+client/src/pages/Superadmin/Dashboard.jsx:10:    '&#128101;': Users,          // 👥 Users
+client/src/pages/Superadmin/Dashboard.jsx:11:    '&#127970;': Building2,      // 🏢 Building
+client/src/pages/Superadmin/Dashboard.jsx:12:    '&#128203;': ClipboardList,  // 📋 Clipboard
+client/src/pages/Superadmin/Dashboard.jsx:13:    '&#129302;': Bot,            // 🤖 Robot
+client/src/pages/Superadmin/Dashboard.jsx:14:    '&#128081;': Crown,          // 👑 Crown
+client/src/pages/TeamSettings.jsx:71:    { id: 'members', label: t('team.members'), icon: '👥' },
+client/src/pages/TeamSettings.jsx:72:    { id: 'roles', label: t('team.roles'), icon: '🔐' },
+client/src/pages/TeamSettings.jsx:73:    { id: 'activity', label: t('team.activity'), icon: '📋' }
+client/src/pages/Tutorials.jsx:83:  { id: 'all', label: 'Hamısı', icon: '📚' },
+client/src/pages/Tutorials.jsx:84:  { id: 'getting-started', label: 'Başlanğıc', icon: '🚀' },
+client/src/pages/Tutorials.jsx:85:  { id: 'channels', label: 'Kanallar', icon: '📱' },
+client/src/pages/Tutorials.jsx:86:  { id: 'ai-features', label: 'AI Features', icon: '🤖' },
+client/src/pages/Tutorials.jsx:441:            <div className="text-6xl mb-4">🔍</div>
+client/src/pages/Tutorials.jsx:464:            <div className="text-6xl mb-4">🏆</div>
+client/src/pages/Usage.jsx:136:                  <div className="text-3xl">🤖</div>
+client/src/pages/Usage.jsx:170:                    ⚠️ Limit reached
+client/src/pages/Usage.jsx:178:                  <div className="text-3xl">📨</div>
+client/src/pages/Usage.jsx:212:                    ⚠️ {dashboardData.messages.percentage >= 100 ? 'Limit reached' : 'Approaching limit'}
+client/src/pages/Usage.jsx:220:                  <div className="text-3xl">📤</div>
+client/src/pages/Usage.jsx:232:                  <div className="text-3xl">📥</div>
+client/src/pages/Usage.jsx:246:                  <div className="text-3xl">⚠️</div>
+client/src/pages/Usage.jsx:274:                  <div className="text-3xl">⚠️</div>
+client/src/pages/Usage.jsx:433:                  <div className="text-4xl mb-3">🤖</div>
+client/src/pages/Usage.jsx:442:                  <div className="text-4xl mb-3">🔑</div>
+client/src/pages/Usage.jsx:451:                  <div className="text-4xl mb-3">🔗</div>
+client/src/pages/UsageBilling.jsx:7:  apiRequests: { label: 'API Requests', icon: '🔗', unit: 'requests', color: '#3b82f6' },
+client/src/pages/UsageBilling.jsx:8:  aiTokens: { label: 'AI Tokens', icon: '🤖', unit: 'tokens', color: '#8b5cf6' },
+client/src/pages/UsageBilling.jsx:9:  storageGb: { label: 'Storage', icon: '💾', unit: 'GB', color: '#10b981' },
+client/src/pages/UsageBilling.jsx:10:  bandwidthGb: { label: 'Bandwidth', icon: '📡', unit: 'GB', color: '#f59e0b' }
+client/src/pages/UsageBilling.jsx:405:                  {unitType === 'request' ? '🔗 API Requests' :
+client/src/pages/UsageBilling.jsx:406:                   unitType === 'token' ? '🤖 AI Tokens' :
+client/src/pages/UsageBilling.jsx:407:                   unitType === 'gb_storage' ? '💾 Storage' : '📡 Bandwidth'}
+client/src/pages/VerifyEmail.jsx:100:            <div style={styles.successIcon}>✅</div>
+client/src/pages/VoiceBots.jsx:144:              <span style={{ fontSize: '32px' }}>📞</span>
+client/src/pages/VoiceBots.jsx:165:              📋 {t('voice.callHistory', 'Call History')}
+client/src/pages/VoiceBots.jsx:193:            <div style={{ fontSize: '64px', marginBottom: '16px' }}>📞</div>
+client/src/pages/VoiceBots.jsx:207:                      📞
+client/src/pages/VoiceBots.jsx:226:                      <span>📱</span>
+client/src/pages/VoiceBots.jsx:254:                    📋 {t('voice.viewCalls', 'Calls')}
+client/src/pages/VoiceBots.jsx:257:                    ✏️
+client/src/pages/VoiceBots.jsx:260:                    🗑️
+client/src/pages/VoiceClone.jsx:299:            <span role="img" aria-label="voice">🎙️</span> {t('clone.voiceClone', 'Voice Clone')}
+client/src/pages/VoiceClone.jsx:460:              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
+client/src/pages/VoiceClone.jsx:516:                        <span style={{ fontSize: '24px' }}>🎵</span>
+client/src/pages/VoiceClone.jsx:601:            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+client/src/pages/VoiceToBot.jsx:1070:          <span style={styles.errorIcon}>⚠️</span>
+client/src/pages/VoiceToBot.jsx:1163:                  <span style={styles.pausedText}>⏸️ Paused</span>
+client/src/pages/VoiceToBot.jsx:1309:                <span style={styles.cardIcon}>🎯</span>
+client/src/pages/VoiceToBot.jsx:1331:                <span style={styles.cardIcon}>📦</span>
+client/src/pages/VoiceToBot.jsx:1349:                <span style={styles.cardIcon}>🔄</span>
+client/src/pages/VoiceToBot.jsx:1368:                <span style={styles.cardIcon}>💡</span>
+client/src/pages/VoiceToBot.jsx:1406:          <div style={styles.successIcon}>✅</div>
+client/src/pages/VoiceToBot.jsx:1450:                  {template.category === 'support' ? '🎧' :
+client/src/pages/VoiceToBot.jsx:1451:                   template.category === 'sales' ? '💼' :
+client/src/pages/VoiceToBot.jsx:1453:                   template.category === 'booking' ? '📅' : '🤖'}
+client/src/pages/Webhooks.jsx:142:        alert(`✅ Webhook test successful!\n\nStatus Code: ${result.statusCode}\nResponse Time: ${result.responseTime}ms`);
+client/src/pages/Webhooks.jsx:493:                          <p className="text-xs text-gray-600 mt-1">⏱️ Response time: {log.response_time_ms}ms</p>
+client/src/pages/WidgetSettings.jsx:90:          <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+client/src/pages/WidgetSettings.jsx:128:              <span style={{ fontSize: '28px' }}>💬</span>
+client/src/pages/WorkClone.jsx:351:            <div style={{ fontSize: '64px', marginBottom: '16px' }}>👤</div>
+client/src/pages/WorkflowBuilder.jsx:381:              <span className="text-3xl sm:text-4xl">🔄</span>
+client/src/pages/WorkflowBuilder.jsx:401:                <div className="text-5xl mb-4">🤖</div>
+client/src/pages/WorkflowBuilder.jsx:420:                    <span className="text-2xl">🤖</span>
+client/src/pages/WorkflowBuilder.jsx:491:          <span>🐛</span>
+client/src/__tests__/components/docs/DocsAI.test.jsx:23:    en: { flag: '🇺🇸', name: 'English' },
+client/src/__tests__/components/docs/DocsAI.test.jsx:24:    az: { flag: '🇦🇿', name: 'Azerbaijani' }
+client/src/__tests__/components/docs/DocsAI.test.jsx:102:      expect(screen.getByText('🇺🇸')).toBeInTheDocument();
+client/src/__tests__/components/docs/DocsAI.test.jsx:113:        fireEvent.click(screen.getByText('🇺🇸'));

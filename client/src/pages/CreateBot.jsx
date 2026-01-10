@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Bot, AlertTriangle, Loader2, Rocket, PartyPopper, Copy
+} from 'lucide-react';
 import botApi from '../api/bots';
 import UpgradeLimitModal from '../components/UpgradeLimitModal';
 
@@ -199,7 +202,7 @@ export default function CreateBot() {
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-            Create New Bot 🤖
+            Create New Bot <Bot className="w-7 h-7 text-purple-600" />
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Fill in the details below to create your chatbot
@@ -208,8 +211,8 @@ export default function CreateBot() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
-            ⚠️ {error}
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" /> {error}
           </div>
         )}
 
@@ -248,11 +251,11 @@ export default function CreateBot() {
                   fieldErrors.platform ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'
                 }`}
               >
-                <option value="telegram">✈️ Telegram</option>
-                <option value="whatsapp">💬 WhatsApp</option>
-                <option value="discord">🎮 Discord</option>
-                <option value="slack">💼 Slack</option>
-                <option value="messenger">💌 Facebook Messenger</option>
+                <option value="telegram">Telegram</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="discord">Discord</option>
+                <option value="slack">Slack</option>
+                <option value="messenger">Facebook Messenger</option>
               </select>
               {fieldErrors.platform && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.platform}</p>
@@ -325,12 +328,12 @@ export default function CreateBot() {
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⏳</span>
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   Creating...
                 </>
               ) : (
                 <>
-                  🚀 Create Bot
+                  <Rocket className="w-5 h-5" /> Create Bot
                 </>
               )}
             </button>
@@ -347,7 +350,9 @@ export default function CreateBot() {
           {/* Modal */}
           <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full p-6">
             <div className="text-center mb-4">
-              <div className="text-5xl mb-2">🎉</div>
+              <div className="flex justify-center mb-2">
+                <PartyPopper className="w-12 h-12 text-purple-600" />
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Bot Created Successfully!
               </h2>
@@ -367,16 +372,17 @@ export default function CreateBot() {
                 </code>
                 <button
                   onClick={() => copyToClipboard(apiToken)}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap flex items-center gap-2"
                 >
-                  📋 Copy
+                  <Copy className="w-4 h-4" /> Copy
                 </button>
               </div>
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4 flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                ⚠️ <strong>Important:</strong> Store this token securely. You'll need it to authenticate API requests for this bot.
+                <strong>Important:</strong> Store this token securely. You'll need it to authenticate API requests for this bot.
               </p>
             </div>
 

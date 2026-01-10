@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -367,7 +368,7 @@ const PluginAnalytics = ({ plugin, plugins, onSelectPlugin }) => {
 
         <div className="summary-card">
           <div className="card-header">
-            <span className="card-icon">⭐</span>
+            <span className="card-icon"><Star size={20} /></span>
             <span className="card-title">Rating</span>
           </div>
           <div className="card-value">{analytics?.summary?.avgRating || 0}</div>

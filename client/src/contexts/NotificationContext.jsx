@@ -55,7 +55,8 @@ export function NotificationProvider({ children }) {
     try {
       socketRef.current = io(serverUrl, {
         path: '/ws',
-        transports: ['websocket', 'polling'],
+        transports: ['polling'],
+        upgrade: false,
         auth: { token }
       });
 

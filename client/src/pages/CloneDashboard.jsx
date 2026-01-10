@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Mic, PenTool, Theater, Wand2, Package, FileEdit, GraduationCap, Settings } from 'lucide-react';
 
 const CloneDashboard = () => {
   const { t } = useTranslation();
@@ -60,11 +61,20 @@ const CloneDashboard = () => {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'voice': return '🎙️';
-      case 'style': return '✍️';
-      case 'personality': return '🎭';
-      case 'full': return '🔮';
-      default: return '📦';
+      case 'voice': return <Mic size={24} />;
+      case 'style': return <PenTool size={24} />;
+      case 'personality': return <Theater size={24} />;
+      case 'full': return <Wand2 size={24} />;
+      default: return <Package size={24} />;
+    }
+  };
+
+  const getTypeIconSmall = (type) => {
+    switch (type) {
+      case 'voice': return <Mic size={14} />;
+      case 'style': return <PenTool size={14} />;
+      case 'personality': return <Theater size={14} />;
+      default: return <Package size={14} />;
     }
   };
 
@@ -144,7 +154,7 @@ const CloneDashboard = () => {
               gap: '8px'
             }}
           >
-            🎙️ {t('clone.newVoice', 'New Voice Clone')}
+            <Mic size={16} /> {t('clone.newVoice', 'New Voice Clone')}
           </button>
           <button
             onClick={() => navigate('/clone/style')}
@@ -161,7 +171,7 @@ const CloneDashboard = () => {
               gap: '8px'
             }}
           >
-            ✍️ {t('clone.newStyle', 'New Style Clone')}
+            <PenTool size={16} /> {t('clone.newStyle', 'New Style Clone')}
           </button>
           <button
             onClick={() => navigate('/clone/personality')}
@@ -178,7 +188,7 @@ const CloneDashboard = () => {
               gap: '8px'
             }}
           >
-            🎭 {t('clone.newPersonality', 'New Personality Clone')}
+            <Theater size={16} /> {t('clone.newPersonality', 'New Personality Clone')}
           </button>
         </div>
       </div>
@@ -190,15 +200,15 @@ const CloneDashboard = () => {
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#2d3748' }}>{stats.total}</div>
         </div>
         <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>🎙️ {t('clone.stats.voice', 'Voice')}</div>
+          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Mic size={14} /> {t('clone.stats.voice', 'Voice')}</div>
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#f5576c' }}>{stats.voice}</div>
         </div>
         <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>✍️ {t('clone.stats.style', 'Style')}</div>
+          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><PenTool size={14} /> {t('clone.stats.style', 'Style')}</div>
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#667eea' }}>{stats.style}</div>
         </div>
         <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px' }}>🎭 {t('clone.stats.personality', 'Personality')}</div>
+          <div style={{ color: '#a0aec0', fontSize: '13px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}><Theater size={14} /> {t('clone.stats.personality', 'Personality')}</div>
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#38ef7d' }}>{stats.personality}</div>
         </div>
         <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
@@ -228,7 +238,7 @@ const CloneDashboard = () => {
               boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
             }}
           >
-            {f === 'all' ? t('common.all', 'All') : `${getTypeIcon(f)} ${t(`clone.types.${f}`, f)}`}
+            {f === 'all' ? t('common.all', 'All') : <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{getTypeIconSmall(f)} {t(`clone.types.${f}`, f)}</span>}
           </button>
         ))}
       </div>
@@ -240,7 +250,7 @@ const CloneDashboard = () => {
         </div>
       ) : jobs.length === 0 ? (
         <div style={{ background: 'white', padding: '60px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔮</div>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}><Wand2 size={64} /></div>
           <h3 style={{ color: '#2d3748', marginBottom: '8px' }}>{t('clone.noClones', 'No clones yet')}</h3>
           <p style={{ color: '#718096', marginBottom: '24px' }}>
             {t('clone.noClones.description', 'Create your first clone to get started')}
@@ -258,7 +268,7 @@ const CloneDashboard = () => {
                 cursor: 'pointer'
               }}
             >
-              🎙️ {t('clone.createVoice', 'Create Voice Clone')}
+              <Mic size={16} /> {t('clone.createVoice', 'Create Voice Clone')}
             </button>
             <button
               onClick={() => navigate('/clone/style')}
@@ -272,7 +282,7 @@ const CloneDashboard = () => {
                 cursor: 'pointer'
               }}
             >
-              ✍️ {t('clone.createStyle', 'Create Style Clone')}
+              <PenTool size={16} /> {t('clone.createStyle', 'Create Style Clone')}
             </button>
           </div>
         </div>
@@ -428,7 +438,7 @@ const CloneDashboard = () => {
               cursor: 'pointer'
             }}
           >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>📝</div>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}><FileEdit size={24} /></div>
             <div style={{ fontWeight: '500', color: '#2d3748' }}>{t('clone.legacyClones', 'Legacy Work Clones')}</div>
             <div style={{ fontSize: '13px', color: '#718096' }}>{t('clone.legacyClones.desc', 'View old style work clones')}</div>
           </button>
@@ -443,7 +453,7 @@ const CloneDashboard = () => {
               cursor: 'pointer'
             }}
           >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎓</div>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}><GraduationCap size={24} /></div>
             <div style={{ fontWeight: '500', color: '#2d3748' }}>{t('clone.trainingCenter', 'Training Center')}</div>
             <div style={{ fontSize: '13px', color: '#718096' }}>{t('clone.trainingCenter.desc', 'Manage training data')}</div>
           </button>
@@ -458,7 +468,7 @@ const CloneDashboard = () => {
               cursor: 'pointer'
             }}
           >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⚙️</div>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}><Settings size={24} /></div>
             <div style={{ fontWeight: '500', color: '#2d3748' }}>{t('clone.settings', 'Clone Settings')}</div>
             <div style={{ fontSize: '13px', color: '#718096' }}>{t('clone.settings.desc', 'Configure clone preferences')}</div>
           </button>

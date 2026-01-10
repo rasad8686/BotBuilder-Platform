@@ -35,6 +35,7 @@ jest.mock('../../../services/channels/discordService', () => ({
 
 const db = require('../../../db');
 const discordService = require('../../../services/channels/discordService');
+const nacl = require('tweetnacl');
 
 // Import router after mocks
 const discordWebhook = require('../../../routes/webhooks/discord');

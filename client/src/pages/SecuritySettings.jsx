@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Lock, CheckCircle, AlertTriangle, Smartphone, Monitor } from 'lucide-react';
 import api from '../api/axios';
 import BackupCodesExport from '../components/BackupCodesExport';
 
@@ -183,7 +184,9 @@ export default function SecuritySettings() {
         {/* Two-Factor Authentication Section */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 transition-colors duration-300">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-3xl">🔐</span>
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+              <Lock className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
                 {t('security.twoFactor.title')}
@@ -201,7 +204,7 @@ export default function SecuritySettings() {
           ) : twoFAEnabled ? (
             <div>
               <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg mb-4">
-                <span className="text-2xl">✅</span>
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                 <div>
                   <p className="font-semibold text-green-800 dark:text-green-400">
                     {t('security.twoFactor.enabled')}
@@ -386,7 +389,7 @@ export default function SecuritySettings() {
           ) : (
             <div>
               <div className="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg mb-4">
-                <span className="text-2xl">⚠️</span>
+                <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 <div>
                   <p className="font-semibold text-yellow-800 dark:text-yellow-400">
                     {t('security.twoFactor.disabled')}
@@ -410,7 +413,9 @@ export default function SecuritySettings() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 sm:p-8 transition-colors duration-300">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">📱</span>
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
                   {t('security.sessions.title')}
@@ -452,8 +457,12 @@ export default function SecuritySettings() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="text-2xl">
-                        {session.deviceInfo?.includes('Mobile') ? '📱' : '💻'}
+                      <div className="w-10 h-10 bg-gray-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
+                        {session.deviceInfo?.includes('Mobile') ? (
+                          <Smartphone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        ) : (
+                          <Monitor className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">

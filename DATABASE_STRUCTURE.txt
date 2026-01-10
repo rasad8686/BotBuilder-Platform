@@ -1,0 +1,29 @@
+BOTBUILDER DATABASE ANALYSIS
+=============================
+
+ D server/migrations/20250202000002_api_token_spending_limits.js
+ D server/migrations/20250202000003_api_token_ip_allowlist.js
+ D server/migrations/20250202000003_usage_alerts.js
+ D server/migrations/20250202000004_api_audit_logs.js
+ D server/migrations/20250202000004_changelog_system.js
+ D server/migrations/20250202000004_service_accounts.js
+ D server/migrations/20250202000005_batch_jobs.js
+ D server/migrations/20250202000005_sla_system.js
+ D server/migrations/20250202000005_status_page.js
+ D server/migrations/20250202000006_forum_system.js
+ D server/migrations/20250202000006_multi_region.js
+ D server/migrations/20250202000006_reseller_portal.js
+ D server/migrations/20250202000006_webhook_management.js
+ D server/migrations/20250202000007_analytics_pro.js
+ D server/migrations/20250202000007_certification_program.js
+ D server/migrations/20250202000007_custom_domains.js
+ D server/migrations/20250202000007_team_workspaces.js
+ D server/migrations/20250202000008_affiliate_system.js
+ D server/migrations/20250202000008_blog_tutorials.js
+ D server/migrations/20250202000008_enterprise_contracts.js
+ D server/migrations/20250202000008_usage_billing.js
+ D server/migrations/20250202000009_blog_tutorials.js
+ D server/migrations/20250202000009_marketplace_system.js
+ D server/migrations/20250202000009_showcase_gallery.js
+ D server/migrations/20250202000010_roadmap_system.js
+ D server/migrations/20250202000011_showcase_system.js

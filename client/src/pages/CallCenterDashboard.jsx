@@ -32,7 +32,7 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
-import api from '../services/api';
+import api from '../api/axios';
 
 const CallCenterDashboard = () => {
   const navigate = useNavigate();

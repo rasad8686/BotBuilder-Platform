@@ -1,25 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Bot, Shuffle, MessageCircle, BarChart3, Building2, Key, Link as LinkIcon, Brain, Target, RefreshCw, Smartphone, Phone, Plug, Briefcase, User } from 'lucide-react';
 import api from '../utils/api';
 
 // Available permission resources
 const PERMISSION_RESOURCES = [
-  { key: 'bots', icon: '🤖', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'flows', icon: '🔀', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'messages', icon: '💬', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'analytics', icon: '📊', actions: ['read', 'export'] },
-  { key: 'organization', icon: '🏢', actions: ['read', 'update', 'invite', 'remove_members'] },
-  { key: 'api_tokens', icon: '🔑', actions: ['create', 'read', 'delete'] },
-  { key: 'webhooks', icon: '🔗', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'knowledge_base', icon: '🧠', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'agents', icon: '🎯', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'workflows', icon: '🔄', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'channels', icon: '📱', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'voice_bots', icon: '📞', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'integrations', icon: '🔌', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'roles', icon: '👔', actions: ['create', 'read', 'update', 'delete'] },
-  { key: 'users', icon: '👤', actions: ['read', 'update', 'delete', 'assign_role'] }
+  { key: 'bots', Icon: Bot, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'flows', Icon: Shuffle, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'messages', Icon: MessageCircle, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'analytics', Icon: BarChart3, actions: ['read', 'export'] },
+  { key: 'organization', Icon: Building2, actions: ['read', 'update', 'invite', 'remove_members'] },
+  { key: 'api_tokens', Icon: Key, actions: ['create', 'read', 'delete'] },
+  { key: 'webhooks', Icon: LinkIcon, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'knowledge_base', Icon: Brain, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'agents', Icon: Target, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'workflows', Icon: RefreshCw, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'channels', Icon: Smartphone, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'voice_bots', Icon: Phone, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'integrations', Icon: Plug, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'roles', Icon: Briefcase, actions: ['create', 'read', 'update', 'delete'] },
+  { key: 'users', Icon: User, actions: ['read', 'update', 'delete', 'assign_role'] }
 ];
 
 export default function AdminRoles() {
@@ -364,7 +365,7 @@ export default function AdminRoles() {
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-xl">{resource.icon}</span>
+                              <span className="text-xl">{resource.Icon && <resource.Icon size={20} />}</span>
                               <span className="font-medium text-gray-900 dark:text-white capitalize">
                                 {t(`roles.resources.${resource.key}`, resource.key.replace('_', ' '))}
                               </span>

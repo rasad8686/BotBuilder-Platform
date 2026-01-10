@@ -1,0 +1,525 @@
+/* Design Tokens - BotBuilder Design System
+   Inspired by Linear, Stripe, and Vercel design systems
+   ====================================================== */
+
+:root {
+  /* ======================================
+     COLOR PALETTE
+     ====================================== */
+
+  /* Primary Colors (Purple) */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-800: #5b21b6;
+  --color-primary-900: #4c1d95;
+
+  /* Secondary Colors (Blue) */
+  --color-secondary-50: #eff6ff;
+  --color-secondary-100: #dbeafe;
+  --color-secondary-200: #bfdbfe;
+  --color-secondary-300: #93c5fd;
+  --color-secondary-400: #60a5fa;
+  --color-secondary-500: #3b82f6;
+  --color-secondary-600: #2563eb;
+  --color-secondary-700: #1d4ed8;
+  --color-secondary-800: #1e40af;
+  --color-secondary-900: #1e3a8a;
+
+  /* Gray Scale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  /* Semantic Colors - Success */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+
+  /* Semantic Colors - Warning */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+
+  /* Semantic Colors - Error */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+
+  /* Semantic Colors - Info */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
+  --color-info-300: #93c5fd;
+  --color-info-400: #60a5fa;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* ======================================
+     SEMANTIC SURFACE COLORS (Light Mode)
+     ====================================== */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f9fafb;
+  --surface-tertiary: #f3f4f6;
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(0, 0, 0, 0.5);
+  --surface-inverse: #111827;
+
+  /* ======================================
+     SEMANTIC TEXT COLORS (Light Mode)
+     ====================================== */
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
+  --text-inverse: #ffffff;
+  --text-link: #7c3aed;
+  --text-link-hover: #6d28d9;
+
+  /* ======================================
+     SEMANTIC BORDER COLORS (Light Mode)
+     ====================================== */
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --border-focus: #8b5cf6;
+  --border-error: #ef4444;
+  --border-success: #10b981;
+
+  /* ======================================
+     GRADIENTS
+     ====================================== */
+  --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-purple-indigo: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  --gradient-cyan-teal: linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%);
+  --gradient-pink-purple: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  --gradient-orange-red: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  --gradient-subtle: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(249,250,251,1) 100%);
+
+  /* ======================================
+     SHADOWS
+     ====================================== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Colored shadows for interactive elements */
+  --shadow-primary: 0 4px 14px rgba(139, 92, 246, 0.25);
+  --shadow-primary-lg: 0 8px 25px rgba(139, 92, 246, 0.35);
+  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.25);
+  --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.25);
+
+  /* Focus ring shadow */
+  --shadow-focus: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.3);
+
+  /* ======================================
+     BORDER RADIUS
+     ====================================== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-md: 0.375rem;   /* 6px */
+  --radius-lg: 0.5rem;     /* 8px */
+  --radius-xl: 0.75rem;    /* 12px */
+  --radius-2xl: 1rem;      /* 16px */
+  --radius-3xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ======================================
+     TRANSITIONS & ANIMATIONS
+     ====================================== */
+  /* Durations */
+  --duration-instant: 50ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* Easings */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Preset transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-colors: background-color 200ms, border-color 200ms, color 200ms, fill 200ms;
+  --transition-transform: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-opacity: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-all: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ======================================
+     TYPOGRAPHY
+     ====================================== */
+  /* Font families */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+  --font-size-4xl: 2.25rem;    /* 36px */
+  --font-size-5xl: 3rem;       /* 48px */
+  --font-size-6xl: 3.75rem;    /* 60px */
+
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+
+  /* ======================================
+     SPACING SCALE
+     ====================================== */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0-5: 0.125rem;   /* 2px */
+  --space-1: 0.25rem;      /* 4px */
+  --space-1-5: 0.375rem;   /* 6px */
+  --space-2: 0.5rem;       /* 8px */
+  --space-2-5: 0.625rem;   /* 10px */
+  --space-3: 0.75rem;      /* 12px */
+  --space-3-5: 0.875rem;   /* 14px */
+  --space-4: 1rem;         /* 16px */
+  --space-5: 1.25rem;      /* 20px */
+  --space-6: 1.5rem;       /* 24px */
+  --space-7: 1.75rem;      /* 28px */
+  --space-8: 2rem;         /* 32px */
+  --space-9: 2.25rem;      /* 36px */
+  --space-10: 2.5rem;      /* 40px */
+  --space-11: 2.75rem;     /* 44px */
+  --space-12: 3rem;        /* 48px */
+  --space-14: 3.5rem;      /* 56px */
+  --space-16: 4rem;        /* 64px */
+  --space-20: 5rem;        /* 80px */
+  --space-24: 6rem;        /* 96px */
+
+  /* ======================================
+     Z-INDEX SCALE
+     ====================================== */
+  --z-behind: -1;
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+  --z-max: 9999;
+
+  /* ======================================
+     COMPONENT TOKENS - BUTTONS
+     ====================================== */
+  --btn-height-sm: 32px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+  --btn-padding-x-sm: 12px;
+  --btn-padding-x-md: 16px;
+  --btn-padding-x-lg: 24px;
+  --btn-font-size-sm: var(--font-size-sm);
+  --btn-font-size-md: var(--font-size-sm);
+  --btn-font-size-lg: var(--font-size-base);
+  --btn-radius: var(--radius-lg);
+
+  /* ======================================
+     COMPONENT TOKENS - INPUTS
+     ====================================== */
+  --input-height-sm: 32px;
+  --input-height-md: 40px;
+  --input-height-lg: 48px;
+  --input-padding-x: 12px;
+  --input-font-size: var(--font-size-sm);
+  --input-radius: var(--radius-lg);
+  --input-border-width: 1px;
+
+  /* ======================================
+     COMPONENT TOKENS - CARDS
+     ====================================== */
+  --card-padding-sm: var(--space-4);
+  --card-padding-md: var(--space-6);
+  --card-padding-lg: var(--space-8);
+  --card-radius: var(--radius-xl);
+  --card-shadow: var(--shadow-sm);
+  --card-shadow-hover: var(--shadow-md);
+
+  /* ======================================
+     COMPONENT TOKENS - MODAL
+     ====================================== */
+  --modal-width-sm: 400px;
+  --modal-width-md: 560px;
+  --modal-width-lg: 720px;
+  --modal-width-xl: 960px;
+  --modal-padding: var(--space-6);
+  --modal-radius: var(--radius-2xl);
+
+  /* ======================================
+     COMPONENT TOKENS - TOAST
+     ====================================== */
+  --toast-width: 360px;
+  --toast-padding: var(--space-4);
+  --toast-radius: var(--radius-xl);
+}
+
+/* ======================================
+   DARK MODE TOKENS
+   ====================================== */
+.dark {
+  /* Inverted Gray Scale for Dark Mode */
+  --color-gray-50: #1f2937;
+  --color-gray-100: #374151;
+  --color-gray-200: #4b5563;
+  --color-gray-300: #6b7280;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #d1d5db;
+  --color-gray-600: #e5e7eb;
+  --color-gray-700: #f3f4f6;
+  --color-gray-800: #f9fafb;
+  --color-gray-900: #ffffff;
+
+  /* Semantic Surface Colors (Dark Mode) */
+  --surface-primary: #0f172a;
+  --surface-secondary: #1e293b;
+  --surface-tertiary: #334155;
+  --surface-elevated: #1e293b;
+  --surface-overlay: rgba(0, 0, 0, 0.7);
+  --surface-inverse: #f9fafb;
+
+  /* Semantic Text Colors (Dark Mode) */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+  --text-link: #a78bfa;
+  --text-link-hover: #c4b5fd;
+
+  /* Semantic Border Colors (Dark Mode) */
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-focus: #a78bfa;
+  --border-error: #f87171;
+  --border-success: #34d399;
+
+  /* Dark Mode Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+  /* Colored shadows for dark mode */
+  --shadow-primary: 0 4px 14px rgba(139, 92, 246, 0.4);
+  --shadow-primary-lg: 0 8px 25px rgba(139, 92, 246, 0.5);
+  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.4);
+  --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.4);
+
+  /* Focus ring for dark mode */
+  --shadow-focus: 0 0 0 3px rgba(167, 139, 250, 0.4);
+  --shadow-focus-error: 0 0 0 3px rgba(248, 113, 113, 0.4);
+
+  /* Gradients adjusted for dark mode */
+  --gradient-subtle: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(15,23,42,1) 100%);
+}
+
+/* ======================================
+   KEYFRAME ANIMATIONS
+   ====================================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-5%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* ======================================
+   UTILITY ANIMATION CLASSES
+   ====================================== */
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.animate-slide-up {
+  animation: slideInUp var(--duration-normal) var(--ease-out);
+}
+
+.animate-slide-down {
+  animation: slideInDown var(--duration-normal) var(--ease-out);
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-normal) var(--ease-out);
+}
+
+.animate-pulse {
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--surface-tertiary) 50%, var(--surface-secondary) 75%);
+  background-size: 200% 100%;
+}
+
+/* ======================================
+   FOCUS VISIBLE STYLES
+   ====================================== */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.focus-ring-error:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-error);
+}

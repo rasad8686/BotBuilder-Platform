@@ -27,6 +27,7 @@ const fineTuningPoller = require('./jobs/fineTuningPoller');
 const { setupSwagger } = require('./config/swagger');
 const refreshTokenService = require('./services/refreshTokenService');
 const { applyGraphQLMiddleware } = require('./graphql');
+const { initializePassport, passport } = require('./config/passport');
 
 // Load .env from parent directory (BotBuilder root)
 dotenv.config({ path: path.join(__dirname, '..', '.env'), override: true });
@@ -212,7 +213,7 @@ app.use(cors({
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-organization-id', 'x-csrf-token']
 }));
 
@@ -236,6 +237,10 @@ app.use(sanitizeInput);
 
 // ✅ Cookie parser for CSRF and JWT cookies
 app.use(cookieParser());
+
+// ✅ Initialize Passport for OAuth authentication
+initializePassport();
+app.use(passport.initialize());
 
 // ✅ SECURITY: Request ID tracking for audit trails
 // Adds unique X-Request-ID header to every request/response
@@ -280,6 +285,67 @@ app.use(detectCustomDomain);
 
 // ✅ Rate limiting for API routes
 app.use('/api/', apiLimiter);
+
+// ✅ SMS Webhook routes (BEFORE CSRF - Twilio doesn't send CSRF tokens)
+const smsWebhookRouter = require('express').Router();
+const smsDb = require('./config/db');
+const smsLog = require('./utils/logger');
+
+smsWebhookRouter.post('/incoming', async (req, res) => {
+  try {
+    const { From, To, Body, MessageSid } = req.body;
+    smsLog.info('Incoming SMS received:', { from: From, to: To, sid: MessageSid });
+
+    let organizationId = 1;
+    const settings = await smsDb('sms_settings').where('twilio_phone_number', To).first();
+    if (settings) organizationId = settings.organization_id;
+
+    await smsDb('sms_logs').insert({
+      organization_id: organizationId,
+      from_number: From,
+      to_number: To,
+      direction: 'inbound',
+      content: Body,
+      status: 'delivered',
+      twilio_sid: MessageSid,
+      sent_at: new Date(),
+      created_at: new Date()
+    });
+
+    smsLog.info('Inbound SMS saved:', { from: From, organizationId });
+    res.set('Content-Type', 'text/xml');
+    res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+  } catch (error) {
+    smsLog.error('Error processing incoming SMS:', error);
+    res.set('Content-Type', 'text/xml');
+    res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+  }
+});
+
+smsWebhookRouter.post('/status', async (req, res) => {
+  try {
+    const { MessageSid, MessageStatus, ErrorCode, ErrorMessage } = req.body;
+    smsLog.info('SMS status update:', { sid: MessageSid, status: MessageStatus });
+
+    const statusMap = {
+      'queued': 'pending', 'sending': 'pending', 'sent': 'sent',
+      'delivered': 'delivered', 'failed': 'failed', 'undelivered': 'failed'
+    };
+    const localStatus = statusMap[MessageStatus] || 'pending';
+
+    await smsDb('sms_logs').where('twilio_sid', MessageSid).update({
+      status: localStatus,
+      error_message: ErrorCode ? `${ErrorCode}: ${ErrorMessage}` : null
+    });
+
+    res.status(200).send('OK');
+  } catch (error) {
+    smsLog.error('Error processing SMS status:', error);
+    res.status(200).send('OK');
+  }
+});
+
+app.use('/api/sms/webhook', smsWebhookRouter);
 
 // ✅ CSRF validation for state-changing requests (POST, PUT, DELETE, PATCH)
 app.use('/api/', csrfValidationMiddleware);
@@ -428,6 +494,8 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.name,
+        role: user.role || 'user',
+        plan: user.plan || 'free',
         current_organization_id: organizationId
       },
       getSecureEnv('JWT_SECRET'),
@@ -515,7 +583,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async (req, res) => {
+app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, async (req, res) => {
   try {
     const { email, password, twoFactorCode } = req.body;
 
@@ -528,7 +596,7 @@ app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async
 
     // Query database for user
     const result = await db.query(
-      'SELECT id, name, email, password_hash, is_superadmin FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash, is_superadmin, role, plan FROM users WHERE email = $1',
       [email]
     );
 
@@ -673,6 +741,9 @@ app.post('/api/auth/login', dbAuthLimiter, recordFailedLogin, authLimiter, async
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role || 'user',
+      plan: user.plan || 'free',
+      is_superadmin: user.is_superadmin || false,
       organizationId
     });
 
@@ -832,7 +903,7 @@ app.post('/api/auth/demo', async (req, res) => {
 
     // Query database for demo user
     const result = await db.query(
-      'SELECT id, name, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, name, email, password_hash, role, plan FROM users WHERE email = $1',
       [demoEmail]
     );
 
@@ -868,6 +939,8 @@ app.post('/api/auth/demo', async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.name,
+        role: user.role || 'user',
+        plan: user.plan || 'free',
         current_organization_id: organizationId,
         is_demo: true // Flag to identify demo users
       },
@@ -926,6 +999,9 @@ app.use('/api/bots', require('./routes/botFlows'));
 
 // ✅ Bot AI routes - Mount at /api/bots to handle /api/bots/:id/ai/* endpoints
 app.use('/api/bots', require('./routes/ai'));
+
+// ✅ Rate Limit Admin routes (Professional Rate Limiting) - Must be before /api/admin
+app.use('/api/admin/rate-limit', require('./routes/rateLimit.routes'));
 
 // ✅ Admin routes (Monitoring & Audit) - Using modular router
 app.use('/api/admin', require('./routes/admin'));
@@ -1002,6 +1078,9 @@ app.use('/api/integrations', require('./routes/integrations'));
 
 // ✅ Voice AI routes (Call Bots, Twilio, STT/TTS)
 app.use('/api/voice', require('./routes/voice'));
+app.use('/api/voice/ivr', require('./routes/ivr.routes'));
+app.use('/api/voice/ivr', require('./routes/ivr-simulator.routes'));
+app.use('/api/voice/ivr/webhook', require('./routes/ivr-webhook.routes'));
 
 // ✅ Work Clone routes (AI Writing Clone)
 app.use('/api/clones', require('./routes/clone'));
@@ -1011,6 +1090,9 @@ app.use('/api/voice-to-bot', require('./routes/voiceToBot'));
 
 // ✅ Widget routes (Web Chat Widget)
 app.use('/api/widget', require('./routes/widget'));
+
+// ✅ OAuth Authentication routes (Google, Microsoft)
+app.use('/api/auth', require('./routes/auth.routes'));
 
 // ✅ Password Reset routes
 app.use('/api/auth', require('./routes/passwordReset'));
@@ -1035,6 +1117,8 @@ app.use('/api/admin-auth', require('./routes/adminAuth'));
 
 // ✅ AI Fine-tuning routes (Custom Model Training)
 app.use('/api/fine-tuning', require('./routes/fineTuning'));
+app.use('/api/fine-tuning', require('./routes/fine-tuning-cost.routes'));
+app.use('/api/fine-tuning', require('./routes/fineTuning.upload.routes'));
 
 // ✅ Enterprise SSO routes (SAML/OIDC authentication)
 app.use('/api/sso', require('./routes/sso'));
@@ -1086,6 +1170,52 @@ app.use('/api/certifications', require('./routes/certifications'));
 
 // ✅ Blog/Tutorials routes
 app.use('/api/blog', require('./routes/blog'));
+
+// ✅ Changelog routes
+app.use('/api/changelog', require('./routes/changelog'));
+
+// ✅ Forum routes
+app.use('/api/forum', require('./routes/forum'));
+
+// ✅ Docs AI Assistant routes
+app.use('/api/docs-ai', require('./routes/docsAI'));
+
+// ✅ Product Tours routes
+app.use('/api/tours', require('./routes/tour.routes'));
+app.use('/api/public/tours', require('./routes/tour-public.routes'));
+
+// ✅ A/B Testing routes
+app.use('/api/ab-tests', require('./routes/ab-test.routes'));
+app.use('/api/public/ab-tests', require('./routes/ab-test-public.routes'));
+
+// ✅ Helpdesk/Tickets routes
+app.use('/api/tickets', require('./routes/ticket.routes'));
+app.use('/api/public/tickets', require('./routes/ticket-public.routes'));
+
+// ✅ Email Marketing routes
+app.use('/api/email', require('./routes/email-marketing.routes'));
+app.use('/api/email/queue', require('./routes/email-queue.routes'));
+app.use('/api/email/bounces', require('./routes/email-bounce.routes'));
+app.use('/api/email/webhooks', require('./routes/email-webhooks.routes'));
+app.use('/api/public/email', require('./routes/email-public.routes'));
+app.use('/api/email-domains', require('./routes/email-domains.routes'));
+app.use('/api/email/ab-tests', require('./routes/email-ab-test.routes'));
+app.use('/api/email/analytics', require('./routes/email-analytics.routes'));
+app.use('/api/email/automations', require('./routes/email-automations.routes'));
+app.use('/api/email/templates-api', require('./routes/email-templates'));
+
+// ✅ Surveys routes
+app.use('/api/surveys', require('./routes/surveys.routes'));
+app.use('/api/public/surveys', require('./routes/surveys-public.routes')(db, io));
+
+// ✅ In-app Banners routes
+app.use('/api/banners', require('./routes/banner.routes'));
+
+// ✅ SMS Messaging routes (Twilio)
+app.use('/api/sms', require('./routes/sms.routes'));
+
+// V2 API (Professional API with consistent responses, pagination, and more)
+app.use('/api/v2', require('./v2'));
 
 // ✅ Import error handler middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');

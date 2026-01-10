@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import aiApi from '../../api/ai';
 
 /**
@@ -152,7 +153,7 @@ export default function AIChatTester({ botId, hasConfig, testResult, onTest, tes
           }`}>
             {testResult.success ? (
               <div>
-                <div className="font-semibold mb-1">✅ Connection Successful!</div>
+                <div className="font-semibold mb-1 flex items-center gap-1"><CheckCircle size={16} /> Connection Successful!</div>
                 <div className="text-sm">Provider: {testResult.provider} · Model: {testResult.model}</div>
                 {testResult.testResponse && (
                   <div className="text-sm mt-1">Response: "{testResult.testResponse}"</div>
@@ -160,7 +161,7 @@ export default function AIChatTester({ botId, hasConfig, testResult, onTest, tes
               </div>
             ) : (
               <div>
-                <div className="font-semibold mb-1">❌ Connection Failed</div>
+                <div className="font-semibold mb-1 flex items-center gap-1"><XCircle size={16} /> Connection Failed</div>
                 <div className="text-sm">{testResult.error || 'Unknown error'}</div>
               </div>
             )}

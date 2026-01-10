@@ -1,0 +1,1243 @@
+openapi: 3.0.3
+info:
+  title: BotBuilder API
+  version: 1.0.0
+  description: |
+    # BotBuilder API Documentation
+
+    Enterprise-grade AI chatbot platform with multi-channel support, autonomous agents, and advanced analytics.
+
+    ## Features
+    - **Bot Management**: Create, configure, and deploy chatbots
+    - **AI Integration**: OpenAI GPT-4, Anthropic Claude, Google Gemini
+    - **Multi-Channel**: Telegram, Slack, Discord, WhatsApp, Web Widget
+    - **Knowledge Base**: RAG-powered document retrieval
+    - **Autonomous Agents**: Self-operating AI agents with tool execution
+    - **Fine-Tuning**: Custom AI model training
+    - **Enterprise SSO**: SAML, OIDC, and SCIM support
+
+    ## Authentication
+    Most endpoints require JWT authentication:
+    ```
+    Authorization: Bearer <your_jwt_token>
+    ```
+
+    ## Rate Limits
+    | Plan | Requests/Min | Requests/Day |
+    |------|-------------|--------------|
+    | Free | 20 | 1,000 |
+    | Pro | 100 | 10,000 |
+    | Enterprise | 500 | 100,000 |
+  contact:
+    name: BotBuilder Support
+    email: support@botbuilder.com
+    url: https://botbuilder.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://api.botbuilder.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Bots
+    description: Bot management operations
+  - name: Messages
+    description: Message history and chat
+  - name: AI
+    description: AI configuration and chat
+  - name: Agents
+    description: Autonomous AI agents
+  - name: Knowledge
+    description: Knowledge base and RAG
+  - name: Channels
+    description: Channel integrations
+  - name: Webhooks
+    description: Webhook management
+  - name: Analytics
+    description: Usage analytics
+  - name: Billing
+    description: Subscription and billing
+  - name: Status
+    description: System status
+
+paths:
+  # ============================================
+  # AUTHENTICATION
+  # ============================================
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              username: johndoe
+              email: john@example.com
+              password: SecurePassword123!
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: john@example.com
+              password: SecurePassword123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # ============================================
+  # BOTS
+  # ============================================
+  /api/bots:
+    get:
+      tags: [Bots]
+      summary: List all bots
+      operationId: listBots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        '200':
+          description: Bots retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bot'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags: [Bots]
+      summary: Create new bot
+      operationId: createBot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBotRequest'
+            example:
+              name: Customer Support Bot
+              platform: telegram
+              language: en
+              description: Handles customer inquiries
+      responses:
+        '201':
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          description: Plan limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanLimitError'
+
+  /api/bots/{id}:
+    get:
+      tags: [Bots]
+      summary: Get bot by ID
+      operationId: getBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags: [Bots]
+      summary: Update bot
+      operationId: updateBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBotRequest'
+      responses:
+        '200':
+          description: Bot updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bot:
+                    $ref: '#/components/schemas/Bot'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags: [Bots]
+      summary: Delete bot
+      operationId: deleteBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bot deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # ============================================
+  # AI CHAT
+  # ============================================
+  /api/bots/{id}/ai/chat:
+    post:
+      tags: [AI]
+      summary: Send message to AI bot
+      operationId: chatWithBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              message: Hello, how can you help me?
+              sessionId: session_abc123
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/bots/{id}/ai/config:
+    get:
+      tags: [AI]
+      summary: Get bot AI configuration
+      operationId: getAIConfig
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: AI configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/AIConfiguration'
+
+    put:
+      tags: [AI]
+      summary: Update bot AI configuration
+      operationId: updateAIConfig
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIConfiguration'
+      responses:
+        '200':
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  config:
+                    $ref: '#/components/schemas/AIConfiguration'
+
+  # ============================================
+  # MESSAGES
+  # ============================================
+  /api/messages/{botId}:
+    get:
+      tags: [Messages]
+      summary: Get message history
+      operationId: getMessages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sessionId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Messages retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+  # ============================================
+  # AUTONOMOUS AGENTS
+  # ============================================
+  /api/agents:
+    get:
+      tags: [Agents]
+      summary: List autonomous agents
+      operationId: listAgents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Agents list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+
+    post:
+      tags: [Agents]
+      summary: Create autonomous agent
+      operationId: createAgent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
+      responses:
+        '201':
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agent:
+                    $ref: '#/components/schemas/Agent'
+
+  /api/agents/{id}/execute:
+    post:
+      tags: [Agents]
+      summary: Execute agent task
+      operationId: executeAgent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [goal]
+              properties:
+                goal:
+                  type: string
+                  description: Task goal for the agent
+                context:
+                  type: object
+                  description: Additional context
+      responses:
+        '200':
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  executionId:
+                    type: string
+                  status:
+                    type: string
+
+  # ============================================
+  # KNOWLEDGE BASE
+  # ============================================
+  /api/knowledge/{botId}/documents:
+    get:
+      tags: [Knowledge]
+      summary: List knowledge documents
+      operationId: listDocuments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Documents list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KnowledgeDocument'
+
+    post:
+      tags: [Knowledge]
+      summary: Upload document
+      operationId: uploadDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  document:
+                    $ref: '#/components/schemas/KnowledgeDocument'
+
+  /api/knowledge/{botId}/query:
+    post:
+      tags: [Knowledge]
+      summary: Query knowledge base
+      operationId: queryKnowledge
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                topK:
+                  type: integer
+                  default: 5
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        score:
+                          type: number
+                        documentId:
+                          type: integer
+
+  # ============================================
+  # WEBHOOKS
+  # ============================================
+  /api/webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhooks
+      operationId: listWebhooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Webhooks list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+
+    post:
+      tags: [Webhooks]
+      summary: Create webhook
+      operationId: createWebhook
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webhook:
+                    $ref: '#/components/schemas/Webhook'
+
+  # ============================================
+  # ANALYTICS
+  # ============================================
+  /api/analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Get analytics overview
+      operationId: getAnalyticsOverview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+
+  # ============================================
+  # STATUS
+  # ============================================
+  /api/status:
+    get:
+      tags: [Status]
+      summary: Get system status
+      operationId: getStatus
+      responses:
+        '200':
+          description: System status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+
+  /api/status/services:
+    get:
+      tags: [Status]
+      summary: Get services status
+      operationId: getServicesStatus
+      responses:
+        '200':
+          description: Services status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceStatus'
+
+# ============================================
+# COMPONENTS
+# ============================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for external integrations
+
+  schemas:
+    # Auth
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+          minLength: 2
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        twoFactorCode:
+          type: string
+          description: 2FA code if enabled
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+          description: JWT access token (15 min)
+        refreshToken:
+          type: string
+          description: Refresh token (7 days)
+        expiresIn:
+          type: integer
+          example: 900
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        currentOrganizationId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Bots
+    Bot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+          enum: [telegram, whatsapp, discord, slack, messenger, web]
+        language:
+          type: string
+        api_token:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+        organization_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateBotRequest:
+      type: object
+      required: [name, platform]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        platform:
+          type: string
+          enum: [telegram, whatsapp, discord, slack, messenger, web]
+        language:
+          type: string
+          default: en
+        description:
+          type: string
+        webhook_url:
+          type: string
+          format: uri
+
+    UpdateBotRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        platform:
+          type: string
+        language:
+          type: string
+        webhook_url:
+          type: string
+        is_active:
+          type: boolean
+
+    # AI
+    AIConfiguration:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [openai, claude]
+        model:
+          type: string
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 0.7
+        max_tokens:
+          type: integer
+          default: 1024
+        system_prompt:
+          type: string
+        context_window:
+          type: integer
+          default: 10
+        is_enabled:
+          type: boolean
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: string
+
+    ChatResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        usage:
+          type: object
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+        cost:
+          type: number
+
+    # Messages
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        session_id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # Agents
+    Agent:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        model:
+          type: string
+        tools:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+
+    CreateAgentRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        model:
+          type: string
+          default: gpt-4o-mini
+        tools:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: object
+
+    # Knowledge
+    KnowledgeDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+        bot_id:
+          type: integer
+        title:
+          type: string
+        file_type:
+          type: string
+        chunk_count:
+          type: integer
+        status:
+          type: string
+          enum: [pending, processing, ready, failed]
+        created_at:
+          type: string
+          format: date-time
+
+    # Webhooks
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        secret:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateWebhookRequest:
+      type: object
+      required: [url, events]
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum: [bot.created, bot.updated, bot.deleted, message.received, agent.completed]
+
+    # Analytics
+    AnalyticsOverview:
+      type: object
+      properties:
+        total_messages:
+          type: integer
+        total_sessions:
+          type: integer
+        total_users:
+          type: integer
+        avg_session_duration:
+          type: number
+        ai_cost:
+          type: number
+        messages_by_day:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+
+    # Status
+    SystemStatus:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum: [operational, degraded, partial_outage, major_outage]
+        activeIncidents:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+
+    ServiceStatus:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+          enum: [up, degraded, down]
+        responseTime:
+          type: integer
+        lastCheck:
+          type: string
+          format: date-time
+
+    # Common
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        message:
+          type: string
+
+    PlanLimitError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: Plan limit reached
+        currentPlan:
+          type: string
+        currentBots:
+          type: integer
+        maxBots:
+          type: integer
+        upgradePlan:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Unauthorized
+            message: Invalid or expired token
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Not Found
+            message: The requested resource was not found
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Validation Error
+            message: Invalid input data
+
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Too Many Requests
+            message: Rate limit exceeded
+
+security:
+  - bearerAuth: []

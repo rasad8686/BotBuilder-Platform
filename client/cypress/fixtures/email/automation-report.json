@@ -1,0 +1,92 @@
+{
+  "enrolled": 1250,
+  "active": 210,
+  "completed": 890,
+  "exited": 150,
+  "completionRate": 71.2,
+  "averageTimeToComplete": "4.5 days",
+  "stepStats": [
+    {
+      "index": 0,
+      "name": "Welcome to Our Community!",
+      "type": "send_email",
+      "sent": 1250,
+      "delivered": 1220,
+      "opened": 680,
+      "clicked": 245,
+      "openRate": 55.7,
+      "clickRate": 20.1
+    },
+    {
+      "index": 1,
+      "name": "Wait 2 days",
+      "type": "wait",
+      "entered": 1220,
+      "completed": 1180
+    },
+    {
+      "index": 2,
+      "name": "Opened welcome email?",
+      "type": "condition",
+      "evaluated": 1180,
+      "yesBranch": 680,
+      "noBranch": 500
+    },
+    {
+      "index": 3,
+      "name": "Tips to get started",
+      "type": "send_email",
+      "sent": 680,
+      "delivered": 670,
+      "opened": 420,
+      "clicked": 180,
+      "openRate": 62.7,
+      "clickRate": 26.9
+    },
+    {
+      "index": 4,
+      "name": "Did you see our email?",
+      "type": "send_email",
+      "sent": 500,
+      "delivered": 490,
+      "opened": 180,
+      "clicked": 45,
+      "openRate": 36.7,
+      "clickRate": 9.2
+    }
+  ],
+  "recentActivity": [
+    {
+      "type": "enrolled",
+      "description": "john@example.com - enrolled in automation",
+      "timestamp": "2024-01-20T14:30:00.000Z"
+    },
+    {
+      "type": "email_sent",
+      "description": "jane@example.com - sent Welcome email",
+      "timestamp": "2024-01-20T14:25:00.000Z"
+    },
+    {
+      "type": "email_opened",
+      "description": "mike@example.com - opened Tips email",
+      "timestamp": "2024-01-20T14:20:00.000Z"
+    },
+    {
+      "type": "completed",
+      "description": "sarah@example.com - completed automation",
+      "timestamp": "2024-01-20T14:15:00.000Z"
+    },
+    {
+      "type": "goal_reached",
+      "description": "tom@example.com - reached goal (made_purchase)",
+      "timestamp": "2024-01-20T14:10:00.000Z"
+    }
+  ],
+  "conversionFunnel": {
+    "step1_reached": 1250,
+    "step2_reached": 1180,
+    "step3_reached": 1160,
+    "goal_reached": 150,
+    "conversionRate": 12.0
+  }
+}

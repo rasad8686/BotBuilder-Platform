@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Puzzle, Download, Lock, Star, Check } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -90,7 +91,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
             {plugin.icon_url ? (
               <img src={plugin.icon_url} alt={plugin.name} />
             ) : (
-              <span className="default-icon">🧩</span>
+              <span className="default-icon"><Puzzle size={40} /></span>
             )}
           </div>
           <div className="plugin-info">
@@ -101,7 +102,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
                 {renderStars(plugin.rating || 0)}
                 <span className="count">({plugin.review_count || 0} reviews)</span>
               </span>
-              <span className="downloads">↓ {plugin.downloads || 0} downloads</span>
+              <span className="downloads"><Download size={14} /> {plugin.downloads || 0} downloads</span>
             </div>
           </div>
           <div className="plugin-action">
@@ -178,7 +179,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
                   <h3>Features</h3>
                   <ul className="features-list">
                     {manifest.features.map((feature, i) => (
-                      <li key={i}>✓ {feature}</li>
+                      <li key={i}><Check size={14} className="feature-check" /> {feature}</li>
                     ))}
                   </ul>
                 </>
@@ -244,7 +245,7 @@ const PluginDetails = ({ plugin, isInstalled, onInstall, onUninstall, onClose })
                 <ul className="permissions-list">
                   {permissions.map((perm, i) => (
                     <li key={i}>
-                      <span className="perm-icon">🔐</span>
+                      <span className="perm-icon"><Lock size={20} /></span>
                       <span className="perm-name">{perm}</span>
                     </li>
                   ))}

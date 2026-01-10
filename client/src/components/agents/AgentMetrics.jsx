@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle, XCircle, ClipboardList, Clock, Cpu } from 'lucide-react';
 
 const AgentMetrics = ({ metrics = {}, compact = false }) => {
   const {
@@ -78,7 +79,7 @@ const AgentMetrics = ({ metrics = {}, compact = false }) => {
         </div>
 
         <div className="metric-card success">
-          <div className="metric-icon">✅</div>
+          <div className="metric-icon"><CheckCircle size={24} /></div>
           <div className="metric-content">
             <div className="metric-value">{successfulTasks}</div>
             <div className="metric-label">Successful</div>
@@ -87,7 +88,7 @@ const AgentMetrics = ({ metrics = {}, compact = false }) => {
         </div>
 
         <div className="metric-card error">
-          <div className="metric-icon">❌</div>
+          <div className="metric-icon"><XCircle size={24} /></div>
           <div className="metric-content">
             <div className="metric-value">{failedTasks}</div>
             <div className="metric-label">Failed</div>

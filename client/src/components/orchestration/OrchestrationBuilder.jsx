@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Rocket, ClipboardList, BarChart3, Play, Hourglass, ArrowLeft, Shuffle, Check } from 'lucide-react';
 import ReactFlow, {
   Background,
   Controls,
@@ -92,10 +93,10 @@ function OrchestrationBuilderInner() {
           flowName: flow.name || `Flow ${flow.id}`,
           label: (
             <div style={{ padding: 8, textAlign: 'center' }}>
-              <div style={{ fontSize: 24, marginBottom: 4 }}>{isEntryFlow ? '🚀' : '📋'}</div>
+              <div style={{ fontSize: 24, marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{isEntryFlow ? <Rocket size={24} /> : <ClipboardList size={24} />}</div>
               <div style={{ fontWeight: 600 }}>{flow.name || `Flow ${flow.id}`}</div>
-              <div style={{ fontSize: 11, color: isEntryFlow ? '#059669' : '#6b7280' }}>
-                {isEntryFlow ? '✓ Entry Flow' : `${flow.flow_data?.nodes?.length || 0} nodes`}
+              <div style={{ fontSize: 11, color: isEntryFlow ? '#059669' : '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                {isEntryFlow ? <><Check size={12} /> Entry Flow</> : `${flow.flow_data?.nodes?.length || 0} nodes`}
               </div>
             </div>
           )
@@ -283,13 +284,13 @@ function OrchestrationBuilderInner() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => navigate(`/bots/${botId}/orchestrations`)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6b7280' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6b7280', display: 'flex', alignItems: 'center' }}
           >
-            ←
+            <ArrowLeft size={18} />
           </button>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🔀</span>
+              <Shuffle size={20} />
               {orchestration?.name || 'Orchestration Builder'}
             </h1>
             <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>
@@ -313,7 +314,7 @@ function OrchestrationBuilderInner() {
               gap: 8
             }}
           >
-            <span>📊</span> Variables
+            <BarChart3 size={16} /> Variables
           </button>
           <button
             onClick={handleRunWorkflow}
@@ -331,7 +332,7 @@ function OrchestrationBuilderInner() {
               gap: 8
             }}
           >
-            <span>{isRunning ? '⏳' : '▶'}</span> {isRunning ? 'Running...' : 'Run Workflow'}
+            {isRunning ? <Hourglass size={16} /> : <Play size={16} />} {isRunning ? 'Running...' : 'Run Workflow'}
           </button>
           <button
             onClick={() => setShowFlowSelector(true)}
@@ -417,8 +418,8 @@ function OrchestrationBuilderInner() {
               }
             }}
           >
-            <span>🚀</span>
-            {orchestration?.entry_flow_id === selectedNode.flowId ? '✓ Current Entry Flow' : 'Set as Entry Flow'}
+            <Rocket size={16} />
+            {orchestration?.entry_flow_id === selectedNode.flowId ? <><Check size={12} style={{ marginRight: 4 }} /> Current Entry Flow</> : 'Set as Entry Flow'}
           </button>
         </div>
       )}

@@ -138,6 +138,44 @@
 
 ---
 
+## SDK & Developer Tools
+
+### JavaScript SDK
+
+```bash
+npm install @botbuilder/sdk
+```
+
+```javascript
+const BotBuilder = require('@botbuilder/sdk');
+
+const client = new BotBuilder({ apiKey: 'your-api-key' });
+
+// Create a bot
+const bot = await client.bots.create({
+  name: 'My Bot',
+  platform: 'telegram'
+});
+
+// Send a message
+const response = await client.messages.send(bot.id, {
+  message: 'Hello!',
+  sessionId: 'session_123'
+});
+```
+
+### Developer Resources
+
+| Resource | Location |
+|----------|----------|
+| OpenAPI Spec | `server/docs/openapi.yaml` |
+| Postman Collection | `docs/BotBuilder.postman_collection.json` |
+| Swagger UI | `http://localhost:5000/api-docs` |
+| Status Page | `http://localhost:5000/status` |
+| SDK Docs | `packages/botbuilder-sdk/README.md` |
+
+---
+
 ## Quick Start
 
 ```bash
@@ -433,6 +471,30 @@ BotBuilder/
 ├── README.md                    # This file
 └── LICENSE
 ```
+
+---
+
+## Documentation
+
+- [Getting Started](/docs/SETUP.md)
+- [API Reference](/docs/API_REFERENCE.md)
+- [User Guide](/docs/USER_GUIDE.md)
+- [Integrations](/docs/INTEGRATIONS.md)
+- [Troubleshooting](/docs/TROUBLESHOOTING.md)
+
+### Interactive Resources
+
+- [API Playground](/playground) - Test API endpoints live
+- [Video Tutorials](/academy) - Step-by-step guides
+- AI Assistant - Available on all doc pages
+
+### Supported Languages
+
+Documentation and AI Assistant available in:
+- Azerbaijani
+- Turkish
+- English
+- Russian
 
 ---
 

@@ -1,6 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import {
+  Bot, Send, MessageCircle, Gamepad2, Briefcase, Mail,
+  Calendar, Link2, Pencil, MessageSquare, MoreVertical,
+  Workflow, Cpu, Target, Wrench, RefreshCw, Monitor, Trash2
+} from 'lucide-react';
 import PermissionGuard from './PermissionGuard';
+import { ActionDropdown } from './ui';
 
 /**
  * Reusable Bot Card Component
@@ -13,15 +20,16 @@ export default function BotCard({ bot, onDelete }) {
 
   // Platform icons and colors
   const platformConfig = {
-    telegram: { icon: '✈️', color: 'bg-blue-100 text-blue-800' },
-    whatsapp: { icon: '💬', color: 'bg-green-100 text-green-800' },
-    discord: { icon: '🎮', color: 'bg-indigo-100 text-indigo-800' },
-    slack: { icon: '💼', color: 'bg-purple-100 text-purple-800' },
-    messenger: { icon: '💌', color: 'bg-pink-100 text-pink-800' }
+    telegram: { icon: Send, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+    whatsapp: { icon: MessageCircle, color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+    discord: { icon: Gamepad2, color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    slack: { icon: Briefcase, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
+    messenger: { icon: Mail, color: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400' }
   };
 
   const platform = bot.platform?.toLowerCase() || 'telegram';
   const platformInfo = platformConfig[platform] || platformConfig.telegram;
+  const PlatformIcon = platformInfo.icon;
 
   // Format date
   const formatDate = (dateString) => {
@@ -34,30 +42,77 @@ export default function BotCard({ bot, onDelete }) {
     });
   };
 
+  // Dropdown menu items
+  const dropdownItems = [
+    {
+      label: t('bots.flowBuilder'),
+      icon: Workflow,
+      onClick: () => navigate(`/bots/${bot.id}/flow`)
+    },
+    {
+      label: t('bots.aiConfig'),
+      icon: Cpu,
+      onClick: () => navigate(`/bots/${bot.id}/ai-config`)
+    },
+    {
+      label: t('bots.agents'),
+      icon: Target,
+      onClick: () => navigate(`/bots/${bot.id}/agents`)
+    },
+    {
+      label: t('bots.tools'),
+      icon: Wrench,
+      onClick: () => navigate(`/bots/${bot.id}/tools`)
+    },
+    {
+      label: t('bots.workflows'),
+      icon: RefreshCw,
+      onClick: () => navigate(`/bots/${bot.id}/workflows`)
+    },
+    {
+      label: t('bots.widget'),
+      icon: Monitor,
+      onClick: () => navigate(`/bots/${bot.id}/widget`)
+    },
+    { divider: true },
+    {
+      label: t('common.delete'),
+      icon: Trash2,
+      onClick: () => onDelete(bot),
+      danger: true
+    }
+  ];
+
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 border border-gray-100 dark:border-slate-700">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className="bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-slate-700"
+    >
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">
             {bot.name}
           </h3>
 
           {/* Platform Badge */}
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${platformInfo.color}`}>
-              <span>{platformInfo.icon}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${platformInfo.color}`}>
+              <PlatformIcon className="w-3.5 h-3.5" />
               <span className="capitalize">{platform}</span>
             </span>
 
             {/* Active Status Badge */}
             {bot.is_active !== undefined && (
-              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                 bot.is_active
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
               }`}>
-                <span className={`w-2 h-2 rounded-full ${bot.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                <span className={`w-2 h-2 rounded-full ${bot.is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
                 {bot.is_active ? t('bots.active') : t('bots.inactive')}
               </span>
             )}
@@ -65,8 +120,8 @@ export default function BotCard({ bot, onDelete }) {
         </div>
 
         {/* Bot Icon */}
-        <div className="text-4xl ml-2">
-          🤖
+        <div className="ml-3 p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+          <Bot className="w-8 h-8 text-purple-600 dark:text-purple-400" />
         </div>
       </div>
 
@@ -76,95 +131,56 @@ export default function BotCard({ bot, onDelete }) {
       </p>
 
       {/* Metadata */}
-      <div className="text-xs text-gray-500 dark:text-gray-400 mb-4 space-y-1">
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-4 space-y-1.5">
         <div className="flex items-center gap-2">
-          <span>📅 {t('bots.created')}</span>
-          <span>{formatDate(bot.created_at)}</span>
+          <Calendar className="w-3.5 h-3.5" />
+          <span>{t('bots.created')}</span>
+          <span className="text-gray-700 dark:text-gray-300">{formatDate(bot.created_at)}</span>
         </div>
         {bot.webhook_url && (
-          <div className="flex items-center gap-2 truncate">
-            <span>🔗 {t('bots.webhook')}</span>
-            <span className="truncate">{bot.webhook_url}</span>
+          <div className="flex items-center gap-2">
+            <Link2 className="w-3.5 h-3.5" />
+            <span>{t('bots.webhook')}</span>
+            <span className="truncate text-gray-700 dark:text-gray-300 max-w-[150px]">{bot.webhook_url}</span>
           </div>
         )}
       </div>
 
-      {/* Action Buttons - Grid Layout */}
-      <div className="grid grid-cols-2 gap-1.5 mt-4" role="group" aria-label={t('bots.actions', 'Bot actions')}>
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/flow`)}
-          className="bg-purple-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-          aria-label={`${t('bots.flowBuilder')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">🔀</span> <span className="truncate">{t('bots.flowBuilder')}</span>
-        </button>
-
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/ai-config`)}
-          className="bg-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
-          aria-label={`${t('bots.aiConfig')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">🤖</span> <span className="truncate">{t('bots.aiConfig')}</span>
-        </button>
-
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/agents`)}
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
-          aria-label={`${t('bots.agents')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">🎯</span> <span className="truncate">{t('bots.agents')}</span>
-        </button>
-
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/tools`)}
-          className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
-          aria-label={`${t('bots.tools')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">🔧</span> <span className="truncate">{t('bots.tools')}</span>
-        </button>
-
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/workflows`)}
-          className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white py-1.5 px-2 rounded-lg font-medium hover:from-cyan-700 hover:to-teal-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
-          aria-label={`${t('bots.workflows')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">🔄</span> <span className="truncate">{t('bots.workflows')}</span>
-        </button>
-
-        <button
-          onClick={() => navigate(`/bots/${bot.id}/widget`)}
-          className="bg-orange-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
-          aria-label={`${t('bots.widget')} - ${bot.name}`}
-        >
-          <span aria-hidden="true">📟</span> <span className="truncate">{t('bots.widget')}</span>
-        </button>
-
-        <button
+      {/* Action Buttons - Simplified Layout */}
+      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+        {/* Primary Action: Edit */}
+        <motion.button
           onClick={() => navigate(`/bot/${bot.id}/edit`)}
-          className="bg-blue-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          className="flex-1 bg-purple-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
           aria-label={`${t('bots.edit')} - ${bot.name}`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <span aria-hidden="true">✏️</span> <span className="truncate">{t('bots.edit')}</span>
-        </button>
+          <Pencil className="w-4 h-4" />
+          <span>{t('bots.edit')}</span>
+        </motion.button>
 
-        <button
+        {/* Secondary Action: Messages */}
+        <motion.button
           onClick={() => navigate(`/bot/${bot.id}/messages`)}
-          className="bg-green-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1 text-xs truncate focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+          className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
           aria-label={`${t('bots.messages')} - ${bot.name}`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <span aria-hidden="true">💬</span> <span className="truncate">{t('bots.messages')}</span>
-        </button>
+          <MessageSquare className="w-4 h-4" />
+          <span>{t('bots.messages')}</span>
+        </motion.button>
 
-        <PermissionGuard require="admin">
-          <button
-            onClick={() => onDelete(bot)}
-            className="col-span-2 bg-red-600 text-white py-1.5 px-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-1 text-xs focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
-            aria-label={`${t('common.delete')} ${bot.name}`}
-          >
-            <span aria-hidden="true">🗑️</span> <span>{t('common.delete')}</span>
-          </button>
+        {/* More Actions Dropdown */}
+        <PermissionGuard require="member">
+          <ActionDropdown
+            items={dropdownItems}
+            trigger="icon"
+            align="right"
+          />
         </PermissionGuard>
       </div>
-    </div>
+    </motion.div>
   );
 }

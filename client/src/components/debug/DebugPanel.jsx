@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Bug, Play, Search, Package, AlertTriangle, Trash2, Pin, ChevronDown, X } from 'lucide-react';
 import NodeInspector from './NodeInspector';
 import VariablesViewer from './VariablesViewer';
 import ExecutionPath from './ExecutionPath';
@@ -75,10 +76,10 @@ const DebugPanel = ({
   }, [onNodeHighlight]);
 
   const tabs = [
-    { id: 'execution', label: 'Execution', icon: '▶' },
-    { id: 'inspector', label: 'Inspector', icon: '🔍' },
-    { id: 'variables', label: 'Variables', icon: '📦' },
-    { id: 'errors', label: 'Errors', icon: '⚠', count: errors.length + warnings.length }
+    { id: 'execution', label: 'Execution', Icon: Play },
+    { id: 'inspector', label: 'Inspector', Icon: Search },
+    { id: 'variables', label: 'Variables', Icon: Package },
+    { id: 'errors', label: 'Errors', Icon: AlertTriangle, count: errors.length + warnings.length }
   ];
 
   if (!isExpanded) {
@@ -89,7 +90,7 @@ const DebugPanel = ({
           style={styles.expandButton}
           title="Expand Debug Panel"
         >
-          <span style={{ marginRight: '8px' }}>🐛</span>
+          <Bug size={16} style={{ marginRight: '8px' }} />
           Debug
           {(errors.length > 0 || warnings.length > 0) && (
             <span style={styles.badge}>{errors.length + warnings.length}</span>
@@ -107,7 +108,7 @@ const DebugPanel = ({
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <span style={styles.debugIcon}>🐛</span>
+          <Bug size={16} style={styles.debugIcon} />
           <span style={styles.title}>Debug Panel</span>
           {isRunning && (
             <span style={styles.runningIndicator}>
@@ -122,7 +123,7 @@ const DebugPanel = ({
             style={styles.iconButton}
             title="Clear Debug Data"
           >
-            🗑
+            <Trash2 size={14} />
           </button>
           <button
             onClick={() => setIsPinned(!isPinned)}
@@ -132,21 +133,21 @@ const DebugPanel = ({
             }}
             title={isPinned ? 'Unpin Panel' : 'Pin Panel'}
           >
-            📌
+            <Pin size={14} />
           </button>
           <button
             onClick={() => setIsExpanded(false)}
             style={styles.iconButton}
             title="Collapse Panel"
           >
-            ▼
+            <ChevronDown size={14} />
           </button>
           <button
             onClick={onClose}
             style={styles.iconButton}
             title="Close Debug Panel"
           >
-            ✕
+            <X size={14} />
           </button>
         </div>
       </div>
@@ -162,7 +163,7 @@ const DebugPanel = ({
               ...(activeTab === tab.id ? styles.activeTab : {})
             }}
           >
-            <span style={styles.tabIcon}>{tab.icon}</span>
+            <tab.Icon size={12} style={styles.tabIcon} />
             {tab.label}
             {tab.count > 0 && (
               <span style={styles.tabBadge}>{tab.count}</span>

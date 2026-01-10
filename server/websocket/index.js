@@ -5,6 +5,8 @@
 
 const { Server } = require('socket.io');
 const ExecutionSocket = require('./executionSocket');
+const { getFineTuningSocket } = require('./fineTuningSocket');
+const TourSocket = require('./tourSocket');
 const log = require('../utils/logger');
 const pool = require('../db');
 const {
@@ -16,6 +18,8 @@ const GladiaProcessor = require('../services/voiceToBot/GladiaProcessor');
 
 let io = null;
 let executionSocket = null;
+let fineTuningSocket = null;
+let tourSocket = null;
 
 // Configurable voice streaming settings
 const VOICE_STREAMING_CONFIG = {
@@ -43,17 +47,37 @@ function initializeWebSocket(server) {
   // Create Socket.IO server
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || '*',
+      origin: function(origin, callback) {
+        // Allow requests with no origin
+        if (!origin) return callback(null, true);
+        // Allow all localhost ports in development
+        if (origin.startsWith('http://localhost:')) return callback(null, true);
+        // Allow configured frontend URLs
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
+        if (frontendUrl && origin === frontendUrl) return callback(null, true);
+        // Default allow
+        callback(null, true);
+      },
       methods: ['GET', 'POST'],
       credentials: true
     },
     path: '/ws',
-    transports: ['websocket', 'polling']
+    transports: ['polling'],
+    allowUpgrades: false,
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
 
   // Initialize execution socket handler
   executionSocket = new ExecutionSocket(io);
   executionSocket.initialize();
+
+  // Initialize fine-tuning socket handler
+  fineTuningSocket = getFineTuningSocket(io);
+
+  // Initialize tour analytics socket handler
+  tourSocket = new TourSocket(io);
+  log.info('[WebSocket] Tour analytics socket initialized');
 
   // Gladia processor instance for real-time STT streaming
   const gladiaProcessor = new GladiaProcessor();
@@ -310,6 +334,116 @@ function initializeWebSocket(server) {
       log.info(`[WebSocket] Widget joined room: ${room}`);
     });
 
+    // Handle workspace join (for admin survey notifications)
+    socket.on('workspace:join', (data) => {
+      const { workspaceId } = data;
+      if (workspaceId) {
+        const room = `workspace:${workspaceId}`;
+        socket.join(room);
+        log.info(`[WebSocket] Joined workspace room: ${room}`);
+      }
+    });
+
+    // Handle campaign join (for email queue progress)
+    socket.on('campaign:join', (data) => {
+      const { campaignId } = data;
+      if (campaignId) {
+        const room = `campaign:${campaignId}`;
+        socket.join(room);
+        log.info(`[WebSocket] Joined campaign room: ${room}`);
+      }
+    });
+
+    // Handle campaign leave
+    socket.on('campaign:leave', (data) => {
+      const { campaignId } = data;
+      if (campaignId) {
+        const room = `campaign:${campaignId}`;
+        socket.leave(room);
+        log.info(`[WebSocket] Left campaign room: ${room}`);
+      }
+    });
+
+    // Handle survey completed event from widget
+    socket.on('widget:survey_completed', async (data) => {
+      const { botId, sessionId, surveyId, responses } = data;
+      log.info(`[WebSocket] Survey completed: ${surveyId}`, { sessionId });
+
+      try {
+        // Get survey workspace_id
+        const surveyResult = await pool.query(
+          'SELECT workspace_id, title FROM surveys WHERE id = $1',
+          [surveyId]
+        );
+
+        if (surveyResult.rows.length > 0) {
+          const survey = surveyResult.rows[0];
+          const workspaceRoom = `workspace:${survey.workspace_id}`;
+
+          // Notify admin dashboard about new response
+          io.to(workspaceRoom).emit('survey:response_received', {
+            survey_id: surveyId,
+            survey_title: survey.title,
+            session_id: sessionId,
+            bot_id: botId,
+            responses,
+            timestamp: new Date()
+          });
+        }
+      } catch (error) {
+        log.error('[WebSocket] Error processing survey completion:', error.message);
+      }
+    });
+
+    // Handle manual survey trigger from operator
+    socket.on('operator:trigger_survey', async (data) => {
+      const { botId, sessionId, surveyId } = data;
+      log.info(`[WebSocket] Operator triggered survey: ${surveyId}`);
+
+      try {
+        // Get survey details
+        const surveyResult = await pool.query(
+          'SELECT * FROM surveys WHERE id = $1 AND status = $2',
+          [surveyId, 'active']
+        );
+
+        if (surveyResult.rows.length > 0) {
+          const survey = surveyResult.rows[0];
+          const widgetRoom = `widget:${botId}:${sessionId}`;
+
+          // Parse JSON fields
+          const parsedSurvey = {
+            ...survey,
+            questions: typeof survey.questions === 'string'
+              ? JSON.parse(survey.questions)
+              : survey.questions,
+            settings: typeof survey.settings === 'string'
+              ? JSON.parse(survey.settings)
+              : survey.settings
+          };
+
+          // Send survey to widget
+          io.to(widgetRoom).emit('widget:survey', {
+            survey: {
+              id: parsedSurvey.id,
+              title: parsedSurvey.title,
+              description: parsedSurvey.description,
+              questions: parsedSurvey.questions,
+              thank_you_message: parsedSurvey.thank_you_message,
+              settings: {
+                primaryColor: parsedSurvey.settings?.primaryColor,
+                showProgress: parsedSurvey.settings?.showProgress,
+                allowSkip: parsedSurvey.settings?.allowSkip
+              }
+            },
+            trigger_type: 'manual'
+          });
+        }
+      } catch (error) {
+        log.error('[WebSocket] Error triggering survey:', error.message);
+      }
+    });
+
     // Handle widget messages
     socket.on('widget:message', async (data) => {
       const { sessionId, message } = data;
@@ -465,7 +599,7 @@ function initializeWebSocket(server) {
 
   log.info('[WebSocket] Server initialized');
 
-  return { io, executionSocket };
+  return { io, executionSocket, fineTuningSocket, tourSocket };
 }
 
 /**
@@ -482,6 +616,22 @@ function getIO() {
  */
 function getExecutionSocket() {
   return executionSocket;
+}
+
+/**
+ * Get the FineTuningSocket instance
+ * @returns {FineTuningSocket|null}
+ */
+function getFineTuningSocketInstance() {
+  return fineTuningSocket;
+}
+
+/**
+ * Get the TourSocket instance
+ * @returns {TourSocket|null}
+ */
+function getTourSocket() {
+  return tourSocket;
 }
 
 /**
@@ -508,6 +658,53 @@ function broadcastToRoom(room, event, data) {
 }
 
 /**
+ * Send email campaign progress update
+ * @param {string} campaignId - Campaign ID
+ * @param {Object} progress - Progress data
+ */
+function sendCampaignProgress(campaignId, progress) {
+  if (io) {
+    const room = `campaign:${campaignId}`;
+    io.to(room).emit('campaign:progress', {
+      campaignId,
+      ...progress,
+      timestamp: new Date()
+    });
+  }
+}
+
+/**
+ * Send email queue status update
+ * @param {number} workspaceId - Workspace ID
+ * @param {Object} stats - Queue statistics
+ */
+function sendQueueStats(workspaceId, stats) {
+  if (io) {
+    const room = `workspace:${workspaceId}`;
+    io.to(room).emit('email:queue_stats', {
+      ...stats,
+      timestamp: new Date()
+    });
+  }
+}
+
+/**
+ * Send email send status
+ * @param {string} campaignId - Campaign ID
+ * @param {Object} sendStatus - Send status details
+ */
+function sendEmailStatus(campaignId, sendStatus) {
+  if (io) {
+    const room = `campaign:${campaignId}`;
+    io.to(room).emit('email:send_status', {
+      campaignId,
+      ...sendStatus,
+      timestamp: new Date()
+    });
+  }
+}
+
+/**
  * Get connected clients count
  * @returns {number}
  */
@@ -521,7 +718,12 @@ module.exports = {
   initializeWebSocket,
   getIO,
   getExecutionSocket,
+  getFineTuningSocketInstance,
+  getTourSocket,
   broadcast,
   broadcastToRoom,
-  getConnectedClientsCount
+  getConnectedClientsCount,
+  sendCampaignProgress,
+  sendQueueStats,
+  sendEmailStatus
 };

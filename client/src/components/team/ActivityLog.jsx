@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { UserPlus, Pencil, Ban, Mail, CheckCircle, Lock, RefreshCw, Trash2, FileText, Undo2, GitBranch, GitMerge, Scissors, ClipboardList } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ACTION_LABELS = {
-  team_member_added: { label: 'Member Added', icon: '👤', color: '#10b981' },
-  team_member_updated: { label: 'Member Updated', icon: '✏️', color: '#3b82f6' },
-  team_member_removed: { label: 'Member Removed', icon: '🚫', color: '#ef4444' },
-  team_invitation_sent: { label: 'Invitation Sent', icon: '📧', color: '#8b5cf6' },
-  team_invitation_accepted: { label: 'Invitation Accepted', icon: '✅', color: '#10b981' },
-  role_created: { label: 'Role Created', icon: '🔐', color: '#3b82f6' },
-  role_updated: { label: 'Role Updated', icon: '🔄', color: '#f59e0b' },
-  role_deleted: { label: 'Role Deleted', icon: '🗑️', color: '#ef4444' },
-  version_created: { label: 'Version Created', icon: '📝', color: '#3b82f6' },
-  version_rollback: { label: 'Version Rollback', icon: '⏪', color: '#f59e0b' },
-  branch_created: { label: 'Branch Created', icon: '🌿', color: '#10b981' },
-  branch_merged: { label: 'Branch Merged', icon: '🔀', color: '#8b5cf6' },
-  branch_deleted: { label: 'Branch Deleted', icon: '✂️', color: '#ef4444' }
+  team_member_added: { label: 'Member Added', Icon: UserPlus, color: '#10b981' },
+  team_member_updated: { label: 'Member Updated', Icon: Pencil, color: '#3b82f6' },
+  team_member_removed: { label: 'Member Removed', Icon: Ban, color: '#ef4444' },
+  team_invitation_sent: { label: 'Invitation Sent', Icon: Mail, color: '#8b5cf6' },
+  team_invitation_accepted: { label: 'Invitation Accepted', Icon: CheckCircle, color: '#10b981' },
+  role_created: { label: 'Role Created', Icon: Lock, color: '#3b82f6' },
+  role_updated: { label: 'Role Updated', Icon: RefreshCw, color: '#f59e0b' },
+  role_deleted: { label: 'Role Deleted', Icon: Trash2, color: '#ef4444' },
+  version_created: { label: 'Version Created', Icon: FileText, color: '#3b82f6' },
+  version_rollback: { label: 'Version Rollback', Icon: Undo2, color: '#f59e0b' },
+  branch_created: { label: 'Branch Created', Icon: GitBranch, color: '#10b981' },
+  branch_merged: { label: 'Branch Merged', Icon: GitMerge, color: '#8b5cf6' },
+  branch_deleted: { label: 'Branch Deleted', Icon: Scissors, color: '#ef4444' }
 };
 
 export default function ActivityLog() {
@@ -80,7 +81,7 @@ export default function ActivityLog() {
   };
 
   const getActionInfo = (action) => {
-    return ACTION_LABELS[action] || { label: action, icon: '📋', color: '#6b7280' };
+    return ACTION_LABELS[action] || { label: action, Icon: ClipboardList, color: '#6b7280' };
   };
 
   const uniqueActions = [...new Set(activities.map(a => a.action))];
@@ -176,7 +177,7 @@ export default function ActivityLog() {
           borderRadius: '12px',
           color: '#6b7280'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+          <div style={{ marginBottom: '16px' }}><ClipboardList size={48} /></div>
           <p>No activity yet</p>
         </div>
       ) : (
@@ -206,10 +207,10 @@ export default function ActivityLog() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  color: actionInfo.color
                 }}>
-                  {actionInfo.icon}
+                  {actionInfo.Icon && <actionInfo.Icon size={18} />}
                 </div>
 
                 {/* Content */}

@@ -43,9 +43,11 @@ export { default as usePagination, useArrayPagination } from './usePagination';
 // Real-time & WebSocket
 export { default as useWebSocket, useWebSocketChannel } from './useWebSocket';
 export { default as useExecutionSocket } from './useExecutionSocket';
+export { useFineTuningProgress, useModelTrainingProgress } from './useFineTuningProgress';
 
 // Domain-specific
 export { default as useBots } from './useBots';
+export { default as useBanners } from './useBanners';
 
 // Import all hooks for default export object
 import useAuth from './useAuth';
@@ -58,7 +60,9 @@ import useDebounce, { useDebouncedCallback, useDebouncedState, useDebouncedEffec
 import usePagination, { useArrayPagination } from './usePagination';
 import useWebSocket, { useWebSocketChannel } from './useWebSocket';
 import useExecutionSocket from './useExecutionSocket';
+import { useFineTuningProgress, useModelTrainingProgress } from './useFineTuningProgress';
 import useBots from './useBots';
+import useBanners from './useBanners';
 
 /**
  * Default export with all hooks
@@ -84,7 +88,10 @@ const hooks = {
   useWebSocket,
   useWebSocketChannel,
   useExecutionSocket,
-  useBots
+  useFineTuningProgress,
+  useModelTrainingProgress,
+  useBots,
+  useBanners
 };
 
 export default hooks;

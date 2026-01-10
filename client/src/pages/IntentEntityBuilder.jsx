@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  Target, Bot, Download, Upload, Package, BarChart3, AlertTriangle, Save,
+  Trash2, TrendingUp, RefreshCw, Search, CheckCircle, FlaskConical, GitMerge,
+  CircleDot
+} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -648,7 +653,7 @@ export default function IntentEntityBuilder() {
     return (
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
+          <h1 style={styles.title}><Target style={{ display: 'inline', width: 24, height: 24, marginRight: 8 }} /> {t('intentEntity.title')}</h1>
         </div>
         <div style={styles.botSelectorPanel}>
           <h2 style={styles.botSelectorTitle}>{t('common.selectBot')}</h2>
@@ -657,7 +662,7 @@ export default function IntentEntityBuilder() {
             <div style={styles.loading}>{t('common.loading')}</div>
           ) : bots.length === 0 ? (
             <div style={styles.emptyState}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+              <div style={{ marginBottom: '16px' }}><Bot style={{ width: 48, height: 48, color: '#8b5cf6' }} /></div>
               <p>{t('agentStudio.noBotsFound')}</p>
               <button
                 style={styles.addButton}
@@ -674,7 +679,7 @@ export default function IntentEntityBuilder() {
                   style={styles.botCard}
                   onClick={() => navigate(`/bots/${bot.id}/intents`)}
                 >
-                  <span style={{ fontSize: '24px' }}>🤖</span>
+                  <Bot style={{ width: 24, height: 24, color: '#8b5cf6' }} />
                   <div>
                     <div style={styles.botCardName}>{bot.name}</div>
                     <div style={styles.botCardDesc}>{bot.description || 'Bot'}</div>
@@ -708,7 +713,7 @@ export default function IntentEntityBuilder() {
 
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>🎯 {t('intentEntity.title')}</h1>
+        <h1 style={styles.title}><Target style={{ display: 'inline', width: 24, height: 24, marginRight: 8 }} /> {t('intentEntity.title')}</h1>
         <div style={styles.headerActions}>
           {/* Import Dropdown */}
           <div style={styles.dropdown}>
@@ -717,15 +722,15 @@ export default function IntentEntityBuilder() {
               onClick={() => { setShowImportMenu(!showImportMenu); setShowExportMenu(false); }}
               disabled={importLoading}
             >
-              📥 {importLoading ? 'Importing...' : 'Import'}
+              <Download style={{ width: 16, height: 16 }} /> {importLoading ? 'Importing...' : 'Import'}
             </button>
             {showImportMenu && (
               <div style={styles.dropdownMenu}>
                 <button style={styles.dropdownItem} onClick={() => intentFileRef.current?.click()}>
-                  🎯 Import Intents (CSV/JSON)
+                  <Target style={{ width: 14, height: 14 }} /> Import Intents (CSV/JSON)
                 </button>
                 <button style={styles.dropdownItem} onClick={() => entityFileRef.current?.click()}>
-                  📦 Import Entities (CSV/JSON)
+                  <Package style={{ width: 14, height: 14 }} /> Import Entities (CSV/JSON)
                 </button>
               </div>
             )}
@@ -738,21 +743,21 @@ export default function IntentEntityBuilder() {
               onClick={() => { setShowExportMenu(!showExportMenu); setShowImportMenu(false); }}
               disabled={exportLoading}
             >
-              📤 {exportLoading ? 'Exporting...' : 'Export'}
+              <Upload style={{ width: 16, height: 16 }} /> {exportLoading ? 'Exporting...' : 'Export'}
             </button>
             {showExportMenu && (
               <div style={styles.dropdownMenu}>
                 <button style={styles.dropdownItem} onClick={() => handleExport('intents', 'csv')}>
-                  🎯 Export Intents (CSV)
+                  <Target style={{ width: 14, height: 14 }} /> Export Intents (CSV)
                 </button>
                 <button style={styles.dropdownItem} onClick={() => handleExport('intents', 'json')}>
-                  🎯 Export Intents (JSON)
+                  <Target style={{ width: 14, height: 14 }} /> Export Intents (JSON)
                 </button>
                 <button style={styles.dropdownItem} onClick={() => handleExport('entities', 'csv')}>
-                  📦 Export Entities (CSV)
+                  <Package style={{ width: 14, height: 14 }} /> Export Entities (CSV)
                 </button>
                 <button style={styles.dropdownItem} onClick={() => handleExport('entities', 'json')}>
-                  📦 Export Entities (JSON)
+                  <Package style={{ width: 14, height: 14 }} /> Export Entities (JSON)
                 </button>
               </div>
             )}
@@ -771,7 +776,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('intents')}
         >
-          🎯 {t('intentEntity.intents')} ({intents.length})
+          <Target style={{ width: 14, height: 14, marginRight: 6 }} /> {t('intentEntity.intents')} ({intents.length})
         </button>
         <button
           style={{
@@ -780,7 +785,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('entities')}
         >
-          📦 {t('intentEntity.entities')} ({entities.length})
+          <Package style={{ width: 14, height: 14, marginRight: 6 }} /> {t('intentEntity.entities')} ({entities.length})
         </button>
         <button
           style={{
@@ -789,7 +794,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('analytics')}
         >
-          📊 Analytics
+          <BarChart3 style={{ width: 14, height: 14, marginRight: 6 }} /> Analytics
         </button>
         <button
           style={{
@@ -798,7 +803,7 @@ export default function IntentEntityBuilder() {
           }}
           onClick={() => setActiveTab('conflicts')}
         >
-          ⚠️ Conflicts {conflictsData?.summary?.totalConflicts > 0 && `(${conflictsData.summary.totalConflicts})`}
+          <AlertTriangle style={{ width: 14, height: 14, marginRight: 6 }} /> Conflicts {conflictsData?.summary?.totalConflicts > 0 && `(${conflictsData.summary.totalConflicts})`}
         </button>
       </div>
 
@@ -935,10 +940,10 @@ export default function IntentEntityBuilder() {
 
                     <div style={styles.buttonRow}>
                       <button type="button" style={styles.saveButton} onClick={saveIntent}>
-                        💾 {t('common.save')}
+                        <Save style={{ width: 14, height: 14, marginRight: 6 }} /> {t('common.save')}
                       </button>
                       <button type="button" style={styles.deleteButton} onClick={deleteIntent}>
-                        🗑️ {t('common.delete')}
+                        <Trash2 style={{ width: 14, height: 14, marginRight: 6 }} /> {t('common.delete')}
                       </button>
                     </div>
                   </div>
@@ -1074,10 +1079,10 @@ export default function IntentEntityBuilder() {
                     {!selectedEntity.is_system && (
                       <div style={styles.buttonRow}>
                         <button type="button" style={styles.saveButton} onClick={saveEntity}>
-                          💾 {t('common.save')}
+                          <Save style={{ width: 14, height: 14, marginRight: 6 }} /> {t('common.save')}
                         </button>
                         <button type="button" style={styles.deleteButton} onClick={deleteEntity}>
-                          🗑️ {t('common.delete')}
+                          <Trash2 style={{ width: 14, height: 14, marginRight: 6 }} /> {t('common.delete')}
                         </button>
                       </div>
                     )}
@@ -1125,7 +1130,7 @@ export default function IntentEntityBuilder() {
                 <div style={styles.chartsRow}>
                   {/* Daily Usage Chart */}
                   <div style={styles.chartContainer}>
-                    <h4 style={styles.chartTitle}>📈 Daily Usage (Last 30 Days)</h4>
+                    <h4 style={styles.chartTitle}><TrendingUp style={{ width: 14, height: 14, marginRight: 6, display: 'inline' }} /> Daily Usage (Last 30 Days)</h4>
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart data={analyticsData.daily?.slice().reverse() || []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#2d2d3a" />
@@ -1139,7 +1144,7 @@ export default function IntentEntityBuilder() {
 
                   {/* Confidence Distribution */}
                   <div style={styles.chartContainer}>
-                    <h4 style={styles.chartTitle}>📊 Confidence Distribution</h4>
+                    <h4 style={styles.chartTitle}><BarChart3 style={{ width: 14, height: 14, marginRight: 6, display: 'inline' }} /> Confidence Distribution</h4>
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={analyticsData.confidence || []}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#2d2d3a" />
@@ -1153,7 +1158,7 @@ export default function IntentEntityBuilder() {
 
                   {/* Top Intents Pie Chart */}
                   <div style={styles.chartContainer}>
-                    <h4 style={styles.chartTitle}>🎯 Top 5 Intents</h4>
+                    <h4 style={styles.chartTitle}><Target style={{ width: 14, height: 14, marginRight: 6, display: 'inline' }} /> Top 5 Intents</h4>
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
                         <Pie
@@ -1180,7 +1185,7 @@ export default function IntentEntityBuilder() {
                 <div style={styles.tablesRow}>
                   {/* Low Confidence Messages */}
                   <div style={styles.tableContainer}>
-                    <h4 style={styles.chartTitle}>⚠️ Low Confidence Messages</h4>
+                    <h4 style={styles.chartTitle}><AlertTriangle style={{ width: 14, height: 14, marginRight: 6, display: 'inline' }} /> Low Confidence Messages</h4>
                     <div style={styles.table}>
                       {(analyticsData.lowConfidence || []).length === 0 ? (
                         <div style={styles.emptyState}>No low confidence messages</div>
@@ -1203,7 +1208,7 @@ export default function IntentEntityBuilder() {
 
                   {/* Training Gaps */}
                   <div style={styles.tableContainer}>
-                    <h4 style={styles.chartTitle}>📚 Training Gaps</h4>
+                    <h4 style={styles.chartTitle}><Target style={{ width: 14, height: 14, marginRight: 6, display: 'inline' }} /> Training Gaps</h4>
                     <div style={styles.table}>
                       {(analyticsData.trainingGaps || []).length === 0 ? (
                         <div style={styles.emptyState}>All intents have sufficient examples</div>
@@ -1229,7 +1234,7 @@ export default function IntentEntityBuilder() {
                 </div>
 
                 <button style={styles.refreshButton} onClick={fetchAnalytics}>
-                  🔄 Refresh Analytics
+                  <RefreshCw style={{ width: 14, height: 14, marginRight: 6 }} /> Refresh Analytics
                 </button>
               </>
             ) : (
@@ -1260,7 +1265,7 @@ export default function IntentEntityBuilder() {
                 onClick={fetchConflicts}
                 disabled={conflictsLoading}
               >
-                {conflictsLoading ? '🔄 Scanning...' : '🔍 Scan for Conflicts'}
+                {conflictsLoading ? <><RefreshCw style={{ width: 14, height: 14, marginRight: 6, animation: 'spin 1s linear infinite' }} /> Scanning...</> : <><Search style={{ width: 14, height: 14, marginRight: 6 }} /> Scan for Conflicts</>}
               </button>
             </div>
 
@@ -1272,17 +1277,17 @@ export default function IntentEntityBuilder() {
                 <div style={styles.conflictSummary}>
                   <span>Found <strong>{conflictsData.summary?.totalConflicts || 0}</strong> conflicts</span>
                   {conflictsData.summary?.critical > 0 && (
-                    <span style={styles.criticalBadge}>🔴 {conflictsData.summary.critical} Critical</span>
+                    <span style={styles.criticalBadge}><CircleDot style={{ width: 12, height: 12, marginRight: 4, color: '#ef4444' }} /> {conflictsData.summary.critical} Critical</span>
                   )}
                   {conflictsData.summary?.high > 0 && (
-                    <span style={styles.highBadge}>🟠 {conflictsData.summary.high} High</span>
+                    <span style={styles.highBadge}><CircleDot style={{ width: 12, height: 12, marginRight: 4, color: '#f59e0b' }} /> {conflictsData.summary.high} High</span>
                   )}
                 </div>
 
                 {/* Conflict List */}
                 <div style={styles.conflictList}>
                   {(conflictsData.conflicts || []).length === 0 ? (
-                    <div style={styles.emptyState}>✅ No conflicts found! Your intents are well-defined.</div>
+                    <div style={styles.emptyState}><CheckCircle style={{ width: 16, height: 16, marginRight: 8, color: '#10b981' }} /> No conflicts found! Your intents are well-defined.</div>
                   ) : (
                     conflictsData.conflicts.map((conflict, i) => (
                       <div key={i} style={styles.conflictCard}>
@@ -1314,14 +1319,14 @@ export default function IntentEntityBuilder() {
                             onClick={() => resolveConflict('delete', { example_id: conflict.intent1.example_id })}
                             title="Delete first example"
                           >
-                            🗑️ Delete 1st
+                            <Trash2 style={{ width: 12, height: 12, marginRight: 4 }} /> Delete 1st
                           </button>
                           <button
                             style={styles.conflictActionButton}
                             onClick={() => resolveConflict('delete', { example_id: conflict.intent2.example_id })}
                             title="Delete second example"
                           >
-                            🗑️ Delete 2nd
+                            <Trash2 style={{ width: 12, height: 12, marginRight: 4 }} /> Delete 2nd
                           </button>
                           <button
                             style={styles.conflictActionButton}
@@ -1331,7 +1336,7 @@ export default function IntentEntityBuilder() {
                             })}
                             title="Merge intents"
                           >
-                            🔀 Merge
+                            <GitMerge style={{ width: 12, height: 12, marginRight: 4 }} /> Merge
                           </button>
                         </div>
                       </div>
@@ -1348,7 +1353,7 @@ export default function IntentEntityBuilder() {
 
       {/* NLU Test Panel */}
       <div style={styles.testPanel}>
-        <h3 style={styles.testTitle}>🧪 Test NLU</h3>
+        <h3 style={styles.testTitle}><FlaskConical style={{ width: 16, height: 16, marginRight: 8, display: 'inline' }} /> Test NLU</h3>
         <div style={styles.testRow}>
           <input
             type="text"
@@ -1364,7 +1369,7 @@ export default function IntentEntityBuilder() {
             onClick={analyzeMessage}
             disabled={analyzing}
           >
-            {analyzing ? '...' : '🔍 Analyze'}
+            {analyzing ? '...' : <><Search style={{ width: 14, height: 14, marginRight: 6 }} /> Analyze</>}
           </button>
         </div>
         {nluResult && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Target, Bot, Wrench } from 'lucide-react';
 import { AgentList, AgentForm, AgentTestPanel } from '../components/agents';
 
 const AgentStudio = () => {
@@ -189,7 +190,7 @@ const AgentStudio = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ marginBottom: '32px' }}>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '32px' }}>🎯</span>
+              <Target size={32} style={{ color: '#667eea' }} />
               {t('agentStudio.title')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
@@ -209,7 +210,7 @@ const AgentStudio = () => {
               </div>
             ) : bots.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}><Bot size={48} style={{ color: '#667eea' }} /></div>
                 <p style={{ color: '#6c757d', marginBottom: '16px' }}>{t('agentStudio.noBotsFound')}</p>
                 <button
                   type="button"
@@ -248,7 +249,7 @@ const AgentStudio = () => {
                       width: '100%'
                     }}
                   >
-                    <span style={{ fontSize: '24px' }}>🤖</span>
+                    <Bot size={24} style={{ color: '#667eea' }} />
                     <div>
                       <div style={{ color: '#1a1a2e', fontWeight: '600', fontSize: '14px' }}>{bot.name}</div>
                       <div style={{ color: '#6c757d', fontSize: '12px', marginTop: '2px' }}>{bot.description || 'Bot'}</div>
@@ -299,8 +300,8 @@ const AgentStudio = () => {
           </div>
         </div>
         <div className="header-right">
-          <Link to={`/bots/${botId}/tools`} className="btn btn-tools">
-            🔧 {t('agentStudio.tools')}
+          <Link to={`/bots/${botId}/tools`} className="btn btn-tools" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Wrench size={16} /> {t('agentStudio.tools')}
           </Link>
           <Link to={`/bots/${botId}/workflows`} className="btn btn-secondary">
             {t('agentStudio.workflows')}

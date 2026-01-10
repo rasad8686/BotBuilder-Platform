@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ClipboardList, Phone, ArrowDownCircle, ArrowUpCircle, Bot, User } from 'lucide-react';
 
 const statusColors = {
   completed: { bg: '#d4edda', color: '#155724' },
@@ -115,7 +116,7 @@ const CallHistory = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '32px' }}>📋</span>
+              <ClipboardList style={{ width: '32px', height: '32px', color: '#667eea' }} />
               {t('voice.callHistory', 'Call History')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
@@ -210,7 +211,9 @@ const CallHistory = () => {
         <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           {calls.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 40px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📞</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                <Phone style={{ width: '48px', height: '48px', color: '#667eea' }} />
+              </div>
               <h3 style={{ color: '#1a1a2e', marginBottom: '8px' }}>{t('voice.noCalls', 'No Calls Yet')}</h3>
               <p style={{ color: '#6c757d' }}>{t('voice.noCallsDesc', 'Call history will appear here')}</p>
             </div>
@@ -241,7 +244,7 @@ const CallHistory = () => {
                         background: call.direction === 'inbound' ? '#e3f2fd' : '#fff3e0',
                         color: call.direction === 'inbound' ? '#1565c0' : '#e65100'
                       }}>
-                        {call.direction === 'inbound' ? '📥' : '📤'} {call.direction}
+                        {call.direction === 'inbound' ? <ArrowDownCircle style={{ width: '12px', height: '12px', display: 'inline', marginRight: '4px' }} /> : <ArrowUpCircle style={{ width: '12px', height: '12px', display: 'inline', marginRight: '4px' }} />} {call.direction}
                       </span>
                     </td>
                     <td style={{ padding: '16px', fontSize: '14px', color: '#6c757d' }}>{call.from_number || '-'}</td>
@@ -338,8 +341,9 @@ const CallHistory = () => {
                         marginLeft: segment.speaker === 'bot' ? '0' : '40px',
                         marginRight: segment.speaker === 'bot' ? '40px' : '0'
                       }}>
-                        <div style={{ fontSize: '11px', color: '#6c757d', marginBottom: '4px' }}>
-                          {segment.speaker === 'bot' ? '🤖 Bot' : '👤 Caller'}
+                        <div style={{ fontSize: '11px', color: '#6c757d', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {segment.speaker === 'bot' ? <Bot style={{ width: '12px', height: '12px' }} /> : <User style={{ width: '12px', height: '12px' }} />}
+                          {segment.speaker === 'bot' ? 'Bot' : 'Caller'}
                         </div>
                         <div style={{ fontSize: '14px', color: '#1a1a2e' }}>{segment.text}</div>
                       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Mic } from 'lucide-react';
 
 const VoiceClone = () => {
   const { t } = useTranslation();
@@ -296,7 +297,7 @@ const VoiceClone = () => {
         </button>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1a202c', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span role="img" aria-label="voice">🎙️</span> {t('clone.voiceClone', 'Voice Clone')}
+            <Mic size={20} style={{ display: 'inline', marginRight: '8px' }} aria-hidden="true" />{t('clone.voiceClone', 'Voice Clone')}
           </h1>
           <p style={{ color: '#718096', marginTop: '4px' }}>{t('clone.voiceClone.subtitle', 'Create a voice clone from audio samples')}</p>
         </div>

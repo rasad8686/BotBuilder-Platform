@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Home, Bot, Plus, BarChart3, User } from 'lucide-react';
 
 /**
  * Mobile Bottom Navigation Bar
@@ -14,32 +15,32 @@ export default function BottomNavBar() {
   const navItems = [
     {
       path: '/dashboard',
-      icon: '🏠',
+      Icon: Home,
       label: t('bottomNav.dashboard', 'Home'),
       matchPaths: ['/dashboard']
     },
     {
       path: '/mybots',
-      icon: '🤖',
+      Icon: Bot,
       label: t('bottomNav.bots', 'Bots'),
       matchPaths: ['/mybots', '/my-bots', '/bots']
     },
     {
       path: '/create-bot',
-      icon: '➕',
+      Icon: Plus,
       label: t('bottomNav.create', 'Create'),
       matchPaths: ['/create-bot'],
       isCreate: true
     },
     {
       path: '/analytics',
-      icon: '📊',
+      Icon: BarChart3,
       label: t('bottomNav.analytics', 'Analytics'),
       matchPaths: ['/analytics', '/usage']
     },
     {
       path: '/settings',
-      icon: '👤',
+      Icon: User,
       label: t('bottomNav.profile', 'Profile'),
       matchPaths: ['/settings', '/billing', '/team']
     }
@@ -71,7 +72,7 @@ export default function BottomNavBar() {
                 aria-label={item.label}
               >
                 <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
-                  <span className="text-2xl text-white">{item.icon}</span>
+                  <item.Icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xs mt-1 font-medium text-gray-600 dark:text-gray-400">
                   {item.label}
@@ -92,9 +93,7 @@ export default function BottomNavBar() {
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
             >
-              <span className={`text-2xl mb-1 ${active ? 'transform scale-110' : ''}`}>
-                {item.icon}
-              </span>
+              <item.Icon className={`w-6 h-6 mb-1 ${active ? 'transform scale-110' : ''}`} />
               <span className={`text-xs font-medium ${active ? 'font-semibold' : ''}`}>
                 {item.label}
               </span>

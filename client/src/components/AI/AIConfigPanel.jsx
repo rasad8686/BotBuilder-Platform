@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Settings, MessageCircle, SlidersHorizontal, TestTube, Loader2, Bot, CheckCircle, AlertTriangle, Save, Lightbulb } from 'lucide-react';
 import aiApi from '../../api/ai';
 import AIProviderSelector from './AIProviderSelector';
 import AIModelSelector from './AIModelSelector';
@@ -141,17 +142,17 @@ export default function AIConfigPanel() {
   };
 
   const tabs = [
-    { id: 'setup', label: 'Setup', icon: '⚙️' },
-    { id: 'prompt', label: 'Prompt', icon: '💭' },
-    { id: 'parameters', label: 'Parameters', icon: '🎛️' },
-    { id: 'test', label: 'Test', icon: '🧪' }
+    { id: 'setup', label: 'Setup', Icon: Settings },
+    { id: 'prompt', label: 'Prompt', Icon: MessageCircle },
+    { id: 'parameters', label: 'Parameters', Icon: SlidersHorizontal },
+    { id: 'test', label: 'Test', Icon: TestTube }
   ];
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+          <div className="text-4xl mb-4 animate-pulse"><Loader2 size={48} className="mx-auto animate-spin text-purple-600" /></div>
           <div className="text-xl text-gray-600">Loading AI configuration...</div>
         </div>
       </div>
@@ -171,7 +172,7 @@ export default function AIConfigPanel() {
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-            🤖 AI Configuration
+            <Bot size={28} className="text-purple-600" /> AI Configuration
           </h1>
           <p className="text-gray-600">
             Configure AI capabilities for your bot
@@ -181,14 +182,14 @@ export default function AIConfigPanel() {
         {/* Success Message */}
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-            ✅ {success}
+            <CheckCircle size={18} /> {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-            ⚠️ {error}
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <AlertTriangle size={18} /> {error}
           </div>
         )}
 
@@ -200,13 +201,13 @@ export default function AIConfigPanel() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+                  className={`flex-1 px-6 py-4 text-center font-medium transition-colors flex items-center justify-center gap-2 ${
                     activeTab === tab.id
                       ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
                       : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="mr-2">{tab.icon}</span>
+                  <tab.Icon size={16} />
                   {tab.label}
                 </button>
               ))}
@@ -241,8 +242,8 @@ export default function AIConfigPanel() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="sk-... (Leave empty to use platform key)"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
-                    💡 Provide your own API key or leave empty to use the platform key (if configured)
+                  <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                    <Lightbulb size={14} /> Provide your own API key or leave empty to use the platform key (if configured)
                   </p>
                 </div>
 
@@ -316,12 +317,12 @@ export default function AIConfigPanel() {
           >
             {saving ? (
               <>
-                <span className="animate-spin">⏳</span>
+                <Loader2 size={18} className="animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                💾 Save Configuration
+                <Save size={18} /> Save Configuration
               </>
             )}
           </button>
@@ -330,14 +331,16 @@ export default function AIConfigPanel() {
             <button
               onClick={handleTest}
               disabled={testing}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {testing ? (
                 <>
-                  <span className="animate-spin">⏳</span> Testing...
+                  <Loader2 size={18} className="animate-spin" /> Testing...
                 </>
               ) : (
-                '🧪 Test Connection'
+                <>
+                  <TestTube size={18} /> Test Connection
+                </>
               )}
             </button>
           )}
@@ -345,7 +348,7 @@ export default function AIConfigPanel() {
 
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+          <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2"><Lightbulb size={18} /> Quick Tips</h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Start with GPT-4o Mini or Claude 3.5 Haiku for best cost/performance</li>
             <li>• Lower temperature (0.3-0.5) for consistent responses, higher (0.8-1.0) for creative ones</li>

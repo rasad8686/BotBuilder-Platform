@@ -458,7 +458,8 @@
     script.onload = function() {
       state.socket = io(config.serverUrl, {
         path: '/ws',
-        transports: ['websocket', 'polling'],
+        transports: ['polling'],
+        upgrade: false,
         query: { botId: config.botId, sessionId: state.sessionId }
       });
 

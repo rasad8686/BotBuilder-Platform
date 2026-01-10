@@ -1,24 +1,25 @@
 import React from 'react';
+import { Globe, Database, Code, Bug, Mail, Wrench, Bot, Play, Pencil, Link, Trash2 } from 'lucide-react';
 
 const ToolCard = ({ tool, onEdit, onDelete, onTest, onAssign }) => {
   const getToolIcon = (type) => {
     const icons = {
-      'http_request': '🌐',
-      'http': '🌐',
-      'api': '🌐',
-      'database_query': '🗄️',
-      'database': '🗄️',
-      'sql': '🗄️',
-      'code_execution': '💻',
-      'code': '💻',
-      'javascript': '💻',
-      'web_scraper': '🕷️',
-      'scraper': '🕷️',
-      'email': '📧',
-      'smtp': '📧',
-      'custom': '🔧'
+      'http_request': Globe,
+      'http': Globe,
+      'api': Globe,
+      'database_query': Database,
+      'database': Database,
+      'sql': Database,
+      'code_execution': Code,
+      'code': Code,
+      'javascript': Code,
+      'web_scraper': Bug,
+      'scraper': Bug,
+      'email': Mail,
+      'smtp': Mail,
+      'custom': Wrench
     };
-    return icons[type] || '🔧';
+    return icons[type] || Wrench;
   };
 
   const getTypeLabel = (type) => {
@@ -61,10 +62,12 @@ const ToolCard = ({ tool, onEdit, onDelete, onTest, onAssign }) => {
     return colors[type] || '#6b7280';
   };
 
+  const IconComponent = getToolIcon(tool.tool_type);
+
   return (
     <div className={`tool-card ${!tool.is_active ? 'inactive' : ''}`}>
       <div className="tool-card-header">
-        <div className="tool-icon">{getToolIcon(tool.tool_type)}</div>
+        <div className="tool-icon"><IconComponent size={28} /></div>
         <div className="tool-info">
           <h3 className="tool-name">{tool.name}</h3>
           <span
@@ -86,25 +89,25 @@ const ToolCard = ({ tool, onEdit, onDelete, onTest, onAssign }) => {
       {tool.assignedAgentsCount !== undefined && (
         <div className="tool-meta">
           <span className="meta-item">
-            🤖 {tool.assignedAgentsCount} agent{tool.assignedAgentsCount !== 1 ? 's' : ''}
+            <Bot size={14} /> {tool.assignedAgentsCount} agent{tool.assignedAgentsCount !== 1 ? 's' : ''}
           </span>
         </div>
       )}
 
       <div className="tool-actions">
         <button className="btn btn-test" onClick={onTest} title="Test Tool">
-          ▶️ Test
+          <Play size={14} /> Test
         </button>
         <button className="btn btn-edit" onClick={onEdit} title="Edit Tool">
-          ✏️ Edit
+          <Pencil size={14} /> Edit
         </button>
         {onAssign && (
           <button className="btn btn-assign" onClick={onAssign} title="Assign to Agent">
-            🔗 Assign
+            <Link size={14} /> Assign
           </button>
         )}
         <button className="btn btn-delete" onClick={onDelete} title="Delete Tool">
-          🗑️
+          <Trash2 size={14} />
         </button>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Wrench } from 'lucide-react';
 import ToolCard from './ToolCard';
 
 const ToolList = ({ tools, onEdit, onDelete, onTest, onCreate, onAssign }) => {
@@ -52,7 +53,7 @@ const ToolList = ({ tools, onEdit, onDelete, onTest, onCreate, onAssign }) => {
 
       {filteredTools.length === 0 ? (
         <div className="tool-list-empty">
-          <div className="empty-icon">🔧</div>
+          <div className="empty-icon"><Wrench size={64} /></div>
           <h3>{tools.length === 0 ? 'No Tools Yet' : 'No Matching Tools'}</h3>
           <p>
             {tools.length === 0

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { FileText, Hash, ToggleLeft, List, Package, BarChart3 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const VARIABLE_TYPES = [
-  { value: 'string', label: 'String', icon: '📝' },
-  { value: 'number', label: 'Number', icon: '🔢' },
-  { value: 'boolean', label: 'Boolean', icon: '✓' },
-  { value: 'array', label: 'Array', icon: '📋' },
-  { value: 'object', label: 'Object', icon: '📦' }
+  { value: 'string', label: 'String', Icon: FileText },
+  { value: 'number', label: 'Number', Icon: Hash },
+  { value: 'boolean', label: 'Boolean', Icon: ToggleLeft },
+  { value: 'array', label: 'Array', Icon: List },
+  { value: 'object', label: 'Object', Icon: Package }
 ];
 
 const SCOPES = [
@@ -97,7 +98,8 @@ export default function VariableManager({ orchestrationId, onClose }) {
 
   const getTypeIcon = (type) => {
     const typeInfo = VARIABLE_TYPES.find(t => t.value === type);
-    return typeInfo?.icon || '📝';
+    const Icon = typeInfo?.Icon || FileText;
+    return <Icon size={20} />;
   };
 
   return (
@@ -125,7 +127,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>📊</span> Shared Variables
+              <BarChart3 size={20} /> Shared Variables
             </h2>
             <p style={{ fontSize: 13, color: '#6b7280', margin: '4px 0 0' }}>
               Variables shared between flows in this orchestration
@@ -300,7 +302,7 @@ export default function VariableManager({ orchestrationId, onClose }) {
             borderRadius: 12,
             color: '#6b7280'
           }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}><BarChart3 size={48} /></div>
             <p>No variables defined yet.</p>
             <p style={{ fontSize: 13 }}>Add variables to share data between flows.</p>
           </div>

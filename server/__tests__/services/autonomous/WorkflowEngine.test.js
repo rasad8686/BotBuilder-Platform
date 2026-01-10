@@ -1167,6 +1167,8 @@ describe('WorkflowEngine', () => {
       AgentExecutionStep.create = jest.fn().mockResolvedValue({ id: 1 });
       AgentExecutionStep.complete = jest.fn();
       AgentExecutionStep.fail = jest.fn();
+      // Eliminate retry delays to prevent test timeouts
+      engine.retryDelay = 0;
     });
 
     it('should create step record', async () => {
@@ -1295,22 +1297,23 @@ describe('WorkflowEngine', () => {
     });
 
     it('should delay between retries', async () => {
+      // Set a real delay for this test to verify delay behavior
+      engine.retryDelay = 1000;
       jest.useFakeTimers();
+
       mockAgent.execute
         .mockResolvedValueOnce({ success: false, error: 'Failed' })
         .mockResolvedValueOnce({ success: true, output: 'success', tokensUsed: 100 });
 
       const promise = engine.processStep(mockAgent, 'input', mockContext, 1001, 0);
 
-      // Wait for first attempt
-      await Promise.resolve();
-
-      // Advance timers for retry delay
-      jest.advanceTimersByTime(engine.retryDelay);
-
-      await promise;
+      // Flush first attempt - need to let promise microtasks run
+      await jest.runAllTimersAsync();
 
       expect(mockAgent.execute).toHaveBeenCalledTimes(2);
+
+      const result = await promise;
+      expect(result.success).toBe(true);
 
       jest.useRealTimers();
     });

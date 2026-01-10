@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { AlertTriangle } from 'lucide-react';
 import { useOrganization } from '../contexts/OrganizationContext';
 
 /**
@@ -45,8 +46,9 @@ export default function PermissionGuard({
     // Show message if requested
     if (showMessage) {
       return (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg text-sm">
-          ⚠️ You need {require} role or higher to access this feature. Your role: {userRole || 'none'}
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>You need {require} role or higher to access this feature. Your role: {userRole || 'none'}</span>
         </div>
       );
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bot, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 
 const statusColors = {
   active: { bg: '#d4edda', color: '#155724' },
@@ -25,7 +26,7 @@ const AutonomousAgentCard = ({ agent, onEdit, onDelete }) => {
       {/* Header */}
       <div className="card-header">
         <div className="agent-icon">
-          <span>🤖</span>
+          <Bot size={24} />
         </div>
         <span
           className="status-badge"
@@ -92,13 +93,13 @@ const AutonomousAgentCard = ({ agent, onEdit, onDelete }) => {
       {/* Actions */}
       <div className="card-actions">
         <button className="btn btn-primary" onClick={handleViewTasks}>
-          📋 Tasks
+          <ClipboardList size={14} style={{ marginRight: '4px' }} /> Tasks
         </button>
         <button className="btn btn-edit" onClick={() => onEdit(agent)}>
-          ✏️
+          <Pencil size={14} />
         </button>
         <button className="btn btn-delete" onClick={() => onDelete(agent)}>
-          🗑️
+          <Trash2 size={14} />
         </button>
       </div>
 

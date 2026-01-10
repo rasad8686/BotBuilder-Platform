@@ -1,0 +1,228 @@
+BotBuilder Production Database & Migration Audit Report
+========================================================
+Date: 2026-01-09
+Status: CRITICAL ISSUES FOUND
+
+===== 1. MIGRATION STATISTICS =====
+
+Total Migrations (Active in filesystem):   75
+Total Migrations (Committed in git):       55  
+Untracked/New Migrations:                  20
+Deleted Migrations:                        26
+Migrations with Down Functions:            52
+Migrations WITHOUT Down Functions:         3
+
+Current State: UNSTABLE - Large discrepancy between git and filesystem
+
+===== 2. CRITICAL PROBLEMS FOUND =====
+
+PROBLEM #1: DELETED MIGRATIONS (26 - HIGH RISK)
+These migrations were committed but are now deleted:
+- 20250202000002_api_token_spending_limits.js
+- 20250202000003_api_token_ip_allowlist.js
+- 20250202000003_usage_alerts.js
+- 20250202000004_api_audit_logs.js
+- 20250202000004_changelog_system.js
+- 20250202000004_service_accounts.js
+- 20250202000005_batch_jobs.js
+- 20250202000005_sla_system.js
+- 20250202000005_status_page.js
+- 20250202000006_forum_system.js
+- 20250202000006_multi_region.js
+- 20250202000006_reseller_portal.js
+- 20250202000006_webhook_management.js
+- 20250202000007_analytics_pro.js
+- 20250202000007_certification_program.js
+- 20250202000007_custom_domains.js
+- 20250202000007_team_workspaces.js
+- 20250202000008_affiliate_system.js
+- 20250202000008_blog_tutorials.js
+- 20250202000008_enterprise_contracts.js
+- 20250202000008_usage_billing.js
+- 20250202000009_blog_tutorials.js
+- 20250202000009_marketplace_system.js
+- 20250202000009_showcase_gallery.js
+- 20250202000010_roadmap_system.js
+- 20250202000011_showcase_system.js
+
+Risk: CRITICAL
+Impact: Cannot rollback or clean up tables from these migrations in production
+
+---
+
+PROBLEM #2: DUPLICATE TIMESTAMP NAMING (HIGH RISK)
+Files with same timestamp "20250202000034":
+- 20250202000034_fix_ab_tests_columns.js
+- 20250202000034_helpdesk_tickets.js
+
+Risk: HIGH
+Impact: Knex cannot determine execution order. One migration may not run.
+
+---
+
+PROBLEM #3: BROKEN MIGRATION FILES (3 MEDIUM RISK)
+
+File: 026_create_intents_entities.js
+- Uses raw SQL: db.query() instead of Knex
+- Not compatible with Knex migration framework
+- Impact: Will fail during "knex migrate:latest"
+
+File: 035_clone_system.js  
+- Uses raw SQL: db.query() instead of Knex
+- Not compatible with Knex migration framework
+- Impact: Will fail during "knex migrate:latest"
+
+File: 036_facebook_channels.js
+- Uses raw SQL: db.query() instead of Knex
+- Not compatible with Knex migration framework
+- Impact: Will fail during "knex migrate:latest"
+
+---
+
+===== 3. DATABASE CONFIGURATION MISMATCH =====
+
+POOL CONFIGURATION CONFLICT (MEDIUM RISK)
+
+File: server/knexfile.js
+  min: 2
+  max: 10
+  acquireTimeoutMillis: 60000
+  idleTimeoutMillis: 30000
+
+File: server/config/db.js  
+  min: 0           <-- DIFFERENT
+  max: 20          <-- DIFFERENT
+  acquireTimeoutMillis: 30000  <-- DIFFERENT
+  idleTimeoutMillis: 30000
+
+Risk: MEDIUM
+Impact:
+- Different connection pool sizing
+- Different timeout values
+- May cause connection exhaustion or timeouts
+- Migrations use knexfile.js, app uses config/db.js
+
+Recommendation: Unify configuration (use knexfile.js as source of truth)
+
+---
+
+SSL CONFIGURATION INCONSISTENCY (MEDIUM RISK)
+
+knexfile.js:
+  Always enables SSL for external databases
+
+config/db.js:
+  Conditional SSL based on DB_SSL env variable
+
+Impact: Different SSL handling between migrations and application
+
+---
+
+===== 4. FOREIGN KEY ANALYSIS =====
+
+Status: MOSTLY GOOD
+
+Patterns Found:
+- CASCADE deletes used properly
+- SET NULL used for optional relationships
+- All foreign keys have onDelete handlers
+
+No critical issues found in foreign key constraints.
+
+---
+
+===== 5. INDEX ANALYSIS =====
+
+Total Indexes Created: 562
+Average per Migration: 7.5
+
+Quality Assessment:
+- Good: Composite indexes on (id, created_at)
+- Good: Status column indexes
+- Missing: Some created_at only indexes in transactional tables
+- Missing: Composite (workspace_id, created_at) in some tables
+
+No critical index issues, but optimization opportunities exist.
+
+---
+
+===== 6. PRODUCTION DEPLOYMENT RISK SUMMARY =====
+
+HIGH RISK:
+1. 26 deleted migrations (cannot clean up)
+2. 1 duplicate timestamp conflict (execution order unclear)
+3. 3 broken migrations (not Knex compatible)
+
+MEDIUM RISK:
+1. Pool configuration mismatch (connection handling)
+2. SSL configuration inconsistency
+3. Missing down functions on 3 migrations
+
+LOW RISK:
+1. Missing some optional indexes
+2. Index naming inconsistency
+
+Production Readiness: NOT READY
+
+===== 7. IMMEDIATE ACTIONS REQUIRED =====
+
+BLOCKING ISSUES (must fix before production):
+
+1. Fix Duplicate Timestamp
+   - Rename 20250202000034_helpdesk_tickets.js to 20250202000035_*
+   - Renumber to resolve conflict
+
+2. Fix Broken Migrations
+   - Convert 026_create_intents_entities.js to Knex format
+   - Convert 035_clone_system.js to Knex format  
+   - Convert 036_facebook_channels.js to Knex format
+
+3. Reconcile Pool Configuration
+   - Update config/db.js to match knexfile.js:
+     - Set min: 2 (not 0)
+     - Set max: 10 (not 20)
+     - Set acquireTimeoutMillis: 60000
+
+4. Handle Deleted Migrations
+   - Document all 26 deleted migrations
+   - Create manual rollback scripts if needed
+   - Verify production tables won't be orphaned
+
+5. Test Migration Chain
+   - Run in staging: knex migrate:latest
+   - Verify all 55 committed migrations work
+   - Verify all 20 new migrations work
+
+---
+
+===== FILES REQUIRING CHANGES =====
+
+Immediate:
+- server/migrations/20250202000034_helpdesk_tickets.js (RENAME)
+- server/migrations/20250202000034_fix_ab_tests_columns.js (rename dependent)
+- server/migrations/026_create_intents_entities.js (CONVERT FORMAT)
+- server/migrations/035_clone_system.js (CONVERT FORMAT)
+- server/migrations/036_facebook_channels.js (CONVERT FORMAT)
+
+Configuration:
+- server/knexfile.js (as source of truth)
+- server/config/db.js (must align with knexfile.js)
+
+---
+
+===== CONCLUSION =====
+
+Current state is NOT PRODUCTION READY
+
+Critical blocking issues: 3
+Must be resolved before any production deployment
+
+Estimated effort to fix: 4-6 hours
+Risk of proceeding without fixes: HIGH (deployment failure + data integrity issues)
+
+Next Steps:
+1. Fix duplicate timestamp naming
+2. Convert raw SQL migrations to Knex format
+3. Unify pool configuration
+4. Create migration test suite
+5. Deploy to staging for full validation

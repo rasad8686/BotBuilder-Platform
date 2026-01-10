@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Bot, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 
 const statusColors = {
   active: '#48bb78',
@@ -193,7 +194,7 @@ const AutonomousAgents = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '32px' }}>🤖</span>
+              <Bot style={{ width: '32px', height: '32px', color: '#667eea' }} />
               {t('autonomous.title', 'Autonomous Agents')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
@@ -225,7 +226,9 @@ const AutonomousAgents = () => {
         {/* Agents Grid */}
         {agents.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 40px', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>🤖</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <Bot style={{ width: '64px', height: '64px', color: '#667eea' }} />
+            </div>
             <h2 style={{ color: '#1a1a2e', marginBottom: '8px' }}>{t('autonomous.noAgents', 'No Agents Yet')}</h2>
             <p style={{ color: '#6c757d', marginBottom: '24px' }}>{t('autonomous.noAgentsDesc', 'Create your first autonomous agent to start automating complex tasks')}</p>
             <button
@@ -266,7 +269,7 @@ const AutonomousAgents = () => {
                       justifyContent: 'center',
                       fontSize: '24px'
                     }}>
-                      🤖
+                      <Bot style={{ width: '24px', height: '24px', color: '#667eea' }} />
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1a2e' }}>{agent.name}</h3>
@@ -347,7 +350,7 @@ const AutonomousAgents = () => {
                       fontWeight: '500'
                     }}
                   >
-                    📋 {t('autonomous.viewTasks', 'Tasks')}
+                    <ClipboardList style={{ width: '14px', height: '14px', marginRight: '4px', display: 'inline' }} /> {t('autonomous.viewTasks', 'Tasks')}
                   </button>
                   <button
                     onClick={() => handleEdit(agent)}
@@ -362,7 +365,7 @@ const AutonomousAgents = () => {
                       fontWeight: '500'
                     }}
                   >
-                    ✏️
+                    <Pencil style={{ width: '14px', height: '14px' }} />
                   </button>
                   <button
                     onClick={() => handleDelete(agent)}
@@ -376,7 +379,7 @@ const AutonomousAgents = () => {
                       fontSize: '13px'
                     }}
                   >
-                    🗑️
+                    <Trash2 style={{ width: '14px', height: '14px' }} />
                   </button>
                 </div>
               </div>

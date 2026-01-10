@@ -1,0 +1,156 @@
+{
+  "id": "system-promotional-1",
+  "name": "Promotional Sale",
+  "category": "promotional",
+  "description": "Eye-catching promotional email for sales and special offers",
+  "subject": "{{discount_percent}}% OFF - Limited Time Offer!",
+  "previewText": "Don't miss out on this exclusive deal",
+  "isSystem": true,
+  "featured": true,
+  "responsive": true,
+  "blocks": [
+    {
+      "id": "header-1",
+      "type": "header",
+      "settings": {
+        "logo": "{{logo_url}}",
+        "logoWidth": "120px",
+        "logoAlign": "center",
+        "backgroundColor": "#DC2626",
+        "padding": { "top": 20, "right": 20, "bottom": 20, "left": 20 }
+      }
+    },
+    {
+      "id": "text-1",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;'>Limited Time Offer</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14px",
+        "color": "#DC2626",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 30, "right": 20, "bottom": 5, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-2",
+      "type": "text",
+      "content": "<h1 style='text-align: center; margin: 0; font-size: 48px;'>{{discount_percent}}% OFF</h1>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "48px",
+        "color": "#1F2937",
+        "lineHeight": "1.2",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 20, "bottom": 10, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-3",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0;'>Use code: <strong style='color: #DC2626;'>{{promo_code}}</strong></p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "18px",
+        "color": "#374151",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 20, "bottom": 30, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "image-1",
+      "type": "image",
+      "settings": {
+        "src": "{{product_image_url}}",
+        "alt": "Featured product",
+        "link": "{{product_url}}",
+        "width": "80%",
+        "align": "center",
+        "padding": { "top": 0, "right": 0, "bottom": 20, "left": 0 },
+        "borderRadius": "12px"
+      }
+    },
+    {
+      "id": "text-4",
+      "type": "text",
+      "content": "<h2 style='text-align: center; margin: 0 0 10px 0;'>{{product_name}}</h2><p style='text-align: center; margin: 0;'><span style='text-decoration: line-through; color: #9CA3AF;'>{{original_price}}</span> <span style='color: #DC2626; font-weight: bold; font-size: 24px;'>{{sale_price}}</span></p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "20px",
+        "color": "#1F2937",
+        "lineHeight": "1.4",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 20, "bottom": 20, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "button-1",
+      "type": "button",
+      "settings": {
+        "text": "Shop Now",
+        "url": "{{shop_url}}",
+        "backgroundColor": "#DC2626",
+        "textColor": "#FFFFFF",
+        "fontSize": "18px",
+        "fontWeight": "bold",
+        "padding": { "top": 10, "right": 20, "bottom": 30, "left": 20 },
+        "borderRadius": "8px",
+        "align": "center",
+        "fullWidth": false
+      }
+    },
+    {
+      "id": "divider-1",
+      "type": "divider",
+      "settings": {
+        "style": "dashed",
+        "color": "#E5E7EB",
+        "thickness": "2px",
+        "width": "100%",
+        "padding": { "top": 20, "right": 20, "bottom": 20, "left": 20 }
+      }
+    },
+    {
+      "id": "text-5",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0; font-size: 14px;'>Offer expires: <strong>{{expiry_date}}</strong></p><p style='text-align: center; margin: 10px 0 0 0; font-size: 12px; color: #9CA3AF;'>*Terms and conditions apply. Cannot be combined with other offers.</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14px",
+        "color": "#6B7280",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 20, "bottom": 20, "left": 20 },
+        "backgroundColor": "#FEF2F2"
+      }
+    },
+    {
+      "id": "spacer-1",
+      "type": "spacer",
+      "settings": {
+        "height": "20px"
+      }
+    },
+    {
+      "id": "footer-1",
+      "type": "footer",
+      "settings": {
+        "companyName": "{{company_name}}",
+        "address": "{{company_address}}",
+        "showUnsubscribe": true,
+        "unsubscribeText": "Unsubscribe",
+        "showViewInBrowser": true,
+        "backgroundColor": "#F3F4F6",
+        "textColor": "#6B7280",
+        "fontSize": "12px",
+        "padding": { "top": 25, "right": 20, "bottom": 25, "left": 20 }
+      }
+    }
+  ]
+}

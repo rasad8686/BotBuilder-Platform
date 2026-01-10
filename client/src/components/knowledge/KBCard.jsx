@@ -1,4 +1,5 @@
 import React from 'react';
+import { Brain, Link, Trash2 } from 'lucide-react';
 
 const KBCard = ({ kb, isSelected, onSelect, onDelete, onAssign }) => {
   const getStatusColor = (status) => {
@@ -16,7 +17,7 @@ const KBCard = ({ kb, isSelected, onSelect, onDelete, onAssign }) => {
       onClick={onSelect}
     >
       <div className="kb-card-header">
-        <span className="kb-icon">🧠</span>
+        <span className="kb-icon"><Brain size={24} /></span>
         <div className="kb-info">
           <h4>{kb.name}</h4>
           <div className="kb-meta">
@@ -39,7 +40,7 @@ const KBCard = ({ kb, isSelected, onSelect, onDelete, onAssign }) => {
           }}
           title="Assign to Agents"
         >
-          🔗
+          <Link size={12} />
         </button>
         <button
           className="btn-delete"
@@ -49,7 +50,7 @@ const KBCard = ({ kb, isSelected, onSelect, onDelete, onAssign }) => {
           }}
           title="Delete"
         >
-          🗑️
+          <Trash2 size={12} />
         </button>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Play, Pause, Square, AlertTriangle } from 'lucide-react';
 import ExecutionTimeline from './ExecutionTimeline';
 import AgentMessageLog from './AgentMessageLog';
 import ExecutionStats from './ExecutionStats';
@@ -126,26 +127,26 @@ const ExecutionMonitor = ({ workflowId, onClose, onExecutionUpdate }) => {
           <div className="control-buttons">
             {status !== 'running' && status !== 'paused' && (
               <button className="btn-start" onClick={handleStart}>
-                ▶️ Start
+                <Play size={16} /> Start
               </button>
             )}
             {status === 'running' && (
               <>
                 <button className="btn-pause" onClick={handlePause}>
-                  ⏸️ Pause
+                  <Pause size={16} /> Pause
                 </button>
                 <button className="btn-stop" onClick={handleStop}>
-                  ⏹️ Stop
+                  <Square size={16} /> Stop
                 </button>
               </>
             )}
             {status === 'paused' && (
               <>
                 <button className="btn-start" onClick={startExecution}>
-                  ▶️ Resume
+                  <Play size={16} /> Resume
                 </button>
                 <button className="btn-stop" onClick={handleStop}>
-                  ⏹️ Stop
+                  <Square size={16} /> Stop
                 </button>
               </>
             )}
@@ -155,7 +156,7 @@ const ExecutionMonitor = ({ workflowId, onClose, onExecutionUpdate }) => {
 
       {error && (
         <div className="error-banner">
-          ⚠️ {error}
+          <AlertTriangle size={16} style={{ marginRight: '8px', display: 'inline' }} /> {error}
         </div>
       )}
 

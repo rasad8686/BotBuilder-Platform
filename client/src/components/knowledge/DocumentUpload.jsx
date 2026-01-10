@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { FileText } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -193,7 +194,7 @@ const DocumentUpload = ({ knowledgeBaseId, onUploaded }) => {
             </div>
           ) : (
             <>
-              <span className="drop-icon">📄</span>
+              <span className="drop-icon"><FileText size={48} /></span>
               <h4>Drop files here</h4>
               <p>or click to browse</p>
               <span className="file-types">Supported: TXT, MD, PDF, DOCX</span>

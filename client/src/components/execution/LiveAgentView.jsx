@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Target, Search, PenTool, BarChart3, CheckCircle, Shuffle, Settings, Bot } from 'lucide-react';
+
+const ROLE_ICONS = {
+  orchestrator: Target,
+  researcher: Search,
+  writer: PenTool,
+  analyzer: BarChart3,
+  reviewer: CheckCircle,
+  router: Shuffle,
+  custom: Settings
+};
 
 const LiveAgentView = ({ currentStep, status }) => {
   const [dots, setDots] = useState('');
@@ -14,23 +25,15 @@ const LiveAgentView = ({ currentStep, status }) => {
   }, [status, currentStep]);
 
   const getRoleIcon = (role) => {
-    const icons = {
-      orchestrator: '🎯',
-      researcher: '🔍',
-      writer: '✍️',
-      analyzer: '📊',
-      reviewer: '✅',
-      router: '🔀',
-      custom: '⚙️'
-    };
-    return icons[role?.toLowerCase()] || '🤖';
+    const Icon = ROLE_ICONS[role?.toLowerCase()] || Bot;
+    return <Icon size={20} />;
   };
 
   if (!currentStep || status !== 'running') {
     return (
       <div className="live-agent-view idle">
         <div className="idle-content">
-          <span className="idle-icon">🤖</span>
+          <span className="idle-icon"><Bot size={32} /></span>
           <p>{status === 'completed' ? 'Execution completed' : 'Waiting for execution...'}</p>
         </div>
 

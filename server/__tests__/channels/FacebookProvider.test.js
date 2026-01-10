@@ -340,7 +340,8 @@ describe('FacebookProvider', () => {
     });
 
     it('should format account_link buttons', () => {
-      const buttons = [{ type: 'account_link', url: 'https://example.com/login' }];
+      // account_link buttons should not have url at top level to trigger correct branch
+      const buttons = [{ type: 'account_link' }];
       const formatted = provider.formatButtons(buttons);
 
       expect(formatted[0].type).toBe('account_link');

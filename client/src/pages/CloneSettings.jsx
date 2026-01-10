@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { XCircle } from 'lucide-react';
 
 const CloneSettings = () => {
   const { t } = useTranslation();
@@ -137,7 +138,7 @@ const CloneSettings = () => {
     return (
       <div style={{ minHeight: '100vh', background: '#f5f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
+          <div style={{ marginBottom: '16px' }}><XCircle size={48} className="text-red-500" /></div>
           <p style={{ color: '#e53e3e' }}>{error}</p>
           <button onClick={() => navigate('/work-clone')} style={{ marginTop: '16px', padding: '10px 24px', borderRadius: '8px', background: '#667eea', color: 'white', border: 'none', cursor: 'pointer' }}>
             {t('common.back')}

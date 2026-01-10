@@ -1,4 +1,5 @@
 const log = require('../../utils/logger');
+const smsService = require('../smsService');
 
 /**
  * NodeExecutor - Executes individual nodes based on their type
@@ -9,6 +10,7 @@ class NodeExecutor {
     this.nodeHandlers = {
       start: this.executeStartNode.bind(this),
       message: this.executeMessageNode.bind(this),
+      text: this.executeMessageNode.bind(this),
       question: this.executeQuestionNode.bind(this),
       menu: this.executeMenuNode.bind(this),
       input: this.executeInputNode.bind(this),
@@ -21,6 +23,7 @@ class NodeExecutor {
       webhook: this.executeWebhookNode.bind(this),
       ai_response: this.executeAiResponseNode.bind(this),
       goto: this.executeGotoNode.bind(this),
+      sms: this.executeSmsNode.bind(this),
       end: this.executeEndNode.bind(this)
     };
   }
@@ -501,6 +504,94 @@ class NodeExecutor {
       },
       waitForInput: false
     };
+  }
+
+  /**
+   * Execute SMS node
+   */
+  async executeSmsNode(node, executionState) {
+    const toNumber = this.substituteVariables(
+      node.data.toNumber || '',
+      executionState.variables
+    );
+
+    if (!toNumber) {
+      throw new Error('SMS node requires a phone number');
+    }
+
+    const organizationId = executionState.context.organizationId || 1;
+    let result;
+
+    try {
+      if (node.data.messageType === 'template' && node.data.templateId) {
+        // Send using template
+        let variables = {};
+        if (node.data.variables) {
+          try {
+            const varsString = this.substituteVariables(
+              node.data.variables,
+              executionState.variables
+            );
+            variables = JSON.parse(varsString);
+          } catch (e) {
+            log.warn('Failed to parse SMS variables:', e.message);
+          }
+        }
+
+        result = await smsService.sendTemplateSMS(
+          toNumber,
+          parseInt(node.data.templateId),
+          variables,
+          organizationId
+        );
+      } else {
+        // Send custom message
+        const message = this.substituteVariables(
+          node.data.message || '',
+          executionState.variables
+        );
+
+        if (!message) {
+          throw new Error('SMS node requires a message');
+        }
+
+        result = await smsService.sendSMS(toNumber, message, organizationId);
+      }
+
+      log.info('SMS sent successfully:', { to: toNumber, status: result.status });
+
+      return {
+        output: {
+          type: 'sms',
+          to: toNumber,
+          status: result.status,
+          twilioSid: result.twilio_sid,
+          sent: true
+        },
+        variables: {
+          last_sms_status: result.status,
+          last_sms_sid: result.twilio_sid
+        },
+        waitForInput: false
+      };
+    } catch (error) {
+      log.error('SMS send failed:', { to: toNumber, error: error.message });
+
+      return {
+        output: {
+          type: 'sms',
+          to: toNumber,
+          status: 'failed',
+          error: error.message,
+          sent: false
+        },
+        variables: {
+          last_sms_status: 'failed',
+          last_sms_error: error.message
+        },
+        waitForInput: false
+      };
+    }
   }
 
   /**

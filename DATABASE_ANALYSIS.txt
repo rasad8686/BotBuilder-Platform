@@ -1,0 +1,9 @@
+# BotBuilder Database Analysis Report
+
+## COUNTS
+Migrations: 56 files
+Tables: 135+
+Indexes: 348 unique
+Foreign Keys: 278+
+Connection Pool: 2-10 connections
+

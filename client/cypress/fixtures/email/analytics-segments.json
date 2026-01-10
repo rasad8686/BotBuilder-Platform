@@ -1,0 +1,30 @@
+[
+  {
+    "segment": "Highly Engaged",
+    "description": "Opened 5+ emails in last 30 days",
+    "count": 2450,
+    "percentage": 24.5,
+    "color": "#22c55e"
+  },
+  {
+    "segment": "Engaged",
+    "description": "Opened 2-4 emails in last 30 days",
+    "count": 3820,
+    "percentage": 38.2,
+    "color": "#3b82f6"
+  },
+  {
+    "segment": "Somewhat Engaged",
+    "description": "Opened 1 email in last 30 days",
+    "count": 2150,
+    "percentage": 21.5,
+    "color": "#f59e0b"
+  },
+  {
+    "segment": "Inactive",
+    "description": "No opens in last 30 days",
+    "count": 1580,
+    "percentage": 15.8,
+    "color": "#ef4444"
+  }
+]

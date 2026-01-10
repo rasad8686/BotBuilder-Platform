@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FileEdit } from 'lucide-react';
 import DiffViewer from './DiffViewer';
 import RestoreModal from './RestoreModal';
 
@@ -98,7 +99,7 @@ export default function VersionHistory({ entityType, entityId, onVersionRestored
         borderRadius: '12px',
         color: '#6b7280'
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}><FileEdit size={48} /></div>
         <p>No version history yet</p>
         <p style={{ fontSize: '14px' }}>Changes will be tracked automatically</p>
       </div>

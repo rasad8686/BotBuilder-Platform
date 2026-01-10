@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Crown, Shield, Pencil, Eye, User, Users, Calendar, Building2 } from 'lucide-react';
 import { useOrganization } from '../contexts/OrganizationContext';
 import axiosInstance from '../api/axios';
 
@@ -69,15 +70,15 @@ export default function Organizations() {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'owner':
-        return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', icon: '👑' };
+        return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', Icon: Crown };
       case 'admin':
-        return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', icon: '🛡️' };
+        return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', Icon: Shield };
       case 'member':
-        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', icon: '✏️' };
+        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', Icon: Pencil };
       case 'viewer':
-        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: '👁️' };
+        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', Icon: Eye };
       default:
-        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: '👤' };
+        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', Icon: User };
     }
   };
 
@@ -152,8 +153,8 @@ export default function Organizations() {
                         {org.name}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${badge.bg} ${badge.text}`}>
-                          {badge.icon} {org.role?.toUpperCase()}
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${badge.bg} ${badge.text} flex items-center gap-1`}>
+                          <badge.Icon className="w-3 h-3" /> {org.role?.toUpperCase()}
                         </span>
                       </div>
                     </div>
@@ -162,11 +163,11 @@ export default function Organizations() {
                   {/* Stats */}
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <div className="flex items-center gap-1">
-                      <span>👥</span>
+                      <Users className="w-4 h-4" />
                       <span>{org.member_count || 1} {t('organizations.members', 'members')}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span>📅</span>
+                      <Calendar className="w-4 h-4" />
                       <span>{new Date(org.created_at || org.joined_at).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -184,7 +185,9 @@ export default function Organizations() {
         ) : (
           /* Empty State */
           <div className="bg-white dark:bg-slate-800 rounded-xl p-12 text-center border border-gray-200 dark:border-slate-700">
-            <div className="text-6xl mb-4">🏢</div>
+            <div className="flex justify-center mb-4">
+              <Building2 className="w-16 h-16 text-gray-400" />
+            </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               {t('organizations.noOrganizations', 'No organizations yet')}
             </h3>

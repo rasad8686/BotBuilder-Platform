@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Brain } from 'lucide-react';
 import KBList from '../components/knowledge/KBList';
 import DocumentUpload from '../components/knowledge/DocumentUpload';
 import DocumentList from '../components/knowledge/DocumentList';
@@ -231,7 +232,7 @@ const KnowledgeBase = () => {
         ) : (
           <div className="kb-main empty">
             <div className="empty-state">
-              <span className="empty-icon">🧠</span>
+              <span className="empty-icon"><Brain size={64} /></span>
               <h3>{t('knowledgeBase.selectKB')}</h3>
               <p>{t('knowledgeBase.selectKBDesc')}</p>
             </div>

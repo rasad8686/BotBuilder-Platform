@@ -133,7 +133,10 @@ process.env.NODE_ENV = 'test';
 const setupAuthRoutes = (app) => {
   const { authLimiter, dbAuthLimiter, recordFailedLogin } = require('../../middleware/rateLimiter');
   const { setAuthCookie, clearAuthCookie } = require('../../utils/cookieHelper');
-  const { createSession, logRegister, logLogin } = require('../../utils/sessionHelper');
+  // sessionHelper - mock the functions directly since module doesn't exist
+  const createSession = jest.fn().mockResolvedValue({ id: 1 });
+  const logRegister = jest.fn().mockResolvedValue(true);
+  const logLogin = jest.fn().mockResolvedValue(true);
   const crypto = require('crypto');
   const log = require('../../utils/logger');
 

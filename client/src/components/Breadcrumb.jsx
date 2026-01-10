@@ -1,5 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Home, Bot, Plus, Pencil, GitBranch, Brain, Wrench, Users, RefreshCw,
+  ClipboardList, Target, Palette, MessageSquare, Smartphone, Phone, Mic,
+  CreditCard, Key, Link2, BarChart3, Settings, Lock, Shield, Building2,
+  TrendingUp, ShoppingCart, Heart, Briefcase, Activity, Brush, Gauge, Puzzle, Plug
+} from 'lucide-react';
 
 /**
  * Breadcrumb Navigation Component
@@ -15,62 +21,62 @@ export default function Breadcrumb({ items = [], className = '' }) {
 
     const pathnames = location.pathname.split('/').filter(x => x);
     const breadcrumbs = [
-      { label: t('breadcrumb.dashboard', 'Dashboard'), path: '/dashboard', icon: '🏠' }
+      { label: t('breadcrumb.dashboard', 'Dashboard'), path: '/dashboard', Icon: Home }
     ];
 
-    // Route label mappings
+    // Route label mappings with Lucide icons
     const labelMap = {
-      'mybots': { label: t('breadcrumb.myBots', 'My Bots'), icon: '🤖' },
-      'my-bots': { label: t('breadcrumb.myBots', 'My Bots'), icon: '🤖' },
-      'bots': { label: t('breadcrumb.bots', 'Bots'), icon: '🤖' },
-      'create-bot': { label: t('breadcrumb.createBot', 'Create Bot'), icon: '➕' },
-      'edit': { label: t('breadcrumb.edit', 'Edit'), icon: '✏️' },
-      'flow': { label: t('breadcrumb.flowBuilder', 'Flow Builder'), icon: '🔀' },
-      'ai-config': { label: t('breadcrumb.aiConfig', 'AI Configuration'), icon: '🧠' },
-      'tools': { label: t('breadcrumb.tools', 'Tools'), icon: '🔧' },
-      'agents': { label: t('breadcrumb.agents', 'Agents'), icon: '🤖' },
-      'workflows': { label: t('breadcrumb.workflows', 'Workflows'), icon: '🔄' },
-      'executions': { label: t('breadcrumb.executions', 'Executions'), icon: '📋' },
-      'orchestrations': { label: t('breadcrumb.orchestrations', 'Orchestrations'), icon: '🔀' },
-      'intents': { label: t('breadcrumb.intents', 'Intents'), icon: '🎯' },
-      'widget': { label: t('breadcrumb.widget', 'Widget Settings'), icon: '🎨' },
-      'messages': { label: t('breadcrumb.messages', 'Messages'), icon: '💬' },
-      'knowledge': { label: t('breadcrumb.knowledge', 'Knowledge Base'), icon: '🧠' },
-      'channels': { label: t('breadcrumb.channels', 'Channels'), icon: '📱' },
-      'ai-flow': { label: t('breadcrumb.aiFlow', 'AI Flow Studio'), icon: '🤖' },
-      'agent-studio': { label: t('breadcrumb.agentStudio', 'Agent Studio'), icon: '🎯' },
-      'autonomous-agents': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), icon: '🦾' },
-      'autonomous': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), icon: '🦾' },
-      'tasks': { label: t('breadcrumb.tasks', 'Tasks'), icon: '📋' },
-      'work-clone': { label: t('breadcrumb.workClone', 'Work Clone'), icon: '👤' },
-      'clone-training': { label: t('breadcrumb.training', 'Training'), icon: '📚' },
-      'clone-settings': { label: t('breadcrumb.settings', 'Settings'), icon: '⚙️' },
-      'voice-bots': { label: t('breadcrumb.voiceBots', 'Voice Bots'), icon: '📞' },
-      'call-history': { label: t('breadcrumb.callHistory', 'Call History'), icon: '📋' },
-      'voice-to-bot': { label: t('breadcrumb.voiceToBot', 'Voice to Bot'), icon: '🎙️' },
-      'fine-tuning': { label: t('breadcrumb.fineTuning', 'Fine Tuning'), icon: '🧠' },
-      'billing': { label: t('breadcrumb.billing', 'Billing'), icon: '💳' },
-      'api-tokens': { label: t('breadcrumb.apiTokens', 'API Tokens'), icon: '🔑' },
-      'webhooks': { label: t('breadcrumb.webhooks', 'Webhooks'), icon: '🔗' },
-      'usage': { label: t('breadcrumb.usage', 'Usage'), icon: '📊' },
-      'settings': { label: t('breadcrumb.settings', 'Settings'), icon: '⚙️' },
-      'security': { label: t('breadcrumb.security', 'Security'), icon: '🔐' },
-      'sso': { label: t('breadcrumb.sso', 'SSO'), icon: '🛡️' },
-      'team': { label: t('breadcrumb.team', 'Team'), icon: '👥' },
-      'organizations': { label: t('breadcrumb.organization', 'Organization'), icon: '🏢' },
-      'recovery': { label: t('breadcrumb.recovery', 'Recovery'), icon: '📈' },
-      'campaigns': { label: t('breadcrumb.campaigns', 'Campaigns'), icon: '🎯' },
-      'carts': { label: t('breadcrumb.carts', 'Abandoned Carts'), icon: '🛒' },
-      'customers': { label: t('breadcrumb.customers', 'Customers'), icon: '❤️' },
-      'admin': { label: t('breadcrumb.admin', 'Admin'), icon: '👔' },
-      'audit-logs': { label: t('breadcrumb.auditLogs', 'Audit Logs'), icon: '📋' },
-      'health': { label: t('breadcrumb.health', 'System Health'), icon: '🔧' },
-      'whitelabel': { label: t('breadcrumb.whitelabel', 'White Label'), icon: '🎨' },
-      'rate-limiting': { label: t('breadcrumb.rateLimiting', 'Rate Limiting'), icon: '🛡️' },
-      'roles': { label: t('breadcrumb.roles', 'Roles'), icon: '👔' },
-      'marketplace': { label: t('breadcrumb.marketplace', 'Marketplace'), icon: '🧩' },
-      'integrations': { label: t('breadcrumb.integrations', 'Integrations'), icon: '🔌' },
-      'analytics': { label: t('breadcrumb.analytics', 'Analytics'), icon: '📊' },
+      'mybots': { label: t('breadcrumb.myBots', 'My Bots'), Icon: Bot },
+      'my-bots': { label: t('breadcrumb.myBots', 'My Bots'), Icon: Bot },
+      'bots': { label: t('breadcrumb.bots', 'Bots'), Icon: Bot },
+      'create-bot': { label: t('breadcrumb.createBot', 'Create Bot'), Icon: Plus },
+      'edit': { label: t('breadcrumb.edit', 'Edit'), Icon: Pencil },
+      'flow': { label: t('breadcrumb.flowBuilder', 'Flow Builder'), Icon: GitBranch },
+      'ai-config': { label: t('breadcrumb.aiConfig', 'AI Configuration'), Icon: Brain },
+      'tools': { label: t('breadcrumb.tools', 'Tools'), Icon: Wrench },
+      'agents': { label: t('breadcrumb.agents', 'Agents'), Icon: Users },
+      'workflows': { label: t('breadcrumb.workflows', 'Workflows'), Icon: RefreshCw },
+      'executions': { label: t('breadcrumb.executions', 'Executions'), Icon: ClipboardList },
+      'orchestrations': { label: t('breadcrumb.orchestrations', 'Orchestrations'), Icon: GitBranch },
+      'intents': { label: t('breadcrumb.intents', 'Intents'), Icon: Target },
+      'widget': { label: t('breadcrumb.widget', 'Widget Settings'), Icon: Palette },
+      'messages': { label: t('breadcrumb.messages', 'Messages'), Icon: MessageSquare },
+      'knowledge': { label: t('breadcrumb.knowledge', 'Knowledge Base'), Icon: Brain },
+      'channels': { label: t('breadcrumb.channels', 'Channels'), Icon: Smartphone },
+      'ai-flow': { label: t('breadcrumb.aiFlow', 'AI Flow Studio'), Icon: Bot },
+      'agent-studio': { label: t('breadcrumb.agentStudio', 'Agent Studio'), Icon: Target },
+      'autonomous-agents': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), Icon: Users },
+      'autonomous': { label: t('breadcrumb.autonomousAgents', 'Autonomous Agents'), Icon: Users },
+      'tasks': { label: t('breadcrumb.tasks', 'Tasks'), Icon: ClipboardList },
+      'work-clone': { label: t('breadcrumb.workClone', 'Work Clone'), Icon: Users },
+      'clone-training': { label: t('breadcrumb.training', 'Training'), Icon: Brain },
+      'clone-settings': { label: t('breadcrumb.settings', 'Settings'), Icon: Settings },
+      'voice-bots': { label: t('breadcrumb.voiceBots', 'Voice Bots'), Icon: Phone },
+      'call-history': { label: t('breadcrumb.callHistory', 'Call History'), Icon: ClipboardList },
+      'voice-to-bot': { label: t('breadcrumb.voiceToBot', 'Voice to Bot'), Icon: Mic },
+      'fine-tuning': { label: t('breadcrumb.fineTuning', 'Fine Tuning'), Icon: Brain },
+      'billing': { label: t('breadcrumb.billing', 'Billing'), Icon: CreditCard },
+      'api-tokens': { label: t('breadcrumb.apiTokens', 'API Tokens'), Icon: Key },
+      'webhooks': { label: t('breadcrumb.webhooks', 'Webhooks'), Icon: Link2 },
+      'usage': { label: t('breadcrumb.usage', 'Usage'), Icon: BarChart3 },
+      'settings': { label: t('breadcrumb.settings', 'Settings'), Icon: Settings },
+      'security': { label: t('breadcrumb.security', 'Security'), Icon: Lock },
+      'sso': { label: t('breadcrumb.sso', 'SSO'), Icon: Shield },
+      'team': { label: t('breadcrumb.team', 'Team'), Icon: Users },
+      'organizations': { label: t('breadcrumb.organization', 'Organization'), Icon: Building2 },
+      'recovery': { label: t('breadcrumb.recovery', 'Recovery'), Icon: TrendingUp },
+      'campaigns': { label: t('breadcrumb.campaigns', 'Campaigns'), Icon: Target },
+      'carts': { label: t('breadcrumb.carts', 'Abandoned Carts'), Icon: ShoppingCart },
+      'customers': { label: t('breadcrumb.customers', 'Customers'), Icon: Heart },
+      'admin': { label: t('breadcrumb.admin', 'Admin'), Icon: Briefcase },
+      'audit-logs': { label: t('breadcrumb.auditLogs', 'Audit Logs'), Icon: ClipboardList },
+      'health': { label: t('breadcrumb.health', 'System Health'), Icon: Activity },
+      'whitelabel': { label: t('breadcrumb.whitelabel', 'White Label'), Icon: Brush },
+      'rate-limiting': { label: t('breadcrumb.rateLimiting', 'Rate Limiting'), Icon: Gauge },
+      'roles': { label: t('breadcrumb.roles', 'Roles'), Icon: Briefcase },
+      'marketplace': { label: t('breadcrumb.marketplace', 'Marketplace'), Icon: Puzzle },
+      'integrations': { label: t('breadcrumb.integrations', 'Integrations'), Icon: Plug },
+      'analytics': { label: t('breadcrumb.analytics', 'Analytics'), Icon: BarChart3 },
     };
 
     let currentPath = '';
@@ -91,7 +97,7 @@ export default function Breadcrumb({ items = [], className = '' }) {
         breadcrumbs.push({
           label: mapped.label,
           path: currentPath,
-          icon: mapped.icon
+          Icon: mapped.Icon
         });
       }
     });
@@ -126,7 +132,7 @@ export default function Breadcrumb({ items = [], className = '' }) {
                   className="flex items-center gap-1.5 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md font-medium"
                   aria-current="page"
                 >
-                  <span aria-hidden="true">{item.icon}</span>
+                  {item.Icon && <item.Icon className="w-4 h-4" aria-hidden="true" />}
                   <span>{item.label}</span>
                 </span>
               ) : (
@@ -134,7 +140,7 @@ export default function Breadcrumb({ items = [], className = '' }) {
                   to={item.path}
                   className="flex items-center gap-1.5 px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors"
                 >
-                  <span aria-hidden="true">{item.icon}</span>
+                  {item.Icon && <item.Icon className="w-4 h-4" aria-hidden="true" />}
                   <span>{item.label}</span>
                 </Link>
               )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Users, Lock, ClipboardList } from 'lucide-react';
 import MemberList from '../components/team/MemberList';
 import InviteModal from '../components/team/InviteModal';
 import RoleEditor from '../components/team/RoleEditor';
@@ -68,9 +69,9 @@ export default function TeamSettings() {
   };
 
   const tabs = [
-    { id: 'members', label: t('team.members'), icon: '👥' },
-    { id: 'roles', label: t('team.roles'), icon: '🔐' },
-    { id: 'activity', label: t('team.activity'), icon: '📋' }
+    { id: 'members', label: t('team.members'), Icon: Users },
+    { id: 'roles', label: t('team.roles'), Icon: Lock },
+    { id: 'activity', label: t('team.activity'), Icon: ClipboardList }
   ];
 
   if (loading) {
@@ -152,7 +153,7 @@ export default function TeamSettings() {
                 : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800'
             }`}
           >
-            <span>{tab.icon}</span> {tab.label}
+            <tab.Icon className="w-4 h-4" /> {tab.label}
           </button>
         ))}
       </div>

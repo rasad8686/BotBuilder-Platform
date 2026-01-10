@@ -7,7 +7,7 @@
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
     "migrate": "node runMigrations.js",
-    "test": "jest server/__tests__ --verbose",
+    "test": "jest server/__tests__ --verbose --forceExit --detectOpenHandles",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:load": "k6 run server/load-tests/api.test.js",
@@ -16,7 +16,11 @@
     "test:contract": "jest --testPathPattern=contract",
     "test:visual": "playwright test e2e/visual/",
     "test:chaos": "node server/chaos/runner.js",
-    "test:all": "npm test && npm run test:contract && npm run test:visual"
+    "test:all": "npm test && npm run test:contract && npm run test:visual",
+    "seed:demo": "knex seed:run --specific=demo_user.js --knexfile=server/knexfile.js",
+    "build:tours-sdk": "rollup -c src/sdk/tours/rollup.config.js",
+    "watch:tours-sdk": "rollup -c src/sdk/tours/rollup.config.js --watch",
+    "build:tours-sdk:prod": "NODE_ENV=production rollup -c src/sdk/tours/rollup.config.js"
   },
   "keywords": [
     "telegram",
@@ -29,7 +33,10 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.3",
+    "@aws-sdk/client-ses": "^3.965.0",
     "@google-cloud/speech": "^7.2.1",
+    "@monaco-editor/react": "^4.7.0",
+    "@sendgrid/mail": "^8.1.6",
     "@slack/web-api": "^7.0.0",
     "ajv": "^8.17.1",
     "apollo-server-express": "^3.13.0",
@@ -40,6 +47,7 @@
     "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
     "discord.js": "^14.25.1",
     "dotenv": "^16.0.3",
     "exceljs": "^4.4.0",
@@ -58,13 +66,18 @@
     "ioredis": "^5.4.1",
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.0",
+    "juice": "^11.0.3",
     "knex": "^3.1.0",
     "mammoth": "^1.11.0",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.11",
     "openai": "^4.104.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-microsoft": "^2.1.0",
     "pdf-parse": "^1.1.1",
     "pg": "^8.11.0",
     "qrcode": "^1.5.4",
@@ -74,6 +87,8 @@
     "stripe": "^14.25.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tiktoken": "^1.0.22",
+    "twilio": "^5.11.2",
     "uuid": "^9.0.1",
     "winston": "^3.18.3",
     "ws": "^8.18.3"
@@ -82,12 +97,19 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
     "@pact-foundation/pact": "^13.2.0",
     "@playwright/test": "^1.40.0",
+    "@rollup/plugin-babel": "^6.1.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@stryker-mutator/core": "^9.4.0",
     "@stryker-mutator/jest-runner": "^9.4.0",
     "jest": "^29.7.0",
     "node-mocks-http": "^1.17.2",
+    "rollup": "^4.55.1",
     "supertest": "^7.1.4"
   }
 }

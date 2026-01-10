@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Globe, Database, Code, Bug, Mail } from 'lucide-react';
 
 const ToolForm = ({ tool, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -14,11 +15,11 @@ const ToolForm = ({ tool, onSave, onCancel }) => {
   const [errors, setErrors] = useState({});
 
   const toolTypes = [
-    { value: 'http_request', label: 'HTTP/API Request', icon: '🌐' },
-    { value: 'database_query', label: 'Database Query', icon: '🗄️' },
-    { value: 'code_execution', label: 'Code Execution', icon: '💻' },
-    { value: 'web_scraper', label: 'Web Scraper', icon: '🕷️' },
-    { value: 'email', label: 'Email (SMTP)', icon: '📧' }
+    { value: 'http_request', label: 'HTTP/API Request', Icon: Globe },
+    { value: 'database_query', label: 'Database Query', Icon: Database },
+    { value: 'code_execution', label: 'Code Execution', Icon: Code },
+    { value: 'web_scraper', label: 'Web Scraper', Icon: Bug },
+    { value: 'email', label: 'Email (SMTP)', Icon: Mail }
   ];
 
   useEffect(() => {
@@ -373,7 +374,7 @@ return result;`}
                   checked={formData.tool_type === type.value}
                   onChange={handleTypeChange}
                 />
-                <span className="type-icon">{type.icon}</span>
+                <span className="type-icon"><type.Icon size={28} /></span>
                 <span className="type-label">{type.label}</span>
               </label>
             ))}

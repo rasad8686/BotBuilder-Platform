@@ -29,6 +29,9 @@ module.exports = {
     acquireConnectionTimeout: 60000,
     migrations: {
       directory: './migrations'
+    },
+    seeds: {
+      directory: './seeds'
     }
   },
   production: {
@@ -38,6 +41,9 @@ module.exports = {
     acquireConnectionTimeout: 60000,
     migrations: {
       directory: './migrations'
+    },
+    seeds: {
+      directory: './seeds'
     }
   }
 };

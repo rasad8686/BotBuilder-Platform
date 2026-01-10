@@ -1,4 +1,5 @@
 import React from 'react';
+import { Puzzle, Download, Star } from 'lucide-react';
 
 const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails }) => {
   const renderStars = (rating) => {
@@ -37,7 +38,7 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
         {plugin.icon_url ? (
           <img src={plugin.icon_url} alt="" />
         ) : (
-          <span className="default-icon">🧩</span>
+          <span className="default-icon"><Puzzle size={32} color="white" /></span>
         )}
       </div>
 
@@ -54,7 +55,7 @@ const PluginCard = ({ plugin, isInstalled, onInstall, onUninstall, onViewDetails
             <span className="rating-count" aria-hidden="true">({plugin.review_count || 0})</span>
           </div>
           <div className="plugin-downloads" aria-label={`${formatDownloads(plugin.downloads || 0)} downloads`}>
-            <span className="download-icon" aria-hidden="true">↓</span>
+            <Download size={14} aria-hidden="true" />
             <span aria-hidden="true">{formatDownloads(plugin.downloads || 0)}</span>
           </div>
         </div>

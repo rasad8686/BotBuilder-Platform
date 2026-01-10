@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Bot, CheckCircle, AlertTriangle, Search, PartyPopper } from 'lucide-react';
 import axios from 'axios';
 import botApi from '../api/bots';
 import BotCard from '../components/BotCard';
@@ -64,7 +65,7 @@ export default function MyBots() {
   useEffect(() => {
     // Show success message if bot was just created
     if (location.state?.botCreated) {
-      setSuccessMessage('Bot created successfully! 🎉');
+      setSuccessMessage('Bot created successfully!');
       // Clear the state
       window.history.replaceState({}, document.title);
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -245,7 +246,7 @@ export default function MyBots() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              {t('myBots.title')} 🤖
+              {t('myBots.title')} <Bot className="w-8 h-8 text-purple-600" />
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               {t('myBots.subtitle')}
@@ -283,14 +284,14 @@ export default function MyBots() {
         {/* Success Message */}
         {successMessage && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2 shadow-sm">
-            ✅ {successMessage}
+            <CheckCircle className="w-5 h-5" /> {successMessage}
           </div>
         )}
 
         {/* Error Message - Only show after both org and bots finish loading */}
         {!orgLoading && !loading && error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 shadow-sm">
-            ⚠️ {error}
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 shadow-sm flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" /> {error}
           </div>
         )}
 
@@ -342,7 +343,7 @@ export default function MyBots() {
         {/* Empty State */}
         {bots.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
-            <div className="text-6xl mb-4">🤖</div>
+            <div className="text-6xl mb-4"><Bot size={64} className="mx-auto text-purple-600" /></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {t('myBots.noBots')}
             </h2>
@@ -367,7 +368,7 @@ export default function MyBots() {
           </div>
         ) : filteredBots.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-12 text-center transition-colors duration-300">
-            <div className="text-6xl mb-4">🔍</div>
+            <div className="text-6xl mb-4"><Search size={64} className="mx-auto text-gray-400" /></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {t('myBots.noBotsFound')}
             </h2>

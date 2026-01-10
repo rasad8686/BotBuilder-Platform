@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Bug, Sparkles, HelpCircle, Lightbulb, FileText, MessageCircle, CheckCircle, AlertTriangle, Send } from 'lucide-react';
 import axios from 'axios';
 
 // Auto-detect API URL based on environment
@@ -32,11 +33,11 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
   const [success, setSuccess] = useState(false);
 
   const categories = [
-    { value: 'bug', label: t('feedback.categories.bug', '🐛 Bug Report'), emoji: '🐛' },
-    { value: 'feature', label: t('feedback.categories.feature', '✨ Feature Request'), emoji: '✨' },
-    { value: 'question', label: t('feedback.categories.question', '❓ Question'), emoji: '❓' },
-    { value: 'suggestion', label: t('feedback.categories.suggestion', '💡 Suggestion'), emoji: '💡' },
-    { value: 'other', label: t('feedback.categories.other', '📝 Other'), emoji: '📝' }
+    { value: 'bug', label: t('feedback.categories.bug', 'Bug Report'), Icon: Bug },
+    { value: 'feature', label: t('feedback.categories.feature', 'Feature Request'), Icon: Sparkles },
+    { value: 'question', label: t('feedback.categories.question', 'Question'), Icon: HelpCircle },
+    { value: 'suggestion', label: t('feedback.categories.suggestion', 'Suggestion'), Icon: Lightbulb },
+    { value: 'other', label: t('feedback.categories.other', 'Other'), Icon: FileText }
   ];
 
   // Reset form when modal closes
@@ -152,7 +153,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 id="feedback-modal-title" className="text-2xl font-bold text-white flex items-center gap-2">
-              <span>💬</span>
+              <MessageCircle className="w-6 h-6" />
               <span>{t('feedback.title', 'Send Feedback')}</span>
             </h2>
             <button
@@ -174,7 +175,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
         {success && (
           <div className="m-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg animate-slideDown" role="status">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
+              <CheckCircle className="w-8 h-8 text-green-600" />
               <div>
                 <h3 className="font-semibold text-green-800 dark:text-green-300">
                   {t('feedback.success.title', 'Thank you!')}
@@ -220,8 +221,8 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
                     }`}
                     aria-pressed={category === cat.value}
                   >
-                    <span className="mr-2">{cat.emoji}</span>
-                    <span className="text-sm">{cat.label.replace(/^[^\s]+\s/, '')}</span>
+                    <cat.Icon className="w-4 h-4 mr-2" />
+                    <span className="text-sm">{cat.label}</span>
                   </button>
                 ))}
               </div>
@@ -254,7 +255,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
             {/* Error Message */}
             {error && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm flex items-start gap-2" role="alert">
-                <span className="text-lg">⚠️</span>
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
@@ -284,7 +285,7 @@ export default function FeedbackModal({ isOpen, onClose, userName = '', userEmai
                   </>
                 ) : (
                   <>
-                    <span>📤</span>
+                    <Send className="w-5 h-5" />
                     <span>{t('feedback.buttons.submit', 'Submit Feedback')}</span>
                   </>
                 )}

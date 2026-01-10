@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TrendingDown, Target, BarChart3, Clock, DollarSign, Trophy } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -248,37 +249,37 @@ function OverviewTab({ summary, onGenerateMock, t }) {
       label: t('fineTuning.metrics.finalLoss', 'Final Loss'),
       value: summary.finalLoss?.train?.toFixed(4) || 'N/A',
       subValue: `Valid: ${summary.finalLoss?.valid?.toFixed(4) || 'N/A'}`,
-      icon: '📉'
+      Icon: TrendingDown
     },
     {
       label: t('fineTuning.metrics.finalAccuracy', 'Final Accuracy'),
       value: summary.finalAccuracy?.train ? `${(summary.finalAccuracy.train * 100).toFixed(1)}%` : 'N/A',
       subValue: `Valid: ${summary.finalAccuracy?.valid ? `${(summary.finalAccuracy.valid * 100).toFixed(1)}%` : 'N/A'}`,
-      icon: '🎯'
+      Icon: Target
     },
     {
       label: t('fineTuning.metrics.totalTokens', 'Tokens Processed'),
       value: summary.totalTokens?.toLocaleString() || '0',
       subValue: `${summary.totalSteps} steps`,
-      icon: '📊'
+      Icon: BarChart3
     },
     {
       label: t('fineTuning.metrics.trainingTime', 'Training Time'),
       value: summary.trainingTime ? `${summary.trainingTime} min` : 'N/A',
       subValue: `${summary.totalEpochs} epochs`,
-      icon: '⏱️'
+      Icon: Clock
     },
     {
       label: t('fineTuning.metrics.trainingCost', 'Training Cost'),
       value: summary.trainingCost ? `$${summary.trainingCost.toFixed(2)}` : 'N/A',
       subValue: '',
-      icon: '💰'
+      Icon: DollarSign
     },
     {
       label: t('fineTuning.metrics.bestLoss', 'Best Loss'),
       value: summary.bestLoss?.train?.toFixed(4) || 'N/A',
       subValue: `Valid: ${summary.bestLoss?.valid?.toFixed(4) || 'N/A'}`,
-      icon: '🏆'
+      Icon: Trophy
     }
   ];
 
@@ -287,7 +288,7 @@ function OverviewTab({ summary, onGenerateMock, t }) {
       <div className="summary-cards">
         {cards.map((card, index) => (
           <div key={index} className="summary-card">
-            <div className="card-icon">{card.icon}</div>
+            <div className="card-icon">{card.Icon && <card.Icon size={24} />}</div>
             <div className="card-content">
               <div className="card-value">{card.value}</div>
               <div className="card-label">{card.label}</div>

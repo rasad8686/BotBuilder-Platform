@@ -1,0 +1,64 @@
+[
+  {
+    "id": "enrollment-1",
+    "contact_id": "contact-1",
+    "contact_email": "john@example.com",
+    "contact_name": "John Doe",
+    "first_name": "John",
+    "last_name": "Doe",
+    "status": "active",
+    "current_step": 2,
+    "enrolled_at": "2024-01-20T10:00:00.000Z",
+    "updated_at": "2024-01-20T14:00:00.000Z"
+  },
+  {
+    "id": "enrollment-2",
+    "contact_id": "contact-2",
+    "contact_email": "jane@example.com",
+    "contact_name": "Jane Smith",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "status": "waiting",
+    "current_step": 1,
+    "wait_until": "2024-01-22T10:00:00.000Z",
+    "enrolled_at": "2024-01-20T10:00:00.000Z",
+    "updated_at": "2024-01-20T12:00:00.000Z"
+  },
+  {
+    "id": "enrollment-3",
+    "contact_id": "contact-3",
+    "contact_email": "mike@example.com",
+    "contact_name": "Mike Johnson",
+    "first_name": "Mike",
+    "last_name": "Johnson",
+    "status": "completed",
+    "current_step": 5,
+    "enrolled_at": "2024-01-15T10:00:00.000Z",
+    "completed_at": "2024-01-19T14:00:00.000Z"
+  },
+  {
+    "id": "enrollment-4",
+    "contact_id": "contact-4",
+    "contact_email": "sarah@example.com",
+    "contact_name": "Sarah Williams",
+    "first_name": "Sarah",
+    "last_name": "Williams",
+    "status": "exited",
+    "current_step": 3,
+    "exit_reason": "goal_reached",
+    "enrolled_at": "2024-01-10T10:00:00.000Z",
+    "completed_at": "2024-01-12T16:00:00.000Z"
+  },
+  {
+    "id": "enrollment-5",
+    "contact_id": "contact-5",
+    "contact_email": "tom@example.com",
+    "contact_name": "Tom Brown",
+    "first_name": "Tom",
+    "last_name": "Brown",
+    "status": "active",
+    "current_step": 0,
+    "enrolled_at": "2024-01-20T14:30:00.000Z",
+    "updated_at": "2024-01-20T14:30:00.000Z"
+  }
+]

@@ -1,0 +1,77 @@
+{
+  "id": "automation-1",
+  "name": "Welcome Series",
+  "status": "active",
+  "trigger_config": {
+    "type": "list_subscribed",
+    "list_id": "list-1",
+    "list_name": "Newsletter Subscribers"
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "type": "send_email",
+      "config": {
+        "template_id": "tpl-1",
+        "subject": "Welcome to Our Community!",
+        "from_name": "Support Team"
+      },
+      "position": { "x": 250, "y": 100 }
+    },
+    {
+      "id": "step-2",
+      "type": "wait",
+      "config": {
+        "duration": 2,
+        "unit": "days"
+      },
+      "position": { "x": 250, "y": 200 }
+    },
+    {
+      "id": "step-3",
+      "type": "condition",
+      "config": {
+        "type": "opened_email",
+        "email_step": "step-1"
+      },
+      "position": { "x": 250, "y": 300 },
+      "branches": {
+        "yes": "step-4",
+        "no": "step-5"
+      }
+    },
+    {
+      "id": "step-4",
+      "type": "send_email",
+      "config": {
+        "template_id": "tpl-2",
+        "subject": "Here are some tips to get started"
+      },
+      "position": { "x": 150, "y": 400 }
+    },
+    {
+      "id": "step-5",
+      "type": "send_email",
+      "config": {
+        "template_id": "tpl-3",
+        "subject": "Did you see our welcome email?"
+      },
+      "position": { "x": 350, "y": 400 }
+    },
+    {
+      "id": "step-6",
+      "type": "goal",
+      "config": {
+        "type": "made_purchase",
+        "exit_on_goal": true
+      },
+      "position": { "x": 250, "y": 500 }
+    }
+  ],
+  "entry_count": 1250,
+  "completed_count": 890,
+  "exit_count": 150,
+  "created_at": "2024-01-01T00:00:00.000Z",
+  "updated_at": "2024-01-20T00:00:00.000Z",
+  "activated_at": "2024-01-02T00:00:00.000Z"
+}

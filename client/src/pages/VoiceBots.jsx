@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Phone, ClipboardList, Smartphone, Pencil, Trash2 } from 'lucide-react';
 import axiosInstance from '../api/axios';
 
 const statusColors = {
@@ -141,7 +142,7 @@ const VoiceBots = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '32px' }}>📞</span>
+              <Phone style={{ width: '32px', height: '32px', color: '#667eea' }} />
               {t('voice.title', 'Voice AI Bots')}
             </h1>
             <p style={{ color: '#6c757d', margin: 0 }}>
@@ -162,7 +163,7 @@ const VoiceBots = () => {
                 cursor: 'pointer'
               }}
             >
-              📋 {t('voice.callHistory', 'Call History')}
+              <ClipboardList style={{ width: '14px', height: '14px', marginRight: '4px', display: 'inline' }} /> {t('voice.callHistory', 'Call History')}
             </button>
             <button
               onClick={handleCreate}
@@ -190,7 +191,9 @@ const VoiceBots = () => {
         {/* Bots Grid */}
         {bots.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 40px', background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>📞</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <Phone style={{ width: '64px', height: '64px', color: '#667eea' }} />
+            </div>
             <h2 style={{ color: '#1a1a2e', marginBottom: '8px' }}>{t('voice.noBots', 'No Voice Bots Yet')}</h2>
             <p style={{ color: '#6c757d', marginBottom: '24px' }}>{t('voice.noBotsDesc', 'Create your first voice bot to start handling phone calls')}</p>
             <button onClick={handleCreate} style={{ padding: '12px 24px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}>
@@ -204,7 +207,7 @@ const VoiceBots = () => {
                 <div style={{ padding: '20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #667eea20 0%, #764ba220 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                      📞
+                      <Phone style={{ width: '24px', height: '24px', color: '#667eea' }} />
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1a2e' }}>{bot.name}</h3>
@@ -223,7 +226,7 @@ const VoiceBots = () => {
 
                   {bot.phone_number && (
                     <div style={{ marginBottom: '16px', padding: '12px', background: '#e8f5e9', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>📱</span>
+                      <Smartphone style={{ width: '16px', height: '16px', color: '#2e7d32' }} />
                       <span style={{ fontWeight: '600', color: '#2e7d32' }}>{bot.phone_number}</span>
                     </div>
                   )}
@@ -250,14 +253,14 @@ const VoiceBots = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', padding: '16px', background: '#f8f9fa', borderTop: '1px solid #f0f0f0' }}>
-                  <button onClick={() => navigate(`/call-history?botId=${bot.id}`)} style={{ flex: 1, padding: '10px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
-                    📋 {t('voice.viewCalls', 'Calls')}
+                  <button onClick={() => navigate(`/call-history?botId=${bot.id}`)} style={{ flex: 1, padding: '10px', background: '#667eea', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <ClipboardList style={{ width: '14px', height: '14px' }} /> {t('voice.viewCalls', 'Calls')}
                   </button>
                   <button onClick={() => handleEdit(bot)} style={{ padding: '10px 16px', background: '#e3f2fd', color: '#1565c0', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                    ✏️
+                    <Pencil style={{ width: '14px', height: '14px' }} />
                   </button>
                   <button onClick={() => handleDelete(bot)} style={{ padding: '10px 16px', background: '#ffebee', color: '#c62828', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                    🗑️
+                    <Trash2 style={{ width: '14px', height: '14px' }} />
                   </button>
                 </div>
               </div>

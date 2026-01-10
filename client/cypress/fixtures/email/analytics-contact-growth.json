@@ -1,0 +1,9 @@
+[
+  { "date": "2024-01-01", "subscribed": 45, "unsubscribed": 8, "netGrowth": 37 },
+  { "date": "2024-01-02", "subscribed": 62, "unsubscribed": 12, "netGrowth": 50 },
+  { "date": "2024-01-03", "subscribed": 38, "unsubscribed": 5, "netGrowth": 33 },
+  { "date": "2024-01-04", "subscribed": 55, "unsubscribed": 9, "netGrowth": 46 },
+  { "date": "2024-01-05", "subscribed": 78, "unsubscribed": 15, "netGrowth": 63 },
+  { "date": "2024-01-06", "subscribed": 32, "unsubscribed": 4, "netGrowth": 28 },
+  { "date": "2024-01-07", "subscribed": 28, "unsubscribed": 3, "netGrowth": 25 }
+]

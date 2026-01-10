@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Search } from 'lucide-react';
 import PluginCard from '../components/plugins/PluginCard';
 import PluginFilters from '../components/plugins/PluginFilters';
 import PluginDetails from '../components/plugins/PluginDetails';
@@ -244,7 +245,7 @@ const Marketplace = () => {
 
         {plugins.length === 0 ? (
           <div className="no-plugins">
-            <span className="empty-icon">🔍</span>
+            <span className="empty-icon"><Search size={48} /></span>
             <p>{t('marketplace.noPlugins')}</p>
             <p className="hint">{t('marketplace.noPluginsHint')}</p>
           </div>

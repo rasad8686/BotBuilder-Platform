@@ -1,40 +1,48 @@
 import { useState } from 'react';
+import { Play, MessageCircle, HelpCircle, GitBranch, Square, Save, Download, Trash2, Lightbulb, Pencil, Smartphone, PlayCircle } from 'lucide-react';
 
-function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
+function FlowToolbox({ onAddNode, onSave, onClear, onExport, onTest, isSaving, isTesting }) {
   const [showTooltip, setShowTooltip] = useState(null);
 
   const nodeTypes = [
     {
       type: 'start',
-      icon: '▶️',
+      Icon: Play,
       label: 'Start',
       color: 'bg-green-500',
       description: 'Entry point of the flow'
     },
     {
       type: 'text',
-      icon: '💬',
+      Icon: MessageCircle,
       label: 'Text Message',
       color: 'bg-blue-500',
       description: 'Send a text message'
     },
     {
       type: 'question',
-      icon: '❓',
+      Icon: HelpCircle,
       label: 'Question',
       color: 'bg-purple-500',
       description: 'Ask a question with options'
     },
     {
       type: 'condition',
-      icon: '🔀',
+      Icon: GitBranch,
       label: 'Condition',
       color: 'bg-orange-500',
       description: 'Branch based on logic'
     },
     {
+      type: 'sms',
+      Icon: Smartphone,
+      label: 'SMS Send',
+      color: 'bg-green-600',
+      description: 'Send SMS message'
+    },
+    {
       type: 'end',
-      icon: '⏹️',
+      Icon: Square,
       label: 'End',
       color: 'bg-red-500',
       description: 'Exit point of the flow'
@@ -63,7 +71,7 @@ function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
               onClick={() => onAddNode(nodeType.type)}
               className={`w-full ${nodeType.color} text-white px-4 py-3 rounded-lg shadow hover:shadow-lg transition-all transform hover:scale-105 flex items-center gap-3`}
             >
-              <span className="text-2xl">{nodeType.icon}</span>
+              <nodeType.Icon className="w-6 h-6" />
               <span className="font-semibold">{nodeType.label}</span>
             </button>
 
@@ -79,6 +87,24 @@ function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
       {/* Actions */}
       <div className="mt-6 space-y-3 border-t border-gray-200 pt-4">
         <button
+          onClick={onTest}
+          disabled={isTesting}
+          className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isTesting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Testing...
+            </>
+          ) : (
+            <>
+              <PlayCircle className="w-5 h-5" />
+              Test Flow
+            </>
+          )}
+        </button>
+
+        <button
           onClick={onSave}
           disabled={isSaving}
           className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -90,7 +116,7 @@ function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
             </>
           ) : (
             <>
-              <span>💾</span>
+              <Save className="w-5 h-5" />
               Save Flow
             </>
           )}
@@ -100,7 +126,7 @@ function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
           onClick={onExport}
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
         >
-          <span>📥</span>
+          <Download className="w-5 h-5" />
           Export JSON
         </button>
 
@@ -108,18 +134,18 @@ function FlowToolbox({ onAddNode, onSave, onClear, onExport, isSaving }) {
           onClick={onClear}
           className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition flex items-center justify-center gap-2"
         >
-          <span>🗑️</span>
+          <Trash2 className="w-5 h-5" />
           Clear Canvas
         </button>
       </div>
 
       {/* Tips */}
       <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-3">
-        <h4 className="text-xs font-semibold text-purple-800 mb-1">💡 Tips</h4>
+        <h4 className="text-xs font-semibold text-purple-800 mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Tips</h4>
         <ul className="text-xs text-purple-700 space-y-1">
           <li>• Click nodes to add to center</li>
           <li>• Drag to connect nodes</li>
-          <li>• Click ✏️ to edit node</li>
+          <li className="flex items-center gap-1">• Click <Pencil className="w-3 h-3 inline" /> to edit node</li>
           <li>• Use scroll to zoom</li>
         </ul>
       </div>

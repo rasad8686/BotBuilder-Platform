@@ -1,13 +1,14 @@
 import React from 'react';
+import { Clock, RefreshCw, CheckCircle, XCircle, Circle } from 'lucide-react';
 
 const ExecutionTimeline = ({ steps = [], currentStep, onSelectStep, selectedStepId }) => {
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending': return '⏳';
-      case 'running': return '🔄';
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      default: return '⚪';
+      case 'pending': return <Clock size={16} />;
+      case 'running': return <RefreshCw size={16} className="animate-spin" />;
+      case 'completed': return <CheckCircle size={16} />;
+      case 'failed': return <XCircle size={16} />;
+      default: return <Circle size={16} />;
     }
   };
 

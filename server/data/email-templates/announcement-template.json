@@ -1,0 +1,174 @@
+{
+  "id": "system-announcement-1",
+  "name": "Product Announcement",
+  "category": "announcement",
+  "description": "Announce new products, features, or important updates",
+  "subject": "Introducing: {{product_name}}",
+  "previewText": "Something exciting is here - check it out!",
+  "isSystem": true,
+  "featured": false,
+  "responsive": true,
+  "blocks": [
+    {
+      "id": "header-1",
+      "type": "header",
+      "settings": {
+        "logo": "{{logo_url}}",
+        "logoWidth": "130px",
+        "logoAlign": "center",
+        "backgroundColor": "#FFFFFF",
+        "padding": { "top": 25, "right": 20, "bottom": 25, "left": 20 }
+      }
+    },
+    {
+      "id": "text-1",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0; text-transform: uppercase; letter-spacing: 3px; font-size: 12px;'>New Announcement</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "12px",
+        "color": "#7C3AED",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 30, "right": 20, "bottom": 10, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-2",
+      "type": "text",
+      "content": "<h1 style='text-align: center; margin: 0;'>{{headline}}</h1>",
+      "settings": {
+        "fontFamily": "Georgia, serif",
+        "fontSize": "36px",
+        "color": "#1F2937",
+        "lineHeight": "1.3",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 30, "bottom": 20, "left": 30 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "image-1",
+      "type": "image",
+      "settings": {
+        "src": "{{hero_image_url}}",
+        "alt": "Product announcement",
+        "link": "{{product_url}}",
+        "width": "100%",
+        "align": "center",
+        "padding": { "top": 10, "right": 0, "bottom": 30, "left": 0 },
+        "borderRadius": "0px"
+      }
+    },
+    {
+      "id": "text-3",
+      "type": "text",
+      "content": "<p style='margin: 0;'>{{description}}</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#4B5563",
+        "lineHeight": "1.7",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 40, "bottom": 30, "left": 40 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-4",
+      "type": "text",
+      "content": "<h3 style='margin: 0 0 20px 0; text-align: center;'>Key Features</h3><table width='100%' cellpadding='10'><tr><td style='text-align: center; vertical-align: top;'><strong>{{feature_1_title}}</strong><br><span style='color: #6B7280; font-size: 14px;'>{{feature_1_desc}}</span></td><td style='text-align: center; vertical-align: top;'><strong>{{feature_2_title}}</strong><br><span style='color: #6B7280; font-size: 14px;'>{{feature_2_desc}}</span></td><td style='text-align: center; vertical-align: top;'><strong>{{feature_3_title}}</strong><br><span style='color: #6B7280; font-size: 14px;'>{{feature_3_desc}}</span></td></tr></table>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#1F2937",
+        "lineHeight": "1.5",
+        "textAlign": "left",
+        "padding": { "top": 20, "right": 20, "bottom": 20, "left": 20 },
+        "backgroundColor": "#F9FAFB"
+      }
+    },
+    {
+      "id": "spacer-1",
+      "type": "spacer",
+      "settings": {
+        "height": "20px"
+      }
+    },
+    {
+      "id": "button-1",
+      "type": "button",
+      "settings": {
+        "text": "Learn More",
+        "url": "{{product_url}}",
+        "backgroundColor": "#7C3AED",
+        "textColor": "#FFFFFF",
+        "fontSize": "16px",
+        "fontWeight": "bold",
+        "padding": { "top": 10, "right": 20, "bottom": 30, "left": 20 },
+        "borderRadius": "8px",
+        "align": "center",
+        "fullWidth": false
+      }
+    },
+    {
+      "id": "divider-1",
+      "type": "divider",
+      "settings": {
+        "style": "solid",
+        "color": "#E5E7EB",
+        "thickness": "1px",
+        "width": "60%",
+        "padding": { "top": 20, "right": 0, "bottom": 20, "left": 0 }
+      }
+    },
+    {
+      "id": "text-5",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0;'>Questions? <a href='{{support_url}}' style='color: #7C3AED;'>Contact our support team</a></p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14px",
+        "color": "#6B7280",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 10, "right": 20, "bottom": 20, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "social-1",
+      "type": "social",
+      "settings": {
+        "platforms": [
+          { "name": "facebook", "url": "{{facebook_url}}", "enabled": true },
+          { "name": "twitter", "url": "{{twitter_url}}", "enabled": true },
+          { "name": "instagram", "url": "{{instagram_url}}", "enabled": true },
+          { "name": "linkedin", "url": "{{linkedin_url}}", "enabled": true },
+          { "name": "youtube", "url": "", "enabled": false }
+        ],
+        "iconStyle": "colored",
+        "iconSize": "28px",
+        "align": "center",
+        "spacing": "10px",
+        "padding": { "top": 10, "right": 0, "bottom": 20, "left": 0 }
+      }
+    },
+    {
+      "id": "footer-1",
+      "type": "footer",
+      "settings": {
+        "companyName": "{{company_name}}",
+        "address": "{{company_address}}",
+        "showUnsubscribe": true,
+        "unsubscribeText": "Unsubscribe",
+        "showViewInBrowser": true,
+        "backgroundColor": "#F3F4F6",
+        "textColor": "#6B7280",
+        "fontSize": "12px",
+        "padding": { "top": 25, "right": 20, "bottom": 25, "left": 20 }
+      }
+    }
+  ]
+}

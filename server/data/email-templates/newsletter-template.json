@@ -1,0 +1,202 @@
+{
+  "id": "system-newsletter-1",
+  "name": "Newsletter",
+  "category": "newsletter",
+  "description": "Clean and modern newsletter template for regular updates",
+  "subject": "{{newsletter_title}} - {{month}} Update",
+  "previewText": "Your monthly dose of news and updates",
+  "isSystem": true,
+  "featured": true,
+  "responsive": true,
+  "blocks": [
+    {
+      "id": "header-1",
+      "type": "header",
+      "settings": {
+        "logo": "{{logo_url}}",
+        "logoWidth": "120px",
+        "logoAlign": "center",
+        "backgroundColor": "#7C3AED",
+        "padding": { "top": 25, "right": 20, "bottom": 25, "left": 20 }
+      }
+    },
+    {
+      "id": "text-1",
+      "type": "text",
+      "content": "<h1 style='text-align: center; color: #1F2937; margin: 0;'>{{newsletter_title}}</h1>",
+      "settings": {
+        "fontFamily": "Georgia, serif",
+        "fontSize": "32px",
+        "color": "#1F2937",
+        "lineHeight": "1.3",
+        "textAlign": "center",
+        "padding": { "top": 40, "right": 20, "bottom": 10, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-2",
+      "type": "text",
+      "content": "<p style='text-align: center; margin: 0;'>{{month}} {{year}} Edition</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "14px",
+        "color": "#9CA3AF",
+        "lineHeight": "1.5",
+        "textAlign": "center",
+        "padding": { "top": 5, "right": 20, "bottom": 30, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "image-1",
+      "type": "image",
+      "settings": {
+        "src": "{{featured_image_url}}",
+        "alt": "Featured article image",
+        "link": "{{featured_article_url}}",
+        "width": "100%",
+        "align": "center",
+        "padding": { "top": 0, "right": 0, "bottom": 20, "left": 0 },
+        "borderRadius": "8px"
+      }
+    },
+    {
+      "id": "text-3",
+      "type": "text",
+      "content": "<h2 style='margin: 0 0 10px 0; color: #1F2937;'>{{featured_title}}</h2><p style='margin: 0; color: #6B7280;'>{{featured_excerpt}}</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#374151",
+        "lineHeight": "1.6",
+        "textAlign": "left",
+        "padding": { "top": 10, "right": 20, "bottom": 20, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "button-1",
+      "type": "button",
+      "settings": {
+        "text": "Read More",
+        "url": "{{featured_article_url}}",
+        "backgroundColor": "#7C3AED",
+        "textColor": "#FFFFFF",
+        "fontSize": "14px",
+        "fontWeight": "bold",
+        "padding": { "top": 0, "right": 20, "bottom": 30, "left": 20 },
+        "borderRadius": "6px",
+        "align": "left",
+        "fullWidth": false
+      }
+    },
+    {
+      "id": "divider-1",
+      "type": "divider",
+      "settings": {
+        "style": "solid",
+        "color": "#E5E7EB",
+        "thickness": "1px",
+        "width": "100%",
+        "padding": { "top": 10, "right": 20, "bottom": 10, "left": 20 }
+      }
+    },
+    {
+      "id": "text-4",
+      "type": "text",
+      "content": "<h3 style='margin: 0 0 20px 0; color: #1F2937;'>More Stories</h3>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "20px",
+        "color": "#1F2937",
+        "lineHeight": "1.4",
+        "textAlign": "left",
+        "padding": { "top": 30, "right": 20, "bottom": 0, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-5",
+      "type": "text",
+      "content": "<p style='margin: 0 0 5px 0;'><a href='{{article_1_url}}' style='color: #7C3AED; text-decoration: none; font-weight: 600;'>{{article_1_title}}</a></p><p style='margin: 0; color: #6B7280; font-size: 14px;'>{{article_1_excerpt}}</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#374151",
+        "lineHeight": "1.5",
+        "textAlign": "left",
+        "padding": { "top": 15, "right": 20, "bottom": 15, "left": 20 },
+        "backgroundColor": "#F9FAFB"
+      }
+    },
+    {
+      "id": "text-6",
+      "type": "text",
+      "content": "<p style='margin: 0 0 5px 0;'><a href='{{article_2_url}}' style='color: #7C3AED; text-decoration: none; font-weight: 600;'>{{article_2_title}}</a></p><p style='margin: 0; color: #6B7280; font-size: 14px;'>{{article_2_excerpt}}</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#374151",
+        "lineHeight": "1.5",
+        "textAlign": "left",
+        "padding": { "top": 15, "right": 20, "bottom": 15, "left": 20 },
+        "backgroundColor": "transparent"
+      }
+    },
+    {
+      "id": "text-7",
+      "type": "text",
+      "content": "<p style='margin: 0 0 5px 0;'><a href='{{article_3_url}}' style='color: #7C3AED; text-decoration: none; font-weight: 600;'>{{article_3_title}}</a></p><p style='margin: 0; color: #6B7280; font-size: 14px;'>{{article_3_excerpt}}</p>",
+      "settings": {
+        "fontFamily": "Arial, sans-serif",
+        "fontSize": "16px",
+        "color": "#374151",
+        "lineHeight": "1.5",
+        "textAlign": "left",
+        "padding": { "top": 15, "right": 20, "bottom": 15, "left": 20 },
+        "backgroundColor": "#F9FAFB"
+      }
+    },
+    {
+      "id": "spacer-1",
+      "type": "spacer",
+      "settings": {
+        "height": "30px"
+      }
+    },
+    {
+      "id": "social-1",
+      "type": "social",
+      "settings": {
+        "platforms": [
+          { "name": "facebook", "url": "{{facebook_url}}", "enabled": true },
+          { "name": "twitter", "url": "{{twitter_url}}", "enabled": true },
+          { "name": "instagram", "url": "{{instagram_url}}", "enabled": true },
+          { "name": "linkedin", "url": "{{linkedin_url}}", "enabled": true },
+          { "name": "youtube", "url": "", "enabled": false }
+        ],
+        "iconStyle": "colored",
+        "iconSize": "28px",
+        "align": "center",
+        "spacing": "8px",
+        "padding": { "top": 20, "right": 0, "bottom": 20, "left": 0 }
+      }
+    },
+    {
+      "id": "footer-1",
+      "type": "footer",
+      "settings": {
+        "companyName": "{{company_name}}",
+        "address": "{{company_address}}",
+        "showUnsubscribe": true,
+        "unsubscribeText": "Unsubscribe from this newsletter",
+        "showViewInBrowser": true,
+        "backgroundColor": "#1F2937",
+        "textColor": "#9CA3AF",
+        "fontSize": "12px",
+        "padding": { "top": 30, "right": 20, "bottom": 30, "left": 20 }
+      }
+    }
+  ]
+}

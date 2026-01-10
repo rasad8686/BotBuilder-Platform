@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link2, MessageSquare, Calendar, Mail, Users, CheckCircle, XCircle, Plug, RefreshCw } from 'lucide-react';
 
-const integrationIcons = {
-  slack: '💬',
-  google_calendar: '📅',
-  gmail: '📧',
-  crm: '👥'
+// Icon components for integrations
+const IntegrationIconComponent = ({ type }) => {
+  const icons = {
+    slack: MessageSquare,
+    google_calendar: Calendar,
+    gmail: Mail,
+    crm: Users
+  };
+  const IconComp = icons[type] || Plug;
+  return <IconComp className="w-6 h-6 text-indigo-600" />;
 };
 
 const statusColors = {
@@ -182,7 +188,7 @@ const Integrations = () => {
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '32px' }}>🔗</span>
+            <Link2 style={{ width: '32px', height: '32px', color: '#667eea' }} />
             {t('integrations.title', 'Integrations')}
           </h1>
           <p style={{ color: '#6c757d', margin: 0 }}>
@@ -202,7 +208,7 @@ const Integrations = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span>✅</span>
+            <CheckCircle style={{ width: '18px', height: '18px' }} />
             {successMessage}
           </div>
         )}
@@ -218,7 +224,7 @@ const Integrations = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <span>❌</span>
+            <XCircle style={{ width: '18px', height: '18px' }} />
             {error}
           </div>
         )}
@@ -250,7 +256,7 @@ const Integrations = () => {
                         justifyContent: 'center',
                         fontSize: '24px'
                       }}>
-                        {integrationIcons[integration.type] || '🔌'}
+                        <IntegrationIconComponent type={integration.type} />
                       </div>
                       <div>
                         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1a2e' }}>
@@ -272,8 +278,8 @@ const Integrations = () => {
                   </div>
 
                   {integration.metadata?.email && (
-                    <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#6c757d' }}>
-                      📧 {integration.metadata.email}
+                    <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#6c757d', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Mail style={{ width: '14px', height: '14px' }} /> {integration.metadata.email}
                     </p>
                   )}
 
@@ -299,7 +305,7 @@ const Integrations = () => {
                         fontWeight: '500'
                       }}
                     >
-                      {testingId === integration.id ? '...' : '🔄'} {t('integrations.test', 'Test')}
+                      {testingId === integration.id ? '...' : <RefreshCw style={{ width: '14px', height: '14px', display: 'inline' }} />} {t('integrations.test', 'Test')}
                     </button>
                     <button
                       onClick={() => handleDisconnect(integration.id)}

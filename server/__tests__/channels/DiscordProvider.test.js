@@ -600,4 +600,334 @@ describe('DiscordProvider', () => {
       expect(elapsed).toBeGreaterThanOrEqual(45); // Allow some margin
     });
   });
+
+  describe('sendEmbed', () => {
+    it('should send embed message', async () => {
+      const channel = { bot_token: 'test_token' };
+      const spy = jest.spyOn(provider, 'send');
+
+      await provider.sendEmbed(channel, 'channel123', {
+        title: 'Test',
+        description: 'Description'
+      });
+
+      expect(spy).toHaveBeenCalledWith(channel, expect.objectContaining({
+        type: 'embed'
+      }));
+    });
+  });
+
+  describe('sendTemplate', () => {
+    it('should send template as interactive embed', async () => {
+      const channel = { bot_token: 'test_token' };
+      const spy = jest.spyOn(provider, 'send');
+
+      await provider.sendTemplate(channel, 'channel123', 'Welcome', 'en', [
+        { type: 'button', text: 'Click', callback_data: 'btn1' }
+      ]);
+
+      expect(spy).toHaveBeenCalledWith(channel, expect.objectContaining({
+        type: 'interactive'
+      }));
+    });
+
+    it('should handle template without components', async () => {
+      const channel = { bot_token: 'test_token' };
+      const spy = jest.spyOn(provider, 'send');
+
+      await provider.sendTemplate(channel, 'channel123', 'Welcome', 'en', []);
+
+      expect(spy).toHaveBeenCalled();
+    });
+  });
+
+  describe('receive', () => {
+    it('should handle MESSAGE_CREATE event', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.receive({
+        type: 'MESSAGE_CREATE',
+        message: { content: 'Hello' }
+      });
+
+      expect(discordService.handleIncomingMessage).toHaveBeenCalled();
+      expect(result.type).toBe('text');
+    });
+
+    it('should handle slash command interaction', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.receive({
+        type: 'INTERACTION_CREATE',
+        interaction: { type: 2, commandName: 'help' }
+      });
+
+      expect(discordService.handleSlashCommand).toHaveBeenCalled();
+      expect(result.type).toBe('slash_command');
+    });
+
+    it('should handle button interaction', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.receive({
+        type: 'INTERACTION_CREATE',
+        interaction: { type: 3, componentType: 2, customId: 'btn1' }
+      });
+
+      expect(discordService.handleButtonInteraction).toHaveBeenCalled();
+      expect(result.type).toBe('button');
+    });
+
+    it('should handle select menu interaction', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.receive({
+        type: 'INTERACTION_CREATE',
+        interaction: { type: 3, componentType: 3, customId: 'menu1' }
+      });
+
+      expect(discordService.handleSelectMenuInteraction).toHaveBeenCalled();
+      expect(result.type).toBe('select_menu');
+    });
+
+    it('should return payload for unknown types', async () => {
+      const payload = { type: 'UNKNOWN', data: {} };
+      const result = await provider.receive(payload);
+      expect(result).toEqual(payload);
+    });
+  });
+
+  describe('processWebhook', () => {
+    it('should process webhook and return events', async () => {
+      jest.spyOn(provider, 'receive').mockResolvedValueOnce({
+        type: 'text',
+        userId: 'user123',
+        username: 'testuser',
+        displayName: 'Test User',
+        channelId: 'channel123',
+        channelType: 'text',
+        guildId: 'guild123',
+        guildName: 'Test Guild',
+        messageId: 'msg123',
+        content: 'Hello'
+      });
+
+      const events = await provider.processWebhook({}, { type: 'MESSAGE_CREATE' }, {});
+
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('text');
+      expect(events[0].from.id).toBe('user123');
+    });
+
+    it('should handle errors gracefully', async () => {
+      jest.spyOn(provider, 'receive').mockRejectedValueOnce(new Error('Parse error'));
+
+      const events = await provider.processWebhook({}, {}, {});
+
+      expect(events).toHaveLength(0);
+    });
+  });
+
+  describe('uploadMedia', () => {
+    it('should return media directly (Discord handles upload)', async () => {
+      const channel = { bot_token: 'test_token' };
+      const media = 'https://example.com/image.png';
+
+      const result = await provider.uploadMedia(channel, media, 'image/png');
+
+      expect(result).toBe(media);
+    });
+  });
+
+  describe('downloadMedia', () => {
+    it('should return download info', async () => {
+      const channel = { bot_token: 'test_token' };
+      const mediaId = 'https://cdn.discord.com/attachments/123/456/image.png';
+
+      const result = await provider.downloadMedia(channel, mediaId);
+
+      expect(result.url).toBe(mediaId);
+      expect(result.directDownload).toBe(true);
+    });
+  });
+
+  describe('sendEmbedMessage', () => {
+    it('should send embed via service', async () => {
+      const discordService = require('../../services/channels/discordService');
+      const channel = { bot_token: 'test_token' };
+
+      await provider.sendEmbedMessage(channel, 'channel123', { title: 'Test' });
+
+      expect(discordService.sendEmbed).toHaveBeenCalledWith(
+        'test_token',
+        'channel123',
+        { title: 'Test' },
+        {}
+      );
+    });
+  });
+
+  describe('replyToInteraction', () => {
+    it('should reply to interaction', async () => {
+      const discordService = require('../../services/channels/discordService');
+      const interaction = { id: 'int123' };
+
+      await provider.replyToInteraction(interaction, { content: 'Response' });
+
+      expect(discordService.replyToInteraction).toHaveBeenCalledWith(
+        interaction,
+        { content: 'Response' }
+      );
+    });
+  });
+
+  describe('deferInteraction', () => {
+    it('should defer interaction reply', async () => {
+      const discordService = require('../../services/channels/discordService');
+      const interaction = { id: 'int123' };
+
+      await provider.deferInteraction(interaction, true);
+
+      expect(discordService.deferReply).toHaveBeenCalledWith(interaction, true);
+    });
+  });
+
+  describe('send method branches', () => {
+    const channel = { bot_token: 'test_token', client_id: 'client123' };
+
+    it('should handle interactive message type', async () => {
+      const discordService = require('../../services/channels/discordService');
+      discordService.connectBot.mockResolvedValueOnce({
+        channels: {
+          fetch: jest.fn().mockResolvedValue({
+            send: jest.fn().mockResolvedValue({ id: 'msg999' })
+          })
+        }
+      });
+
+      const result = await provider.send(channel, {
+        type: 'interactive',
+        to: 'channel123',
+        content: 'Choose:',
+        components: [{ type: 'buttons' }]
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle thread message type', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.send(channel, {
+        type: 'thread',
+        to: 'channel123',
+        threadName: 'New Thread',
+        text: 'Initial message'
+      });
+
+      expect(discordService.createStandaloneThread).toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+
+    it('should default to text for unknown type', async () => {
+      const discordService = require('../../services/channels/discordService');
+
+      const result = await provider.send(channel, {
+        type: 'unknown_type',
+        to: 'channel123',
+        text: 'Hello'
+      });
+
+      expect(discordService.sendMessage).toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('sendMediaMessage branches', () => {
+    it('should handle non-image media', async () => {
+      const channel = { bot_token: 'test_token' };
+      const spy = jest.spyOn(provider, 'send');
+
+      await provider.sendMediaMessage(channel, 'channel123', 'video', 'https://example.com/video.mp4', {
+        caption: 'My video'
+      });
+
+      expect(spy).toHaveBeenCalled();
+      const callArgs = spy.mock.calls[0][1];
+      expect(callArgs.embed.url).toBe('https://example.com/video.mp4');
+      expect(callArgs.embed.description).toContain('Download video');
+    });
+  });
+
+  describe('initialize branches', () => {
+    it('should initialize with clientId instead of client_id', async () => {
+      const discordService = require('../../services/channels/discordService');
+      const channel = {
+        botToken: 'test_token',
+        clientId: 'test_client'
+      };
+
+      await provider.initialize(channel);
+
+      expect(discordService.connectBot).toHaveBeenCalledWith('test_token');
+      expect(discordService.registerSlashCommands).toHaveBeenCalled();
+    });
+
+    it('should skip slash commands if no client ID', async () => {
+      const discordService = require('../../services/channels/discordService');
+      discordService.registerSlashCommands.mockClear();
+
+      const channel = {
+        bot_token: 'test_token'
+      };
+
+      await provider.initialize(channel);
+
+      expect(discordService.registerSlashCommands).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sendTypingIndicator error handling', () => {
+    it('should return false on error', async () => {
+      const discordService = require('../../services/channels/discordService');
+      discordService.sendTyping.mockRejectedValueOnce(new Error('Typing failed'));
+
+      const channel = { bot_token: 'test_token' };
+      const result = await provider.sendTypingIndicator(channel, 'channel123', true);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('checkRateLimit advanced scenarios', () => {
+    it('should wait when messages per minute exceeded', async () => {
+      const tracker = {
+        lastMessage: Date.now() - 1000,
+        messagesThisSecond: 0,
+        messagesThisMinute: 120,
+        minuteStart: Date.now() - 30000
+      };
+      provider.rateLimitTrackers.set('test:ch', tracker);
+
+      const delaySpy = jest.spyOn(provider, 'delay').mockResolvedValue();
+
+      await provider.checkRateLimit('test', 'ch');
+
+      expect(delaySpy).toHaveBeenCalled();
+    });
+
+    it('should reset minute counter after 60 seconds', async () => {
+      const tracker = {
+        lastMessage: Date.now() - 1000,
+        messagesThisSecond: 0,
+        messagesThisMinute: 50,
+        minuteStart: Date.now() - 70000
+      };
+      provider.rateLimitTrackers.set('test2:ch2', tracker);
+
+      await provider.checkRateLimit('test2', 'ch2');
+
+      expect(tracker.messagesThisMinute).toBe(1);
+    });
+  });
 });

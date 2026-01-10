@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Home, Bot, Plus, Target, Users, RefreshCw, Brain, Smartphone, Plug,
+  Phone, ClipboardList, UserCircle, Mic, Puzzle, CreditCard, Key, Link2,
+  BarChart3, Settings, Lock, Shield, Building2, TrendingUp, Briefcase, Search
+} from 'lucide-react';
+
+// Icon mapping for pages
+const iconComponents = {
+  Home, Bot, Plus, Target, Users, RefreshCw, Brain, Smartphone, Plug,
+  Phone, ClipboardList, UserCircle, Mic, Puzzle, CreditCard, Key, Link2,
+  BarChart3, Settings, Lock, Shield, Building2, TrendingUp, Briefcase, Search
+};
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -21,34 +33,34 @@ export default function GlobalSearch() {
 
   // Available pages for search
   const pages = [
-    { name: t('search.dashboard', 'Dashboard'), path: '/dashboard', icon: '🏠', keywords: ['home', 'ana', 'panel'] },
-    { name: t('search.myBots', 'My Bots'), path: '/mybots', icon: '🤖', keywords: ['bots', 'botlar'] },
-    { name: t('search.createBot', 'Create Bot'), path: '/create-bot', icon: '➕', keywords: ['new', 'yeni', 'yarat'] },
-    { name: t('search.aiFlow', 'AI Flow Studio'), path: '/ai-flow', icon: '🤖', keywords: ['flow', 'studio', 'ai'] },
-    { name: t('search.agentStudio', 'Agent Studio'), path: '/agent-studio', icon: '🎯', keywords: ['agent', 'studio'] },
-    { name: t('search.autonomousAgents', 'Autonomous Agents'), path: '/autonomous-agents', icon: '🦾', keywords: ['autonomous', 'auto'] },
-    { name: t('search.workflows', 'Workflows'), path: '/workflows', icon: '🔄', keywords: ['workflow', 'axin'] },
-    { name: t('search.knowledge', 'Knowledge Base'), path: '/knowledge', icon: '🧠', keywords: ['knowledge', 'bilik'] },
-    { name: t('search.channels', 'Channels'), path: '/channels', icon: '📱', keywords: ['channel', 'kanal'] },
-    { name: t('search.integrations', 'Integrations'), path: '/integrations', icon: '🔌', keywords: ['integration', 'inteqrasiya'] },
-    { name: t('search.voiceBots', 'Voice Bots'), path: '/voice-bots', icon: '📞', keywords: ['voice', 'ses'] },
-    { name: t('search.callHistory', 'Call History'), path: '/call-history', icon: '📋', keywords: ['call', 'zeng'] },
-    { name: t('search.workClone', 'Work Clone'), path: '/work-clone', icon: '👤', keywords: ['clone', 'klon'] },
-    { name: t('search.voiceToBot', 'Voice to Bot'), path: '/voice-to-bot', icon: '🎙️', keywords: ['voice', 'ses'] },
-    { name: t('search.fineTuning', 'Fine Tuning'), path: '/fine-tuning', icon: '🧠', keywords: ['fine', 'tuning'] },
-    { name: t('search.marketplace', 'Marketplace'), path: '/marketplace', icon: '🧩', keywords: ['market', 'bazar'] },
-    { name: t('search.billing', 'Billing'), path: '/billing', icon: '💳', keywords: ['billing', 'odenis', 'payment'] },
-    { name: t('search.apiTokens', 'API Tokens'), path: '/api-tokens', icon: '🔑', keywords: ['api', 'token', 'key'] },
-    { name: t('search.webhooks', 'Webhooks'), path: '/webhooks', icon: '🔗', keywords: ['webhook', 'hook'] },
-    { name: t('search.usage', 'Usage'), path: '/usage', icon: '📊', keywords: ['usage', 'istifade'] },
-    { name: t('search.settings', 'Settings'), path: '/settings', icon: '⚙️', keywords: ['settings', 'ayarlar'] },
-    { name: t('search.security', 'Security'), path: '/settings/security', icon: '🔐', keywords: ['security', 'tehlukesizlik'] },
-    { name: t('search.sso', 'Enterprise SSO'), path: '/settings/sso', icon: '🛡️', keywords: ['sso', 'enterprise'] },
-    { name: t('search.team', 'Team'), path: '/team', icon: '👥', keywords: ['team', 'komanda'] },
-    { name: t('search.organization', 'Organization'), path: '/organizations/settings', icon: '🏢', keywords: ['org', 'teskilat'] },
-    { name: t('search.recovery', 'Recovery Dashboard'), path: '/recovery', icon: '📈', keywords: ['recovery', 'berpa'] },
-    { name: t('search.analytics', 'Analytics'), path: '/analytics', icon: '📊', keywords: ['analytics', 'analitika'] },
-    { name: t('search.adminDashboard', 'Admin Dashboard'), path: '/admin/dashboard', icon: '👔', keywords: ['admin', 'idareetme'] },
+    { name: t('search.dashboard', 'Dashboard'), path: '/dashboard', Icon: Home, keywords: ['home', 'ana', 'panel'] },
+    { name: t('search.myBots', 'My Bots'), path: '/mybots', Icon: Bot, keywords: ['bots', 'botlar'] },
+    { name: t('search.createBot', 'Create Bot'), path: '/create-bot', Icon: Plus, keywords: ['new', 'yeni', 'yarat'] },
+    { name: t('search.aiFlow', 'AI Flow Studio'), path: '/ai-flow', Icon: Bot, keywords: ['flow', 'studio', 'ai'] },
+    { name: t('search.agentStudio', 'Agent Studio'), path: '/agent-studio', Icon: Target, keywords: ['agent', 'studio'] },
+    { name: t('search.autonomousAgents', 'Autonomous Agents'), path: '/autonomous-agents', Icon: Users, keywords: ['autonomous', 'auto'] },
+    { name: t('search.workflows', 'Workflows'), path: '/workflows', Icon: RefreshCw, keywords: ['workflow', 'axin'] },
+    { name: t('search.knowledge', 'Knowledge Base'), path: '/knowledge', Icon: Brain, keywords: ['knowledge', 'bilik'] },
+    { name: t('search.channels', 'Channels'), path: '/channels', Icon: Smartphone, keywords: ['channel', 'kanal'] },
+    { name: t('search.integrations', 'Integrations'), path: '/integrations', Icon: Plug, keywords: ['integration', 'inteqrasiya'] },
+    { name: t('search.voiceBots', 'Voice Bots'), path: '/voice-bots', Icon: Phone, keywords: ['voice', 'ses'] },
+    { name: t('search.callHistory', 'Call History'), path: '/call-history', Icon: ClipboardList, keywords: ['call', 'zeng'] },
+    { name: t('search.workClone', 'Work Clone'), path: '/work-clone', Icon: UserCircle, keywords: ['clone', 'klon'] },
+    { name: t('search.voiceToBot', 'Voice to Bot'), path: '/voice-to-bot', Icon: Mic, keywords: ['voice', 'ses'] },
+    { name: t('search.fineTuning', 'Fine Tuning'), path: '/fine-tuning', Icon: Brain, keywords: ['fine', 'tuning'] },
+    { name: t('search.marketplace', 'Marketplace'), path: '/marketplace', Icon: Puzzle, keywords: ['market', 'bazar'] },
+    { name: t('search.billing', 'Billing'), path: '/billing', Icon: CreditCard, keywords: ['billing', 'odenis', 'payment'] },
+    { name: t('search.apiTokens', 'API Tokens'), path: '/api-tokens', Icon: Key, keywords: ['api', 'token', 'key'] },
+    { name: t('search.webhooks', 'Webhooks'), path: '/webhooks', Icon: Link2, keywords: ['webhook', 'hook'] },
+    { name: t('search.usage', 'Usage'), path: '/usage', Icon: BarChart3, keywords: ['usage', 'istifade'] },
+    { name: t('search.settings', 'Settings'), path: '/settings', Icon: Settings, keywords: ['settings', 'ayarlar'] },
+    { name: t('search.security', 'Security'), path: '/settings/security', Icon: Lock, keywords: ['security', 'tehlukesizlik'] },
+    { name: t('search.sso', 'Enterprise SSO'), path: '/settings/sso', Icon: Shield, keywords: ['sso', 'enterprise'] },
+    { name: t('search.team', 'Team'), path: '/team', Icon: Users, keywords: ['team', 'komanda'] },
+    { name: t('search.organization', 'Organization'), path: '/organizations/settings', Icon: Building2, keywords: ['org', 'teskilat'] },
+    { name: t('search.recovery', 'Recovery Dashboard'), path: '/recovery', Icon: TrendingUp, keywords: ['recovery', 'berpa'] },
+    { name: t('search.analytics', 'Analytics'), path: '/analytics', Icon: BarChart3, keywords: ['analytics', 'analitika'] },
+    { name: t('search.adminDashboard', 'Admin Dashboard'), path: '/admin/dashboard', Icon: Briefcase, keywords: ['admin', 'idareetme'] },
   ];
 
   // Keyboard shortcut (Ctrl+K)
@@ -251,7 +263,7 @@ export default function GlobalSearch() {
                           : 'hover:bg-gray-100 dark:hover:bg-slate-700'
                       }`}
                     >
-                      <span className="text-xl">🤖</span>
+                      <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       <div className="flex-1 text-left">
                         <div className="font-medium text-gray-900 dark:text-white">{bot.name}</div>
                         {bot.description && (
@@ -284,7 +296,7 @@ export default function GlobalSearch() {
                             : 'hover:bg-gray-100 dark:hover:bg-slate-700'
                         }`}
                       >
-                        <span className="text-xl">{page.icon}</span>
+                        <page.Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         <span className="flex-1 text-left font-medium text-gray-900 dark:text-white">
                           {page.name}
                         </span>
@@ -298,7 +310,7 @@ export default function GlobalSearch() {
               {/* No Results */}
               {query && !loading && results.bots.length === 0 && results.pages.length === 0 && (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="text-4xl mb-2">🔍</div>
+                  <Search className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                   <div>{t('search.noResults', 'No results found')}</div>
                 </div>
               )}
@@ -306,7 +318,7 @@ export default function GlobalSearch() {
               {/* Empty State */}
               {!query && (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  <div className="text-4xl mb-2">🔍</div>
+                  <Search className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                   <div>{t('search.hint', 'Start typing to search bots and pages')}</div>
                   <div className="mt-2 text-xs">
                     <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded">↑</kbd>

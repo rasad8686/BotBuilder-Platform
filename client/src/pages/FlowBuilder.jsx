@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Bot, Lightbulb, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import api from '../api/axios';
 import ReactFlow, {
   Background,
   Controls,
@@ -55,6 +57,8 @@ function FlowBuilder() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResults, setTestResults] = useState(null);
 
   // Fetch flow data on mount
   useEffect(() => {
@@ -186,6 +190,118 @@ function FlowBuilder() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Test flow execution
+  const handleTestFlow = async () => {
+    const flowData = getFlowData();
+
+    if (flowData.nodes.length === 0) {
+      showNotification('Flow is empty. Add nodes first.', 'error');
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResults(null);
+
+    try {
+      // Find start node
+      const startNode = flowData.nodes.find(n => n.type === 'start');
+      if (!startNode) {
+        showNotification('No start node found in flow.', 'error');
+        setIsTesting(false);
+        return;
+      }
+
+      // Build execution order
+      const results = [];
+      const visited = new Set();
+      let currentNodeId = startNode.id;
+
+      while (currentNodeId && !visited.has(currentNodeId)) {
+        visited.add(currentNodeId);
+        const currentNode = flowData.nodes.find(n => n.id === currentNodeId);
+
+        if (!currentNode) break;
+
+        const nodeResult = {
+          nodeId: currentNode.id,
+          type: currentNode.type,
+          status: 'success',
+          output: null
+        };
+
+        // Execute node based on type
+        if (currentNode.type === 'sms') {
+          try {
+            const toNumber = currentNode.data?.toNumber || '';
+            if (!toNumber) {
+              nodeResult.status = 'error';
+              nodeResult.output = 'No phone number specified';
+            } else {
+              // Call SMS API
+              const smsPayload = {
+                to: toNumber,
+                message: currentNode.data?.message || 'Test SMS from Flow Builder'
+              };
+
+              if (currentNode.data?.messageType === 'template' && currentNode.data?.templateId) {
+                const response = await api.post('/api/sms/send-template', {
+                  to: toNumber,
+                  templateId: parseInt(currentNode.data.templateId),
+                  variables: currentNode.data.variables ? JSON.parse(currentNode.data.variables) : {}
+                });
+                nodeResult.output = `SMS sent via template: ${response.data?.status || 'sent'}`;
+              } else {
+                const response = await api.post('/api/sms/send', smsPayload);
+                nodeResult.output = `SMS sent: ${response.data?.status || 'sent'}`;
+              }
+            }
+          } catch (err) {
+            nodeResult.status = 'error';
+            nodeResult.output = err.response?.data?.error || err.message;
+          }
+        } else if (currentNode.type === 'text') {
+          nodeResult.output = currentNode.data?.content || 'Empty message';
+        } else if (currentNode.type === 'start') {
+          nodeResult.output = 'Flow started';
+        } else if (currentNode.type === 'end') {
+          nodeResult.output = 'Flow completed';
+        } else if (currentNode.type === 'question') {
+          nodeResult.output = currentNode.data?.question || 'Question node';
+        } else if (currentNode.type === 'condition') {
+          nodeResult.output = currentNode.data?.condition || 'Condition node';
+        } else {
+          nodeResult.output = `Executed ${currentNode.type} node`;
+        }
+
+        results.push(nodeResult);
+
+        // Find next node via edge
+        const outgoingEdge = flowData.edges.find(e => e.source === currentNodeId);
+        currentNodeId = outgoingEdge?.target || null;
+
+        // Stop at end node
+        if (currentNode.type === 'end') break;
+      }
+
+      setTestResults({
+        success: true,
+        executedNodes: results.length,
+        results
+      });
+
+      showNotification(`Flow tested: ${results.length} nodes executed`, 'success');
+    } catch (error) {
+      setTestResults({
+        success: false,
+        error: error.message,
+        results: []
+      });
+      showNotification('Flow test failed: ' + error.message, 'error');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
@@ -243,7 +359,9 @@ function FlowBuilder() {
             onSave={handleSave}
             onClear={handleClear}
             onExport={handleExport}
+            onTest={handleTestFlow}
             isSaving={isSaving}
+            isTesting={isTesting}
           />
         </div>
 
@@ -290,13 +408,13 @@ function FlowBuilder() {
           {nodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border-2 border-dashed border-gray-300 dark:border-slate-600">
-                <div className="text-6xl mb-4">🤖</div>
+                <div className="text-6xl mb-4"><Bot size={64} className="mx-auto text-purple-600" /></div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{t('flowBuilder.emptyState.title')}</h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{t('flowBuilder.emptyState.description')}</p>
                 <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                  <p>💡 {t('flowBuilder.emptyState.tip1')}</p>
-                  <p>💡 {t('flowBuilder.emptyState.tip2')}</p>
-                  <p>💡 {t('flowBuilder.emptyState.tip3')}</p>
+                  <p className="flex items-center justify-center gap-2"><Lightbulb size={16} className="text-yellow-500" /> {t('flowBuilder.emptyState.tip1')}</p>
+                  <p className="flex items-center justify-center gap-2"><Lightbulb size={16} className="text-yellow-500" /> {t('flowBuilder.emptyState.tip2')}</p>
+                  <p className="flex items-center justify-center gap-2"><Lightbulb size={16} className="text-yellow-500" /> {t('flowBuilder.emptyState.tip3')}</p>
                 </div>
               </div>
             </div>
@@ -314,6 +432,77 @@ function FlowBuilder() {
         }}
         onSave={handleEditorSave}
       />
+
+      {/* Test Results Modal */}
+      {testResults && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                {testResults.success ? (
+                  <CheckCircle className="w-6 h-6 text-green-500" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-500" />
+                )}
+                Test Results
+              </h2>
+              <button
+                onClick={() => setTestResults(null)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {testResults.error ? (
+              <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-4 text-red-700 dark:text-red-300">
+                {testResults.error}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Executed {testResults.executedNodes} node(s)
+                </div>
+
+                {testResults.results.map((result, index) => (
+                  <div
+                    key={index}
+                    className={`border rounded-lg p-3 ${
+                      result.status === 'success'
+                        ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20'
+                        : 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {result.status === 'success' ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                      )}
+                      <span className="font-medium text-gray-800 dark:text-white capitalize">
+                        {result.type}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ({result.nodeId})
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 ml-6">
+                      {result.output}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => setTestResults(null)}
+              className="w-full mt-4 bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

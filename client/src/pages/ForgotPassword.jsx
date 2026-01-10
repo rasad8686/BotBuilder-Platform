@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -94,7 +95,7 @@ export default function ForgotPassword() {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.successBox}>
-            <div style={styles.successIcon}>✅</div>
+            <div style={styles.successIcon}><CheckCircle size={48} className="text-green-500" /></div>
             <h2 style={styles.successTitle}>Password Reset Successful!</h2>
             <p style={styles.successText}>Your password has been changed. You can now login with your new password.</p>
             <Link to="/login" style={styles.backButton}>
@@ -174,7 +175,7 @@ export default function ForgotPassword() {
 
         {success ? (
           <div style={styles.successBox}>
-            <div style={styles.successIcon}>✅</div>
+            <div style={styles.successIcon}><CheckCircle size={48} className="text-green-500" /></div>
             <h2 style={styles.successTitle}>{t('forgotPassword.successTitle')}</h2>
             <p style={styles.successText}>{t('forgotPassword.successMessage')}</p>
             <Link to="/login" style={styles.backButton}>

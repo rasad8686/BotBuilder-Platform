@@ -2,7 +2,7 @@
  * Training Progress Component
  *
  * Real-time training status display with:
- * - Progress indicator
+ * - Progress indicator (WebSocket/SSE)
  * - Training events log
  * - Cancel training option
  * - Model testing after completion
@@ -25,8 +25,12 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  X
+  X,
+  Wifi,
+  WifiOff,
+  Activity
 } from 'lucide-react';
+import { useModelTrainingProgress } from '../hooks/useFineTuningProgress';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -78,9 +82,44 @@ const statusConfig = {
   }
 };
 
-export default function TrainingProgress({ model, onStatusChange, onClose }) {
+export default function TrainingProgress({ model, onStatusChange, onClose, useSSE = false }) {
   const { t } = useTranslation();
   const token = localStorage.getItem('token');
+
+  // Real-time progress hook
+  const {
+    status: realtimeStatus,
+    progress: realtimeProgress,
+    trainedTokens,
+    estimatedTotalTokens,
+    currentEpoch,
+    totalEpochs,
+    currentStep,
+    totalSteps,
+    metrics,
+    error: realtimeError,
+    isConnected,
+    fineTunedModel,
+    isTraining,
+    isComplete: realtimeComplete,
+    isFailed: realtimeFailed,
+    isCancelled: realtimeCancelled,
+    loading: hookLoading
+  } = useModelTrainingProgress(model.id, {
+    useSSE,
+    autoConnect: true,
+    onStatusChange: (newStatus, prevStatus) => {
+      if (onStatusChange && newStatus !== prevStatus) {
+        onStatusChange(newStatus);
+      }
+    },
+    onComplete: (data) => {
+      console.log('Training complete:', data);
+    },
+    onError: (data) => {
+      console.error('Training error:', data);
+    }
+  });
 
   // States
   const [status, setStatus] = useState(null);
@@ -89,6 +128,7 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState(null);
   const [showEvents, setShowEvents] = useState(true);
+  const [showMetrics, setShowMetrics] = useState(false);
 
   // Test model states
   const [showTest, setShowTest] = useState(false);
@@ -98,7 +138,7 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
 
   const pollIntervalRef = useRef(null);
 
-  // Fetch training status
+  // Fetch training status (fallback when WebSocket/SSE not connected)
   const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/api/fine-tuning/models/${model.id}/status`, {
@@ -145,7 +185,7 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
     }
   }, [model.id, token]);
 
-  // Initial fetch and polling setup
+  // Initial fetch and polling setup (fallback mode)
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -155,12 +195,12 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
 
     fetchAll();
 
-    // Start polling if training is active
-    if (['training', 'uploading', 'validating'].includes(model.status)) {
+    // Only start polling if NOT connected to WebSocket/SSE
+    if (['training', 'uploading', 'validating'].includes(model.status) && !isConnected) {
       pollIntervalRef.current = setInterval(() => {
         fetchStatus();
         fetchEvents();
-      }, 5000); // Poll every 5 seconds
+      }, 10000); // Poll every 10 seconds as fallback (less frequent since we have real-time)
     }
 
     return () => {
@@ -168,7 +208,14 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
         clearInterval(pollIntervalRef.current);
       }
     };
-  }, [model.id, model.status, fetchStatus, fetchEvents]);
+  }, [model.id, model.status, fetchStatus, fetchEvents, isConnected]);
+
+  // Sync errors
+  useEffect(() => {
+    if (realtimeError) {
+      setError(realtimeError);
+    }
+  }, [realtimeError]);
 
   // Cancel training
   const handleCancel = async () => {
@@ -234,13 +281,18 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
     }
   };
 
-  // Get current status config
-  const currentStatus = status?.job?.status || model.status;
+  // Get current status config - prefer real-time status
+  const currentStatus = realtimeStatus !== 'idle' ? realtimeStatus : (status?.job?.status || model.status);
   const config = statusConfig[currentStatus] || statusConfig.pending;
   const StatusIcon = config.icon;
 
-  // Calculate progress (approximate)
+  // Calculate progress - prefer real-time progress
   const getProgress = () => {
+    // Use real-time progress if available and training
+    if (realtimeProgress > 0) {
+      return realtimeProgress;
+    }
+
     if (!status?.job) return 0;
 
     switch (status.job.status) {
@@ -256,9 +308,13 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
   };
 
   const progress = getProgress();
-  const isActive = ['pending', 'queued', 'running', 'validating_files'].includes(currentStatus);
-  const isComplete = currentStatus === 'succeeded';
-  const hasFailed = currentStatus === 'failed';
+  const isActive = ['pending', 'queued', 'running', 'validating_files', 'validating'].includes(currentStatus);
+  const isComplete = realtimeComplete || currentStatus === 'succeeded';
+  const hasFailed = realtimeFailed || currentStatus === 'failed';
+
+  // Use real-time trained tokens if available
+  const displayedTrainedTokens = trainedTokens || status?.job?.trained_tokens;
+  const displayedFineTunedModel = fineTunedModel || status?.model_id || model.model_id;
 
   // Format timestamp
   const formatTime = (timestamp) => {
@@ -293,14 +349,37 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
               </p>
             </div>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+          <div className="flex items-center gap-2">
+            {/* Connection Status Indicator */}
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                isConnected
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+              }`}
+              title={isConnected ? 'Real-time connected' : 'Using fallback polling'}
             >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+              {isConnected ? (
+                <>
+                  <Wifi className="w-3 h-3" />
+                  <span>{t('trainingProgress.live', 'Live')}</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3 h-3" />
+                  <span>{t('trainingProgress.polling', 'Polling')}</span>
+                </>
+              )}
+            </div>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -327,24 +406,119 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
       </div>
 
       {/* Stats */}
-      {status?.job && (
-        <div className="px-5 py-4 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.epochs', 'Epochs')}</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">{status.job.epochs || 3}</p>
+      {(status?.job || isTraining) && (
+        <div className="px-5 py-4">
+          {/* Main Stats Grid */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.epochs', 'Epochs')}</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {totalEpochs > 0 ? `${currentEpoch}/${totalEpochs}` : (status?.job?.epochs || 3)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.tokens', 'Trained Tokens')}</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {displayedTrainedTokens?.toLocaleString() || '-'}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.provider', 'Provider')}</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                {status?.job?.provider || 'OpenAI'}
+              </p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.tokens', 'Trained Tokens')}</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {status.job.trained_tokens?.toLocaleString() || '-'}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.provider', 'Provider')}</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-              {status.job.provider || 'OpenAI'}
-            </p>
-          </div>
+
+          {/* Real-time Epoch/Step Progress */}
+          {isTraining && (currentEpoch > 0 || currentStep > 0) && (
+            <div className="space-y-2 mb-4">
+              {/* Epoch Progress */}
+              {totalEpochs > 0 && (
+                <div>
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <span>{t('trainingProgress.epochProgress', 'Epoch Progress')}</span>
+                    <span>{currentEpoch} / {totalEpochs}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full bg-blue-500 transition-all duration-300"
+                      style={{ width: `${(currentEpoch / totalEpochs) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Step Progress */}
+              {totalSteps > 0 && (
+                <div>
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <span>{t('trainingProgress.stepProgress', 'Step Progress')}</span>
+                    <span>{currentStep} / {totalSteps}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full bg-indigo-500 transition-all duration-300"
+                      style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Real-time Metrics */}
+          {isTraining && Object.keys(metrics).length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowMetrics(!showMetrics)}
+                className="w-full flex items-center justify-between py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
+                <span className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  {t('trainingProgress.metrics', 'Training Metrics')}
+                </span>
+                {showMetrics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {showMetrics && (
+                <div className="mt-2 grid grid-cols-2 gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                  {metrics.training_loss !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.trainingLoss', 'Training Loss')}</p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                        {metrics.training_loss.toFixed(4)}
+                      </p>
+                    </div>
+                  )}
+                  {metrics.validation_loss !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.validationLoss', 'Validation Loss')}</p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                        {metrics.validation_loss.toFixed(4)}
+                      </p>
+                    </div>
+                  )}
+                  {metrics.learning_rate !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.learningRate', 'Learning Rate')}</p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                        {metrics.learning_rate.toExponential(2)}
+                      </p>
+                    </div>
+                  )}
+                  {metrics.step_loss !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('trainingProgress.stepLoss', 'Step Loss')}</p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                        {metrics.step_loss.toFixed(4)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -470,8 +644,8 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
                           </p>
                         )}
                         {testResponse.simulation && (
-                          <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
-                            ⚠️ {t('trainingProgress.simulationMode', 'Simulation mode - OpenAI not configured')}
+                          <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> {t('trainingProgress.simulationMode', 'Simulation mode - OpenAI not configured')}
                           </p>
                         )}
                       </div>
@@ -482,13 +656,13 @@ export default function TrainingProgress({ model, onStatusChange, onClose }) {
             )}
 
             {/* Model ID Display */}
-            {status?.model_id || model.model_id ? (
+            {displayedFineTunedModel ? (
               <div className="mt-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {t('trainingProgress.fineTunedModelId', 'Fine-tuned Model ID')}
                 </p>
                 <p className="text-sm font-mono text-purple-600 dark:text-purple-400 break-all">
-                  {status?.model_id || model.model_id}
+                  {displayedFineTunedModel}
                 </p>
               </div>
             ) : null}

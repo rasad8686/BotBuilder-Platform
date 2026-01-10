@@ -19,7 +19,11 @@ import {
   TrendingUp,
   Calendar,
   GitBranch,
-  FlaskConical
+  FlaskConical,
+  DollarSign,
+  Wallet,
+  Bell,
+  PieChart
 } from 'lucide-react';
 import MetricsDashboard from '../components/MetricsDashboard';
 import VersionManager from '../components/VersionManager';
@@ -70,6 +74,22 @@ export default function FineTuning() {
   const [costEstimate, setCostEstimate] = useState(null);
   const [loadingCost, setLoadingCost] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState({});
+
+  // Cost & Budget states
+  const [costHistory, setCostHistory] = useState([]);
+  const [costByModel, setCostByModel] = useState([]);
+  const [monthlyCosts, setMonthlyCosts] = useState([]);
+  const [budget, setBudget] = useState(null);
+  const [budgetAlert, setBudgetAlert] = useState(null);
+  const [loadingCostData, setLoadingCostData] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetForm, setBudgetForm] = useState({
+    monthly_limit: 100,
+    alert_threshold: 80,
+    alert_enabled: true,
+    auto_stop: false
+  });
+  const [savingBudget, setSavingBudget] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -133,6 +153,109 @@ export default function FineTuning() {
       // Silent fail
     }
   }, [token]);
+
+  // Cost Data Functions
+  const fetchCostHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/costs?limit=50`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCostHistory(data.costs || []);
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [token]);
+
+  const fetchCostByModel = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/costs/by-model`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCostByModel(data.costByModel || []);
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [token]);
+
+  const fetchMonthlyCosts = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/costs/monthly?months=6`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMonthlyCosts(data.monthlySummary || []);
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [token]);
+
+  const fetchBudget = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/budget`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBudget(data.budget);
+        setBudgetAlert(data.alert);
+        if (data.budget) {
+          setBudgetForm({
+            monthly_limit: data.budget.monthly_limit || 100,
+            alert_threshold: parseInt(data.budget.alert_threshold) || 80,
+            alert_enabled: data.budget.alert_enabled !== false,
+            auto_stop: data.budget.auto_stop || false
+          });
+        }
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }, [token]);
+
+  const fetchAllCostData = useCallback(async () => {
+    setLoadingCostData(true);
+    await Promise.all([
+      fetchCostHistory(),
+      fetchCostByModel(),
+      fetchMonthlyCosts(),
+      fetchBudget()
+    ]);
+    setLoadingCostData(false);
+  }, [fetchCostHistory, fetchCostByModel, fetchMonthlyCosts, fetchBudget]);
+
+  const handleSaveBudget = async (e) => {
+    e.preventDefault();
+    setSavingBudget(true);
+    try {
+      const res = await fetch(`${API_URL}/api/fine-tuning/budget`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(budgetForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBudget(data.budget);
+        setShowBudgetModal(false);
+      } else {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingBudget(false);
+    }
+  };
 
   useEffect(() => {
     fetchModels();
@@ -408,6 +531,20 @@ export default function FineTuning() {
             <FlaskConical className="w-4 h-4" />
             {t('fineTuning.tabs.abTests', 'A/B Tests')}
           </button>
+          <button
+            onClick={() => {
+              setActiveTab('costs');
+              fetchAllCostData();
+            }}
+            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'costs'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            {t('fineTuning.tabs.costs', 'Costs & Budget')}
+          </button>
         </div>
       </div>
 
@@ -623,6 +760,242 @@ export default function FineTuning() {
       {/* A/B Tests Tab */}
       {activeTab === 'abTests' && (
         <ABTestManager models={models} />
+      )}
+
+      {/* Costs & Budget Tab */}
+      {activeTab === 'costs' && (
+        <div className="space-y-6">
+          {loadingCostData ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+            </div>
+          ) : (
+            <>
+              {/* Budget Overview Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-purple-500" />
+                    {t('fineTuning.budget.title', 'Budget Overview')}
+                  </h3>
+                  <button
+                    onClick={() => setShowBudgetModal(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50"
+                  >
+                    <Settings className="w-4 h-4" />
+                    {t('fineTuning.budget.configure', 'Configure')}
+                  </button>
+                </div>
+
+                {budget ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Monthly Limit */}
+                    <div className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        {t('fineTuning.budget.monthlyLimit', 'Monthly Limit')}
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        ${parseFloat(budget.monthly_limit || 0).toFixed(2)}
+                      </div>
+                    </div>
+
+                    {/* Current Spend */}
+                    <div className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        {t('fineTuning.budget.currentSpend', 'Current Spend')}
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        ${parseFloat(budget.current_spend || 0).toFixed(2)}
+                      </div>
+                      {budget.monthly_limit > 0 && (
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all ${
+                                (budget.current_spend / budget.monthly_limit) * 100 > 80
+                                  ? 'bg-red-500'
+                                  : (budget.current_spend / budget.monthly_limit) * 100 > 50
+                                    ? 'bg-yellow-500'
+                                    : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min((budget.current_spend / budget.monthly_limit) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {((budget.current_spend / budget.monthly_limit) * 100).toFixed(1)}% {t('fineTuning.budget.used', 'used')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Remaining */}
+                    <div className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        {t('fineTuning.budget.remaining', 'Remaining')}
+                      </div>
+                      <div className={`text-2xl font-bold ${
+                        (budget.monthly_limit - budget.current_spend) < 0
+                          ? 'text-red-500'
+                          : 'text-green-600 dark:text-green-400'
+                      }`}>
+                        ${Math.max(0, parseFloat(budget.monthly_limit || 0) - parseFloat(budget.current_spend || 0)).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <Wallet className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>{t('fineTuning.budget.noBudget', 'No budget configured')}</p>
+                    <button
+                      onClick={() => setShowBudgetModal(true)}
+                      className="mt-3 text-purple-600 dark:text-purple-400 hover:underline"
+                    >
+                      {t('fineTuning.budget.setupNow', 'Set up budget now')}
+                    </button>
+                  </div>
+                )}
+
+                {/* Budget Alert */}
+                {budgetAlert && (
+                  <div className={`mt-4 p-4 rounded-lg flex items-center gap-3 ${
+                    budgetAlert.severity === 'critical'
+                      ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                      : 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                  }`}>
+                    <Bell className="w-5 h-5" />
+                    <span>{budgetAlert.message}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Monthly Cost Chart */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-5 h-5 text-purple-500" />
+                  {t('fineTuning.costs.monthlyChart', 'Monthly Costs')}
+                </h3>
+
+                {monthlyCosts.length > 0 ? (
+                  <div className="space-y-3">
+                    {monthlyCosts.map((month, idx) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <div className="w-20 text-sm text-gray-500 dark:text-gray-400">
+                          {month.month}
+                        </div>
+                        <div className="flex-1">
+                          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-6 overflow-hidden">
+                            <div
+                              className="bg-gradient-to-r from-purple-500 to-purple-600 h-6 rounded-full flex items-center justify-end px-2"
+                              style={{
+                                width: `${Math.max(5, (month.total_cost / Math.max(...monthlyCosts.map(m => m.total_cost || 1))) * 100)}%`
+                              }}
+                            >
+                              <span className="text-xs text-white font-medium">
+                                ${parseFloat(month.total_cost || 0).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-16 text-right text-sm text-gray-500 dark:text-gray-400">
+                          {month.job_count} {t('fineTuning.costs.jobs', 'jobs')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>{t('fineTuning.costs.noData', 'No cost data yet')}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Cost by Model */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                    <PieChart className="w-5 h-5 text-purple-500" />
+                    {t('fineTuning.costs.byModel', 'Cost by Model')}
+                  </h3>
+
+                  {costByModel.length > 0 ? (
+                    <div className="space-y-3">
+                      {costByModel.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {item.base_model}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {item.job_count} {t('fineTuning.costs.trainings', 'trainings')}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-purple-600 dark:text-purple-400">
+                              ${parseFloat(item.total_cost || 0).toFixed(4)}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {parseInt(item.total_tokens || 0).toLocaleString()} tokens
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <PieChart className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>{t('fineTuning.costs.noModelData', 'No model cost data')}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Cost History */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                    <Clock className="w-5 h-5 text-purple-500" />
+                    {t('fineTuning.costs.recentHistory', 'Recent History')}
+                  </h3>
+
+                  {costHistory.length > 0 ? (
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {costHistory.slice(0, 10).map((cost, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900 rounded-lg">
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white text-sm">
+                              {cost.base_model}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(cost.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-medium ${
+                              cost.status === 'completed'
+                                ? 'text-green-600 dark:text-green-400'
+                                : cost.status === 'failed'
+                                  ? 'text-red-500'
+                                  : 'text-gray-600 dark:text-gray-400'
+                            }`}>
+                              ${parseFloat(cost.actual_cost || cost.estimated_cost || 0).toFixed(4)}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {cost.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>{t('fineTuning.costs.noHistory', 'No cost history')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {/* Create Model Modal */}
@@ -926,6 +1299,122 @@ export default function FineTuning() {
               modelId={selectedModel.id}
               onClose={() => setShowMetricsModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Budget Settings Modal */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-purple-500" />
+                {t('fineTuning.budget.settings', 'Budget Settings')}
+              </h2>
+            </div>
+            <form onSubmit={handleSaveBudget} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('fineTuning.budget.monthlyLimit', 'Monthly Limit')} (USD)
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={budgetForm.monthly_limit}
+                    onChange={(e) => setBudgetForm(prev => ({ ...prev, monthly_limit: parseFloat(e.target.value) || 0 }))}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="100"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {t('fineTuning.budget.limitDesc', 'Set to 0 for unlimited')}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('fineTuning.budget.alertThreshold', 'Alert Threshold')} (%)
+                </label>
+                <input
+                  type="range"
+                  min="50"
+                  max="100"
+                  step="5"
+                  value={budgetForm.alert_threshold}
+                  onChange={(e) => setBudgetForm(prev => ({ ...prev, alert_threshold: parseInt(e.target.value) }))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <span>50%</span>
+                  <span className="font-medium text-purple-600 dark:text-purple-400">{budgetForm.alert_threshold}%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={budgetForm.alert_enabled}
+                    onChange={(e) => setBudgetForm(prev => ({ ...prev, alert_enabled: e.target.checked }))}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {t('fineTuning.budget.enableAlerts', 'Enable Alerts')}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {t('fineTuning.budget.alertsDesc', 'Get notified when approaching budget limit')}
+                    </div>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={budgetForm.auto_stop}
+                    onChange={(e) => setBudgetForm(prev => ({ ...prev, auto_stop: e.target.checked }))}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {t('fineTuning.budget.autoStop', 'Auto-Stop Training')}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {t('fineTuning.budget.autoStopDesc', 'Prevent new training when budget exceeded')}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  {t('fineTuning.budget.warning', 'Budget limits apply to all fine-tuning operations in your organization.')}
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBudgetModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingBudget}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {savingBudget && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t('common.save')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

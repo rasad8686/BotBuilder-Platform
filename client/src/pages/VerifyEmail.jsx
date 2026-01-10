@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -97,7 +98,7 @@ export default function VerifyEmail() {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.successBox}>
-            <div style={styles.successIcon}>✅</div>
+            <div style={styles.successIcon}><CheckCircle size={48} className="text-green-500" /></div>
             <h2 style={styles.successTitle}>
               {alreadyVerified
                 ? t('verifyEmail.alreadyVerifiedTitle', 'Already Verified')
@@ -122,7 +123,7 @@ export default function VerifyEmail() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.errorBox}>
-          <div style={styles.errorIcon}>❌</div>
+          <div style={styles.errorIcon}><XCircle size={48} className="text-red-500" /></div>
           <h2 style={styles.errorTitle}>{t('verifyEmail.errorTitle', 'Verification Failed')}</h2>
           <p style={styles.errorText}>{error}</p>
 

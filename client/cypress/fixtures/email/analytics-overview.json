@@ -1,0 +1,32 @@
+{
+  "sent": {
+    "value": 45230,
+    "change": 12.5
+  },
+  "delivered": {
+    "value": 44100,
+    "change": 11.8
+  },
+  "opened": {
+    "value": 18950,
+    "change": 15.2
+  },
+  "clicked": {
+    "value": 4520,
+    "change": 8.3
+  },
+  "bounced": {
+    "value": 1130,
+    "change": -5.2
+  },
+  "unsubscribed": {
+    "value": 320,
+    "change": -2.1
+  },
+  "openRate": 43.0,
+  "clickRate": 10.2,
+  "bounceRate": 2.5,
+  "unsubscribeRate": 0.7,
+  "deliveryRate": 97.5,
+  "clickToOpenRate": 23.9
+}

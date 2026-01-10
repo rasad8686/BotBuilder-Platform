@@ -1,4 +1,5 @@
 import React from 'react';
+import { Play, Square, MessageCircle, HelpCircle, Diamond, Bot, Plug, GitBranch, Clock, RefreshCw, Route } from 'lucide-react';
 
 const ExecutionPath = ({
   path = [],
@@ -10,19 +11,19 @@ const ExecutionPath = ({
   const getNodeById = (nodeId) => nodes.find(n => n.id === nodeId);
 
   const getNodeTypeIcon = (type) => {
-    switch (type) {
-      case 'start': return '▶';
-      case 'end': return '⏹';
-      case 'text': return '💬';
-      case 'question': return '❓';
-      case 'condition': return '◇';
-      case 'agent': return '🤖';
-      case 'api': return '🔌';
-      case 'parallel': return '⫸';
-      case 'delay': return '⏰';
-      case 'loop': return '🔄';
-      default: return '■';
-    }
+    const icons = {
+      start: <Play size={14} />,
+      end: <Square size={14} />,
+      text: <MessageCircle size={14} />,
+      question: <HelpCircle size={14} />,
+      condition: <Diamond size={14} />,
+      agent: <Bot size={14} />,
+      api: <Plug size={14} />,
+      parallel: <GitBranch size={14} />,
+      delay: <Clock size={14} />,
+      loop: <RefreshCw size={14} />
+    };
+    return icons[type] || <Square size={14} />;
   };
 
   const getStatusInfo = (nodeId) => {
@@ -52,7 +53,7 @@ const ExecutionPath = ({
   if (path.length === 0) {
     return (
       <div style={styles.emptyState}>
-        <div style={styles.emptyIcon}>🛤</div>
+        <div style={styles.emptyIcon}><Route size={48} /></div>
         <p style={styles.emptyText}>No execution path yet</p>
         <p style={styles.emptySubtext}>
           Run the workflow to see the execution path

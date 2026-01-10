@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DollarSign, Star, Package, Download, Edit, Upload, BarChart3, Trash2 } from 'lucide-react';
 import PluginBuilder from '../components/plugins/PluginBuilder';
 import PluginUpload from '../components/plugins/PluginUpload';
 import PluginAnalytics from '../components/plugins/PluginAnalytics';
@@ -128,28 +129,28 @@ const PluginDeveloper = () => {
       {/* Stats Overview */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📦</div>
+          <div className="stat-icon"><Package size={24} /></div>
           <div className="stat-info">
             <span className="stat-value">{stats.totalPlugins}</span>
             <span className="stat-label">{t('pluginDeveloper.totalPlugins')}</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">⬇️</div>
+          <div className="stat-icon"><Download size={24} /></div>
           <div className="stat-info">
             <span className="stat-value">{stats.totalDownloads.toLocaleString()}</span>
             <span className="stat-label">{t('pluginDeveloper.totalDownloads')}</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon"><DollarSign size={24} /></div>
           <div className="stat-info">
             <span className="stat-value">${stats.totalRevenue.toFixed(2)}</span>
             <span className="stat-label">{t('pluginDeveloper.totalRevenue')}</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">⭐</div>
+          <div className="stat-icon"><Star size={24} /></div>
           <div className="stat-info">
             <span className="stat-value">{stats.avgRating}</span>
             <span className="stat-label">{t('pluginDeveloper.avgRating')}</span>
@@ -251,7 +252,7 @@ const PluginDeveloper = () => {
                             }}
                             title="Edit"
                           >
-                            ✏️
+                            <Edit size={14} />
                           </button>
                           <button
                             className="btn-action upload"
@@ -261,7 +262,7 @@ const PluginDeveloper = () => {
                             }}
                             title="Upload New Version"
                           >
-                            ⬆️
+                            <Upload size={14} />
                           </button>
                           <button
                             className="btn-action analytics"
@@ -271,14 +272,14 @@ const PluginDeveloper = () => {
                             }}
                             title="Analytics"
                           >
-                            📊
+                            <BarChart3 size={14} />
                           </button>
                           <button
                             className="btn-action delete"
                             onClick={() => handleDeletePlugin(plugin.id)}
                             title="Delete"
                           >
-                            🗑️
+                            <Trash2 size={14} />
                           </button>
                         </td>
                       </tr>

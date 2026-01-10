@@ -1,13 +1,28 @@
 import { useState, useEffect } from 'react';
+import api from '../api/axios';
 
 function NodeEditor({ node, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({});
+  const [smsTemplates, setSmsTemplates] = useState([]);
 
   useEffect(() => {
     if (node) {
       setFormData(node.data || {});
+      // Load SMS templates if SMS node
+      if (node.type === 'sms') {
+        loadSmsTemplates();
+      }
     }
   }, [node]);
+
+  const loadSmsTemplates = async () => {
+    try {
+      const response = await api.get('/api/sms/templates');
+      setSmsTemplates(response.data || []);
+    } catch (error) {
+      console.error('Failed to load SMS templates:', error);
+    }
+  };
 
   if (!isOpen || !node) return null;
 
@@ -84,6 +99,102 @@ function NodeEditor({ node, isOpen, onClose, onSave }) {
             <p className="text-xs text-gray-500 mt-2">
               Define the condition that determines the flow path
             </p>
+          </div>
+        );
+
+      case 'sms':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                To Phone Number
+              </label>
+              <input
+                type="text"
+                value={formData.toNumber || ''}
+                onChange={(e) => setFormData({ ...formData, toNumber: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="+994501234567 or {user_phone}"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use {'{user_phone}'} for dynamic phone number
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Message Type
+              </label>
+              <select
+                value={formData.messageType || 'custom'}
+                onChange={(e) => setFormData({ ...formData, messageType: e.target.value, templateId: '', templateName: '' })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="custom">Custom Message</option>
+                <option value="template">Use Template</option>
+              </select>
+            </div>
+
+            {formData.messageType === 'template' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Template
+                </label>
+                <select
+                  value={formData.templateId || ''}
+                  onChange={(e) => {
+                    const template = smsTemplates.find(t => t.id === parseInt(e.target.value));
+                    setFormData({
+                      ...formData,
+                      templateId: e.target.value,
+                      templateName: template?.name || ''
+                    });
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select a template...</option>
+                  {smsTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+                {formData.templateId && smsTemplates.find(t => t.id === parseInt(formData.templateId)) && (
+                  <div className="mt-2 p-2 bg-gray-100 rounded text-sm text-gray-600">
+                    {smsTemplates.find(t => t.id === parseInt(formData.templateId))?.content}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message Content
+                </label>
+                <textarea
+                  value={formData.message || ''}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  rows="4"
+                  placeholder="Enter SMS message..."
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Variables (JSON format)
+              </label>
+              <textarea
+                value={formData.variables || ''}
+                onChange={(e) => setFormData({ ...formData, variables: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                rows="2"
+                placeholder='{"name": "{user_name}", "code": "12345"}'
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Variables to replace in template: {'{name}'}, {'{code}'}
+              </p>
+            </div>
           </div>
         );
 

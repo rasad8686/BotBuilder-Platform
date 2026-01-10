@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Users, Bot, MessageSquare, Sparkles, DollarSign, BarChart3, TrendingUp, Zap, Info, RefreshCw, Loader } from 'lucide-react';
 
 export default function AdminStats() {
   const { t } = useTranslation();
@@ -58,7 +59,7 @@ export default function AdminStats() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <div className="animate-spin text-4xl mb-4"><Loader size={40} /></div>
           <p className="text-gray-600">{t('admin.loadingStatistics')}</p>
         </div>
       </div>
@@ -69,42 +70,42 @@ export default function AdminStats() {
     {
       title: 'Total Users',
       value: stats.totalUsers,
-      icon: '👥',
+      Icon: Users,
       color: 'bg-blue-500',
       change: stats.newUsersToday > 0 ? `+${stats.newUsersToday} today` : null
     },
     {
       title: 'Total Bots',
       value: stats.totalBots,
-      icon: '🤖',
+      Icon: Bot,
       color: 'bg-purple-500',
       change: null
     },
     {
       title: 'Total Messages',
       value: stats.totalMessages.toLocaleString(),
-      icon: '💬',
+      Icon: MessageSquare,
       color: 'bg-green-500',
       change: stats.messagesPerDay > 0 ? `${Math.round(stats.messagesPerDay)}/day avg` : null
     },
     {
       title: 'Active Users',
       value: stats.activeUsers,
-      icon: '✨',
+      Icon: Sparkles,
       color: 'bg-yellow-500',
       change: stats.totalUsers > 0 ? `${Math.round((stats.activeUsers / stats.totalUsers) * 100)}% active` : null
     },
     {
       title: 'Total Revenue',
       value: `$${stats.totalRevenue.toLocaleString()}`,
-      icon: '💰',
+      Icon: DollarSign,
       color: 'bg-emerald-500',
       change: null
     },
     {
       title: 'Bots per User',
       value: stats.botsPerUser.toFixed(1),
-      icon: '📊',
+      Icon: BarChart3,
       color: 'bg-indigo-500',
       change: null
     }
@@ -116,7 +117,7 @@ export default function AdminStats() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-            📈 {t('admin.statistics')}
+            <TrendingUp size={28} /> {t('admin.statistics')}
           </h1>
           <p className="text-gray-600">
             {t('admin.statisticsSubtitle')}
@@ -132,9 +133,9 @@ export default function AdminStats() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div
-                  className={`${card.color} text-white rounded-lg p-3 text-2xl`}
+                  className={`${card.color} text-white rounded-lg p-3`}
                 >
-                  {card.icon}
+                  <card.Icon size={24} />
                 </div>
                 {card.change && (
                   <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
@@ -155,7 +156,7 @@ export default function AdminStats() {
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              ⚡ {t('admin.quickActions')}
+              <Zap size={20} /> {t('admin.quickActions')}
             </h2>
             <div className="space-y-3">
               <button
@@ -185,7 +186,7 @@ export default function AdminStats() {
           {/* System Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              ℹ️ {t('admin.systemInformation')}
+              <Info size={20} /> {t('admin.systemInformation')}
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center pb-3 border-b">
@@ -222,7 +223,7 @@ export default function AdminStats() {
             onClick={fetchStats}
             className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors inline-flex items-center gap-2"
           >
-            🔄 {t('admin.refreshStatistics')}
+            <RefreshCw size={16} /> {t('admin.refreshStatistics')}
           </button>
         </div>
       </div>

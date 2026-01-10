@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { BarChart3, TrendingUp, ClipboardList, AlertTriangle, CheckCircle, Circle } from 'lucide-react';
 
 const statusColors = {
   pending: { bg: '#fff3cd', color: '#856404' },
@@ -188,10 +189,10 @@ const AgentMonitor = () => {
       <div style={{ background: 'white', borderBottom: '1px solid #e9ecef', padding: '0 32px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', gap: '4px' }}>
           {[
-            { id: 'overview', label: 'Overview', icon: '📊' },
-            { id: 'metrics', label: 'Metrics', icon: '📈' },
-            { id: 'logs', label: 'Logs', icon: '📋' },
-            { id: 'alerts', label: 'Alerts', icon: '⚠️' }
+            { id: 'overview', label: 'Overview', Icon: BarChart3 },
+            { id: 'metrics', label: 'Metrics', Icon: TrendingUp },
+            { id: 'logs', label: 'Logs', Icon: ClipboardList },
+            { id: 'alerts', label: 'Alerts', Icon: AlertTriangle }
           ].map(tab => (
             <button
               key={tab.id}
@@ -210,7 +211,7 @@ const AgentMonitor = () => {
                 gap: '8px'
               }}
             >
-              <span>{tab.icon}</span>
+              <tab.Icon size={16} />
               {tab.label}
             </button>
           ))}
@@ -306,7 +307,7 @@ const AgentMonitor = () => {
                 <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#1a1a2e' }}>Optimization Suggestions</h3>
                 {suggestions.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <span style={{ fontSize: '32px' }}>✅</span>
+                    <CheckCircle size={32} className="text-green-500" />
                     <p style={{ color: '#6c757d', marginTop: '8px' }}>No suggestions - agent is performing well!</p>
                   </div>
                 ) : (
@@ -446,7 +447,7 @@ const AgentMonitor = () => {
 
             {(!analytics?.alerts || analytics.alerts.length === 0) ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
-                <span style={{ fontSize: '48px' }}>✅</span>
+                <CheckCircle size={48} className="text-green-500" />
                 <p style={{ color: '#6c757d', marginTop: '12px' }}>No active alerts</p>
               </div>
             ) : (
@@ -460,7 +461,7 @@ const AgentMonitor = () => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '20px' }}>
-                        {alert.severity === 'critical' ? '🔴' : alert.severity === 'warning' ? '🟠' : '🔵'}
+                        <Circle size={20} fill={alert.severity === 'critical' ? '#ef4444' : alert.severity === 'warning' ? '#f97316' : '#3b82f6'} className={alert.severity === 'critical' ? 'text-red-500' : alert.severity === 'warning' ? 'text-orange-500' : 'text-blue-500'} />
                       </span>
                       <span style={{
                         padding: '2px 8px',

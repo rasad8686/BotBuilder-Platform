@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { XCircle, Mail, FileText, MessageCircle, Smartphone, Settings, Search } from 'lucide-react';
 
 const dataTypes = [
-  { value: 'email', label: 'Email', icon: '✉️' },
-  { value: 'document', label: 'Document', icon: '📄' },
-  { value: 'chat', label: 'Chat Message', icon: '💬' },
-  { value: 'social', label: 'Social Post', icon: '📱' },
-  { value: 'custom', label: 'Custom', icon: '⚙️' }
+  { value: 'email', label: 'Email', Icon: Mail },
+  { value: 'document', label: 'Document', Icon: FileText },
+  { value: 'chat', label: 'Chat Message', Icon: MessageCircle },
+  { value: 'social', label: 'Social Post', Icon: Smartphone },
+  { value: 'custom', label: 'Custom', Icon: Settings }
 ];
 
 const CloneTraining = () => {
@@ -209,7 +210,7 @@ const CloneTraining = () => {
     return (
       <div style={{ minHeight: '100vh', background: '#f5f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}><XCircle size={48} style={{ color: '#e53e3e' }} /></div>
           <p style={{ color: '#e53e3e' }}>{error}</p>
           <button onClick={() => navigate('/work-clone')} style={{ marginTop: '16px', padding: '10px 24px', borderRadius: '8px', background: '#667eea', color: 'white', border: 'none', cursor: 'pointer' }}>
             {t('common.back')}
@@ -363,7 +364,7 @@ const CloneTraining = () => {
                   fontSize: '20px',
                   flexShrink: 0
                 }}>
-                  {dataTypes.find(dt => dt.value === data.data_type)?.icon || '📄'}
+                  {(() => { const DtIcon = dataTypes.find(dt => dt.value === data.data_type)?.Icon || FileText; return <DtIcon size={20} />; })()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -401,7 +402,7 @@ const CloneTraining = () => {
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#667eea', fontSize: '14px' }}
                         title={t('clone.analyze')}
                       >
-                        🔍
+                        <Search size={14} />
                       </button>
                       <button
                         onClick={() => handleDeleteSample(data.id)}
@@ -484,7 +485,7 @@ const CloneTraining = () => {
                         gap: '6px'
                       }}
                     >
-                      <span>{dt.icon}</span>
+                      <span>{dt.Icon && <dt.Icon size={14} />}</span>
                       <span>{dt.label}</span>
                     </button>
                   ))}
@@ -612,7 +613,7 @@ const CloneTraining = () => {
                   }}
                 >
                   {dataTypes.map(dt => (
-                    <option key={dt.value} value={dt.value}>{dt.icon} {dt.label}</option>
+                    <option key={dt.value} value={dt.value}>{dt.label}</option>
                   ))}
                 </select>
               </div>

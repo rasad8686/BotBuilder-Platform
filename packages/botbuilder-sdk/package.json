@@ -1,0 +1,43 @@
+{
+  "name": "@botbuilder/sdk",
+  "version": "1.0.0",
+  "description": "Official JavaScript SDK for BotBuilder API",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint src"
+  },
+  "keywords": [
+    "botbuilder",
+    "chatbot",
+    "ai",
+    "sdk",
+    "api",
+    "openai",
+    "claude"
+  ],
+  "author": "BotBuilder Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/botbuilder/sdk-js"
+  },
+  "homepage": "https://botbuilder.com/docs/sdk",
+  "bugs": {
+    "url": "https://github.com/botbuilder/sdk-js/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Lock } from "lucide-react";
 import axios from "axios";
 import { validateEmail, validateRequired } from "../utils/formValidation";
 
@@ -174,12 +175,20 @@ function Login() {
       }
     } catch (err) {
       // Check if user is blocked (rate limited)
-      if (err.response?.data?.blocked && err.response?.data?.blockedUntil) {
-        setBlockedUntil(err.response.data.blockedUntil);
-        setError(t('auth.tooManyAttempts', 'Too many login attempts. Please try again in'));
+      const responseData = err.response?.data;
+      if (responseData?.blocked || responseData?.error?.code === 'RATE_LIMIT_EXCEEDED') {
+        // Use retryAfter from new format, or calculate from blockedUntil
+        const retryAfterSeconds = responseData?.error?.retryAfter || responseData?.retryAfter;
+        if (retryAfterSeconds) {
+          const blockedUntilTime = new Date(Date.now() + retryAfterSeconds * 1000);
+          setBlockedUntil(blockedUntilTime.toISOString());
+        } else if (responseData?.blockedUntil) {
+          setBlockedUntil(responseData.blockedUntil);
+        }
+        setError(responseData?.error?.message || t('auth.tooManyAttempts', 'Too many login attempts. Please try again in'));
       } else {
         setBlockedUntil(null);
-        setError(err.response?.data?.message || err.response?.data?.error || "Login failed");
+        setError(responseData?.message || responseData?.error?.message || responseData?.error || "Login failed");
       }
     } finally {
       setLoading(false);
@@ -187,13 +196,13 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-500 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2">BotBuilder</h1>
-        <p className="text-gray-600 text-center mb-6">{t('auth.login')}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-500 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-900 dark:text-white">BotBuilder</h1>
+        <p className="text-gray-600 dark:text-gray-300 text-center mb-6">{t('auth.login')}</p>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4">
             {blockedUntil && countdown ? (
               <div className="text-center">
                 <p className="font-semibold">{error}</p>
@@ -209,7 +218,7 @@ function Login() {
           {!requires2FA ? (
             <>
               <div className="mb-4">
-                <label htmlFor="login-email" className="block text-gray-700 font-semibold mb-2">{t('auth.email')}</label>
+                <label htmlFor="login-email" className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">{t('auth.email')}</label>
                 <input
                   id="login-email"
                   type="email"
@@ -218,16 +227,16 @@ function Login() {
                   required
                   aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                   aria-invalid={fieldErrors.email ? 'true' : 'false'}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${fieldErrors.email ? 'border-red-500' : ''}`}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white border-gray-300 dark:border-slate-600 ${fieldErrors.email ? 'border-red-500' : ''}`}
                 />
-                {fieldErrors.email && <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.email}</p>}
+                {fieldErrors.email && <p id="email-error" className="text-red-500 dark:text-red-400 text-sm mt-1" role="alert">{fieldErrors.email}</p>}
               </div>
 
               {/* Show password field only if SSO is not enforced */}
               {(!ssoInfo?.requiresSSO) && (
                 <>
                   <div className="mb-4">
-                    <label htmlFor="login-password" className="block text-gray-700 font-semibold mb-2">{t('auth.password')}</label>
+                    <label htmlFor="login-password" className="block text-gray-700 dark:text-gray-200 font-semibold mb-2">{t('auth.password')}</label>
                     <div className="relative">
                       <input
                         id="login-password"
@@ -237,12 +246,12 @@ function Login() {
                         required={!ssoInfo?.ssoAvailable}
                         aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                         aria-invalid={fieldErrors.password ? 'true' : 'false'}
-                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${fieldErrors.password ? 'border-red-500' : ''}`}
+                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 bg-white dark:bg-slate-700 text-gray-900 dark:text-white border-gray-300 dark:border-slate-600 ${fieldErrors.password ? 'border-red-500' : ''}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                         aria-pressed={showPassword}
                       >
@@ -258,11 +267,11 @@ function Login() {
                         )}
                       </button>
                     </div>
-                    {fieldErrors.password && <p id="password-error" className="text-red-500 text-sm mt-1" role="alert">{fieldErrors.password}</p>}
+                    {fieldErrors.password && <p id="password-error" className="text-red-500 dark:text-red-400 text-sm mt-1" role="alert">{fieldErrors.password}</p>}
                   </div>
 
                   <div className="mb-6 text-right">
-                    <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                    <a href="/forgot-password" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                       {t('auth.forgotPassword')}
                     </a>
                   </div>
@@ -316,10 +325,10 @@ function Login() {
                   {!ssoInfo.ssoRequired && (
                     <div className="relative my-4">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300"></div>
+                        <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">{t('auth.or', 'or')}</span>
+                        <span className="px-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400">{t('auth.or', 'or')}</span>
                       </div>
                     </div>
                   )}
@@ -328,7 +337,7 @@ function Login() {
 
               {/* SSO Enforced Message */}
               {ssoInfo?.requiresSSO && (
-                <p className="text-sm text-gray-600 text-center mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">
                   {t('sso.ssoRequired', 'Your organization requires SSO authentication')}
                 </p>
               )}
@@ -336,9 +345,11 @@ function Login() {
           ) : (
             <div className="mb-6">
               <div className="text-center mb-4">
-                <span className="text-4xl">🔐</span>
-                <h2 className="text-xl font-semibold text-gray-800 mt-2">Two-Factor Authentication</h2>
-                <p className="text-sm text-gray-600 mt-1">Enter the 6-digit code from your authenticator app</p>
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                  <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white mt-2">Two-Factor Authentication</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Enter the 6-digit code from your authenticator app</p>
               </div>
               <input
                 type="text"
@@ -346,7 +357,7 @@ function Login() {
                 onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
                 maxLength={6}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-widest font-mono"
+                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-widest font-mono bg-white dark:bg-slate-700 text-gray-900 dark:text-white border-gray-300 dark:border-slate-600"
                 autoFocus
               />
               <button
@@ -356,7 +367,7 @@ function Login() {
                   setTwoFactorCode("");
                   setError("");
                 }}
-                className="w-full mt-3 text-sm text-gray-600 hover:text-gray-800"
+                className="w-full mt-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
               >
                 Back to login
               </button>
@@ -376,8 +387,8 @@ function Login() {
         </form>
 
         {!requires2FA && (
-          <p className="text-center mt-6 text-gray-600">
-            {t('auth.noAccount')} <a href="/register" className="text-blue-600 hover:underline">{t('auth.register')}</a>
+          <p className="text-center mt-6 text-gray-600 dark:text-gray-300">
+            {t('auth.noAccount')} <a href="/register" className="text-blue-600 dark:text-blue-400 hover:underline">{t('auth.register')}</a>
           </p>
         )}
       </div>

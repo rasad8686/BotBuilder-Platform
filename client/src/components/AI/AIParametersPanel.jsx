@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 /**
  * AI Parameters Panel
  * Advanced configuration parameters
@@ -153,7 +155,7 @@ export default function AIParametersPanel({
 
       {/* Info Panel */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Cost Considerations:</h4>
+        <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-1"><AlertTriangle size={16} /> Cost Considerations:</h4>
         <ul className="text-sm text-yellow-800 space-y-1">
           <li>• Higher max_tokens = higher maximum cost per request</li>
           <li>• Larger context_window = more input tokens = higher cost</li>

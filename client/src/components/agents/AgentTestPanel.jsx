@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertTriangle, Ticket, Clock, CheckCircle, XCircle, Play } from 'lucide-react';
 
 const AgentTestPanel = ({ agent, onClose }) => {
   const [input, setInput] = useState('');
@@ -79,14 +80,14 @@ const AgentTestPanel = ({ agent, onClose }) => {
                   Running...
                 </>
               ) : (
-                '▶ Run Test'
+                <><Play size={14} /> Run Test</>
               )}
             </button>
           </div>
 
           {error && (
             <div className="error-message">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon"><AlertTriangle size={16} /></span>
               {error}
             </div>
           )}
@@ -98,19 +99,19 @@ const AgentTestPanel = ({ agent, onClose }) => {
                 <div className="response-meta">
                   {response.tokensUsed && (
                     <span className="meta-badge">
-                      🎫 {response.tokensUsed} tokens
+                      <Ticket size={14} /> {response.tokensUsed} tokens
                     </span>
                   )}
                   {response.durationMs && (
                     <span className="meta-badge">
-                      ⏱️ {response.durationMs}ms
+                      <Clock size={14} /> {response.durationMs}ms
                     </span>
                   )}
                 </div>
               </div>
 
               <div className={`response-status ${response.success ? 'success' : 'failed'}`}>
-                {response.success ? '✅ Success' : '❌ Failed'}
+                {response.success ? <><CheckCircle size={16} /> Success</> : <><XCircle size={16} /> Failed</>}
               </div>
 
               <div className="response-content">

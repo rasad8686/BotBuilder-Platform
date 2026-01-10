@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Pause, Target, Package, RefreshCw, Lightbulb, CheckCircle, Headphones, Briefcase, HelpCircle, Calendar, Bot } from 'lucide-react';
 import { API_BASE_URL as API_URL } from '../utils/api';
 import { io } from 'socket.io-client';
 
@@ -340,13 +341,13 @@ const VoiceToBot = () => {
 
     socketRef.current = io(wsUrl, {
       path: '/ws',
-      transports: ['polling', 'websocket'],
+      transports: ['polling'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      upgrade: true
+      upgrade: false
     });
 
     socketRef.current.on('connect', () => {
@@ -1067,7 +1068,7 @@ const VoiceToBot = () => {
 
       {error && (
         <div style={styles.error}>
-          <span style={styles.errorIcon}>⚠️</span>
+          <AlertTriangle size={18} style={styles.errorIcon} />
           {error}
           <button onClick={() => setError('')} style={styles.closeError}>×</button>
         </div>
@@ -1160,7 +1161,7 @@ const VoiceToBot = () => {
               {/* Paused Indicator */}
               {isPaused && (
                 <div style={styles.pausedIndicator}>
-                  <span style={styles.pausedText}>⏸️ Paused</span>
+                  <span style={styles.pausedText}><Pause size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Paused</span>
                 </div>
               )}
             </div>
@@ -1306,7 +1307,7 @@ const VoiceToBot = () => {
           <div style={styles.previewGrid}>
             <div style={styles.previewCard}>
               <h3 style={styles.cardTitle}>
-                <span style={styles.cardIcon}>🎯</span>
+                <Target size={20} style={styles.cardIcon} />
                 {t('voiceToBot.intents', 'Intents')} ({extractedData.intents?.length || 0})
               </h3>
               <ul style={styles.cardList}>
@@ -1328,7 +1329,7 @@ const VoiceToBot = () => {
 
             <div style={styles.previewCard}>
               <h3 style={styles.cardTitle}>
-                <span style={styles.cardIcon}>📦</span>
+                <Package size={20} style={styles.cardIcon} />
                 {t('voiceToBot.entities', 'Entities')} ({extractedData.entities?.length || 0})
               </h3>
               <ul style={styles.cardList}>
@@ -1346,7 +1347,7 @@ const VoiceToBot = () => {
 
             <div style={styles.previewCard}>
               <h3 style={styles.cardTitle}>
-                <span style={styles.cardIcon}>🔄</span>
+                <RefreshCw size={20} style={styles.cardIcon} />
                 {t('voiceToBot.flows', 'Flows')} ({extractedData.flows?.length || 0})
               </h3>
               <ul style={styles.cardList}>
@@ -1365,7 +1366,7 @@ const VoiceToBot = () => {
           {extractedData.suggestedFeatures?.length > 0 && (
             <div style={styles.suggestionsBox}>
               <h3 style={styles.suggestionsTitle}>
-                <span style={styles.cardIcon}>💡</span>
+                <Lightbulb size={20} style={styles.cardIcon} />
                 {t('voiceToBot.suggestions', 'Suggested Features')}
               </h3>
               <div style={styles.tagList}>
@@ -1403,7 +1404,7 @@ const VoiceToBot = () => {
       {/* Completed */}
       {step === 'completed' && generatedBot && (
         <div style={styles.completedSection}>
-          <div style={styles.successIcon}>✅</div>
+          <div style={styles.successIcon}><CheckCircle size={64} color="#059669" /></div>
           <h2 style={styles.successTitle}>{t('voiceToBot.success', 'Bot Created Successfully!')}</h2>
           <p style={styles.successText}>
             {t('voiceToBot.botCreated', 'Your bot "{{name}}" has been created.', { name: generatedBot.name })}
@@ -1447,10 +1448,10 @@ const VoiceToBot = () => {
                 onClick={() => applyTemplate(template)}
               >
                 <span style={styles.templateIcon}>
-                  {template.category === 'support' ? '🎧' :
-                   template.category === 'sales' ? '💼' :
-                   template.category === 'faq' ? '❓' :
-                   template.category === 'booking' ? '📅' : '🤖'}
+                  {template.category === 'support' ? <Headphones size={32} /> :
+                   template.category === 'sales' ? <Briefcase size={32} /> :
+                   template.category === 'faq' ? <HelpCircle size={32} /> :
+                   template.category === 'booking' ? <Calendar size={32} /> : <Bot size={32} />}
                 </span>
                 <h4 style={styles.templateName}>{template.name}</h4>
                 <p style={styles.templateDesc}>{template.description}</p>

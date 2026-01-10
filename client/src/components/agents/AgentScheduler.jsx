@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { Hash, RefreshCw, Clock, Calendar } from 'lucide-react';
 
 const scheduleTypes = [
-  { value: 'once', label: 'One Time', icon: '1️⃣', description: 'Run once at a specific time' },
-  { value: 'recurring', label: 'Recurring', icon: '🔄', description: 'Run at regular intervals' },
-  { value: 'cron', label: 'Cron Expression', icon: '⏰', description: 'Advanced scheduling with cron' }
+  { value: 'once', label: 'One Time', Icon: Hash, description: 'Run once at a specific time' },
+  { value: 'recurring', label: 'Recurring', Icon: RefreshCw, description: 'Run at regular intervals' },
+  { value: 'cron', label: 'Cron Expression', Icon: Clock, description: 'Advanced scheduling with cron' }
 ];
 
 const intervalPresets = [
@@ -103,7 +104,7 @@ const AgentScheduler = ({
                 className={`schedule-type ${scheduleType === type.value ? 'active' : ''}`}
                 onClick={() => setScheduleType(type.value)}
               >
-                <span className="type-icon">{type.icon}</span>
+                <span className="type-icon">{type.Icon && <type.Icon size={28} />}</span>
                 <div className="type-info">
                   <div className="type-label">{type.label}</div>
                   <div className="type-desc">{type.description}</div>
@@ -202,7 +203,7 @@ const AgentScheduler = ({
             </>
           ) : (
             <>
-              <span>📅</span>
+              <Calendar size={18} />
               Create Schedule
             </>
           )}

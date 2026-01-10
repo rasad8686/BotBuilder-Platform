@@ -114,12 +114,12 @@ export default function OrganizationSwitcher() {
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[60]"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dropdown */}
-          <div className="absolute left-4 right-4 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 py-2 z-20 max-h-96 overflow-y-auto" role="menu">
+          <div className="absolute left-4 right-4 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 py-2 z-[70] max-h-96 overflow-y-auto" role="menu">
             {/* Organizations List */}
             <div className="px-2 py-1">
               <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 py-2">

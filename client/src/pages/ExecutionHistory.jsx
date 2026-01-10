@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ExecutionMonitor } from '../components/execution';
+import { Eye, Trash2 } from 'lucide-react';
 
 const ExecutionHistory = () => {
   const { t } = useTranslation();
@@ -340,13 +341,13 @@ const ExecutionHistory = () => {
                         className="btn-view"
                         onClick={() => handleViewExecution(execution)}
                       >
-                        👁️ {t('common.view')}
+                        <Eye size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('common.view')}
                       </button>
                       <button
                         className="btn-delete"
                         onClick={() => handleDelete(execution.id)}
                       >
-                        🗑️
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

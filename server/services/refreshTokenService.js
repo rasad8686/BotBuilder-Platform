@@ -42,6 +42,9 @@ function generateAccessToken(user) {
       id: user.id,
       email: user.email,
       username: user.name || user.username,
+      role: user.role || 'user',
+      plan: user.plan || 'free',
+      is_superadmin: user.is_superadmin || false,
       current_organization_id: user.organizationId || user.current_organization_id
     },
     getSecureEnv('JWT_SECRET'),

@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Globe, FileText, ClipboardList, Hash, List, Save, BookOpen, Link, Mail, Monitor, Search, Check } from 'lucide-react';
 
 const defaultTools = [
-  { id: 'web_search', name: 'Web Search', icon: '🌐', description: 'Search the web for information', category: 'research' },
-  { id: 'analyze_text', name: 'Text Analysis', icon: '📝', description: 'Analyze and extract info from text', category: 'analysis' },
-  { id: 'format_data', name: 'Data Formatter', icon: '📋', description: 'Format data into structured output', category: 'utility' },
-  { id: 'calculate', name: 'Calculator', icon: '🔢', description: 'Perform mathematical calculations', category: 'utility' },
-  { id: 'generate_list', name: 'List Generator', icon: '📑', description: 'Generate formatted lists', category: 'utility' },
-  { id: 'save_note', name: 'Save Note', icon: '💾', description: 'Save notes for later use', category: 'memory' },
-  { id: 'get_note', name: 'Get Note', icon: '📖', description: 'Retrieve saved notes', category: 'memory' },
-  { id: 'http_request', name: 'HTTP Request', icon: '🔗', description: 'Make HTTP API calls', category: 'integration' },
-  { id: 'send_email', name: 'Send Email', icon: '📧', description: 'Send email notifications', category: 'integration' },
-  { id: 'browser', name: 'Browser', icon: '🖥️', description: 'Browse and scrape web pages', category: 'research' }
+  { id: 'web_search', name: 'Web Search', Icon: Globe, description: 'Search the web for information', category: 'research' },
+  { id: 'analyze_text', name: 'Text Analysis', Icon: FileText, description: 'Analyze and extract info from text', category: 'analysis' },
+  { id: 'format_data', name: 'Data Formatter', Icon: ClipboardList, description: 'Format data into structured output', category: 'utility' },
+  { id: 'calculate', name: 'Calculator', Icon: Hash, description: 'Perform mathematical calculations', category: 'utility' },
+  { id: 'generate_list', name: 'List Generator', Icon: List, description: 'Generate formatted lists', category: 'utility' },
+  { id: 'save_note', name: 'Save Note', Icon: Save, description: 'Save notes for later use', category: 'memory' },
+  { id: 'get_note', name: 'Get Note', Icon: BookOpen, description: 'Retrieve saved notes', category: 'memory' },
+  { id: 'http_request', name: 'HTTP Request', Icon: Link, description: 'Make HTTP API calls', category: 'integration' },
+  { id: 'send_email', name: 'Send Email', Icon: Mail, description: 'Send email notifications', category: 'integration' },
+  { id: 'browser', name: 'Browser', Icon: Monitor, description: 'Browse and scrape web pages', category: 'research' }
 ];
 
 const categoryLabels = {
@@ -56,7 +57,7 @@ const ToolSelector = ({
       {/* Search and Filter */}
       <div className="tool-selector-header">
         <div className="search-box">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Search size={16} /></span>
           <input
             type="text"
             placeholder="Search tools..."
@@ -99,13 +100,13 @@ const ToolSelector = ({
             onClick={() => handleToggle(tool.id)}
             disabled={!selectedTools.includes(tool.id) && selectedTools.length >= maxTools}
           >
-            <div className="tool-icon">{tool.icon}</div>
+            <div className="tool-icon">{tool.Icon ? <tool.Icon size={20} /> : null}</div>
             <div className="tool-info">
               <div className="tool-name">{tool.name}</div>
               <div className="tool-description">{tool.description}</div>
             </div>
             <div className="tool-checkbox">
-              {selectedTools.includes(tool.id) ? '✓' : ''}
+              {selectedTools.includes(tool.id) ? <Check size={14} /> : ''}
             </div>
           </button>
         ))}
@@ -118,9 +119,10 @@ const ToolSelector = ({
           <div className="selected-chips">
             {selectedTools.map(toolId => {
               const tool = availableTools.find(t => t.id === toolId);
+              const ToolIcon = tool?.Icon;
               return (
                 <span key={toolId} className="tool-chip">
-                  {tool?.icon} {tool?.name}
+                  {ToolIcon && <ToolIcon size={14} />} {tool?.name}
                   <button onClick={() => handleToggle(toolId)}>×</button>
                 </span>
               );

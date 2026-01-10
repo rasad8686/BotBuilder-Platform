@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { PenTool, FileText, Edit } from 'lucide-react';
 
 const StyleClone = () => {
   const { t } = useTranslation();
@@ -311,7 +312,7 @@ const StyleClone = () => {
         </button>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1a202c', margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span role="img" aria-label="style">✍️</span> {t('clone.styleClone', 'Style Clone')}
+            <PenTool size={20} style={{ display: 'inline', marginRight: '8px' }} aria-hidden="true" />{t('clone.styleClone', 'Style Clone')}
           </h1>
           <p style={{ color: '#718096', marginTop: '4px' }}>{t('clone.styleClone.subtitle', 'Clone writing style from text samples')}</p>
         </div>
@@ -505,7 +506,7 @@ const StyleClone = () => {
                 marginBottom: '24px'
               }}
             >
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📄</div>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}><FileText size={32} /></div>
               <p style={{ color: '#4a5568', fontWeight: '500', marginBottom: '4px' }}>{t('clone.uploadDocs', 'Upload documents')}</p>
               <p style={{ color: '#a0aec0', fontSize: '13px' }}>{t('clone.docFormats', 'TXT, PDF, DOC, DOCX')}</p>
               <input
@@ -534,7 +535,7 @@ const StyleClone = () => {
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '20px' }}>{sample.type === 'document' ? '📄' : '📝'}</span>
+                          <span style={{ fontSize: '20px' }}>{sample.type === 'document' ? <FileText size={20} /> : <Edit size={20} />}</span>
                           <span style={{ fontWeight: '500', color: '#2d3748' }}>
                             {sample.file_name || `Sample ${sample.id}`}
                           </span>

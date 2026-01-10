@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle, Wrench, Lock, XCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -113,7 +114,7 @@ export default function ResetPassword() {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.errorBox}>
-            <div style={styles.errorIcon}>❌</div>
+            <div style={styles.errorIcon}><XCircle size={48} className="text-red-500" /></div>
             <h2 style={styles.errorTitle}>{t('resetPassword.invalidTokenTitle')}</h2>
             <p style={styles.errorText}>{tokenError}</p>
             <Link to="/forgot-password" style={styles.retryButton}>
@@ -131,7 +132,7 @@ export default function ResetPassword() {
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.successBox}>
-            <div style={styles.successIcon}>✅</div>
+            <div style={styles.successIcon}><CheckCircle size={48} className="text-green-500" /></div>
             <h2 style={styles.successTitle}>{t('resetPassword.successTitle')}</h2>
             <p style={styles.successText}>{t('resetPassword.successMessage')}</p>
             <Link to="/login" style={styles.loginButton}>

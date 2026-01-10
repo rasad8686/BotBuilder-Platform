@@ -6,6 +6,7 @@
  * - Checks all active training jobs
  * - Updates database with status changes
  * - Handles completion notifications
+ * - Emits WebSocket events for real-time updates
  */
 
 const db = require('../db');
@@ -13,6 +14,7 @@ const log = require('../utils/logger');
 const fineTuningController = require('../controllers/fineTuningController');
 const openaiFineTuning = require('../services/openaiFineTuning');
 const emailService = require('../services/emailService');
+const { getInstance: getFineTuningSocket } = require('../websocket/fineTuningSocket');
 
 // Polling interval (30 seconds)
 const POLL_INTERVAL = 30000;
@@ -46,14 +48,23 @@ async function getActiveJobs() {
  * @param {Object} job - Job record
  */
 async function pollJob(job) {
+  const socket = getFineTuningSocket();
+
   try {
     log.debug('Polling job status', { jobId: job.job_id, dbJobId: job.id });
 
+    // Get detailed status from OpenAI
     const status = await fineTuningController.updateJobStatus(
       job.job_id,
       job.id,
       job.fine_tune_model_id
     );
+
+    // Emit progress via WebSocket if there are watchers
+    if (socket && socket.hasWatchers(job.job_id)) {
+      // Emit current progress
+      emitProgressUpdate(socket, job, status);
+    }
 
     // Check for status changes
     if (status.status !== job.status) {
@@ -64,14 +75,56 @@ async function pollJob(job) {
         modelName: job.model_name
       });
 
+      // Emit status change via WebSocket
+      if (socket) {
+        socket.emitStatusChange(job.job_id, status.status, {
+          modelName: job.model_name,
+          previousStatus: job.status
+        });
+      }
+
       // Handle completion
       if (status.status === 'succeeded') {
         await handleTrainingComplete(job, status);
+        if (socket) {
+          socket.emitComplete(job.job_id, {
+            fineTunedModel: status.fine_tuned_model,
+            trainedTokens: status.trained_tokens,
+            modelName: job.model_name
+          });
+        }
       } else if (status.status === 'failed') {
         await handleTrainingFailed(job, status);
+        if (socket) {
+          socket.emitError(job.job_id, {
+            message: status.error?.message || 'Training failed',
+            code: status.error?.code,
+            modelName: job.model_name
+          });
+        }
       } else if (status.status === 'cancelled') {
         await handleTrainingCancelled(job);
+        if (socket) {
+          socket.emitCancelled(job.job_id);
+        }
+      } else if (status.status === 'running' && job.status !== 'running') {
+        // Training just started
+        if (socket) {
+          socket.emitStarted(job.job_id, {
+            modelName: job.model_name,
+            baseModel: job.base_model
+          });
+        }
+      } else if (status.status === 'validating_files') {
+        if (socket) {
+          socket.emitValidating(job.job_id);
+        }
       }
+    }
+
+    // Store metrics in database
+    if (status.training_metrics) {
+      await storeTrainingMetrics(job, status.training_metrics);
     }
 
     return status;
@@ -81,8 +134,93 @@ async function pollJob(job) {
       error: err.message
     });
 
+    // Emit error via WebSocket
+    if (socket && socket.hasWatchers(job.job_id)) {
+      socket.emitError(job.job_id, {
+        message: 'Failed to fetch training status',
+        temporary: true
+      });
+    }
+
     // Don't throw - continue polling other jobs
     return null;
+  }
+}
+
+/**
+ * Emit progress update via WebSocket
+ * @param {Object} socket - FineTuningSocket instance
+ * @param {Object} job - Job record
+ * @param {Object} status - OpenAI status
+ */
+function emitProgressUpdate(socket, job, status) {
+  // Extract training metrics from OpenAI response
+  const metrics = status.training_metrics || {};
+
+  // Calculate progress percentage
+  let progress = 0;
+  if (status.trained_tokens && status.estimated_total_tokens) {
+    progress = Math.round((status.trained_tokens / status.estimated_total_tokens) * 100);
+  }
+
+  // Emit general progress
+  socket.emitProgress(job.job_id, {
+    status: status.status,
+    progress,
+    trainedTokens: status.trained_tokens,
+    estimatedTotalTokens: status.estimated_total_tokens,
+    modelName: job.model_name
+  });
+
+  // Emit epoch progress if available
+  if (metrics.current_epoch !== undefined && metrics.total_epochs) {
+    socket.emitEpochProgress(
+      job.job_id,
+      metrics.current_epoch,
+      metrics.total_epochs,
+      {
+        loss: metrics.training_loss,
+        validationLoss: metrics.validation_loss,
+        learningRate: metrics.learning_rate
+      }
+    );
+  }
+
+  // Emit step progress if available
+  if (metrics.current_step !== undefined && metrics.total_steps) {
+    socket.emitStepProgress(
+      job.job_id,
+      metrics.current_step,
+      metrics.total_steps,
+      {
+        loss: metrics.step_loss,
+        gradientNorm: metrics.gradient_norm
+      }
+    );
+  }
+
+  // Emit detailed metrics
+  if (Object.keys(metrics).length > 0) {
+    socket.emitMetrics(job.job_id, metrics);
+  }
+}
+
+/**
+ * Store training metrics in database
+ * @param {Object} job - Job record
+ * @param {Object} metrics - Training metrics
+ */
+async function storeTrainingMetrics(job, metrics) {
+  try {
+    await db.query(
+      `INSERT INTO fine_tune_metrics (job_id, metrics, recorded_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (job_id, recorded_at) DO UPDATE SET metrics = $2`,
+      [job.id, JSON.stringify(metrics)]
+    );
+  } catch (err) {
+    // Table might not exist, log and continue
+    log.debug('Could not store metrics', { error: err.message });
   }
 }
 

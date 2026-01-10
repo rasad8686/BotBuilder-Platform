@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Bell, Check, X, AlertTriangle, Info } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const TYPE_ICONS = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ'
+  success: Check,
+  error: X,
+  warning: AlertTriangle,
+  info: Info
 };
 
 function formatTimeAgo(dateString) {
@@ -44,7 +45,7 @@ function NotificationItem({ notification, onRead, onDelete }) {
     >
       {/* Icon */}
       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${typeClasses[notification.type] || typeClasses.info}`}>
-        {TYPE_ICONS[notification.type]}
+        {(() => { const IconComp = TYPE_ICONS[notification.type] || Info; return <IconComp size={16} />; })()}
       </div>
 
       {/* Content */}
@@ -109,7 +110,7 @@ export default function NotificationCenter() {
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <span className="text-xl" aria-hidden="true">🔔</span>
+        <Bell size={20} aria-hidden="true" />
 
         {/* Badge */}
         {unreadCount > 0 && (
@@ -165,7 +166,7 @@ export default function NotificationCenter() {
           <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="py-10 px-5 text-center text-gray-400 dark:text-gray-500">
-                <div className="text-5xl mb-3 opacity-50">🔔</div>
+                <div className="text-5xl mb-3 opacity-50"><Bell size={48} /></div>
                 <div className="text-sm">
                   {t('notifications.noNotifications', 'No notifications yet')}
                 </div>

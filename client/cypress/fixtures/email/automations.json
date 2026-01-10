@@ -1,0 +1,68 @@
+[
+  {
+    "id": "automation-1",
+    "name": "Welcome Series",
+    "status": "active",
+    "trigger_config": {
+      "type": "list_subscribed",
+      "list_id": "list-1"
+    },
+    "steps": [
+      { "type": "send_email", "config": { "template_id": "tpl-1", "subject": "Welcome!" } },
+      { "type": "wait", "config": { "duration": 2, "unit": "days" } },
+      { "type": "send_email", "config": { "template_id": "tpl-2", "subject": "Getting Started" } }
+    ],
+    "entry_count": 1250,
+    "completed_count": 890,
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "activated_at": "2024-01-02T00:00:00.000Z"
+  },
+  {
+    "id": "automation-2",
+    "name": "Onboarding Flow",
+    "status": "active",
+    "trigger_config": {
+      "type": "tag_added",
+      "tag": "new-user"
+    },
+    "steps": [
+      { "type": "send_email", "config": { "template_id": "tpl-3", "subject": "Let's get you set up" } },
+      { "type": "condition", "config": { "type": "opened_email" } }
+    ],
+    "entry_count": 560,
+    "completed_count": 320,
+    "created_at": "2024-01-05T00:00:00.000Z",
+    "activated_at": "2024-01-06T00:00:00.000Z"
+  },
+  {
+    "id": "automation-3",
+    "name": "Re-engagement Campaign",
+    "status": "paused",
+    "trigger_config": {
+      "type": "segment_entered",
+      "segment_id": "inactive-30"
+    },
+    "steps": [
+      { "type": "send_email", "config": { "template_id": "tpl-4", "subject": "We miss you!" } }
+    ],
+    "entry_count": 200,
+    "completed_count": 180,
+    "created_at": "2024-01-10T00:00:00.000Z",
+    "activated_at": null
+  },
+  {
+    "id": "automation-4",
+    "name": "Birthday Wishes",
+    "status": "draft",
+    "trigger_config": {
+      "type": "date_based",
+      "field": "birthday",
+      "offset_days": 0
+    },
+    "steps": [],
+    "entry_count": 0,
+    "completed_count": 0,
+    "created_at": "2024-01-15T00:00:00.000Z",
+    "activated_at": null
+  }
+]

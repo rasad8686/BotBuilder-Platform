@@ -240,4 +240,326 @@ describe('API Tokens Routes', () => {
       expect(response.status).toBe(500);
     });
   });
+
+  // =====================================================
+  // API KEY ROTATION TESTS
+  // =====================================================
+
+  describe('POST /api/api-tokens/:id/rotate', () => {
+    it('should rotate token successfully', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Production API',
+          bot_id: null,
+          permissions: { read: true, write: true },
+          expires_at: null
+        }] }) // Get old token
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // Update old token
+        .mockResolvedValueOnce({ rows: [{
+          id: 2,
+          token_name: 'Production API (rotated)',
+          token_preview: 'abc1...xyz4',
+          expires_at: null,
+          created_at: new Date()
+        }] }) // Create new token
+        .mockResolvedValueOnce({ rows: [] }); // COMMIT
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/rotate')
+        .send({ overlapHours: 24 });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.newToken).toBeDefined();
+      expect(response.body.data.newToken.token).toBeDefined();
+      expect(response.body.data.oldToken.validUntil).toBeDefined();
+    });
+
+    it('should use default overlap hours if not provided', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Test Token',
+          bot_id: null,
+          permissions: {},
+          expires_at: null
+        }] })
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // Update
+        .mockResolvedValueOnce({ rows: [{
+          id: 2,
+          token_name: 'Test Token (rotated)',
+          token_preview: 'abc1...xyz4',
+          created_at: new Date()
+        }] })
+        .mockResolvedValueOnce({ rows: [] }); // COMMIT
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/rotate')
+        .send({});
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.oldToken.overlapHours).toBe(24);
+    });
+
+    it('should clamp overlap hours to valid range', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Test Token',
+          bot_id: null,
+          permissions: {},
+          expires_at: null
+        }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{
+          id: 2,
+          token_name: 'Test Token (rotated)',
+          token_preview: 'abc1...xyz4',
+          created_at: new Date()
+        }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/rotate')
+        .send({ overlapHours: 500 }); // Exceeds max of 168
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.oldToken.overlapHours).toBe(168); // Clamped to max
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .post('/api/api-tokens/999/rotate')
+        .send({ overlapHours: 24 });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('not found');
+    });
+
+    it('should handle database errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/rotate')
+        .send({ overlapHours: 24 });
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('POST /api/api-tokens/:id/schedule-rotation', () => {
+    it('should schedule rotation successfully', async () => {
+      const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, token_name: 'Test Token' }] }) // Token check
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Test Token',
+          rotation_scheduled_at: futureDate
+        }] }); // Update
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/schedule-rotation')
+        .send({ scheduledAt: futureDate.toISOString() });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.rotationScheduledAt).toBeDefined();
+    });
+
+    it('should reject missing scheduledAt', async () => {
+      const response = await request(app)
+        .post('/api/api-tokens/1/schedule-rotation')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('scheduledAt');
+    });
+
+    it('should reject invalid date format', async () => {
+      const response = await request(app)
+        .post('/api/api-tokens/1/schedule-rotation')
+        .send({ scheduledAt: 'not-a-date' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid date');
+    });
+
+    it('should reject past dates', async () => {
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // Yesterday
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/schedule-rotation')
+        .send({ scheduledAt: pastDate.toISOString() });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('future');
+    });
+
+    it('should return 404 if token not found', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .post('/api/api-tokens/999/schedule-rotation')
+        .send({ scheduledAt: futureDate.toISOString() });
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle database errors', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .post('/api/api-tokens/1/schedule-rotation')
+        .send({ scheduledAt: futureDate.toISOString() });
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('DELETE /api/api-tokens/:id/cancel-rotation', () => {
+    it('should cancel scheduled rotation', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Test Token',
+          rotation_scheduled_at: new Date()
+        }] }) // Token check
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Test Token',
+          rotation_scheduled_at: null
+        }] }); // Update
+
+      const response = await request(app)
+        .delete('/api/api-tokens/1/cancel-rotation');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('cancelled');
+    });
+
+    it('should return 400 if no rotation scheduled', async () => {
+      db.query.mockResolvedValueOnce({ rows: [{
+        id: 1,
+        token_name: 'Test Token',
+        rotation_scheduled_at: null
+      }] });
+
+      const response = await request(app)
+        .delete('/api/api-tokens/1/cancel-rotation');
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('No rotation is scheduled');
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .delete('/api/api-tokens/999/cancel-rotation');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle database errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .delete('/api/api-tokens/1/cancel-rotation');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /api/api-tokens/:id/rotation-history', () => {
+    it('should return rotation history', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 2 }] }) // Token check
+        .mockResolvedValueOnce({ rows: [] }) // Child tokens
+        .mockResolvedValueOnce({ rows: [{
+          rotated_from_id: 1,
+          parent_name: 'Original Token',
+          parent_preview: 'old1...old4',
+          parent_active: false,
+          parent_created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }] }) // Parent result
+        .mockResolvedValueOnce({ rows: [{
+          id: 2,
+          token_name: 'Current Token',
+          token_preview: 'abc1...xyz4',
+          is_active: true,
+          rotation_scheduled_at: null,
+          overlap_expires_at: null,
+          created_at: new Date()
+        }] }); // Current token
+
+      const response = await request(app)
+        .get('/api/api-tokens/2/rotation-history');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.current).toBeDefined();
+      expect(response.body.data.rotatedFrom).toBeDefined();
+      expect(response.body.data.rotatedTo).toEqual([]);
+    });
+
+    it('should return history with children', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // Token check
+        .mockResolvedValueOnce({ rows: [
+          { id: 2, token_name: 'Rotated Token 1', token_preview: 'abc...', is_active: false, created_at: new Date() },
+          { id: 3, token_name: 'Rotated Token 2', token_preview: 'def...', is_active: true, created_at: new Date() }
+        ] }) // Child tokens
+        .mockResolvedValueOnce({ rows: [{
+          rotated_from_id: null,
+          parent_name: null,
+          parent_preview: null,
+          parent_active: null,
+          parent_created_at: null
+        }] }) // No parent
+        .mockResolvedValueOnce({ rows: [{
+          id: 1,
+          token_name: 'Original Token',
+          token_preview: 'abc1...xyz4',
+          is_active: true,
+          rotation_scheduled_at: null,
+          overlap_expires_at: null,
+          created_at: new Date()
+        }] }); // Current token
+
+      const response = await request(app)
+        .get('/api/api-tokens/1/rotation-history');
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.rotatedTo).toHaveLength(2);
+    });
+
+    it('should return 404 if token not found', async () => {
+      db.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .get('/api/api-tokens/999/rotation-history');
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should handle database errors', async () => {
+      db.query.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await request(app)
+        .get('/api/api-tokens/1/rotation-history');
+
+      expect(response.status).toBe(500);
+    });
+  });
 });

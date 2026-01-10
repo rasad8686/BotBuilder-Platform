@@ -1616,4 +1616,741 @@ router.get('/base-models', (req, res) => {
   });
 });
 
+// ==========================================
+// SSE (SERVER-SENT EVENTS) ENDPOINT
+// ==========================================
+
+const fineTuningController = require('../controllers/fineTuningController');
+
+/**
+ * GET /api/fine-tuning/:jobId/stream
+ * Server-Sent Events endpoint for real-time training updates
+ *
+ * This provides an alternative to WebSocket for clients that prefer SSE.
+ * The client can connect and receive real-time training progress updates.
+ */
+router.get('/:jobId/stream', async (req, res) => {
+  const { jobId } = req.params;
+  const orgId = req.organization.id;
+
+  // Validate job exists and belongs to org
+  try {
+    const jobInfo = await fineTuningService.getJobByOpenAIId(jobId, orgId);
+    if (!jobInfo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Training job not found'
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // For nginx proxy
+
+  // Send initial connection event
+  res.write(`event: connected\ndata: ${JSON.stringify({ jobId, message: 'Connected to training stream' })}\n\n`);
+
+  // Keep track of last status to detect changes
+  let lastStatus = null;
+  let lastProgress = null;
+
+  // Polling function for SSE
+  const pollInterval = setInterval(async () => {
+    try {
+      // Get current status from OpenAI
+      const status = await fineTuningService.getTrainingStatusByJobId(jobId);
+
+      if (!status) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'Could not fetch status' })}\n\n`);
+        return;
+      }
+
+      // Send status change event
+      if (status.status !== lastStatus) {
+        res.write(`event: status\ndata: ${JSON.stringify({
+          jobId,
+          status: status.status,
+          previousStatus: lastStatus,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+        lastStatus = status.status;
+
+        // Handle terminal states
+        if (['succeeded', 'failed', 'cancelled'].includes(status.status)) {
+          res.write(`event: ${status.status}\ndata: ${JSON.stringify({
+            jobId,
+            status: status.status,
+            fineTunedModel: status.fine_tuned_model,
+            trainedTokens: status.trained_tokens,
+            error: status.error,
+            timestamp: new Date().toISOString()
+          })}\n\n`);
+
+          // Close connection for terminal states
+          clearInterval(pollInterval);
+          res.end();
+          return;
+        }
+      }
+
+      // Send progress update
+      const currentProgress = status.trained_tokens || 0;
+      if (currentProgress !== lastProgress) {
+        const progressPercent = status.estimated_total_tokens
+          ? Math.round((currentProgress / status.estimated_total_tokens) * 100)
+          : 0;
+
+        res.write(`event: progress\ndata: ${JSON.stringify({
+          jobId,
+          trainedTokens: currentProgress,
+          estimatedTotalTokens: status.estimated_total_tokens,
+          progress: progressPercent,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+        lastProgress = currentProgress;
+      }
+
+      // Send metrics if available
+      if (status.training_metrics) {
+        res.write(`event: metrics\ndata: ${JSON.stringify({
+          jobId,
+          metrics: status.training_metrics,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+      }
+
+      // Send heartbeat
+      res.write(`:heartbeat\n\n`);
+
+    } catch (error) {
+      log.error('SSE poll error', { jobId, error: error.message });
+      res.write(`event: error\ndata: ${JSON.stringify({
+        error: 'Failed to fetch training status',
+        temporary: true
+      })}\n\n`);
+    }
+  }, 5000); // Poll every 5 seconds for SSE (more frequent than background poller)
+
+  // Handle client disconnect
+  req.on('close', () => {
+    log.info('SSE client disconnected', { jobId });
+    clearInterval(pollInterval);
+  });
+
+  // Handle connection errors
+  req.on('error', (err) => {
+    log.error('SSE connection error', { jobId, error: err.message });
+    clearInterval(pollInterval);
+  });
+});
+
+/**
+ * GET /api/fine-tuning/models/:id/stream
+ * SSE endpoint by model ID (alternative to job ID)
+ */
+router.get('/models/:id/stream', async (req, res) => {
+  const modelId = parseInt(req.params.id);
+  const orgId = req.organization.id;
+
+  try {
+    // Get the active job for this model
+    const status = await fineTuningService.getTrainingStatus(modelId, orgId);
+
+    if (!status.job || !status.job.job_id) {
+      return res.status(404).json({
+        success: false,
+        error: 'No active training job found for this model'
+      });
+    }
+
+    // Redirect to job stream
+    const jobId = status.job.job_id;
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Send initial connection event
+    res.write(`event: connected\ndata: ${JSON.stringify({
+      modelId,
+      jobId,
+      message: 'Connected to training stream'
+    })}\n\n`);
+
+    let lastStatus = null;
+    let lastProgress = null;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const currentStatus = await fineTuningService.getTrainingStatus(modelId, orgId);
+
+        if (!currentStatus.job) {
+          res.write(`event: error\ndata: ${JSON.stringify({ error: 'Job not found' })}\n\n`);
+          clearInterval(pollInterval);
+          res.end();
+          return;
+        }
+
+        const job = currentStatus.job;
+
+        // Status change
+        if (job.status !== lastStatus) {
+          res.write(`event: status\ndata: ${JSON.stringify({
+            modelId,
+            jobId: job.job_id,
+            status: job.status,
+            previousStatus: lastStatus,
+            timestamp: new Date().toISOString()
+          })}\n\n`);
+          lastStatus = job.status;
+
+          // Terminal states
+          if (['succeeded', 'failed', 'cancelled'].includes(job.status)) {
+            res.write(`event: ${job.status}\ndata: ${JSON.stringify({
+              modelId,
+              jobId: job.job_id,
+              status: job.status,
+              fineTunedModel: job.fine_tuned_model,
+              error: job.error,
+              timestamp: new Date().toISOString()
+            })}\n\n`);
+
+            clearInterval(pollInterval);
+            res.end();
+            return;
+          }
+        }
+
+        // Progress
+        if (currentStatus.progress !== lastProgress) {
+          res.write(`event: progress\ndata: ${JSON.stringify({
+            modelId,
+            jobId: job.job_id,
+            progress: currentStatus.progress,
+            epoch: currentStatus.epoch,
+            totalEpochs: currentStatus.totalEpochs,
+            timestamp: new Date().toISOString()
+          })}\n\n`);
+          lastProgress = currentStatus.progress;
+        }
+
+        // Heartbeat
+        res.write(`:heartbeat\n\n`);
+
+      } catch (error) {
+        log.error('Model SSE poll error', { modelId, error: error.message });
+        res.write(`event: error\ndata: ${JSON.stringify({
+          error: error.message,
+          temporary: true
+        })}\n\n`);
+      }
+    }, 5000);
+
+    req.on('close', () => {
+      log.info('Model SSE client disconnected', { modelId });
+      clearInterval(pollInterval);
+    });
+
+    req.on('error', (err) => {
+      log.error('Model SSE connection error', { modelId, error: err.message });
+      clearInterval(pollInterval);
+    });
+
+  } catch (error) {
+    log.error('Error starting model SSE stream', { modelId, error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ==========================================
+// MODEL TESTING & DEPLOYMENT ENDPOINTS
+// ==========================================
+
+const fineTuningTestService = require('../services/fine-tuning-test.service');
+
+/**
+ * POST /api/fine-tuning/models/:id/test-playground
+ * Test model in playground with detailed results
+ */
+router.post('/models/:id/test-playground', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const { prompt, systemMessage, maxTokens, temperature } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Prompt is required'
+      });
+    }
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const result = await fineTuningTestService.testModel(modelId, prompt, {
+      systemMessage,
+      maxTokens,
+      temperature
+    });
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error in test playground', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/compare
+ * Compare multiple models with test prompts
+ */
+router.post('/compare', async (req, res) => {
+  try {
+    const orgId = req.organization.id;
+    const { modelIds, prompts, options } = req.body;
+
+    if (!modelIds || !Array.isArray(modelIds) || modelIds.length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least 2 model IDs required'
+      });
+    }
+
+    if (!prompts || !Array.isArray(prompts) || prompts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least 1 test prompt required'
+      });
+    }
+
+    // Verify all models belong to org
+    for (const modelId of modelIds) {
+      await fineTuningService.getModelById(modelId, orgId);
+    }
+
+    const result = await fineTuningTestService.compareModels(modelIds, prompts, options);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error comparing models', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/models/:id/benchmark
+ * Run benchmark test suite on model
+ */
+router.post('/models/:id/benchmark', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const { testDataset, options } = req.body;
+
+    if (!testDataset) {
+      return res.status(400).json({
+        success: false,
+        error: 'Test dataset required'
+      });
+    }
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const result = await fineTuningTestService.runBenchmark(modelId, testDataset, options);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error running benchmark', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/models/:id/test-history
+ * Get test history for a model
+ */
+router.get('/models/:id/test-history', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const { limit, offset, testType } = req.query;
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const history = await fineTuningTestService.getTestHistory(modelId, {
+      limit: parseInt(limit) || 50,
+      offset: parseInt(offset) || 0,
+      testType
+    });
+
+    res.json({
+      success: true,
+      ...history
+    });
+  } catch (error) {
+    log.error('Error fetching test history', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/models/:id/deploy
+ * Deploy model to a bot
+ */
+router.post('/models/:id/deploy', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const userId = req.user.id;
+    const { botId } = req.body;
+
+    if (!botId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bot ID is required'
+      });
+    }
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const result = await fineTuningTestService.deployModel(modelId, botId, userId);
+
+    res.json({
+      success: true,
+      message: 'Model deployed successfully',
+      ...result
+    });
+  } catch (error) {
+    log.error('Error deploying model', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/fine-tuning/models/:id/deploy
+ * Undeploy model from a bot
+ */
+router.delete('/models/:id/deploy', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+    const { botId } = req.body;
+
+    if (!botId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bot ID is required'
+      });
+    }
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const result = await fineTuningTestService.undeployModel(modelId, botId);
+
+    res.json({
+      success: true,
+      message: 'Model undeployed successfully',
+      ...result
+    });
+  } catch (error) {
+    log.error('Error undeploying model', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/deployments
+ * Get all deployed models for organization
+ */
+router.get('/deployments', async (req, res) => {
+  try {
+    const orgId = req.organization.id;
+
+    const deployments = await fineTuningTestService.getDeployedModels(orgId);
+
+    res.json({
+      success: true,
+      deployments
+    });
+  } catch (error) {
+    log.error('Error fetching deployments', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/models/:id/deployment-status
+ * Get deployment status for a model
+ */
+router.get('/models/:id/deployment-status', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+
+    // Verify model ownership
+    await fineTuningService.getModelById(modelId, orgId);
+
+    const status = await fineTuningTestService.getDeploymentStatus(modelId);
+
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    log.error('Error fetching deployment status', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/models/:id/set-default
+ * Set model as organization default
+ */
+router.post('/models/:id/set-default', async (req, res) => {
+  try {
+    const modelId = parseInt(req.params.id);
+    const orgId = req.organization.id;
+
+    const result = await fineTuningTestService.setDefaultModel(modelId, orgId);
+
+    res.json({
+      success: true,
+      message: 'Model set as default',
+      ...result
+    });
+  } catch (error) {
+    log.error('Error setting default model', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/model-ab-test
+ * Create A/B test for models
+ */
+router.post('/model-ab-test', async (req, res) => {
+  try {
+    const orgId = req.organization.id;
+    const userId = req.user.id;
+    const { modelAId, modelBId, trafficSplit, name, description } = req.body;
+
+    if (!modelAId || !modelBId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both model IDs are required'
+      });
+    }
+
+    // Verify both models belong to org
+    await fineTuningService.getModelById(modelAId, orgId);
+    await fineTuningService.getModelById(modelBId, orgId);
+
+    const result = await fineTuningTestService.createModelABTest(
+      modelAId,
+      modelBId,
+      trafficSplit || 50,
+      { name, description, organizationId: orgId, userId }
+    );
+
+    res.status(201).json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error creating model A/B test', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/fine-tuning/model-ab-test/:id
+ * Get A/B test results
+ */
+router.get('/model-ab-test/:id', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.id);
+
+    const results = await fineTuningTestService.getABTestResults(testId);
+
+    res.json({
+      success: true,
+      ...results
+    });
+  } catch (error) {
+    log.error('Error fetching A/B test results', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/model-ab-test/:id/start
+ * Start model A/B test
+ */
+router.post('/model-ab-test/:id/start', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.id);
+
+    const test = await fineTuningTestService.startABTest(testId);
+
+    res.json({
+      success: true,
+      test,
+      message: 'A/B test started'
+    });
+  } catch (error) {
+    log.error('Error starting A/B test', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/model-ab-test/:id/stop
+ * Stop model A/B test
+ */
+router.post('/model-ab-test/:id/stop', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.id);
+
+    const test = await fineTuningTestService.stopABTest(testId);
+
+    res.json({
+      success: true,
+      test,
+      message: 'A/B test stopped'
+    });
+  } catch (error) {
+    log.error('Error stopping A/B test', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/model-ab-test/:id/select-winner
+ * Select winner for model A/B test
+ */
+router.post('/model-ab-test/:id/select-winner', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.id);
+    const { winnerModelId } = req.body;
+
+    const result = await fineTuningTestService.selectWinnerModel(testId, winnerModelId);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    log.error('Error selecting winner', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/fine-tuning/model-ab-test/:id/record
+ * Record A/B test result
+ */
+router.post('/model-ab-test/:id/record', async (req, res) => {
+  try {
+    const testId = parseInt(req.params.id);
+    const { modelId, prompt, response, latencyMs, tokensUsed, userRating, isPreferred, sessionId } = req.body;
+
+    if (!modelId || !prompt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Model ID and prompt are required'
+      });
+    }
+
+    const result = await fineTuningTestService.recordABTestResult(testId, modelId, {
+      prompt,
+      response,
+      latencyMs,
+      tokensUsed,
+      userRating,
+      isPreferred,
+      sessionId
+    });
+
+    res.status(201).json({
+      success: true,
+      result
+    });
+  } catch (error) {
+    log.error('Error recording A/B test result', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

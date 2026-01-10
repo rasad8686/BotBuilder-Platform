@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Settings, MessageSquare, SlidersHorizontal, FlaskConical, CheckCircle, AlertTriangle,
+  Loader2, Check, Zap, Coins, BarChart3, Lightbulb, Brain, Clipboard, Palette, Ruler,
+  Clock, Square, Save
+} from 'lucide-react';
 import aiApi from '../api/ai';
 
 /**
@@ -128,10 +133,10 @@ export default function AIConfiguration() {
   };
 
   const tabs = [
-    { id: 'setup', label: 'Setup', icon: '⚙️' },
-    { id: 'prompt', label: 'Prompt', icon: '💬' },
-    { id: 'parameters', label: 'Parameters', icon: '🎚️' },
-    { id: 'test', label: 'Test', icon: '🧪' }
+    { id: 'setup', label: 'Setup', Icon: Settings },
+    { id: 'prompt', label: 'Prompt', Icon: MessageSquare },
+    { id: 'parameters', label: 'Parameters', Icon: SlidersHorizontal },
+    { id: 'test', label: 'Test', Icon: FlaskConical }
   ];
 
   const providers = [
@@ -214,7 +219,7 @@ export default function AIConfiguration() {
       const response = await aiApi.getConfig(botId);
 
       if (response.config) {
-        alert('✅ Connection successful! AI is configured and ready.');
+        alert('Connection successful! AI is configured and ready.');
       }
     } catch (err) {
       setTestError(err.response?.data?.message || 'Failed to connect to AI service');
@@ -328,7 +333,7 @@ export default function AIConfiguration() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+          <Loader2 className="w-10 h-10 mb-4 animate-spin text-purple-600 mx-auto" />
           <div className="text-xl text-gray-600">{t('common.loading')}</div>
         </div>
       </div>
@@ -358,14 +363,14 @@ export default function AIConfiguration() {
         {/* Success Message */}
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-            ✅ {success}
+            <CheckCircle className="w-5 h-5" /> {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-            ⚠️ {error}
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" /> {error}
           </div>
         )}
 
@@ -377,13 +382,13 @@ export default function AIConfiguration() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+                  className={`flex-1 px-6 py-4 text-center font-medium transition-colors flex items-center justify-center gap-2 ${
                     activeTab === tab.id
                       ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
                       : 'text-gray-600 hover:text-purple-600 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="mr-2">{tab.icon}</span>
+                  <tab.Icon className="w-4 h-4" />
                   {tab.label}
                 </button>
               ))}
@@ -416,7 +421,7 @@ export default function AIConfiguration() {
                         }`}
                       >
                         {config.provider === provider.id && (
-                          <div className="absolute top-3 right-3 text-purple-600 text-xl">✓</div>
+                          <div className="absolute top-3 right-3 text-purple-600"><Check className="w-5 h-5" /></div>
                         )}
                         <div className="font-bold text-gray-900 mb-1">{provider.name}</div>
                         <div className="text-sm text-gray-500 mb-2">{provider.modelsCount} models available</div>
@@ -443,20 +448,20 @@ export default function AIConfiguration() {
                         }`}
                       >
                         {config.model === model.id && (
-                          <div className="absolute top-4 right-4 text-purple-600 text-xl">✓</div>
+                          <div className="absolute top-4 right-4 text-purple-600"><Check className="w-5 h-5" /></div>
                         )}
                         <div className="flex items-start gap-2 mb-2">
                           <div className="font-bold text-gray-900">{model.name}</div>
                           {model.recommended && (
-                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                              ⚡ Recommended
+                            <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
+                              <Zap className="w-3 h-3" /> Recommended
                             </span>
                           )}
                         </div>
                         <div className="text-sm text-gray-600 mb-2">{model.description}</div>
                         <div className="flex gap-4 text-xs text-gray-500">
-                          <span>💰 {model.pricing}</span>
-                          <span>📊 {model.maxTokens}</span>
+                          <span className="flex items-center gap-1"><Coins className="w-3 h-3" /> {model.pricing}</span>
+                          <span className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> {model.maxTokens}</span>
                         </div>
                       </button>
                     ))}
@@ -475,8 +480,8 @@ export default function AIConfiguration() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="sk-... (Leave empty to use platform key)"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
-                    💡 Provide your own API key or leave empty to use the platform key (if configured)
+                  <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                    <Lightbulb className="w-4 h-4" /> Provide your own API key or leave empty to use the platform key (if configured)
                   </p>
                 </div>
 
@@ -524,14 +529,14 @@ export default function AIConfiguration() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-sm text-gray-500 mt-2">
-                    🧠 Link a Knowledge Base to enable RAG (Retrieval-Augmented Generation).
+                  <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                    <Brain className="w-4 h-4 inline" /> Link a Knowledge Base to enable RAG (Retrieval-Augmented Generation).
                     AI will search your documents to answer questions.
                   </p>
                   {config.knowledgeBaseId && (
                     <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2 text-green-800">
-                        <span>✅</span>
+                        <CheckCircle className="w-4 h-4" />
                         <span className="font-medium">RAG Enabled</span>
                       </div>
                       <p className="text-sm text-green-700 mt-1">
@@ -548,8 +553,8 @@ export default function AIConfiguration() {
               <div className="space-y-6">
                 {/* Show Templates Link */}
                 <div>
-                  <button className="text-purple-600 hover:text-purple-700 font-medium">
-                    📋 Show Prompt Templates
+                  <button className="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+                    <Clipboard className="w-4 h-4" /> Show Prompt Templates
                   </button>
                 </div>
 
@@ -569,14 +574,14 @@ export default function AIConfiguration() {
                     rows="12"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
-                    💡 The system prompt defines the AI's personality and behavior
+                  <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                    <Lightbulb className="w-4 h-4" /> The system prompt defines the AI's personality and behavior
                   </p>
                 </div>
 
                 {/* Tips */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for good prompts:</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-1"><Lightbulb className="w-4 h-4" /> Tips for good prompts:</h4>
                   <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                     <li>Be specific about the AI's role and expertise</li>
                     <li>Include tone guidelines (professional, friendly, formal)</li>
@@ -614,8 +619,8 @@ export default function AIConfiguration() {
                     <span>1.0 (Balanced)</span>
                     <span>2.0 (Creative)</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    🎨 Higher values make output more random and creative, lower values make it more focused and deterministic.
+                  <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                    <Palette className="w-4 h-4" /> Higher values make output more random and creative, lower values make it more focused and deterministic.
                   </p>
                 </div>
 
@@ -643,8 +648,8 @@ export default function AIConfiguration() {
                     <span>2000 (Medium)</span>
                     <span>4000 (Long)</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    📏 Maximum number of tokens to generate in the response. Higher values allow longer responses but cost more.
+                  <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                    <Ruler className="w-4 h-4" /> Maximum number of tokens to generate in the response. Higher values allow longer responses but cost more.
                   </p>
                 </div>
 
@@ -672,8 +677,8 @@ export default function AIConfiguration() {
                     <span>10 (Default)</span>
                     <span>50 (Long memory)</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    🧠 Number of previous messages the AI can remember. Higher values maintain more context but use more tokens.
+                  <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                    <Brain className="w-4 h-4" /> Number of previous messages the AI can remember. Higher values maintain more context but use more tokens.
                   </p>
                 </div>
 
@@ -702,14 +707,14 @@ export default function AIConfiguration() {
                       </div>
                     </div>
                   </label>
-                  <p className="text-sm text-gray-600 mt-2">
-                    ⚡ Streaming provides faster perceived response times but may not be supported by all integrations.
+                  <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                    <Zap className="w-4 h-4" /> Streaming provides faster perceived response times but may not be supported by all integrations.
                   </p>
                 </div>
 
                 {/* Cost Considerations */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Cost Considerations:</h4>
+                  <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> Cost Considerations:</h4>
                   <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
                     <li>Higher max_tokens = higher maximum cost per request</li>
                     <li>Larger context_window = more input tokens = higher cost</li>
@@ -737,8 +742,8 @@ export default function AIConfiguration() {
 
                 {/* Warning if no config */}
                 {!hasConfig && (
-                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                    ⚠️ Please save your AI configuration before testing
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" /> Please save your AI configuration before testing
                   </div>
                 )}
 
@@ -747,18 +752,18 @@ export default function AIConfiguration() {
                   {/* Chat Header */}
                   <div className="bg-purple-500 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-white font-semibold">💬 Chat Tester</span>
+                      <span className="text-white font-semibold flex items-center gap-1"><MessageSquare className="w-4 h-4" /> Chat Tester</span>
                       {config.enableStreaming && (
-                        <span className="bg-purple-400 text-white text-xs px-2 py-1 rounded">⚡ Streaming</span>
+                        <span className="bg-purple-400 text-white text-xs px-2 py-1 rounded flex items-center gap-1"><Zap className="w-3 h-3" /> Streaming</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {testing && config.enableStreaming && (
                         <button
                           onClick={handleStopStreaming}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors text-sm"
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors text-sm flex items-center gap-1"
                         >
-                          ⏹️ Stop
+                          <Square className="w-3 h-3" /> Stop
                         </button>
                       )}
                       <button
@@ -796,9 +801,9 @@ export default function AIConfiguration() {
                               <div>{message.timestamp}</div>
                               {message.role === 'assistant' && (
                                 <>
-                                  <div>📊 {message.tokens} tokens</div>
-                                  <div>💰 ${message.cost.toFixed(8)}</div>
-                                  <div>⏱️ {message.responseTime}ms</div>
+                                  <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> {message.tokens} tokens</div>
+                                  <div className="flex items-center gap-1"><Coins className="w-3 h-3" /> ${message.cost.toFixed(8)}</div>
+                                  <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {message.responseTime}ms</div>
                                 </>
                               )}
                             </div>
@@ -815,7 +820,7 @@ export default function AIConfiguration() {
                             {streamingText ? (
                               <div>
                                 <div className="whitespace-pre-wrap">{streamingText}<span className="inline-block w-2 h-4 bg-purple-500 ml-1 animate-pulse"></span></div>
-                                <div className="text-xs text-purple-600 mt-2">⚡ Streaming...</div>
+                                <div className="text-xs text-purple-600 mt-2 flex items-center gap-1"><Zap className="w-3 h-3" /> Streaming...</div>
                               </div>
                             ) : (
                               <span className="animate-pulse">Thinking...</span>
@@ -828,8 +833,8 @@ export default function AIConfiguration() {
 
                   {/* Error Display */}
                   {testError && (
-                    <div className="bg-red-100 border-t border-red-200 text-red-800 px-4 py-3">
-                      ⚠️ {testError}
+                    <div className="bg-red-100 border-t border-red-200 text-red-800 px-4 py-3 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" /> {testError}
                     </div>
                   )}
 
@@ -853,8 +858,8 @@ export default function AIConfiguration() {
                         Send
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      💡 Test your AI configuration by sending messages. Responses are generated using your current settings.
+                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                      <Lightbulb className="w-3 h-3" /> Test your AI configuration by sending messages. Responses are generated using your current settings.
                     </p>
                   </div>
                 </div>
@@ -872,12 +877,12 @@ export default function AIConfiguration() {
           >
             {saving ? (
               <>
-                <span className="animate-spin">⏳</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                💾 Save Configuration
+                <Save className="w-5 h-5" /> Save Configuration
               </>
             )}
           </button>
@@ -885,7 +890,7 @@ export default function AIConfiguration() {
 
         {/* Quick Tips */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
+          <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-1"><Lightbulb className="w-4 h-4" /> Quick Tips</h3>
           <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
             <li>Start with GPT-4o Mini or Claude 3.5 Haiku for best cost/performance</li>
             <li>Lower temperature (0.3-0.5) for consistent responses, higher (0.8-1.0) for creative ones</li>

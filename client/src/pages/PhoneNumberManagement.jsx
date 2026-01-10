@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ClipboardList, Trash2 } from 'lucide-react';
 
 const PhoneNumberManagement = () => {
   const { t } = useTranslation();
@@ -392,7 +393,7 @@ const PhoneNumberManagement = () => {
                           fontWeight: '500'
                         }}
                       >
-                        📋 {t('voice.viewCalls', 'View Calls')}
+                        <ClipboardList size={14} style={{ display: 'inline', marginRight: '4px' }} />{t('voice.viewCalls', 'View Calls')}
                       </button>
                       <button
                         onClick={(e) => {
@@ -410,7 +411,7 @@ const PhoneNumberManagement = () => {
                           fontWeight: '500'
                         }}
                       >
-                        🗑️ {t('voice.release', 'Release')}
+                        <Trash2 size={14} style={{ display: 'inline', marginRight: '4px' }} />{t('voice.release', 'Release')}
                       </button>
                     </div>
                   )}

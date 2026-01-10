@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-import { Plus, Trash2, Pencil, Copy, RefreshCw, Send, Check, X, Eye } from 'lucide-react';
+import { Plus, Trash2, Pencil, Copy, RefreshCw, Send, Check, X, Eye, Clock } from 'lucide-react';
 import { API_URL } from '../config/api';
 
 const API_BASE_URL = API_URL;
@@ -139,9 +139,9 @@ export default function Webhooks() {
 
       const result = response.data.data;
       if (result.success) {
-        alert(`✅ Webhook test successful!\n\nStatus Code: ${result.statusCode}\nResponse Time: ${result.responseTime}ms`);
+        alert(`Webhook test successful!\n\nStatus Code: ${result.statusCode}\nResponse Time: ${result.responseTime}ms`);
       } else {
-        alert(`❌ Webhook test failed\n\nStatus Code: ${result.statusCode}\nPlease check the logs for details.`);
+        alert(`Webhook test failed\n\nStatus Code: ${result.statusCode}\nPlease check the logs for details.`);
       }
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to test webhook');
@@ -490,7 +490,7 @@ export default function Webhooks() {
                           </p>
                         )}
                         {log.response_time_ms && (
-                          <p className="text-xs text-gray-600 mt-1">⏱️ Response time: {log.response_time_ms}ms</p>
+                          <p className="text-xs text-gray-600 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> Response time: {log.response_time_ms}ms</p>
                         )}
                         {log.response_body && (
                           <details className="mt-2">

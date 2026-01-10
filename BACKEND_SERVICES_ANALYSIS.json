@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "analysis_date": "2026-01-03",
+    "directory": "server/services",
+    "total_files": 115,
+    "total_lines_of_code": 58583
+  },
+  "service_inventory": {
+    "total_count": 115,
+    "categories": {
+      "root_level": 42,
+      "ai_services": 5,
+      "autonomous_agents": 9,
+      "autonomous_tools": 5,
+      "integrations": 5,
+      "channel_services": 6,
+      "clone_services": 14,
+      "flow_builder": 3,
+      "recovery_engine": 5,
+      "voice_services": 14,
+      "voicetobot_services": 5
+    }
+  },
+  "error_handling": {
+    "files_with_try_catch": 92,
+    "percentage": 80,
+    "files_without_error_handling": 23,
+    "unhandled_promise_chains": 3,
+    "assessment": "GOOD"
+  },
+  "hardcoded_credentials": {
+    "count": 0,
+    "assessment": "CLEAN",
+    "security_rating": "EXCELLENT"
+  },
+  "console_log_statements": {
+    "total": 5,
+    "issues": [
+      {
+        "file": "C:\Users\User\Desktop\BotBuilder\server\services\analyticsEngine.js",
+        "line": 521,
+        "type": "console.log",
+        "severity": "MEDIUM",
+        "recommendation": "Replace with log.info()"
+      },
+      {
+        "file": "C:\Users\User\Desktop\BotBuilder\server\services\analyticsEngine.js",
+        "line": 523,
+        "type": "console.error",
+        "severity": "LOW",
+        "recommendation": "Replace with log.error()"
+      },
+      {
+        "file": "C:\Users\User\Desktop\BotBuilder\server\services\usageBillingEngine.js",
+        "line": 392,
+        "type": "console.error",
+        "severity": "LOW",
+        "recommendation": "Replace with log.error()"
+      },
+      {
+        "file": "C:\Users\User\Desktop\BotBuilder\server\services\sdkGenerator.js",
+        "line": 254,
+        "type": "console.log in example code",
+        "severity": "LOW",
+        "status": "ACCEPTABLE"
+      },
+      {
+        "file": "C:\Users\User\Desktop\BotBuilder\server\services\OrchestrationManager.js",
+        "line": 23,
+        "type": "comment only",
+        "status": "OK"
+      }
+    ]
+  },
+  "todo_fixme_comments": {
+    "explicit_count": 0,
+    "semantic_warnings": 4,
+    "assessment": "EXCELLENT"
+  },
+  "security_assessment": {
+    "database_queries": {
+      "parameterized": true,
+      "percentage": 100,
+      "sql_injection_protection": "YES"
+    },
+    "credentials": {
+      "hardcoded": false,
+      "encrypted": true,
+      "masked_in_logs": true
+    },
+    "api_key_validation": true,
+    "overall_rating": "EXCELLENT"
+  },
+  "action_items": {
+    "priority_1": [
+      "Replace console.log in analyticsEngine.js:521 with log.info()",
+      "Replace console.error in analyticsEngine.js:523 with log.error()",
+      "Replace console.error in usageBillingEngine.js:392 with log.error()"
+    ],
+    "priority_2": [
+      "Add error handling to 23 files without try-catch",
+      "Standardize error message formats across services",
+      "Add unit tests for error handling paths"
+    ],
+    "priority_3": [
+      "Add distributed tracing with correlation IDs",
+      "Create service dependency diagram",
+      "Document error handling conventions and patterns"
+    ]
+  },
+  "verdict": "PRODUCTION-READY",
+  "deployment_recommendation": "Deploy after applying Priority 1 fixes (estimated 15 minutes)"
+}

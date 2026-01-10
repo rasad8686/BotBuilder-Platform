@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, MessageSquare, Bot, Key, Link2 } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -167,7 +168,7 @@ export default function Usage() {
                 </div>
                 {!dashboardData.bots.canCreateMore && (
                   <p className="text-xs text-orange-600 mt-2">
-                    ⚠️ Limit reached
+                    <AlertTriangle size={14} className="inline mr-1" />Limit reached
                   </p>
                 )}
               </div>
@@ -175,7 +176,7 @@ export default function Usage() {
               {/* Messages */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-3xl">📨</div>
+                  <div className="text-3xl"><MessageSquare size={32} className="text-blue-500" /></div>
                   <span className={`text-2xl font-bold ${
                     dashboardData.messages.percentage > 80 ? 'text-orange-600' : 'text-green-600'
                   }`}>
@@ -209,7 +210,7 @@ export default function Usage() {
                 </div>
                 {dashboardData.messages.percentage > 80 && dashboardData.messages.limit !== -1 && (
                   <p className="text-xs text-orange-600 mt-2">
-                    ⚠️ {dashboardData.messages.percentage >= 100 ? 'Limit reached' : 'Approaching limit'}
+                    <AlertTriangle size={14} className="inline mr-1" />{dashboardData.messages.percentage >= 100 ? 'Limit reached' : 'Approaching limit'}
                   </p>
                 )}
               </div>
@@ -243,7 +244,7 @@ export default function Usage() {
             {(dashboardData.messages.percentage > 80 && dashboardData.messages.limit !== -1) && (
               <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-6 mb-8">
                 <div className="flex items-start gap-4">
-                  <div className="text-3xl">⚠️</div>
+                  <div className="text-3xl"><AlertTriangle size={32} className="text-orange-500" /></div>
                   <div>
                     <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
                       {dashboardData.messages.percentage >= 100
@@ -271,7 +272,7 @@ export default function Usage() {
             {!dashboardData.bots.canCreateMore && dashboardData.bots.limit !== -1 && (
               <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-6 mb-8">
                 <div className="flex items-start gap-4">
-                  <div className="text-3xl">⚠️</div>
+                  <div className="text-3xl"><AlertTriangle size={32} className="text-orange-500" /></div>
                   <div>
                     <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">Bot Limit Reached</h3>
                     <p className="text-orange-700 dark:text-orange-300 mb-4">
@@ -439,7 +440,7 @@ export default function Usage() {
                   onClick={() => navigate('/api-tokens')}
                   className="p-6 border-2 border-blue-200 dark:border-blue-800 rounded-xl hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                 >
-                  <div className="text-4xl mb-3">🔑</div>
+                  <div className="text-4xl mb-3"><Key size={40} /></div>
                   <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('apiTokens.title')}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{t('apiTokens.subtitle')}</p>
                 </button>
@@ -448,7 +449,7 @@ export default function Usage() {
                   onClick={() => navigate('/webhooks')}
                   className="p-6 border-2 border-green-200 dark:border-green-800 rounded-xl hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
                 >
-                  <div className="text-4xl mb-3">🔗</div>
+                  <div className="text-4xl mb-3"><Link2 size={40} /></div>
                   <h3 className="font-bold text-gray-800 dark:text-white mb-2">{t('webhooks.title')}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{t('webhooks.subtitle')}</p>
                 </button>

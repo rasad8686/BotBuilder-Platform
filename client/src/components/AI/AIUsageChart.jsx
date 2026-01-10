@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { BarChart3, AlertTriangle, CheckCircle, XCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import aiApi from '../../api/ai';
 
 /**
@@ -47,7 +48,7 @@ export default function AIUsageChart() {
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-        <div className="text-4xl mb-4 animate-pulse">📊</div>
+        <div className="mb-4 animate-pulse"><BarChart3 size={48} className="mx-auto text-purple-500" /></div>
         <div className="text-gray-600">Loading usage data...</div>
       </div>
     );
@@ -56,7 +57,7 @@ export default function AIUsageChart() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-        ⚠️ {error}
+        <AlertTriangle size={16} className="inline mr-1" /> {error}
       </div>
     );
   }
@@ -108,7 +109,7 @@ export default function AIUsageChart() {
             {summary.totalRequests.toLocaleString()}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            ✅ {summary.successfulRequests} success · ❌ {summary.failedRequests} failed
+            <CheckCircle size={12} className="inline" /> {summary.successfulRequests} success · <XCircle size={12} className="inline" /> {summary.failedRequests} failed
           </div>
         </div>
 
@@ -118,7 +119,7 @@ export default function AIUsageChart() {
             {summary.totalTokens.toLocaleString()}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            📥 {summary.totalPromptTokens.toLocaleString()} in · 📤 {summary.totalCompletionTokens.toLocaleString()} out
+            <ArrowDownToLine size={12} className="inline" /> {summary.totalPromptTokens.toLocaleString()} in · <ArrowUpFromLine size={12} className="inline" /> {summary.totalCompletionTokens.toLocaleString()} out
           </div>
         </div>
 

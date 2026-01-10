@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Check, X, AlertTriangle, Info } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const ICONS = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ'
+  success: Check,
+  error: X,
+  warning: AlertTriangle,
+  info: Info
 };
 
 const COLORS = {
@@ -88,7 +89,7 @@ function ToastItem({ toast, onRemove }) {
           flexShrink: 0
         }}
       >
-        {ICONS[toast.type]}
+        {React.createElement(ICONS[toast.type] || ICONS.info, { size: 14 })}
       </div>
 
       {/* Message */}
@@ -117,7 +118,7 @@ function ToastItem({ toast, onRemove }) {
         onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
         onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
       >
-        ✕
+        <X size={12} />
       </button>
 
       {/* Progress bar */}

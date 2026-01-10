@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Smile, Briefcase, Sparkles, Target, Heart, Laugh, Timer, Palette, MessageSquare } from 'lucide-react';
 
 const PersonalityClone = () => {
   const { t } = useTranslation();
@@ -27,14 +28,14 @@ const PersonalityClone = () => {
   const token = localStorage.getItem('token');
 
   const traitLabels = {
-    friendliness: { label: 'Friendliness', emoji: '😊', low: 'Reserved', high: 'Warm' },
-    formality: { label: 'Formality', emoji: '👔', low: 'Casual', high: 'Formal' },
-    enthusiasm: { label: 'Enthusiasm', emoji: '🎉', low: 'Calm', high: 'Energetic' },
-    directness: { label: 'Directness', emoji: '🎯', low: 'Subtle', high: 'Direct' },
-    empathy: { label: 'Empathy', emoji: '💝', low: 'Detached', high: 'Empathetic' },
-    humor: { label: 'Humor', emoji: '😄', low: 'Serious', high: 'Playful' },
-    patience: { label: 'Patience', emoji: '🧘', low: 'Brief', high: 'Patient' },
-    creativity: { label: 'Creativity', emoji: '🎨', low: 'Practical', high: 'Creative' }
+    friendliness: { label: 'Friendliness', Icon: Smile, low: 'Reserved', high: 'Warm' },
+    formality: { label: 'Formality', Icon: Briefcase, low: 'Casual', high: 'Formal' },
+    enthusiasm: { label: 'Enthusiasm', Icon: Sparkles, low: 'Calm', high: 'Energetic' },
+    directness: { label: 'Directness', Icon: Target, low: 'Subtle', high: 'Direct' },
+    empathy: { label: 'Empathy', Icon: Heart, low: 'Detached', high: 'Empathetic' },
+    humor: { label: 'Humor', Icon: Laugh, low: 'Serious', high: 'Playful' },
+    patience: { label: 'Patience', Icon: Timer, low: 'Brief', high: 'Patient' },
+    creativity: { label: 'Creativity', Icon: Palette, low: 'Practical', high: 'Creative' }
   };
 
   useEffect(() => {
@@ -593,7 +594,7 @@ const PersonalityClone = () => {
                       <div key={key}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                           <span style={{ fontSize: '14px', color: '#4a5568' }}>
-                            {trait.emoji} {trait.label}
+                            {trait.Icon && <trait.Icon size={14} style={{ display: 'inline', marginRight: '4px' }} />}{trait.label}
                           </span>
                           <span style={{ fontSize: '14px', fontWeight: '600', color: '#2d3748' }}>{value}/10</span>
                         </div>
@@ -624,7 +625,7 @@ const PersonalityClone = () => {
               <div style={{ flex: 1, minHeight: '300px', maxHeight: '400px', overflowY: 'auto', marginBottom: '16px', padding: '12px', background: '#f7fafc', borderRadius: '8px' }}>
                 {chatHistory.length === 0 ? (
                   <div style={{ textAlign: 'center', color: '#a0aec0', padding: '40px 0' }}>
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>💬</div>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}><MessageSquare size={32} /></div>
                     <p>{t('clone.startConversation', 'Start a conversation to test the personality')}</p>
                   </div>
                 ) : (

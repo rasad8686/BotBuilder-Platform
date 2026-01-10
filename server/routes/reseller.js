@@ -7,6 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const resellerService = require('../services/resellerService');
 const log = require('../utils/logger');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');

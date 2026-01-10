@@ -7,6 +7,14 @@ import { useTheme } from '../contexts/ThemeContext';
 import OrganizationSwitcher from './OrganizationSwitcher';
 import FeedbackModal from './FeedbackModal';
 import ThemeToggle from './ThemeToggle';
+import {
+  Home, Bot, CreditCard, Key, Link2, BarChart3, Building2, Users, Settings, Shield, KeyRound,
+  BookOpen, Gamepad2, GraduationCap, Cpu, Target, Workflow, Shuffle, ClipboardList, Brain,
+  Smartphone, Plug, Phone, PhoneCall, UserCircle, Mic, Puzzle, Sparkles, TrendingUp,
+  ShoppingCart, Heart, LayoutDashboard, FileText, Wrench, Palette, ShieldCheck, UserCog,
+  Crown, Menu, X, LogOut, MessageSquare, Moon, Sun, Compass, FlaskConical, Ticket, PlusCircle,
+  Mail, ListFilter, Send, Zap, FileQuestion, LayoutTemplate, Megaphone, Smartphone as SmsIcon
+} from 'lucide-react';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
@@ -75,45 +83,76 @@ export default function Sidebar() {
   };
 
   const navLinks = [
-    { path: '/dashboard', icon: '🏠', label: t('sidebar.dashboard') },
-    { path: '/mybots', icon: '🤖', label: t('sidebar.myBots') },
-    { path: '/billing', icon: '💳', label: t('sidebar.billing') },
-    { path: '/api-tokens', icon: '🔑', label: t('sidebar.apiTokens') },
-    { path: '/webhooks', icon: '🔗', label: t('sidebar.webhooks') },
-    { path: '/usage', icon: '📊', label: t('sidebar.usage') },
-    { path: '/organizations/settings', icon: '🏢', label: t('sidebar.organization') },
-    { path: '/team', icon: '👥', label: t('sidebar.team') },
-    { path: '/settings', icon: '⚙️', label: t('sidebar.settings') },
-    { path: '/settings/security', icon: '🔐', label: t('sidebar.security', 'Security') },
-    { path: '/settings/sso', icon: '🛡️', label: t('sidebar.sso', 'Enterprise SSO') },
+    { path: '/dashboard', icon: Home, label: t('sidebar.dashboard') },
+    { path: '/mybots', icon: Bot, label: t('sidebar.myBots') },
+    { path: '/billing', icon: CreditCard, label: t('sidebar.billing') },
+    { path: '/api-tokens', icon: Key, label: t('sidebar.apiTokens') },
+    { path: '/webhooks', icon: Link2, label: t('sidebar.webhooks') },
+    { path: '/usage', icon: BarChart3, label: t('sidebar.usage') },
+    { path: '/organizations/settings', icon: Building2, label: t('sidebar.organization') },
+    { path: '/team', icon: Users, label: t('sidebar.team') },
+    { path: '/settings', icon: Settings, label: t('sidebar.settings') },
+    { path: '/settings/security', icon: Shield, label: t('sidebar.security', 'Security') },
+    { path: '/settings/sso', icon: KeyRound, label: t('sidebar.sso', 'Enterprise SSO') },
+    { path: '/docs', icon: BookOpen, label: t('sidebar.documentation', 'Documentation') },
+    { path: '/playground', icon: Gamepad2, label: t('sidebar.playground', 'API Playground') },
+    { path: '/academy', icon: GraduationCap, label: t('sidebar.tutorials', 'Tutorials') },
   ];
 
   // Multi-Agent AI links (shown in bot context)
   const agentLinks = [
-    { path: '/ai-flow', icon: '🤖', label: t('sidebar.aiFlowStudio') },
-    { path: '/agent-studio', icon: '🎯', label: t('sidebar.agentStudio') },
-    { path: '/autonomous-agents', icon: '🦾', label: t('sidebar.autonomousAgents', 'Autonomous Agents') },
-    { path: '/workflows', icon: '🔄', label: t('sidebar.workflows') },
-    { path: '/intents', icon: '🎯', label: t('sidebar.intentBuilder') },
-    { path: '/orchestrations', icon: '🔀', label: t('sidebar.multiFlow') },
-    { path: '/executions', icon: '📋', label: t('sidebar.executions') },
-    { path: '/knowledge', icon: '🧠', label: t('sidebar.knowledgeBase') },
-    { path: '/channels', icon: '📱', label: t('sidebar.channels') },
-    { path: '/integrations', icon: '🔌', label: t('sidebar.integrations', 'Integrations') },
-    { path: '/voice-bots', icon: '📞', label: t('sidebar.voiceBots', 'Voice AI') },
-    { path: '/call-history', icon: '📋', label: t('sidebar.callHistory', 'Call History') },
-    { path: '/work-clone', icon: '👤', label: t('sidebar.workClone', 'Work Clone') },
-    { path: '/voice-to-bot', icon: '🎙️', label: t('sidebar.voiceToBot', 'Voice to Bot') },
-    { path: '/marketplace', icon: '🧩', label: t('sidebar.marketplace') },
-    { path: '/fine-tuning', icon: '🧠', label: t('sidebar.fineTuning', 'AI Fine-tuning') },
+    { path: '/ai-flow', icon: Cpu, label: t('sidebar.aiFlowStudio') },
+    { path: '/agent-studio', icon: Target, label: t('sidebar.agentStudio') },
+    { path: '/autonomous-agents', icon: Bot, label: t('sidebar.autonomousAgents', 'Autonomous Agents') },
+    { path: '/workflows', icon: Workflow, label: t('sidebar.workflows') },
+    { path: '/intents', icon: Target, label: t('sidebar.intentBuilder') },
+    { path: '/orchestrations', icon: Shuffle, label: t('sidebar.multiFlow') },
+    { path: '/executions', icon: ClipboardList, label: t('sidebar.executions') },
+    { path: '/knowledge', icon: Brain, label: t('sidebar.knowledgeBase') },
+    { path: '/channels', icon: Smartphone, label: t('sidebar.channels') },
+    { path: '/integrations', icon: Plug, label: t('sidebar.integrations', 'Integrations') },
+    { path: '/voice-bots', icon: Phone, label: t('sidebar.voiceBots', 'Voice AI') },
+    { path: '/call-history', icon: PhoneCall, label: t('sidebar.callHistory', 'Call History') },
+    { path: '/work-clone', icon: UserCircle, label: t('sidebar.workClone', 'Work Clone') },
+    { path: '/voice-to-bot', icon: Mic, label: t('sidebar.voiceToBot', 'Voice to Bot') },
+    { path: '/marketplace', icon: Puzzle, label: t('sidebar.marketplace') },
+    { path: '/fine-tuning', icon: Sparkles, label: t('sidebar.fineTuning', 'AI Fine-tuning') },
+    { path: '/tours', icon: Compass, label: t('sidebar.productTours', 'Product Tours') },
+    { path: '/ab-tests', icon: FlaskConical, label: t('sidebar.abTesting', 'A/B Testing') },
   ];
 
   // Recovery Engine links
   const recoveryLinks = [
-    { path: '/recovery', icon: '📈', label: t('recovery.dashboard') },
-    { path: '/recovery/campaigns', icon: '🎯', label: t('recovery.campaigns') },
-    { path: '/recovery/carts', icon: '🛒', label: t('recovery.abandonedCarts') },
-    { path: '/recovery/customers', icon: '❤️', label: t('recovery.customerHealth') },
+    { path: '/recovery', icon: TrendingUp, label: t('recovery.dashboard') },
+    { path: '/recovery/campaigns', icon: Target, label: t('recovery.campaigns') },
+    { path: '/recovery/carts', icon: ShoppingCart, label: t('recovery.abandonedCarts') },
+    { path: '/recovery/customers', icon: Heart, label: t('recovery.customerHealth') },
+  ];
+
+  // Helpdesk/Tickets links
+  const helpdeskLinks = [
+    { path: '/tickets', icon: Ticket, label: t('tickets.allTickets', 'All Tickets') },
+    { path: '/tickets/new', icon: PlusCircle, label: t('tickets.createTicket', 'Create Ticket') },
+    { path: '/tickets/analytics', icon: BarChart3, label: t('tickets.analytics', 'Analytics') },
+    { path: '/tickets/settings', icon: Settings, label: t('tickets.settings', 'Settings') },
+  ];
+
+  // Email Marketing links
+  const emailLinks = [
+    { path: '/email/contacts', icon: Users, label: t('email.contacts', 'Contacts') },
+    { path: '/email/lists', icon: ListFilter, label: t('email.lists', 'Lists') },
+    { path: '/email/templates', icon: FileText, label: t('email.templates', 'Templates') },
+    { path: '/email/campaigns', icon: Send, label: t('email.campaigns', 'Campaigns') },
+    { path: '/email/automations', icon: Zap, label: t('email.automations', 'Automations') },
+    { path: '/email/analytics', icon: BarChart3, label: t('email.analytics', 'Analytics') },
+  ];
+
+  // Surveys links
+  const surveyLinks = [
+    { path: '/surveys', icon: FileQuestion, label: t('surveys.allSurveys', 'All Surveys') },
+    { path: '/surveys/templates', icon: LayoutTemplate, label: t('surveys.templates', 'Templates') },
+    { path: '/surveys/responses', icon: MessageSquare, label: t('surveys.responses', 'Responses') },
+    { path: '/surveys/analytics', icon: BarChart3, label: t('surveys.analytics', 'Analytics') },
   ];
 
   // Get botId from URL if on a bot-specific page
@@ -122,17 +161,19 @@ export default function Sidebar() {
 
   // Admin links - only shown to admins and owners
   const adminLinks = [
-    { path: '/admin/dashboard', icon: '📊', label: t('sidebar.adminDashboard') },
-    { path: '/admin/audit-logs', icon: '📋', label: t('sidebar.auditLogs') },
-    { path: '/admin/health', icon: '🔧', label: t('sidebar.systemHealth') },
-    { path: '/admin/whitelabel', icon: '🎨', label: t('sidebar.whiteLabelSettings') },
-    { path: '/admin/rate-limiting', icon: '🛡️', label: t('sidebar.rateLimiting', 'Rate Limiting') },
-    { path: '/admin/roles', icon: '👔', label: t('sidebar.roles', 'Role Management') },
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('sidebar.adminDashboard') },
+    { path: '/admin/audit-logs', icon: FileText, label: t('sidebar.auditLogs') },
+    { path: '/admin/health', icon: Wrench, label: t('sidebar.systemHealth') },
+    { path: '/admin/whitelabel', icon: Palette, label: t('sidebar.whiteLabelSettings') },
+    { path: '/admin/rate-limiting', icon: ShieldCheck, label: t('sidebar.rateLimiting', 'Rate Limiting') },
+    { path: '/admin/roles', icon: UserCog, label: t('sidebar.roles', 'Role Management') },
+    { path: '/admin/banners', icon: Megaphone, label: t('sidebar.banners', 'Banners') },
+    { path: '/admin/sms', icon: SmsIcon, label: t('sidebar.sms', 'SMS Settings') },
   ];
 
   // Superadmin links - only shown to superadmins
   const superadminLinks = [
-    { path: '/superadmin/dashboard', icon: '👑', label: t('sidebar.superadminDashboard', 'Superadmin Panel') },
+    { path: '/superadmin/dashboard', icon: Crown, label: t('sidebar.superadminDashboard', 'Superadmin Panel') },
   ];
 
   // Admin menu visibility - organization role OR superadmin OR on admin page
@@ -159,7 +200,7 @@ export default function Sidebar() {
         aria-label="Toggle menu"
         aria-expanded={isMobileMenuOpen}
       >
-        {isMobileMenuOpen ? '✕' : '☰'}
+        {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
       {/* Overlay for mobile */}
@@ -190,7 +231,7 @@ export default function Sidebar() {
                   className="h-10 w-10 object-contain"
                 />
               ) : (
-                <div className="text-3xl">🤖</div>
+                <Bot className="w-10 h-10 text-purple-600" />
               )}
               <div>
                 <div className="flex items-center gap-2">
@@ -231,7 +272,7 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -264,7 +305,7 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -297,7 +338,106 @@ export default function Sidebar() {
                     }
                   `}
                 >
-                  <span className="text-xl" aria-hidden="true">{link.icon}</span>
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </li>
+            ))}
+
+            {/* Helpdesk Section */}
+            <li className="pt-4 pb-2">
+              <div className="flex items-center gap-2 px-4">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                  {t('sidebar.helpdesk', 'Helpdesk')}
+                </span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+              </div>
+            </li>
+            {helpdeskLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActive(link.path)
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
+                    }
+                  `}
+                >
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </li>
+            ))}
+
+            {/* Email Marketing Section */}
+            <li className="pt-4 pb-2">
+              <div className="flex items-center gap-2 px-4">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                  {t('sidebar.emailMarketing', 'Email Marketing')}
+                </span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+              </div>
+            </li>
+            {emailLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActive(link.path)
+                        ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 dark:hover:text-orange-400'
+                    }
+                  `}
+                >
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
+                  <span className="font-medium">{link.label}</span>
+                </Link>
+              </li>
+            ))}
+
+            {/* Surveys Section */}
+            <li className="pt-4 pb-2">
+              <div className="flex items-center gap-2 px-4">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                  {t('sidebar.surveys', 'Surveys')}
+                </span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700"></div>
+              </div>
+            </li>
+            {surveyLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label={link.label}
+                  aria-current={isActive(link.path) ? 'page' : undefined}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActive(link.path)
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
+                    }
+                  `}
+                >
+                  <link.icon className="w-5 h-5" aria-hidden="true" />
                   <span className="font-medium">{link.label}</span>
                 </Link>
               </li>
@@ -320,7 +460,7 @@ export default function Sidebar() {
                       }
                     `}
                   >
-                    <span className="text-xl">🔀</span>
+                    <Shuffle className="w-5 h-5" />
                     <span className="font-medium">{t('sidebar.multiFlow')}</span>
                   </Link>
                 </li>
@@ -338,7 +478,7 @@ export default function Sidebar() {
                       }
                     `}
                   >
-                    <span className="text-xl">🔧</span>
+                    <Wrench className="w-5 h-5" />
                     <span className="font-medium">{t('sidebar.tools')}</span>
                   </Link>
                 </li>
@@ -356,7 +496,7 @@ export default function Sidebar() {
                       }
                     `}
                   >
-                    <span className="text-xl">🎯</span>
+                    <Target className="w-5 h-5" />
                     <span className="font-medium">{t('sidebar.intentBuilder')}</span>
                   </Link>
                 </li>
@@ -392,7 +532,7 @@ export default function Sidebar() {
                         }
                       `}
                     >
-                      <span className="text-xl" aria-hidden="true">{link.icon}</span>
+                      <link.icon className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">{link.label}</span>
                     </Link>
                   </li>
@@ -429,7 +569,7 @@ export default function Sidebar() {
                         }
                       `}
                     >
-                      <span className="text-xl" aria-hidden="true">{link.icon}</span>
+                      <link.icon className="w-5 h-5" aria-hidden="true" />
                       <span className="font-medium">{link.label}</span>
                     </Link>
                   </li>
@@ -473,15 +613,16 @@ export default function Sidebar() {
             onClick={() => setIsFeedbackModalOpen(true)}
             className="w-full px-4 py-2.5 mb-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center gap-2 text-sm"
           >
-            <span>💬</span>
+            <MessageSquare className="w-4 h-4" />
             <span>{t('sidebar.sendFeedback')}</span>
           </button>
 
           {/* Theme Toggle */}
           <div className="flex items-center justify-between px-3 py-2.5 mb-3 bg-gray-100 dark:bg-slate-800 rounded-lg">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
-            </span>
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+            </div>
             <ThemeToggle />
           </div>
 
@@ -489,7 +630,7 @@ export default function Sidebar() {
             onClick={handleLogout}
             className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium flex items-center justify-center gap-2"
           >
-            <span>🚪</span>
+            <LogOut className="w-4 h-4" />
             <span>{t('sidebar.logout')}</span>
           </button>
         </div>

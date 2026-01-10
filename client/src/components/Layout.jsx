@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Check, User, Settings, CreditCard, LogOut } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Sidebar from './Sidebar';
 import DemoBanner from './DemoBanner';
 import EmailVerificationBanner from './EmailVerificationBanner';
+import { BannerDisplay } from './banners';
 import { NotificationCenter } from './notifications';
 import Breadcrumb from './Breadcrumb';
 import GlobalSearch from './GlobalSearch';
@@ -137,7 +139,7 @@ export default function Layout({ children }) {
                         {lang.code.toUpperCase()}
                       </span>
                       {currentLanguage === lang.code && (
-                        <span className="text-purple-600 dark:text-purple-400">✓</span>
+                        <Check className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       )}
                     </button>
                   ))}
@@ -167,7 +169,7 @@ export default function Layout({ children }) {
                       ? 'text-white'
                       : 'text-purple-600 dark:text-purple-300'
                   }`}>
-                    {user?.name?.charAt(0)?.toUpperCase() || '👤'}
+                    {user?.name?.charAt(0)?.toUpperCase() || <User className="w-4 h-4" />}
                   </span>
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">
@@ -190,22 +192,22 @@ export default function Layout({ children }) {
                 >
                   <button
                     onClick={() => { navigate('/settings'); setShowUserMenu(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                   >
-                    ⚙️ {t('sidebar.settings', 'Settings')}
+                    <Settings className="w-4 h-4" /> {t('sidebar.settings', 'Settings')}
                   </button>
                   <button
                     onClick={() => { navigate('/billing'); setShowUserMenu(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                   >
-                    💳 {t('sidebar.billing', 'Billing')}
+                    <CreditCard className="w-4 h-4" /> {t('sidebar.billing', 'Billing')}
                   </button>
                   <hr className="my-1 border-gray-200 dark:border-slate-700" />
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
                   >
-                    🚪 {t('sidebar.logout', 'Logout')}
+                    <LogOut className="w-4 h-4" /> {t('sidebar.logout', 'Logout')}
                   </button>
                 </div>
               )}
@@ -216,8 +218,13 @@ export default function Layout({ children }) {
         {/* Demo Banner - Shows when in demo mode */}
         <DemoBanner />
 
-        {/* Email Verification Banner - Shows when email not verified */}
+        {/* In-App Banners - Priority announcements and notifications */}
         <div className="px-6 pt-4">
+          <BannerDisplay />
+        </div>
+
+        {/* Email Verification Banner - Shows when email not verified */}
+        <div className="px-6 pt-2">
           <EmailVerificationBanner user={user} />
         </div>
 

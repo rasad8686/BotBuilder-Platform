@@ -1,14 +1,15 @@
 import React from 'react';
+import { Target, Search, PenTool, BarChart3, CheckCircle, GitBranch, Settings, MessageCircle, Bot, Play, Pencil, Trash2 } from 'lucide-react';
 
 const roleIcons = {
-  orchestrator: '🎯',
-  researcher: '🔍',
-  writer: '✍️',
-  analyzer: '📊',
-  reviewer: '✅',
-  router: '🔀',
-  custom: '⚙️',
-  assistant: '💬'
+  orchestrator: Target,
+  researcher: Search,
+  writer: PenTool,
+  analyzer: BarChart3,
+  reviewer: CheckCircle,
+  router: GitBranch,
+  custom: Settings,
+  assistant: MessageCircle
 };
 
 const roleColors = {
@@ -23,14 +24,14 @@ const roleColors = {
 };
 
 const AgentCard = ({ agent, onEdit, onDelete, onTest }) => {
-  const icon = roleIcons[agent.role] || '🤖';
+  const IconComponent = roleIcons[agent.role] || Bot;
   const color = roleColors[agent.role] || '#667eea';
 
   return (
     <div className="agent-card">
       <div className="agent-card-header">
         <div className="agent-icon" style={{ background: `${color}20`, color }}>
-          {icon}
+          <IconComponent size={24} />
         </div>
         <div className="agent-status">
           <span className={`status-badge ${agent.is_active ? 'active' : 'inactive'}`}>
@@ -62,13 +63,13 @@ const AgentCard = ({ agent, onEdit, onDelete, onTest }) => {
 
       <div className="agent-card-actions">
         <button className="btn btn-test" onClick={onTest} title="Test Agent">
-          ▶ Test
+          <Play size={14} /> Test
         </button>
         <button className="btn btn-edit" onClick={onEdit} title="Edit Agent">
-          ✏️ Edit
+          <Pencil size={14} /> Edit
         </button>
         <button className="btn btn-delete" onClick={onDelete} title="Delete Agent">
-          🗑️
+          <Trash2 size={14} />
         </button>
       </div>
 

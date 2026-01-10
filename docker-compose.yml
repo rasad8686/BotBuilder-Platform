@@ -1,19 +1,102 @@
 version: '3.8'
 
 services:
-  # Frontend - React + Vite (served by Nginx)
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: botbuilder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-botbuilder}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-botbuilder_secret}
+      POSTGRES_DB: ${DB_NAME:-botbuilder}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - botbuilder-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-botbuilder}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: botbuilder-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
+    volumes:
+      - redis_data:/data
+    networks:
+      - botbuilder-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: botbuilder-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-botbuilder}
+      DB_PASSWORD: ${DB_PASSWORD:-botbuilder_secret}
+      DB_NAME: ${DB_NAME:-botbuilder}
+      DATABASE_URL: postgresql://${DB_USER:-botbuilder}:${DB_PASSWORD:-botbuilder_secret}@postgres:5432/${DB_NAME:-botbuilder}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secret}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      FRONTEND_URL: ${FRONTEND_URL:-https://yourdomain.com}
+      CLIENT_URL: ${FRONTEND_URL:-https://yourdomain.com}
+      AI_ENCRYPTION_SECRET: ${AI_ENCRYPTION_SECRET}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - botbuilder-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend
   frontend:
     build:
       context: ./client
       dockerfile: Dockerfile
-      target: production
+      args:
+        VITE_API_URL: ""
     container_name: botbuilder-frontend
     restart: unless-stopped
-    ports:
-      - "3000:80"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - botbuilder-network
     healthcheck:
@@ -21,102 +104,38 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
 
-  # Backend - Express.js API
-  backend:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
-      target: production
-    container_name: botbuilder-backend
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: botbuilder-nginx
     restart: unless-stopped
     ports:
-      - "5000:5000"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-botbuilder}:${POSTGRES_PASSWORD:-botbuilder123}@db:5432/${POSTGRES_DB:-botbuilder}
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-BotBuilder_Docker_JWT_Secret_Key_2025_Production}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - STRIPE_PRO_PRICE_ID=${STRIPE_PRO_PRICE_ID}
-      - STRIPE_ENTERPRISE_PRICE_ID=${STRIPE_ENTERPRISE_PRICE_ID}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - CLIENT_URL=${CLIENT_URL:-http://localhost}
-      - AI_ENCRYPTION_SECRET=${AI_ENCRYPTION_SECRET:-BotBuilder_Default_AI_Encryption_Key_32chars}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@local.dev}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-AdminPass123!Secure}
+      - "80:80"
+      - "443:443"
     volumes:
-      - uploads:/app/uploads
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - uploads_data:/app/uploads:ro
+    depends_on:
+      - backend
+      - frontend
     networks:
       - botbuilder-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/test', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-
-  # PostgreSQL Database
-  db:
-    image: postgres:16-alpine
-    container_name: botbuilder-db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-botbuilder}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-botbuilder123}
-      - POSTGRES_DB=${POSTGRES_DB:-botbuilder}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
-    ports:
-      - "5432:5432"
-    networks:
-      - botbuilder-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-botbuilder} -d ${POSTGRES_DB:-botbuilder}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  # Redis Cache (for sessions, rate limiting, etc.)
-  redis:
-    image: redis:7-alpine
-    container_name: botbuilder-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - botbuilder-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
-
-networks:
-  botbuilder-network:
-    driver: bridge
 
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
-  uploads:
+  uploads_data:
     driver: local
+
+networks:
+  botbuilder-network:
+    driver: bridge

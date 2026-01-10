@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { CheckCircle, Shuffle, Target, Key } from 'lucide-react';
 
 const TRIGGER_TYPES = [
-  { value: 'on_complete', label: 'On Flow Complete', icon: '✅', description: 'Trigger when the source flow completes' },
-  { value: 'on_condition', label: 'On Condition', icon: '🔀', description: 'Trigger based on variable condition' },
-  { value: 'on_intent', label: 'On Intent', icon: '🎯', description: 'Trigger when specific intent is detected' },
-  { value: 'on_keyword', label: 'On Keyword', icon: '🔑', description: 'Trigger when keywords are found in user input' }
+  { value: 'on_complete', label: 'On Flow Complete', Icon: CheckCircle, description: 'Trigger when the source flow completes' },
+  { value: 'on_condition', label: 'On Condition', Icon: Shuffle, description: 'Trigger based on variable condition' },
+  { value: 'on_intent', label: 'On Intent', Icon: Target, description: 'Trigger when specific intent is detected' },
+  { value: 'on_keyword', label: 'On Keyword', Icon: Key, description: 'Trigger when keywords are found in user input' }
 ];
 
 const OPERATORS = [
@@ -35,7 +36,7 @@ export default function FlowConnector({ onClose, onSave }) {
       case 'on_complete':
         return (
           <div style={{ padding: 16, backgroundColor: '#f9fafb', borderRadius: 8, textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+            <div style={{ marginBottom: 8 }}><CheckCircle size={32} className="text-green-500 mx-auto" /></div>
             <p style={{ color: '#6b7280', margin: 0 }}>
               This transition will trigger automatically when the source flow completes.
             </p>
@@ -205,7 +206,7 @@ export default function FlowConnector({ onClose, onSave }) {
                   textAlign: 'left'
                 }}
               >
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{type.icon}</div>
+                <div style={{ marginBottom: 8 }}>{type.Icon && <type.Icon size={24} />}</div>
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{type.label}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{type.description}</div>
               </button>

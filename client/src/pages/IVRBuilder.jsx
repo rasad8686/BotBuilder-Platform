@@ -6,18 +6,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Hand, ClipboardList, Hash, Phone, Mail, Bot, Shuffle, PhoneOff, Volume2, Mic, Trash2 } from 'lucide-react';
 
 const nodeTypes = {
-  greeting: { icon: '👋', label: 'Greeting', color: '#4CAF50' },
-  menu: { icon: '📋', label: 'Menu', color: '#2196F3' },
-  input: { icon: '🔢', label: 'Input', color: '#FF9800' },
-  transfer: { icon: '📞', label: 'Transfer', color: '#9C27B0' },
-  voicemail: { icon: '📧', label: 'Voicemail', color: '#607D8B' },
-  ai: { icon: '🤖', label: 'AI Response', color: '#00BCD4' },
-  condition: { icon: '🔀', label: 'Condition', color: '#FF5722' },
-  hangup: { icon: '📴', label: 'Hang Up', color: '#f44336' },
-  playAudio: { icon: '🔊', label: 'Play Audio', color: '#795548' },
-  recordMessage: { icon: '🎙️', label: 'Record', color: '#E91E63' }
+  greeting: { Icon: Hand, label: 'Greeting', color: '#4CAF50' },
+  menu: { Icon: ClipboardList, label: 'Menu', color: '#2196F3' },
+  input: { Icon: Hash, label: 'Input', color: '#FF9800' },
+  transfer: { Icon: Phone, label: 'Transfer', color: '#9C27B0' },
+  voicemail: { Icon: Mail, label: 'Voicemail', color: '#607D8B' },
+  ai: { Icon: Bot, label: 'AI Response', color: '#00BCD4' },
+  condition: { Icon: Shuffle, label: 'Condition', color: '#FF5722' },
+  hangup: { Icon: PhoneOff, label: 'Hang Up', color: '#f44336' },
+  playAudio: { Icon: Volume2, label: 'Play Audio', color: '#795548' },
+  recordMessage: { Icon: Mic, label: 'Record', color: '#E91E63' }
 };
 
 const IVRBuilder = () => {
@@ -195,7 +196,7 @@ const IVRBuilder = () => {
     return (
       <div style={{ padding: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-          <span style={{ fontSize: '24px' }}>{nodeType.icon}</span>
+          <span style={{ fontSize: '24px' }}>{nodeType.Icon && <nodeType.Icon size={24} />}</span>
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', color: '#1a1a2e' }}>{nodeType.label}</h3>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6c757d' }}>Node ID: {node.id}</p>
@@ -382,9 +383,9 @@ const IVRBuilder = () => {
         <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
           <button
             onClick={() => deleteNode(node.id)}
-            style={{ padding: '10px 20px', background: '#f8d7da', color: '#721c24', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}
+            style={{ padding: '10px 20px', background: '#f8d7da', color: '#721c24', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            🗑️ Delete Node
+            <Trash2 size={14} /> Delete Node
           </button>
         </div>
       </div>
@@ -494,7 +495,7 @@ const IVRBuilder = () => {
                 onMouseOver={(e) => e.target.style.background = '#e3f2fd'}
                 onMouseOut={(e) => e.target.style.background = '#f8f9fa'}
               >
-                <span style={{ fontSize: '18px' }}>{config.icon}</span>
+                <span style={{ fontSize: '18px' }}>{config.Icon && <config.Icon size={18} />}</span>
                 <span style={{ fontSize: '13px', color: '#495057' }}>{config.label}</span>
               </button>
             ))}
@@ -564,7 +565,7 @@ const IVRBuilder = () => {
                 }}
               >
                 <div style={{ padding: '8px 12px', background: nodeType.color, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>{nodeType.icon}</span>
+                  {nodeType.Icon && <nodeType.Icon size={16} />}
                   <span style={{ fontSize: '12px', fontWeight: '600' }}>{nodeType.label}</span>
                 </div>
                 <div style={{ padding: '12px', fontSize: '12px', color: '#6c757d' }}>
@@ -601,7 +602,7 @@ const IVRBuilder = () => {
           {/* Empty state */}
           {ivr.nodes.length === 0 && (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📞</div>
+              <div style={{ marginBottom: '16px' }}><Phone size={48} className="text-gray-400" /></div>
               <h3 style={{ color: '#1a1a2e', marginBottom: '8px' }}>{t('voice.emptyIVR', 'Start Building Your IVR')}</h3>
               <p style={{ color: '#6c757d', marginBottom: '24px' }}>{t('voice.emptyIVRDesc', 'Click a node from the left panel to add it')}</p>
               <button

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { User } from 'lucide-react';
 
 const statusColors = {
   draft: '#718096',
@@ -348,7 +349,7 @@ const WorkClone = () => {
 
         {clones.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>👤</div>
+            <div style={{ fontSize: '64px', marginBottom: '16px' }}><User size={64} style={{ color: '#a0aec0', margin: '0 auto' }} /></div>
             <h3 style={{ color: '#2d3748', marginBottom: '8px' }}>{t('clone.noClones')}</h3>
             <p style={{ color: '#718096', marginBottom: '24px' }}>{t('clone.createFirst')}</p>
             <button

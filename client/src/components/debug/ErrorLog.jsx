@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Search, X, Check, ThumbsUp, FileText, MapPin, Clipboard } from 'lucide-react';
 
 const ErrorLog = ({
   errors = [],
@@ -149,7 +150,7 @@ const ErrorLog = ({
 
       {/* Search */}
       <div style={styles.searchWrapper}>
-        <span style={styles.searchIcon}>🔍</span>
+        <span style={styles.searchIcon}><Search size={12} /></span>
         <input
           type="text"
           placeholder="Search logs..."
@@ -171,7 +172,7 @@ const ErrorLog = ({
       {isEmpty ? (
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>
-            {filter === 'errors' ? '✓' : filter === 'warnings' ? '👍' : '📝'}
+            {filter === 'errors' ? <Check size={48} /> : filter === 'warnings' ? <ThumbsUp size={48} /> : <FileText size={48} />}
           </div>
           <p style={styles.emptyText}>
             {searchQuery
@@ -226,7 +227,7 @@ const ErrorLog = ({
                           onClick={() => onNodeSelect(entry.nodeId)}
                           style={styles.nodeLink}
                         >
-                          📍 {entry.nodeId}
+                          <MapPin size={10} style={{ marginRight: '4px' }} /> {entry.nodeId}
                         </button>
                       )}
                       {entry.timestamp && (
@@ -243,7 +244,7 @@ const ErrorLog = ({
                       style={styles.actionButton}
                       title="Copy to clipboard"
                     >
-                      📋
+                      <Clipboard size={12} />
                     </button>
                     {hasDetails && (
                       <button

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket #{{ticketNumber}} Closed</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #6b7280; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    {{#if logo}}
+                    <img src="{{logo}}" alt="{{companyName}}" style="height: 40px; width: auto;">
+                    {{else}}
+                    <span style="font-size: 24px; font-weight: 700; color: #ffffff;">{{companyName}}</span>
+                    {{/if}}
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 6px 12px; background-color: rgba(255,255,255,0.2); border-radius: 16px; font-size: 13px; font-weight: 600; color: #ffffff;">
+                      Closed
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px;">
+              <!-- Icon -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <div style="width: 64px; height: 64px; background-color: #f3f4f6; border-radius: 50%; display: inline-block; text-align: center; line-height: 64px;">
+                      <span style="font-size: 28px;">&#128193;</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #1f2937; text-align: center;">
+                Ticket Closed
+              </h1>
+
+              <p style="margin: 0 0 32px 0; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
+                Your support ticket has been closed. Thank you for reaching out to us.
+              </p>
+
+              <!-- Ticket Summary Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border-radius: 12px; margin-bottom: 32px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td>
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td width="50%" style="padding-bottom: 16px;">
+                                <span style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Ticket Number</span>
+                                <br>
+                                <span style="font-size: 18px; font-weight: 700; color: #374151;">#{{ticketNumber}}</span>
+                              </td>
+                              <td width="50%" style="padding-bottom: 16px;">
+                                <span style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Duration</span>
+                                <br>
+                                <span style="font-size: 18px; font-weight: 700; color: #374151;">{{duration}}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                          <span style="font-size: 13px; color: #6b7280;">Subject</span>
+                          <br>
+                          <span style="font-size: 15px; font-weight: 500; color: #1f2937;">{{subject}}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 12px;">
+                          <span style="font-size: 13px; color: #6b7280;">Status</span>
+                          <br>
+                          <span style="display: inline-block; margin-top: 4px; padding: 4px 10px; background-color: #f3f4f6; border-radius: 12px; font-size: 13px; font-weight: 500; color: #6b7280;">
+                            Closed on {{closedAt}}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              {{#if closingNote}}
+              <!-- Closing Note -->
+              <div style="margin-bottom: 32px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1f2937;">Closing Note</h3>
+                <div style="padding: 16px; background-color: #f9fafb; border-radius: 8px; border-left: 4px solid #6b7280;">
+                  <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">{{closingNote}}</p>
+                </div>
+              </div>
+              {{/if}}
+
+              <!-- Stats Summary -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td width="33%" align="center" style="padding: 16px;">
+                    <span style="font-size: 24px; font-weight: 700; color: {{primaryColor}}; display: block;">{{messageCount}}</span>
+                    <span style="font-size: 12px; color: #6b7280;">Messages</span>
+                  </td>
+                  <td width="33%" align="center" style="padding: 16px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+                    <span style="font-size: 24px; font-weight: 700; color: {{primaryColor}}; display: block;">{{responseTime}}</span>
+                    <span style="font-size: 12px; color: #6b7280;">Avg. Response</span>
+                  </td>
+                  <td width="33%" align="center" style="padding: 16px;">
+                    <span style="font-size: 24px; font-weight: 700; color: {{primaryColor}}; display: block;">{{agentsInvolved}}</span>
+                    <span style="font-size: 12px; color: #6b7280;">Agents Helped</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ticketUrl}}" style="display: inline-block; padding: 14px 32px; background-color: {{primaryColor}}; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 8px;">
+                      View Ticket Archive
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Need More Help -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #1f2937;">Need more help?</h4>
+                    <p style="margin: 0 0 16px 0; font-size: 14px; color: #6b7280;">
+                      We're always here to assist you.
+                    </p>
+                    <a href="{{newTicketUrl}}" style="display: inline-block; padding: 10px 24px; background-color: #ffffff; color: {{primaryColor}}; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; border: 1px solid #e5e7eb;">
+                      Create New Ticket
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
+                Thank you for choosing {{companyName}}.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                {{companyName}} &bull; <a href="{{portalUrl}}" style="color: {{primaryColor}}; text-decoration: none;">Support Center</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

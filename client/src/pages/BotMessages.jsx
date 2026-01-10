@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { MessageSquare, Hand, HelpCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://botbuilder-platform.onrender.com';
@@ -168,7 +169,7 @@ function BotMessages() {
         </div>
 
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-800">{t('botMessages.title')} 💬</h3>
+          <h3 className="text-2xl font-bold text-gray-800">{t('botMessages.title')}</h3>
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700"
@@ -230,7 +231,7 @@ function BotMessages() {
 
         {messages.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div className="text-6xl mb-4">💬</div>
+            <div className="text-6xl mb-4"><MessageSquare size={64} className="mx-auto text-gray-400" /></div>
             <h3 className="text-2xl font-bold text-gray-800 mb-2">{t('botMessages.noMessages')}</h3>
             <p className="text-gray-600 mb-6">{t('botMessages.noMessagesDesc')}</p>
           </div>
@@ -242,7 +243,7 @@ function BotMessages() {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">
-                        {msg.message_type === 'greeting' ? '👋' : msg.message_type === 'response' ? '💬' : '🤷'}
+                        {msg.message_type === 'greeting' ? <Hand size={24} /> : msg.message_type === 'response' ? <MessageSquare size={24} /> : <HelpCircle size={24} />}
                       </span>
                       <div>
                         <h4 className="font-bold text-gray-800 capitalize">{msg.message_type}</h4>

@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 export default function UsageBar({ used, limit, label, color = 'purple' }) {
   const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
 
@@ -58,8 +60,8 @@ export default function UsageBar({ used, limit, label, color = 'purple' }) {
       </div>
 
       {percentage >= 90 && limit !== -1 && (
-        <p className="text-xs text-red-600 mt-1 font-medium">
-          ⚠️ Approaching limit - consider upgrading
+        <p className="text-xs text-red-600 mt-1 font-medium flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3" /> Approaching limit - consider upgrading
         </p>
       )}
     </div>

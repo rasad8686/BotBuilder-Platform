@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Headphones, Briefcase, Calendar, ShoppingCart, Star, Bot } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const CATEGORY_ICONS = {
-  support: '🎧',
-  sales: '💼',
-  scheduling: '📅',
-  ecommerce: '🛒',
-  feedback: '⭐',
-  default: '🤖'
+  support: Headphones,
+  sales: Briefcase,
+  scheduling: Calendar,
+  ecommerce: ShoppingCart,
+  feedback: Star,
+  default: Bot
 };
 
 const DIFFICULTY_COLORS = {
@@ -152,8 +153,8 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
             borderRadius: '12px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '24px', marginBottom: '4px' }}>
-              {CATEGORY_ICONS[previewTemplate.category] || CATEGORY_ICONS.default}
+            <div style={{ marginBottom: '4px' }}>
+              {(() => { const Icon = CATEGORY_ICONS[previewTemplate.category] || CATEGORY_ICONS.default; return <Icon size={24} />; })()}
             </div>
             <div style={{ fontSize: '13px', color: '#6b7280' }}>Category</div>
             <div style={{ fontWeight: '500', textTransform: 'capitalize' }}>
@@ -419,10 +420,9 @@ export default function FlowTemplateSelector({ onSelectTemplate, onClose }) {
                   backgroundColor: '#f3f4f6',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px'
+                  justifyContent: 'center'
                 }}>
-                  {CATEGORY_ICONS[template.category] || CATEGORY_ICONS.default}
+                  {(() => { const Icon = CATEGORY_ICONS[template.category] || CATEGORY_ICONS.default; return <Icon size={24} />; })()}
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>

@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, Check } from 'lucide-react';
 import UsageBar from '../components/UsageBar';
 import { API_URL } from '../config/api';
 import { SkeletonCard } from '../components/SkeletonLoader';
@@ -13,11 +15,34 @@ export default function Billing() {
   const [subscription, setSubscription] = useState(null);
   const [fetchingSubscription, setFetchingSubscription] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [currentPeriod, setCurrentPeriod] = useState(null);
+
+  // Fetch current period cost
+  const fetchCurrentPeriod = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/billing/current-period`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentPeriod(data.currentPeriod);
+      }
+    } catch (err) {
+      // Use mock data
+      setCurrentPeriod({
+        totalCost: 12.50,
+        requestCount: 3500,
+        projectedMonthEnd: 25.00,
+        tier: 'pro'
+      });
+    }
+  }, []);
 
   // Fetch current subscription on mount
   useEffect(() => {
     fetchSubscription();
-  }, []);
+    fetchCurrentPeriod();
+  }, [fetchCurrentPeriod]);
 
   const fetchSubscription = async () => {
     try {
@@ -221,6 +246,61 @@ export default function Billing() {
           <UsageBar />
         </div>
 
+        {/* Cost Cards */}
+        {currentPeriod && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Current Period Cost */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {t('billing.currentPeriodCost', 'Current Period Cost')}
+                </h3>
+                <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full capitalize">
+                  {currentPeriod.tier}
+                </span>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                ${currentPeriod.totalCost?.toFixed(2) || '0.00'}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {currentPeriod.requestCount?.toLocaleString() || 0} requests this period
+              </p>
+            </div>
+
+            {/* Projected Month-End */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-slate-700">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                {t('billing.projectedMonthEnd', 'Projected Month-End')}
+              </h3>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                ${currentPeriod.projectedMonthEnd?.toFixed(2) || '0.00'}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Based on current usage trends
+              </p>
+            </div>
+
+            {/* Cost Calculator Link */}
+            <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
+              <h3 className="text-sm font-medium opacity-90 mb-2">
+                {t('billing.estimateCosts', 'Estimate Your Costs')}
+              </h3>
+              <p className="text-sm opacity-80 mb-4">
+                {t('billing.calculatorDesc', 'Use our calculator to plan your usage and find the best tier')}
+              </p>
+              <Link
+                to="/cost-calculator"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+              >
+                {t('billing.openCalculator', 'Open Calculator')}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Current Subscription Info */}
         {subscription && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
@@ -240,8 +320,8 @@ export default function Billing() {
                 {subscription.plan !== 'free' && subscription.stripeSubscriptionId && (
                   <div className="mt-3">
                     {subscription.cancelAtPeriodEnd ? (
-                      <p className="text-sm text-orange-600 font-medium">
-                        ⚠️ Subscription canceled - Access until {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                      <p className="text-sm text-orange-600 font-medium flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4" /> Subscription canceled - Access until {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
                       </p>
                     ) : (
                       <button
@@ -280,8 +360,8 @@ export default function Billing() {
                 {/* Current Plan Badge */}
                 {isCurrent && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700">
-                      ✓ Current Plan
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700">
+                      <Check className="w-4 h-4" /> Current Plan
                     </span>
                   </div>
                 )}

@@ -1,10 +1,11 @@
 import React from 'react';
+import { Clock, RefreshCw, CheckCircle, XCircle, ClipboardList, BarChart3 } from 'lucide-react';
 
-const statusColors = {
-  pending: { bg: '#fff3cd', color: '#856404', icon: '⏳' },
-  running: { bg: '#cce5ff', color: '#004085', icon: '🔄' },
-  completed: { bg: '#d4edda', color: '#155724', icon: '✅' },
-  failed: { bg: '#f8d7da', color: '#721c24', icon: '❌' }
+const statusConfig = {
+  pending: { bg: '#fff3cd', color: '#856404', Icon: Clock },
+  running: { bg: '#cce5ff', color: '#004085', Icon: RefreshCw },
+  completed: { bg: '#d4edda', color: '#155724', Icon: CheckCircle },
+  failed: { bg: '#f8d7da', color: '#721c24', Icon: XCircle }
 };
 
 const TaskList = ({ tasks, selectedTaskId, onSelectTask, onCreateTask }) => {
@@ -48,7 +49,7 @@ const TaskList = ({ tasks, selectedTaskId, onSelectTask, onCreateTask }) => {
       <div className="task-list">
         {tasks.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">📋</span>
+            <span className="empty-icon"><ClipboardList size={40} /></span>
             <p>No tasks yet</p>
             {onCreateTask && (
               <button className="btn-create-first" onClick={onCreateTask}>
@@ -58,7 +59,8 @@ const TaskList = ({ tasks, selectedTaskId, onSelectTask, onCreateTask }) => {
           </div>
         ) : (
           tasks.map(task => {
-            const status = statusColors[task.status] || statusColors.pending;
+            const status = statusConfig[task.status] || statusConfig.pending;
+            const StatusIcon = status.Icon;
             const isSelected = selectedTaskId === task.id;
             const progress = task.total_steps > 0
               ? Math.round((task.completed_steps / task.total_steps) * 100)
@@ -76,7 +78,7 @@ const TaskList = ({ tasks, selectedTaskId, onSelectTask, onCreateTask }) => {
                     className="task-status"
                     style={{ background: status.bg, color: status.color }}
                   >
-                    {status.icon} {task.status}
+                    <StatusIcon size={12} style={{ display: 'inline', marginRight: 4 }} /> {task.status}
                   </span>
                   <span className="task-id">#{task.id}</span>
                 </div>
@@ -106,10 +108,10 @@ const TaskList = ({ tasks, selectedTaskId, onSelectTask, onCreateTask }) => {
                 {/* Meta Info */}
                 <div className="task-meta">
                   <span className="meta-item">
-                    📊 {task.completed_steps || 0}/{task.total_steps || 0} steps
+                    <BarChart3 size={12} /> {task.completed_steps || 0}/{task.total_steps || 0} steps
                   </span>
                   <span className="meta-item">
-                    🕐 {formatDate(task.created_at)}
+                    <Clock size={12} /> {formatDate(task.created_at)}
                   </span>
                 </div>
               </div>

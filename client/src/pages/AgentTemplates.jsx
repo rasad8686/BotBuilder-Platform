@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Search, PenTool, BarChart3, Settings, MessageSquare, Code, Smartphone, TrendingUp, Folder, Bot } from 'lucide-react';
 
 const categoryIcons = {
-  research: '🔍',
-  content: '✍️',
-  data: '📊',
-  automation: '⚙️',
-  customer_service: '💬',
-  development: '💻',
-  marketing: '📱',
-  analysis: '📈'
+  research: Search,
+  content: PenTool,
+  data: BarChart3,
+  automation: Settings,
+  customer_service: MessageSquare,
+  development: Code,
+  marketing: Smartphone,
+  analysis: TrendingUp
 };
 
 const categoryColors = {
@@ -231,7 +232,7 @@ const AgentTemplates = () => {
                   textTransform: 'capitalize'
                 }}
               >
-                <span>{categoryIcons[category] || '📁'}</span>
+                <span>{(() => { const Icon = categoryIcons[category] || Folder; return <Icon size={16} />; })()}</span>
                 {category.replace('_', ' ')}
               </button>
             ))}
@@ -272,7 +273,7 @@ const AgentTemplates = () => {
                       background: `linear-gradient(135deg, ${categoryColors[template.category] || '#667eea'}20 0%, ${categoryColors[template.category] || '#667eea'}10 100%)`
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '40px' }}>{template.icon || categoryIcons[template.category] || '🤖'}</span>
+                        <span style={{ fontSize: '40px' }}>{(() => { const Icon = categoryIcons[template.category] || Bot; return <Icon size={40} />; })()}</span>
                         <span style={{
                           padding: '4px 10px',
                           background: categoryColors[template.category] || '#667eea',

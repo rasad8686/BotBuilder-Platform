@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Sparkles, ClipboardList, Bot, Rocket, Lightbulb, FileText, RefreshCw } from 'lucide-react';
 import AIFlowGenerator from '../components/AI/AIFlowGenerator';
 import FlowTemplateSelector from '../components/AI/FlowTemplateSelector';
 import GeneratedFlowPreview from '../components/AI/GeneratedFlowPreview';
@@ -70,8 +71,8 @@ export default function AIFlowStudio() {
   };
 
   const tabs = [
-    { id: 'generate', label: t('aiFlow.aiGenerate'), icon: '✨' },
-    { id: 'templates', label: t('aiFlow.templates'), icon: '📋' }
+    { id: 'generate', label: t('aiFlow.aiGenerate'), Icon: Sparkles },
+    { id: 'templates', label: t('aiFlow.templates'), Icon: ClipboardList }
   ];
 
   return (
@@ -87,7 +88,7 @@ export default function AIFlowStudio() {
           </button>
           <div>
             <h1 className="m-0 text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2.5">
-              <span className="text-3xl">🤖</span>
+              <Bot size={28} className="text-blue-500" />
               {t('aiFlow.title')}
             </h1>
             <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">
@@ -101,7 +102,7 @@ export default function AIFlowStudio() {
             onClick={handleUseFlow}
             className="px-6 py-2.5 bg-blue-500 text-white border-none rounded-lg cursor-pointer font-medium text-sm flex items-center gap-2 hover:bg-blue-600 transition-colors"
           >
-            <span>🚀</span> {t('aiFlow.openInWorkflow')}
+            <Rocket size={16} /> {t('aiFlow.openInWorkflow')}
           </button>
         )}
       </div>
@@ -125,7 +126,7 @@ export default function AIFlowStudio() {
                       : 'border-transparent font-normal text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
-                  <span>{tab.icon}</span>
+                  <tab.Icon size={16} />
                   {tab.label}
                 </button>
               ))}
@@ -147,13 +148,13 @@ export default function AIFlowStudio() {
                     onClick={handleBack}
                     className="px-5 py-3 bg-purple-500 text-white border-none rounded-lg cursor-pointer font-medium text-sm flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors"
                   >
-                    <span>✨</span> {t('aiFlow.generateNewWithAI')}
+                    <Sparkles size={16} /> {t('aiFlow.generateNewWithAI')}
                   </button>
                   <button
                     onClick={() => { setActiveTab('templates'); handleBack(); }}
                     className="px-5 py-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 border-none rounded-lg cursor-pointer font-medium text-sm flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                   >
-                    <span>📋</span> {t('aiFlow.browseTemplates')}
+                    <ClipboardList size={16} /> {t('aiFlow.browseTemplates')}
                   </button>
                 </div>
 
@@ -239,7 +240,7 @@ export default function AIFlowStudio() {
               </div>
             ) : bots.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 dark:bg-slate-700 rounded-xl">
-                <div className="text-5xl mb-4">🤖</div>
+                <div className="mb-4"><Bot size={48} className="mx-auto text-gray-400" /></div>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">{t('agentStudio.noBotsFound')}</p>
                 <button
                   onClick={() => navigate('/create-bot')}
@@ -256,8 +257,8 @@ export default function AIFlowStudio() {
                     onClick={() => handleSelectBot(bot.id)}
                     className="flex items-center gap-3 p-4 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer text-left transition-all hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-slate-600"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-slate-600 flex items-center justify-center text-2xl">
-                      🤖
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-slate-600 flex items-center justify-center">
+                      <Bot size={24} className="text-blue-500" />
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold text-[15px] text-gray-900 dark:text-white">{bot.name}</div>
@@ -278,15 +279,15 @@ export default function AIFlowStudio() {
       {!showPreview && (
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 py-3 px-8 flex justify-center gap-8">
           <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
-            <span>💡</span>
+            <Lightbulb size={14} />
             <span>Be specific in your descriptions for better results</span>
           </div>
           <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
-            <span>📝</span>
+            <FileText size={14} />
             <span>You can edit the generated flow before using it</span>
           </div>
           <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
-            <span>🔄</span>
+            <RefreshCw size={14} />
             <span>Not satisfied? Generate again with different settings</span>
           </div>
         </div>

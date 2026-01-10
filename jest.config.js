@@ -14,7 +14,9 @@ module.exports = {
   ],
 
   // Coverage configuration
-  collectCoverage: true,
+  // Note: Set to false by default to prevent test hanging
+  // Use --coverage flag when coverage report is needed
+  collectCoverage: false,
   collectCoverageFrom: [
     'server/**/*.js',
     '!server/__tests__/**',

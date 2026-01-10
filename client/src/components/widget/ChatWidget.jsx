@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { Bot, MessageCircle, X, Send, Paperclip } from 'lucide-react';
+import { SurveyWidget } from './surveys';
 
 const DEFAULT_CONFIG = {
   primaryColor: '#8b5cf6',
@@ -7,7 +9,7 @@ const DEFAULT_CONFIG = {
   size: 'medium',
   welcomeMessage: 'Hello! How can I help you today?',
   botName: 'Assistant',
-  botAvatar: '🤖',
+  botAvatar: null,
   placeholder: 'Type a message...',
   offlineMessage: 'We are currently offline. Leave a message!',
 };
@@ -26,10 +28,14 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
   const [isOnline, setIsOnline] = useState(true);
   const [sessionId, setSessionId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [activeSurvey, setActiveSurvey] = useState(null);
+  const [surveyTriggerType, setSurveyTriggerType] = useState(null);
 
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const fileInputRef = useRef(null);
+  const surveyShownRef = useRef(false);
 
   const settings = { ...DEFAULT_CONFIG, ...config };
   const size = SIZES[settings.size] || SIZES.medium;
@@ -68,7 +74,8 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
     const serverUrl = apiUrl || window.location.origin;
     socketRef.current = io(serverUrl, {
       path: '/ws',
-      transports: ['websocket', 'polling'],
+      transports: ['polling'],
+      upgrade: false,
       query: { botId, sessionId: storedSessionId }
     });
 
@@ -104,12 +111,76 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
       setIsTyping(false);
     });
 
+    // Listen for survey trigger from server
+    socketRef.current.on('widget:survey', (data) => {
+      if (data.survey && !surveyShownRef.current) {
+        setActiveSurvey(data.survey);
+        setSurveyTriggerType(data.trigger_type);
+        setShowSurvey(true);
+        surveyShownRef.current = true;
+      }
+    });
+
+    // Listen for chat end to trigger survey
+    socketRef.current.on('widget:chat_ended', () => {
+      triggerSurvey('after_chat');
+    });
+
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
     };
   }, [botId, apiUrl, settings.welcomeMessage]);
+
+  // Fetch survey for trigger type
+  const fetchSurveyForTrigger = async (triggerType) => {
+    try {
+      const serverUrl = apiUrl || window.location.origin;
+      const response = await fetch(
+        `${serverUrl}/api/public/surveys/active?bot_id=${botId}&trigger_type=${triggerType}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data.survey;
+      }
+    } catch (err) {
+      console.error('Error fetching survey:', err);
+    }
+    return null;
+  };
+
+  // Trigger survey by type
+  const triggerSurvey = async (triggerType) => {
+    if (surveyShownRef.current) return;
+
+    const survey = await fetchSurveyForTrigger(triggerType);
+    if (survey) {
+      setActiveSurvey(survey);
+      setSurveyTriggerType(triggerType);
+      setShowSurvey(true);
+      surveyShownRef.current = true;
+    }
+  };
+
+  // Handle survey completion
+  const handleSurveyComplete = (responses) => {
+    // Emit survey completion event
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('widget:survey_completed', {
+        botId,
+        sessionId,
+        surveyId: activeSurvey?.id,
+        responses
+      });
+    }
+  };
+
+  // Handle survey close
+  const handleSurveyClose = () => {
+    setShowSurvey(false);
+    setActiveSurvey(null);
+  };
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -268,7 +339,7 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
                 fontSize: '20px'
               }}
             >
-              {settings.botAvatar}
+              {settings.botAvatar || <Bot size={20} />}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: '600', fontSize: '16px' }}>{settings.botName}</div>
@@ -292,7 +363,7 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
                 justifyContent: 'center'
               }}
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
 
@@ -404,10 +475,14 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
                 cursor: 'pointer',
                 fontSize: '20px',
                 opacity: isUploading ? 0.5 : 1,
-                padding: '4px'
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#6b7280'
               }}
             >
-              📎
+              <Paperclip size={20} />
             </button>
 
             <input
@@ -444,7 +519,7 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
                 transition: 'background 0.2s'
               }}
             >
-              ➤
+              <Send size={18} />
             </button>
           </div>
         </div>
@@ -478,8 +553,23 @@ export default function ChatWidget({ botId, config = {}, apiUrl }) {
           e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
         }}
       >
-        {isOpen ? '✕' : '💬'}
+        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
       </button>
+
+      {/* Survey Widget */}
+      {showSurvey && activeSurvey && (
+        <SurveyWidget
+          survey={activeSurvey}
+          config={{
+            primaryColor: settings.primaryColor,
+            position: settings.position
+          }}
+          apiUrl={apiUrl}
+          sessionId={sessionId}
+          onComplete={handleSurveyComplete}
+          onClose={handleSurveyClose}
+        />
+      )}
     </div>
   );
 }

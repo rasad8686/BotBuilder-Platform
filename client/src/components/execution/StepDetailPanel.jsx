@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertTriangle, FileText } from 'lucide-react';
 
 const StepDetailPanel = ({ step, onClose }) => {
   const [showRawJson, setShowRawJson] = useState(false);
@@ -83,7 +84,7 @@ const StepDetailPanel = ({ step, onClose }) => {
           <div className="error-section">
             <h4>Error</h4>
             <div className="error-box">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon"><AlertTriangle size={16} /></span>
               <span className="error-message">{step.error}</span>
             </div>
           </div>
@@ -95,7 +96,7 @@ const StepDetailPanel = ({ step, onClose }) => {
 
         <div className="raw-toggle">
           <button onClick={() => setShowRawJson(!showRawJson)}>
-            {showRawJson ? '📄 Hide Raw JSON' : '📄 Show Raw JSON'}
+            {showRawJson ? <><FileText size={14} /> Hide Raw JSON</> : <><FileText size={14} /> Show Raw JSON</>}
           </button>
         </div>
 

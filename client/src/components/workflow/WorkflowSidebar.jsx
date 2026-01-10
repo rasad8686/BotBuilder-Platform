@@ -1,32 +1,45 @@
 import React from 'react';
+import { Play, Bot, Zap, GitBranch, Square, Target, Search, PenTool, BarChart3, CheckSquare, Shuffle } from 'lucide-react';
 
 const nodeCategories = [
   {
     name: 'Triggers',
     items: [
-      { type: 'start', label: 'Start', icon: '▶', color: '#48bb78', description: 'Workflow entry point' }
+      { type: 'start', label: 'Start', Icon: Play, color: '#48bb78', description: 'Workflow entry point' }
     ]
   },
   {
     name: 'Agents',
     items: [
-      { type: 'agent', label: 'Agent', icon: '🤖', color: '#667eea', description: 'AI agent execution' }
+      { type: 'agent', label: 'Agent', Icon: Bot, color: '#667eea', description: 'AI agent execution' }
     ]
   },
   {
     name: 'Logic',
     items: [
-      { type: 'condition', label: 'Condition', icon: '⚡', color: '#ed8936', description: 'Conditional branching' },
-      { type: 'parallel', label: 'Parallel', icon: '⫘', color: '#4fd1c5', description: 'Run simultaneously' }
+      { type: 'condition', label: 'Condition', Icon: GitBranch, color: '#ed8936', description: 'Conditional branching' },
+      { type: 'parallel', label: 'Parallel', Icon: Zap, color: '#4fd1c5', description: 'Run simultaneously' }
     ]
   },
   {
     name: 'Actions',
     items: [
-      { type: 'end', label: 'End', icon: '⏹', color: '#f56565', description: 'Workflow exit point' }
+      { type: 'end', label: 'End', Icon: Square, color: '#f56565', description: 'Workflow exit point' }
     ]
   }
 ];
+
+const getRoleIcon = (role) => {
+  switch (role) {
+    case 'orchestrator': return Target;
+    case 'researcher': return Search;
+    case 'writer': return PenTool;
+    case 'analyzer': return BarChart3;
+    case 'reviewer': return CheckSquare;
+    case 'router': return Shuffle;
+    default: return Bot;
+  }
+};
 
 const WorkflowSidebar = ({ agents = [] }) => {
   const onDragStart = (event, nodeType, data = {}) => {
@@ -54,7 +67,7 @@ const WorkflowSidebar = ({ agents = [] }) => {
                   onDragStart={(e) => onDragStart(e, item.type, { label: item.label })}
                   style={{ '--node-color': item.color }}
                 >
-                  <span className="node-icon">{item.icon}</span>
+                  <span className="node-icon"><item.Icon size={24} /></span>
                   <div className="node-info">
                     <span className="node-label">{item.label}</span>
                     <span className="node-desc">{item.description}</span>
@@ -84,12 +97,7 @@ const WorkflowSidebar = ({ agents = [] }) => {
                   style={{ '--node-color': '#667eea' }}
                 >
                   <span className="node-icon">
-                    {agent.role === 'orchestrator' ? '🎯' :
-                     agent.role === 'researcher' ? '🔍' :
-                     agent.role === 'writer' ? '✍️' :
-                     agent.role === 'analyzer' ? '📊' :
-                     agent.role === 'reviewer' ? '✅' :
-                     agent.role === 'router' ? '🔀' : '🤖'}
+                    {(() => { const RoleIcon = getRoleIcon(agent.role); return <RoleIcon size={24} />; })()}
                   </span>
                   <div className="node-info">
                     <span className="node-label">{agent.name}</span>

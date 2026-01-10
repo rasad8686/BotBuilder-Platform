@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Shield, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -81,10 +82,10 @@ export default function Settings() {
               className="w-full text-left px-4 py-3 rounded-lg hover:bg-purple-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-between transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span>🔐</span>
+                <Shield className="w-4 h-4" />
                 <span className="font-semibold text-gray-800 dark:text-white">{t('sidebar.security', 'Security')}</span>
               </div>
-              <span className="text-gray-600 dark:text-gray-400">→</span>
+              <ArrowRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
         </div>
@@ -99,8 +100,8 @@ export default function Settings() {
             >
               {t('settings.deleteAccount')}
             </button>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              ⚠️ {t('settings.deleteWarning')}
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-yellow-500" /> {t('settings.deleteWarning')}
             </p>
           </div>
         </div>

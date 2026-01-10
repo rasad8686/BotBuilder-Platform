@@ -1,0 +1,51 @@
+[
+  {
+    "date": "2024-01-01",
+    "sent": 1520,
+    "delivered": 1480,
+    "opened": 650,
+    "clicked": 155
+  },
+  {
+    "date": "2024-01-02",
+    "sent": 1680,
+    "delivered": 1640,
+    "opened": 720,
+    "clicked": 180
+  },
+  {
+    "date": "2024-01-03",
+    "sent": 1450,
+    "delivered": 1420,
+    "opened": 610,
+    "clicked": 140
+  },
+  {
+    "date": "2024-01-04",
+    "sent": 1890,
+    "delivered": 1850,
+    "opened": 820,
+    "clicked": 210
+  },
+  {
+    "date": "2024-01-05",
+    "sent": 2100,
+    "delivered": 2050,
+    "opened": 920,
+    "clicked": 245
+  },
+  {
+    "date": "2024-01-06",
+    "sent": 980,
+    "delivered": 960,
+    "opened": 420,
+    "clicked": 95
+  },
+  {
+    "date": "2024-01-07",
+    "sent": 850,
+    "delivered": 830,
+    "opened": 360,
+    "clicked": 80
+  }
+]

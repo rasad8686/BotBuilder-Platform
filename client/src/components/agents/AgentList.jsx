@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bot } from 'lucide-react';
 import AgentCard from './AgentCard';
 
 const AgentList = ({ agents, onEdit, onDelete, onTest, onCreate }) => {
@@ -13,7 +14,7 @@ const AgentList = ({ agents, onEdit, onDelete, onTest, onCreate }) => {
 
       {agents.length === 0 ? (
         <div className="agent-list-empty">
-          <div className="empty-icon">🤖</div>
+          <div className="empty-icon"><Bot size={64} /></div>
           <h3>No Agents Yet</h3>
           <p>Create your first AI agent to get started with multi-agent workflows.</p>
           <button className="btn btn-primary" onClick={onCreate}>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket #{{ticketNumber}} Resolved</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #10b981; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    {{#if logo}}
+                    <img src="{{logo}}" alt="{{companyName}}" style="height: 40px; width: auto;">
+                    {{else}}
+                    <span style="font-size: 24px; font-weight: 700; color: #ffffff;">{{companyName}}</span>
+                    {{/if}}
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 6px 12px; background-color: rgba(255,255,255,0.2); border-radius: 16px; font-size: 13px; font-weight: 600; color: #ffffff;">
+                      &#10003; Resolved
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px;">
+              <!-- Success Icon -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <div style="width: 80px; height: 80px; background-color: #ecfdf5; border-radius: 50%; display: inline-block; text-align: center; line-height: 80px;">
+                      <span style="font-size: 40px;">&#10003;</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #1f2937; text-align: center;">
+                Your Ticket Has Been Resolved
+              </h1>
+
+              <p style="margin: 0 0 32px 0; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
+                Great news! We've resolved your support request. If you have any further questions, feel free to reopen this ticket or create a new one.
+              </p>
+
+              <!-- Ticket Summary Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border-radius: 12px; margin-bottom: 32px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                          <span style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Ticket</span>
+                          <br>
+                          <span style="font-size: 20px; font-weight: 700; color: #10b981;">#{{ticketNumber}}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 16px;">
+                          <span style="font-size: 13px; color: #6b7280;">Subject</span>
+                          <br>
+                          <span style="font-size: 15px; font-weight: 500; color: #1f2937;">{{subject}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              {{#if resolutionNote}}
+              <!-- Resolution Note -->
+              <div style="margin-bottom: 32px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #1f2937;">Resolution Summary</h3>
+                <div style="padding: 16px; background-color: #ecfdf5; border-radius: 8px; border-left: 4px solid #10b981;">
+                  <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">{{resolutionNote}}</p>
+                </div>
+              </div>
+              {{/if}}
+
+              <!-- Satisfaction Survey -->
+              <div style="background-color: #faf5ff; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: center;">
+                <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1f2937;">How was your experience?</h3>
+                <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280;">Your feedback helps us improve our support.</p>
+
+                <!-- Rating Buttons -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                  <tr>
+                    <td>
+                      <a href="{{satisfactionUrl}}?rating=1" style="display: inline-block; padding: 12px 16px; margin: 0 4px; background-color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 24px;" title="Very Dissatisfied">
+                        &#128542;
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{{satisfactionUrl}}?rating=2" style="display: inline-block; padding: 12px 16px; margin: 0 4px; background-color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 24px;" title="Dissatisfied">
+                        &#128577;
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{{satisfactionUrl}}?rating=3" style="display: inline-block; padding: 12px 16px; margin: 0 4px; background-color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 24px;" title="Neutral">
+                        &#128528;
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{{satisfactionUrl}}?rating=4" style="display: inline-block; padding: 12px 16px; margin: 0 4px; background-color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 24px;" title="Satisfied">
+                        &#128578;
+                      </a>
+                    </td>
+                    <td>
+                      <a href="{{satisfactionUrl}}?rating=5" style="display: inline-block; padding: 12px 16px; margin: 0 4px; background-color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 24px;" title="Very Satisfied">
+                        &#128513;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- CTA Buttons -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ticketUrl}}" style="display: inline-block; padding: 14px 32px; background-color: {{primaryColor}}; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 8px; margin-right: 12px;">
+                      View Ticket Details
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Not Resolved Section -->
+          <tr>
+            <td style="background-color: #fff7ed; padding: 24px 40px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #1f2937;">Issue not resolved?</h4>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                      If your issue hasn't been fully resolved, simply reply to this email and we'll reopen your ticket.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px; border-radius: 0 0 12px 12px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
+                Thank you for choosing {{companyName}}.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                {{companyName}} &bull; <a href="{{portalUrl}}" style="color: {{primaryColor}}; text-decoration: none;">Support Center</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

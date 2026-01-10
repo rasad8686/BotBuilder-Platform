@@ -20,17 +20,18 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li><a href="#features" className="hover:text-white transition">Features</a></li>
               <li><a href="#pricing" className="hover:text-white transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition">Documentation</a></li>
-              <li><a href="#" className="hover:text-white transition">API</a></li>
+              <li><Link to="/docs" className="hover:text-white transition">Documentation</Link></li>
+              <li><Link to="/docs#api" className="hover:text-white transition">API Reference</Link></li>
+              <li><Link to="/academy" className="hover:text-white transition">Tutorials</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold mb-4">Company</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition">About</a></li>
-              <li><a href="#" className="hover:text-white transition">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition">Contact</a></li>
+              <li><a href="https://github.com/botbuilder/botbuilder" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub</a></li>
+              <li><a href="https://status.botbuilder.io" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Status</a></li>
+              <li><Link to="/blog" className="hover:text-white transition">Blog</Link></li>
+              <li><a href="mailto:support@botbuilder.io" className="hover:text-white transition">Contact</a></li>
             </ul>
           </div>
           <div>

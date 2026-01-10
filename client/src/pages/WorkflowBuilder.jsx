@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ReactFlowProvider, useReactFlow } from 'reactflow';
+import { RefreshCw, Bot, Bug } from 'lucide-react';
 import {
   WorkflowCanvas,
   WorkflowSidebar,
@@ -378,7 +379,7 @@ const WorkflowBuilder = () => {
         <div className="max-w-6xl mx-auto">
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 sm:gap-3">
-              <span className="text-3xl sm:text-4xl">🔄</span>
+              <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-500" />
               {t('workflows.title')}
             </h1>
             <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
@@ -398,7 +399,9 @@ const WorkflowBuilder = () => {
               </div>
             ) : bots.length === 0 ? (
               <div className="text-center py-8">
-                <div className="text-5xl mb-4">🤖</div>
+                <div className="flex justify-center mb-4">
+                  <Bot className="w-12 h-12 text-indigo-500" />
+                </div>
                 <p className="text-gray-500 dark:text-gray-400 mb-4">{t('agentStudio.noBotsFound')}</p>
                 <button
                   type="button"
@@ -417,7 +420,7 @@ const WorkflowBuilder = () => {
                     onClick={() => navigate(`/bots/${bot.id}/workflows`)}
                     className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer text-left transition-all w-full hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-600"
                   >
-                    <span className="text-2xl">🤖</span>
+                    <Bot className="w-6 h-6 text-indigo-500" />
                     <div>
                       <div className="text-gray-900 dark:text-white font-semibold text-sm">{bot.name}</div>
                       <div className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{bot.description || 'Bot'}</div>
@@ -488,7 +491,7 @@ const WorkflowBuilder = () => {
             transition: 'all 0.3s ease'
           }}
         >
-          <span>🐛</span>
+          <Bug style={{ width: '16px', height: '16px' }} />
           {showDebugPanel ? 'Hide Debug' : 'Debug'}
         </button>
 

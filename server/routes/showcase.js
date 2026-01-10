@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const showcaseService = require('../services/showcaseService');
 const { authenticateToken, optionalAuth, requireSuperAdmin } = require('../middleware/auth');
 
 // Helper: Generate slug from title

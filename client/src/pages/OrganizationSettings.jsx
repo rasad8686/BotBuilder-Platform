@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle, AlertTriangle, Crown, Shield, Edit, Eye, User } from 'lucide-react';
 import { useOrganization } from '../contexts/OrganizationContext';
 import axiosInstance from '../api/axios';
 import InviteMemberModal from '../components/InviteMemberModal';
@@ -160,11 +161,11 @@ export default function OrganizationSettings() {
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'owner': return '👑';
-      case 'admin': return '🛡️';
-      case 'member': return '✏️';
-      case 'viewer': return '👁️';
-      default: return '👤';
+      case 'owner': return <Crown size={14} />;
+      case 'admin': return <Shield size={14} />;
+      case 'member': return <Edit size={14} />;
+      case 'viewer': return <Eye size={14} />;
+      default: return <User size={14} />;
     }
   };
 
@@ -196,14 +197,14 @@ export default function OrganizationSettings() {
         {/* Success Message */}
         {successMessage && (
           <div className="bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-            ✅ {successMessage}
+            <CheckCircle size={16} className="inline" /> {successMessage}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
           <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
-            ⚠️ {error}
+            <AlertTriangle size={16} className="inline" /> {error}
           </div>
         )}
 
@@ -329,9 +330,9 @@ export default function OrganizationSettings() {
                         onChange={(e) => handleUpdateRole(member.user_id, e.target.value)}
                         className={`text-xs font-bold px-3 py-1.5 rounded border cursor-pointer ${getRoleBadgeColor(member.role)}`}
                       >
-                        <option value="admin">🛡️ ADMIN</option>
-                        <option value="member">✏️ MEMBER</option>
-                        <option value="viewer">👁️ VIEWER</option>
+                        <option value="admin">ADMIN</option>
+                        <option value="member">MEMBER</option>
+                        <option value="viewer">VIEWER</option>
                       </select>
                     ) : (
                       <span className={`text-xs font-bold px-3 py-1.5 rounded border ${getRoleBadgeColor(member.role)}`}>

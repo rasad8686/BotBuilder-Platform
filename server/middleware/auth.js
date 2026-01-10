@@ -58,6 +58,11 @@ const authenticateToken = (req, res, next) => {
     // Verify token
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
+        log.error('JWT verification failed', {
+          error: err.message,
+          tokenPreview: token ? token.substring(0, 20) + '...' : 'no token',
+          jwtSecretExists: !!process.env.JWT_SECRET
+        });
         return res.status(403).json({
           success: false,
           message: 'Invalid or expired token.'
@@ -71,6 +76,9 @@ const authenticateToken = (req, res, next) => {
         id: decoded.id,
         email: decoded.email,
         username: decoded.username,
+        role: decoded.role || 'user',
+        plan: decoded.plan || 'free',
+        is_superadmin: decoded.is_superadmin || false,
         current_organization_id: orgId,
         organization_id: orgId
       };
@@ -87,8 +95,77 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+/**
+ * Optional Authentication Middleware
+ * @function optionalAuth
+ * @description Tries to authenticate user but continues even without valid token.
+ * Useful for routes that work for both guests and authenticated users.
+ */
+const optionalAuth = (req, res, next) => {
+  try {
+    let token = getAuthToken(req);
+    if (!token) {
+      const authHeader = req.headers['authorization'];
+      token = authHeader && authHeader.split(' ')[1];
+    }
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        req.user = null;
+        return next();
+      }
+
+      const orgId = decoded.current_organization_id || decoded.organizationId || decoded.organization_id;
+      req.user = {
+        id: decoded.id,
+        email: decoded.email,
+        username: decoded.username,
+        current_organization_id: orgId,
+        organization_id: orgId
+      };
+      next();
+    });
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+};
+
+// Require admin role middleware
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  // Check role or is_superadmin flag
+  const isAdmin = req.user.role === 'admin' || req.user.role === 'superadmin' || req.user.is_superadmin === true;
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: 'Admin access required' });
+  }
+  next();
+};
+
+// Require superadmin role middleware
+const requireSuperAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  const isSuperAdmin = req.user.role === 'superadmin' || req.user.is_superadmin === true;
+  if (!isSuperAdmin) {
+    return res.status(403).json({ success: false, error: 'Superadmin access required' });
+  }
+  next();
+};
+
 // Support both import syntaxes:
 // const authenticateToken = require('./auth');
-// const { authenticateToken } = require('./auth');
+// const { authenticateToken, optionalAuth, requireAdmin, requireSuperAdmin } = require('./auth');
 module.exports = authenticateToken;
 module.exports.authenticateToken = authenticateToken;
+module.exports.optionalAuth = optionalAuth;
+module.exports.requireAdmin = requireAdmin;
+module.exports.requireSuperAdmin = requireSuperAdmin;

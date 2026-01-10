@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -151,7 +152,7 @@ export default function RestoreModal({ entityType, entityId, version, onClose, o
 
         {/* Warning */}
         <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg mb-6 flex items-start gap-3">
-          <span className="text-xl">⚠️</span>
+          <span className="text-xl"><AlertTriangle size={20} className="text-amber-600" /></span>
           <div className="text-sm text-amber-800 dark:text-amber-200">
             <strong>{t('common.important', 'Important')}:</strong> {t('version.restoreWarning', 'Restoring will not delete any versions. A new version will be created with the restored content.')}
           </div>

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "campaign-1",
+    "name": "January Newsletter",
+    "sent": 12500,
+    "delivered": 12200,
+    "opened": 5800,
+    "clicked": 1450,
+    "openRate": 47.5,
+    "clickRate": 11.9,
+    "sent_at": "2024-01-15T10:00:00.000Z"
+  },
+  {
+    "id": "campaign-2",
+    "name": "New Year Sale",
+    "sent": 8900,
+    "delivered": 8700,
+    "opened": 4100,
+    "clicked": 1230,
+    "openRate": 47.1,
+    "clickRate": 14.1,
+    "sent_at": "2024-01-01T09:00:00.000Z"
+  },
+  {
+    "id": "campaign-3",
+    "name": "Product Update",
+    "sent": 6500,
+    "delivered": 6350,
+    "opened": 2850,
+    "clicked": 620,
+    "openRate": 44.9,
+    "clickRate": 9.8,
+    "sent_at": "2024-01-10T14:00:00.000Z"
+  },
+  {
+    "id": "campaign-4",
+    "name": "Customer Survey",
+    "sent": 5200,
+    "delivered": 5100,
+    "opened": 2100,
+    "clicked": 890,
+    "openRate": 41.2,
+    "clickRate": 17.5,
+    "sent_at": "2024-01-08T11:00:00.000Z"
+  },
+  {
+    "id": "campaign-5",
+    "name": "Welcome Series",
+    "sent": 4800,
+    "delivered": 4700,
+    "opened": 2650,
+    "clicked": 580,
+    "openRate": 56.4,
+    "clickRate": 12.3,
+    "sent_at": "2024-01-05T08:00:00.000Z"
+  }
+]

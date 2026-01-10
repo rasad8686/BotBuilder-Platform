@@ -23,39 +23,48 @@ const redisConfig = {
   password: process.env.REDIS_PASSWORD || undefined
 };
 
-// Create Bull queue
-let batchQueue;
-try {
-  batchQueue = new Queue('batch-processing', {
-    redis: redisConfig,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 2000
-      },
-      removeOnComplete: 100,
-      removeOnFail: 50
-    }
-  });
+// Create Bull queue (only if Redis is configured)
+let batchQueue = null;
+const redisEnabled = process.env.REDIS_HOST || process.env.REDIS_URL;
 
-  // Queue event handlers
-  batchQueue.on('error', (error) => {
-    log.error('[BATCH_PROCESSOR] Queue error:', { error: error.message });
-  });
-
-  batchQueue.on('failed', (job, error) => {
-    log.error('[BATCH_PROCESSOR] Job failed:', {
-      jobId: job.id,
-      batchJobId: job.data.batchJobId,
-      error: error.message
+if (redisEnabled) {
+  try {
+    batchQueue = new Queue('batch-processing', {
+      redis: redisConfig,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000
+        },
+        removeOnComplete: 100,
+        removeOnFail: 50
+      }
     });
-  });
 
-  log.info('[BATCH_PROCESSOR] Queue initialized');
-} catch (error) {
-  log.warn('[BATCH_PROCESSOR] Redis not available, using in-memory processing', { error: error.message });
-  batchQueue = null;
+    // Queue event handlers
+    batchQueue.on('error', (error) => {
+      // Only log if there's an actual error message
+      if (error && error.message) {
+        log.warn('[BATCH_PROCESSOR] Queue connection issue:', { error: error.message });
+      }
+    });
+
+    batchQueue.on('failed', (job, error) => {
+      log.error('[BATCH_PROCESSOR] Job failed:', {
+        jobId: job.id,
+        batchJobId: job.data.batchJobId,
+        error: error.message
+      });
+    });
+
+    log.info('[BATCH_PROCESSOR] Queue initialized');
+  } catch (error) {
+    log.warn('[BATCH_PROCESSOR] Redis not available, using in-memory processing', { error: error.message });
+    batchQueue = null;
+  }
+} else {
+  log.info('[BATCH_PROCESSOR] Redis not configured, using in-memory processing');
 }
 
 /**
