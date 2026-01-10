@@ -63,7 +63,7 @@ jobs:
         run: npm run lint --if-present
 
       - name: Run Jest unit tests
-        run: npm test -- --ci --coverage --maxWorkers=2
+        run: npm test -- --ci --coverage --maxWorkers=2 --forceExit --detectOpenHandles
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/botbuilder_test
           REDIS_URL: redis://localhost:6379
