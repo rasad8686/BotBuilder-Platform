@@ -179,6 +179,8 @@ jobs:
           JWT_SECRET: test-secret-key
           NODE_ENV: test
           PORT: 5000
+          OPENAI_API_KEY: sk-test-placeholder-for-ci
+          ANTHROPIC_API_KEY: sk-ant-test-placeholder-for-ci
 
       - name: Wait for backend
         run: |
